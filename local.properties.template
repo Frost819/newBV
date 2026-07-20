@@ -1,0 +1,23 @@
+# local.properties 模板
+# 复制此文件为 local.properties 并填入真实值
+# 注意：local.properties 含敏感凭证，不要提交到 git
+
+# Android SDK 路径
+sdk.dir=/path/to/Android/Sdk
+
+# 测试用 B 站账号凭证（从浏览器登录后获取）
+# F12 → Application → Cookies → bilibili.com
+test.sessdata=你的SESSDATA
+test.bili_jct=你的bili_jct
+test.uid=你的uid
+
+# App 接口测试凭证（从 B 站 App 抓包或 TV QR 登录获取）
+test.access_token=你的access_token
+test.buvid=你的buvid
+
+# 测试用视频（避免使用热门视频，防止数据变更）
+test.video.aid=993403941
+test.video.cid=1051761130
+
+# 测试用直播间
+test.live.roomid=21452505
