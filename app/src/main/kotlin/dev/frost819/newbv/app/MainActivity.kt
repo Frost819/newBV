@@ -9,16 +9,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.frost819.newbv.ui.theme.NewBVTheme
+import dev.frost819.newbv.core.theme.BVTheme
+import dev.frost819.newbv.core.theme.ThemeMode
 
-/**
- * 应用主 Activity，单 Activity 架构入口。
- */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NewBVTheme {
+            BVTheme(themeMode = ThemeMode.Dark) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
