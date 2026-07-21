@@ -208,8 +208,8 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 │  │ │ Room (DB)       │ │ │ bili-api (HTTP/gRPC)   │ │   │
 │  │ │ - UserDB        │ │ │ - BiliHttpApi          │ │   │
 │  │ │ - SearchHistory │ │ │ - BiliPassportApi      │ │   │
-│  │ │ - WatchHistory  │ │ │ - BiliLiveApi          │ │   │
-│  │ │ - InteractionLog│ │ │ - gRPC Channel         │ │   │
+│  │ │ - InteractionLog│ │ │ - BiliLiveApi          │ │   │
+│  │ │                 │ │ │ - gRPC Channel         │ │   │
 │  │ └─────────────────┘ │ └────────────────────────┘ │   │
 │  │ ┌─────────────────┐ │ ┌────────────────────────┐ │   │
 │  │ │ DataStore       │ │ │ bili-subtitle          │ │   │
@@ -244,7 +244,7 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 
 **新增模块说明**：
 - `:danmaku`：将原版散落在 app 中的弹幕相关代码（`DanmakuPlayerCompose`、`DanmakuMaskUtil`）独立成模块，职责清晰
-- `:core`：抽象 `InteractionMode`（D-pad / Touch）、主题系统、通用 UI 组件、日志基础设施
+- `:core`：抽象 `InputMethod` + `InteractionTracker`（运行时输入方式追踪，同时支持 D-pad / Touch）、主题系统、通用 UI 组件、日志基础设施
 - `:data`：将 Room DAO、DataStore Prefs、Repository 接口独立，便于测试与复用
 
 ### 2.4 导航设计
@@ -1319,7 +1319,7 @@ Row
 - Web: `/x/web-interface/history/cursor`
 - App gRPC: `History.CursorV2`
 
-**视频卡片已播进度条 [新增]**：历史页卡片显示已播放进度条（基于历史数据中的 `progress` / `duration`）
+**视频卡片已播进度条**：历史页卡片显示已播放进度条（基于历史数据中的 `progress` / `duration`）
 
 #### 3.11.4 收藏
 
@@ -1347,7 +1347,7 @@ Row
 - Web: `/x/space/wbi/arc/search`
 - App: `app.bilibili.com/x/v2/space/archive/cursor`
 
-**视频卡片已播进度条 [新增]**：UP 页卡片显示已播放进度条（查询本地观看历史）
+**视频卡片已播进度条**：UP 页卡片显示已播放进度条（接口 `playback_position` 字段）
 
 ### 3.13 设置
 
@@ -1600,20 +1600,33 @@ LazyColumn
 
 #### 4.3.2 交互模式抽象
 
+原版基于设备能力互斥选择 D-pad/Touch，无法处理"触屏设备也想用遥控器"的场景。
+new BV 改为**运行时追踪最近输入方式**，始终同时支持两种输入。
+
 ```kotlin
-enum class InteractionMode {
-    DPAD,   // D-pad 遥控器（焦点导航）
-    TOUCH   // 触屏（点击/手势）
+enum class InputMethod {
+    DPad,   // D-pad / 遥控器 / 键盘方向键
+    Touch   // 触屏点击/手势
 }
 
-@Composable
-fun rememberInteractionMode(): InteractionMode {
-    val config = LocalConfiguration.current
-    return if (config.touchscreen == Configuration.TOUCHSCREEN_NOTOUCH) {
-        InteractionMode.DPAD
-    } else {
-        InteractionMode.TOUCH
-    }
+class InteractionTracker(initial: InputMethod = InputMethod.DPad) {
+    private val _inputMethod = MutableStateFlow(initial)
+    val inputMethod: StateFlow<InputMethod> = _inputMethod.asStateFlow()
+
+    fun onTouch() { _inputMethod.value = InputMethod.Touch }
+    fun onDpadKey() { _inputMethod.value = InputMethod.DPad }
+}
+
+// Activity 驱动
+override fun onTouchEvent(event: MotionEvent) { tracker.onTouch() }
+override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    if (isDpadKey(keyCode)) tracker.onDpadKey()
+    return super.onKeyDown(keyCode, event)
+}
+
+// Composable 注入
+CompositionLocalProvider(LocalInteractionTracker provides tracker) {
+    BVTheme { /* tracker 已在子树中传播 */ }
 }
 ```
 
@@ -1647,9 +1660,9 @@ fun rememberInteractionMode(): InteractionMode {
 
 #### 4.3.4 实现原则
 
-- 所有交互组件基于 `InteractionMode` 分发行为
-- 避免硬编码 D-pad 逻辑，通过抽象层统一处理
-- 触屏模式保留焦点能力（可选），但视觉上弱化焦点边框
+- 所有交互组件基于 `InputMethod`（`InteractionTracker` 运行时追踪）动态适配
+- 不硬编码 D-pad 逻辑，`focusedBorder` 自动根据 `InputMethod` 显示/隐藏
+- 始终同时支持两种输入：用户拿起遥控器→焦点边框出现，用户触摸屏幕→焦点边框消失
 
 ### 4.4 黑夜/白天主题切换 [P1]
 
@@ -1716,15 +1729,10 @@ fun rememberInteractionMode(): InteractionMode {
 **数据源**：
 - 历史页：接口返回数据含 `progress` / `duration`
 - 稍后再看：接口返回数据含 `progress`（已看进度）
-- UP 主页：查询本地观看历史（若本地缓存了历史数据）
-- 相关视频：查询本地观看历史
+- UP 主页：接口返回数据含 `playback_position`（百分比进度，API 已支持）
+- 相关视频：接口返回数据含 `playback_position`（同 UP 主页接口）
 
-#### 4.6.3 本地历史缓存
-
-为支持 UP 主页等场景的进度条显示，需本地缓存观看历史：
-- Room 新增 `watch_history` 表：`aid`, `cid`, `progress`, `duration`, `last_watched`
-- 心跳上报时同步写入本地表
-- 查询时优先本地表（快速），接口数据覆盖（准确）
+无需本地缓存，所有场景进度均来自各页面接口返回值。
 
 ### 4.7 播放器兼容直播源 [P0]
 
@@ -2316,7 +2324,6 @@ fun rememberInteractionMode(): InteractionMode {
 |---|---|---|
 | `user` | id, uid, username, avatar, auth(JSON), lock | 多账户管理 |
 | `search_history` | id, keyword, search_date | 搜索历史 |
-| `watch_history` [新增] | aid, cid, progress, duration, last_watched | 本地观看历史（进度条支持） |
 | `interaction_log` [新增] | id, timestamp, screen, action, params(JSON) | 交互日志（可选缓存） |
 
 #### 8.3.2 DataStore Preferences

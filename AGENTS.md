@@ -762,7 +762,10 @@ test(bili-api): 补全 VideoPlayRepository 单测
 
 ### 8.2 Compose TV 焦点管理
 
-参考原版 `bv/app/.../component/` 的 `focusRestorer` 用法，但统一到 `core` 模块的 `FocusManager`。
+- 使用 Compose 官方 `focusRestorer` 保持列表焦点
+- `core` 模块提供 `focusedBorder` / `focusedScale` 扩展（`FocusExt.kt`）
+- `focusedBorder` 根据 `InteractionTracker` 的 `InputMethod` 动态显示：触屏时隐藏，遥控器时显示
+- `KeyEventExt` 提供 D-Pad 方向键判断扩展（`isDpadUp` / `isDpadDown` / `isConfirm` 等）
 
 ### 8.3 DataStore Prefs
 
