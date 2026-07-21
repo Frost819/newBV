@@ -1723,13 +1723,15 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 **显示规则**：
 - 卡片封面底部叠加进度条（与 B 站官方客户端一致）
 - 进度条高度 3dp，白色半透明背景 + 主题色前景
-- 进度 = `watchedProgress / duration`
+- 进度计算（两种数据形式统一为 0~1 比例）：
+  - 历史 / 稍后再看：`progress / duration`（均为秒）
+  - UP 主页 / 相关视频：`playback_position / 100`（百分比）
 - 无观看记录的卡片不显示进度条
 
 **数据源**：
-- 历史页：接口返回数据含 `progress` / `duration`
-- 稍后再看：接口返回数据含 `progress`（已看进度）
-- UP 主页：接口返回数据含 `playback_position`（百分比进度，API 已支持）
+- 历史页：接口返回数据含 `progress` / `duration`（秒）
+- 稍后再看：接口返回数据含 `progress` / `duration`（秒）
+- UP 主页：接口返回数据含 `playback_position`（0-100 百分比）
 - 相关视频：接口返回数据含 `playback_position`（同 UP 主页接口）
 
 无需本地缓存，所有场景进度均来自各页面接口返回值。
