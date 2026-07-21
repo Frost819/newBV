@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.kotlinx.serialization)
 
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
@@ -71,6 +72,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
 }
