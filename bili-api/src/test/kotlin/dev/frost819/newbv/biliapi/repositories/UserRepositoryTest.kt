@@ -3,6 +3,7 @@ package dev.frost819.newbv.biliapi.repositories
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.user.SpaceVideoOrder
 import dev.frost819.newbv.biliapi.entity.user.SpaceVideoPage
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -37,6 +38,7 @@ class UserRepositoryTest {
             FavoriteRepositoryTest.ACCESS_TOKEN,
             FavoriteRepositoryTest.BUVID
         )
+        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
         authRepository.sessionData = FavoriteRepositoryTest.SESSDATA
         authRepository.accessToken = FavoriteRepositoryTest.ACCESS_TOKEN

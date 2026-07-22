@@ -3,6 +3,7 @@ package dev.frost819.newbv.biliapi.repositories
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonType
 import dev.frost819.newbv.biliapi.entity.season.TimelineFilter
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -37,6 +38,7 @@ class SeasonRepositoryTest {
             FavoriteRepositoryTest.ACCESS_TOKEN,
             FavoriteRepositoryTest.BUVID
         )
+        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN

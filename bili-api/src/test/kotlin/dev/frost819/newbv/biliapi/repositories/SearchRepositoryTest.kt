@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import dev.frost819.newbv.biliapi.entity.ApiType
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -35,6 +36,7 @@ class SearchRepositoryTest {
             FavoriteRepositoryTest.ACCESS_TOKEN,
             FavoriteRepositoryTest.BUVID
         )
+        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
         authRepository.sessionData = FavoriteRepositoryTest.SESSDATA
         authRepository.accessToken = FavoriteRepositoryTest.ACCESS_TOKEN

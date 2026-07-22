@@ -15,11 +15,28 @@ import dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
 import dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
 import dev.frost819.newbv.biliapi.entity.pgc.index.Style
 import dev.frost819.newbv.biliapi.entity.pgc.index.Year
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.nio.file.Paths
+import java.util.Properties
 import kotlin.test.Test
 
 class PgcRepositoryTest {
+    companion object {
+        private val localProperties = Properties().apply {
+            val path = Paths.get("../local.properties").toAbsolutePath().toString()
+            load(File(path).bufferedReader())
+        }
+        val BUVID: String =
+            runCatching { localProperties.getProperty("test.buvid") }.getOrNull() ?: ""
+    }
+
     private val pgcRepository: PgcRepository = PgcRepository()
+
+    init {
+        BiliHttpApi.init(BUVID)
+    }
 
     @Test
     fun `get pgc carousel data`() {

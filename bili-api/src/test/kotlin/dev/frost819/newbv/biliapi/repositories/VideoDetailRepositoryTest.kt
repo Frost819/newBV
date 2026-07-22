@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import dev.frost819.newbv.biliapi.entity.ApiType
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -38,6 +39,7 @@ class VideoDetailRepositoryTest {
             VideoPlayRepositoryTest.ACCESS_TOKEN,
             VideoPlayRepositoryTest.BUVID
         )
+        BiliHttpApi.init(VideoPlayRepositoryTest.BUVID)
         authRepository.sessionData = VideoPlayRepositoryTest.SESSDATA
     }
 

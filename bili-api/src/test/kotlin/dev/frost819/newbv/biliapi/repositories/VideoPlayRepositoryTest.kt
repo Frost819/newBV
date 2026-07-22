@@ -5,6 +5,7 @@ import bilibili.rpc.Status
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.grpc.utils.getDetail
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -38,6 +39,7 @@ class VideoPlayRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(ACCESS_TOKEN, BUVID)
+        BiliHttpApi.init(BUVID)
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN
         authRepository.biliJct = BILI_JCT

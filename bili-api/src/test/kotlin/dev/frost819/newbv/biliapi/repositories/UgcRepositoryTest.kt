@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import dev.frost819.newbv.biliapi.entity.ugc.UgcType
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Paths
@@ -29,6 +30,7 @@ class UgcRepositoryTest {
     private val ugcRepository: UgcRepository = UgcRepository(authRepository)
 
     init {
+        BiliHttpApi.init(BUVID)
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN
         authRepository.biliJct = BILI_JCT

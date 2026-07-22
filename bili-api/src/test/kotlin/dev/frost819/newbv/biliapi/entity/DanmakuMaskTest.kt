@@ -15,8 +15,8 @@ import kotlin.test.Test
 class DanmakuMaskTest {
     private val webMaskFile = Any::class::class.java.getResource("/35496788838_30_0.webmask")
     private val mobMaskFile = Any::class::class.java.getResource("/35496788838_30_0.mobmask")
-    private val webMaskOutputDir = File("")
-    private val mobMaskOutputDir = File("")
+    private val webMaskOutputDir = File(System.getProperty("java.io.tmpdir"), "danmaku-web-mask")
+    private val mobMaskOutputDir = File(System.getProperty("java.io.tmpdir"), "danmaku-mob-mask")
 
     @Test
     fun `parse web mask file`() {
