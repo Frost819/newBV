@@ -36,15 +36,15 @@ data class SearchResultData(
     @SerialName("top_tlist")
     val topTList: TopTList? = null,
     @SerialName("show_column")
-    val showColumn: Int,
+    val showColumn: Int? = null,
     @SerialName("show_module_list")
     val showModuleList: List<String>? = null,
     @SerialName("app_display_option")
     val appDisplayOption: AppDisplayOption? = null,
     @SerialName("in_black_key")
-    val inBlackKey: Int,
+    val inBlackKey: Int? = null,
     @SerialName("in_white_key")
-    val inWhiteKey: Int,
+    val inWhiteKey: Int? = null,
     val result: List<JsonElement> = emptyList(),
     @Transient
     val searchAllResults: MutableList<SearchResult<SearchResultItem>> = mutableListOf(),

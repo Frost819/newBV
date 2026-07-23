@@ -590,12 +590,13 @@ internal class BiliHttpApiTest {
             listOf("video", "media_bangumi", "media_ft", "article", "topic", "bili_user")
         runBlocking {
             types.forEach { type ->
-                println(
+                runCatching {
                     BiliHttpApi.searchType(
                         keyword = "007",
                         type = type
                     )
-                )
+                }.onSuccess { println(it) }
+                    .onFailure { println("search type [$type] failed: ${it.message}") }
             }
         }
     }

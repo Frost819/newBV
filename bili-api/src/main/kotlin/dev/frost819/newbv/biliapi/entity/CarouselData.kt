@@ -65,7 +65,7 @@ data class CarouselData(
         fun fromUgcRegionLocs(data: dev.frost819.newbv.biliapi.http.entity.region.RegionLocs): CarouselData {
             val result = mutableListOf<CarouselItem>()
             data.data.forEach { (_, value) ->
-                value.filter { it.url.contains("/video/") }.forEach { item ->
+                value?.filter { it.url.contains("/video/") }?.forEach { item ->
                     result.add(
                         CarouselItem(
                             cover = item.pic,

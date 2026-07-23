@@ -11,7 +11,7 @@ data class RegionLocs(
     val adsControl: AdsControl,
     val code: Int,
     val count: Int,
-    val data: Map<String, List<LocData>>,
+    val data: Map<String, List<LocData>?>,
     val live: JsonObject? = null,
     val message: String
 ) {

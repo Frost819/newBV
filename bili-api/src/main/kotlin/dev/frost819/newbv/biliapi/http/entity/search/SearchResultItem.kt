@@ -385,7 +385,7 @@ data class SearchVideoResult(
     @SerialName("arcrank")
     val arcRank: String? = null,
     val pic: String,
-    val play: Int,
+    val play: Int? = null,
     @SerialName("video_review")
     val videoReview: Int,
     val favorites: Int,

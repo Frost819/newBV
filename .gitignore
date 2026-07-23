@@ -50,3 +50,4 @@ logs/
 # Read-only reference (原版 BV 源码，不纳入版本控制)
 # ========================================
 /bv/
+.playwright-mcp/

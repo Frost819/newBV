@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class AddCoin(
-    val like: Boolean
+    val like: Boolean? = null
 )
 
 /**

@@ -304,7 +304,7 @@ data class SearchTypeResult(
                     author = video.author,
                     mid = video.mid,
                     duration = convertStringTimeToSeconds(video.duration),
-                    play = video.play,
+                    play = video.play ?: 0,
                     danmaku = video.danmaku,
                     pubTime = video.pubDate.smartDate
                 )
