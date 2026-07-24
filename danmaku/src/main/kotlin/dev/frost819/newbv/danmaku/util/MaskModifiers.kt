@@ -10,7 +10,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -125,7 +124,7 @@ fun Modifier.danmakuMobMask(
             val byteIndex = i / 8
             val bitOffset = 7 - (i % 8)
             val bit = (frame.image[byteIndex].toInt() shr bitOffset) and 1
-            if (bit == 1) Color.Transparent.hashCode() else Color.Black.hashCode()
+            if (bit == 1) android.graphics.Color.TRANSPARENT else android.graphics.Color.BLACK
         }
         bmp.setPixels(pixels, 0, width, 0, 0, width, height)
         bmp
