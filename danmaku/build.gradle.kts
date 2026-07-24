@@ -35,31 +35,46 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{INDEX.LIST,AL2.0,LGPL2.1}",
+                "/META-INF/LICENSE.md",
+                "/META-INF/LICENSE-notice.md",
+            )
+        }
     }
 }
 
-
 dependencies {
-    implementation(project(":core"))
+    implementation(project(":bili-api"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.util)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.akdanmaku)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.kotlinx.coroutines)
+    implementation(libs.akdanmaku)
+    implementation(libs.androidsvg)
+    implementation(libs.logging)
 
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.turbine)
+    testImplementation(libs.slf4j)
 
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
 tasks.withType<Test> {
