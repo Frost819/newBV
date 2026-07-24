@@ -37,6 +37,17 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{INDEX.LIST,AL2.0,LGPL2.1}",
+                "/META-INF/LICENSE.md",
+                "/META-INF/LICENSE-notice.md",
+                "META-INF/versions/9/OSGI-INF/MANIFEST{MF,.MF}"
+            )
+        }
+    }
 }
 
 
@@ -73,6 +84,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
