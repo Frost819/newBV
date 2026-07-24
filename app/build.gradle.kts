@@ -21,7 +21,7 @@ android {
         versionCode = AppConfiguration.versionCode
         versionName = AppConfiguration.versionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "dev.frost819.newbv.app.CustomTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -80,6 +80,7 @@ dependencies {
 
     // === Navigation ===
     implementation(libs.androidx.navigation.compose)
+    implementation("androidx.navigation:navigation-common-android:2.9.0")
 
     // === DataStore ===
     implementation(libs.androidx.datastore)
@@ -146,6 +147,7 @@ dependencies {
 
     // === Testing ===
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
@@ -159,6 +161,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.truth)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
