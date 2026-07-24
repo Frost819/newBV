@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
 
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
