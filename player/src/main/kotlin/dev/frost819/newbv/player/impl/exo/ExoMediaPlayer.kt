@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -46,11 +47,13 @@ class ExoMediaPlayer(
     /** 当前 MediaSource，在 [playUrl] 中创建 */
     protected var mMediaSource: MediaSource? = null
 
-    private val dataSourceFactory =
+    private val httpDataSourceFactory =
         OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
             options.userAgent?.let { setUserAgent(it) }
             options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
         }
+
+    private val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
 
     init {
         initPlayer()
