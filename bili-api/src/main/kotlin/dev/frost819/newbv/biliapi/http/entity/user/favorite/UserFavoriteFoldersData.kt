@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserFavoriteFoldersData(
     val count: Int,
-    val list: List<UserFavoriteFolder> = emptyList()
+    val list: List<UserFavoriteFolder> = emptyList(),
 ) {
     /**
      * 用户收藏夹信息
@@ -35,6 +35,6 @@ data class UserFavoriteFoldersData(
         @SerialName("fav_state")
         val favState: Int,
         @SerialName("media_count")
-        val mediaCount: Int
+        val mediaCount: Int,
     )
 }

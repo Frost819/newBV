@@ -5,31 +5,38 @@ import dev.frost819.newbv.biliapi.http.util.toSmartDate
 
 data class SpaceVideoData(
     val videos: List<SpaceVideo>,
-    val page: SpaceVideoPage
+    val page: SpaceVideoPage,
 ) {
     companion object {
         fun fromWebSpaceVideoData(webSpaceVideoData: dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData) =
             SpaceVideoData(
-                videos = webSpaceVideoData.list?.vlist
-                    ?.map { SpaceVideo.fromSpaceVideoItem(it) }
-                    ?: emptyList(),
-                page = SpaceVideoPage(
-                    hasNext = (webSpaceVideoData.page?.count ?: 0)
-                            > ((webSpaceVideoData.page?.pageNumber ?: 0)
-                            * (webSpaceVideoData.page?.pageSize ?: 0)),
-                    nextWebPageSize = webSpaceVideoData.page?.pageSize ?: 0,
-                    nextWebPageNumber = (webSpaceVideoData.page?.pageNumber ?: 0) + 1
-                )
+                videos =
+                    webSpaceVideoData.list?.vlist
+                        ?.map { SpaceVideo.fromSpaceVideoItem(it) }
+                        ?: emptyList(),
+                page =
+                    SpaceVideoPage(
+                        hasNext =
+                            (webSpaceVideoData.page?.count ?: 0)
+                                > (
+                                    (webSpaceVideoData.page?.pageNumber ?: 0) *
+                                        (webSpaceVideoData.page?.pageSize ?: 0)
+                                ),
+                        nextWebPageSize = webSpaceVideoData.page?.pageSize ?: 0,
+                        nextWebPageNumber = (webSpaceVideoData.page?.pageNumber ?: 0) + 1,
+                    ),
             )
 
         fun fromAppSpaceVideoData(appSpaceVideoData: dev.frost819.newbv.biliapi.http.entity.user.AppSpaceVideoData) =
             SpaceVideoData(
-                videos = appSpaceVideoData.item
-                    .map { SpaceVideo.fromSpaceVideoItem(it) },
-                page = SpaceVideoPage(
-                    hasNext = appSpaceVideoData.hasNext,
-                    lastAvid = appSpaceVideoData.item.lastOrNull()?.param?.toLong() ?: 0
-                )
+                videos =
+                    appSpaceVideoData.item
+                        .map { SpaceVideo.fromSpaceVideoItem(it) },
+                page =
+                    SpaceVideoPage(
+                        hasNext = appSpaceVideoData.hasNext,
+                        lastAvid = appSpaceVideoData.item.lastOrNull()?.param?.toLong() ?: 0,
+                    ),
             )
     }
 }
@@ -43,34 +50,36 @@ data class SpaceVideo(
     val duration: Int,
     val play: Int,
     val danmaku: Int,
-    val pubTime: String?
+    val pubTime: String?,
 ) {
     companion object {
-        fun fromSpaceVideoItem(spaceVideoItem: dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData.SpaceVideoListItem.VListItem) =
-            SpaceVideo(
-                aid = spaceVideoItem.aid,
-                bvid = spaceVideoItem.bvid,
-                title = spaceVideoItem.title,
-                cover = spaceVideoItem.pic,
-                author = spaceVideoItem.author,
-                duration = convertMmSsToSeconds(spaceVideoItem.length),
-                play = spaceVideoItem.play,
-                danmaku = spaceVideoItem.videoReview,
-                pubTime = spaceVideoItem.created.toSmartDate()
-            )
+        fun fromSpaceVideoItem(
+            spaceVideoItem: dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData.SpaceVideoListItem.VListItem,
+        ) = SpaceVideo(
+            aid = spaceVideoItem.aid,
+            bvid = spaceVideoItem.bvid,
+            title = spaceVideoItem.title,
+            cover = spaceVideoItem.pic,
+            author = spaceVideoItem.author,
+            duration = convertMmSsToSeconds(spaceVideoItem.length),
+            play = spaceVideoItem.play,
+            danmaku = spaceVideoItem.videoReview,
+            pubTime = spaceVideoItem.created.toSmartDate(),
+        )
 
-        fun fromSpaceVideoItem(spaceVideoItem: dev.frost819.newbv.biliapi.http.entity.user.AppSpaceVideoData.SpaceVideoItem) =
-            SpaceVideo(
-                aid = spaceVideoItem.param.toLong(),
-                bvid = spaceVideoItem.bvid?: "",
-                title = spaceVideoItem.title,
-                cover = spaceVideoItem.cover,
-                author = spaceVideoItem.author?: "",
-                duration = spaceVideoItem.duration,
-                play = spaceVideoItem.play,
-                danmaku = spaceVideoItem.danmaku,
-                pubTime = spaceVideoItem.ctime.smartDate
-            )
+        fun fromSpaceVideoItem(
+            spaceVideoItem: dev.frost819.newbv.biliapi.http.entity.user.AppSpaceVideoData.SpaceVideoItem,
+        ) = SpaceVideo(
+            aid = spaceVideoItem.param.toLong(),
+            bvid = spaceVideoItem.bvid ?: "",
+            title = spaceVideoItem.title,
+            cover = spaceVideoItem.cover,
+            author = spaceVideoItem.author ?: "",
+            duration = spaceVideoItem.duration,
+            play = spaceVideoItem.play,
+            danmaku = spaceVideoItem.danmaku,
+            pubTime = spaceVideoItem.ctime.smartDate,
+        )
     }
 }
 
@@ -82,7 +91,8 @@ private fun convertMmSsToSeconds(time: String): Int {
 }
 
 enum class SpaceVideoOrder(val value: String) {
-    PubDate("pubdate"), Click("click")
+    PubDate("pubdate"),
+    Click("click"),
 }
 
 data class SpaceVideoPage(
@@ -91,5 +101,5 @@ data class SpaceVideoPage(
     val nextWebPageSize: Int = 20,
     val nextWebPageNumber: Int = 1,
     // app
-    val lastAvid: Long = 0
+    val lastAvid: Long = 0,
 )

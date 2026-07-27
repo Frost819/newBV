@@ -9,16 +9,17 @@ import kotlinx.serialization.json.Json
 object SubtitleParser {
     fun fromBccString(bcc: String): List<SubtitleItem> {
         val result = mutableListOf<SubtitleItem>()
-        val bccResult = runCatching {
-            Json.decodeFromString<BiliSubtitle>(bcc)
-        }.getOrNull()
+        val bccResult =
+            runCatching {
+                Json.decodeFromString<BiliSubtitle>(bcc)
+            }.getOrNull()
         bccResult?.body?.forEach { bccItem ->
             result.add(
                 SubtitleItem(
                     from = Timestamp.fromBccString(bccItem.from),
                     to = Timestamp.fromBccString(bccItem.to),
-                    content = bccItem.content
-                )
+                    content = bccItem.content,
+                ),
             )
         }
         return result
@@ -41,8 +42,8 @@ object SubtitleParser {
                 SubtitleItem(
                     from = Timestamp.fromSrtString(from),
                     to = Timestamp.fromSrtString(to),
-                    content = content
-                )
+                    content = content,
+                ),
             )
         }
         return result

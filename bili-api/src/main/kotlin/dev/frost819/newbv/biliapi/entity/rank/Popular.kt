@@ -5,7 +5,7 @@ import dev.frost819.newbv.biliapi.entity.ugc.UgcItem
 data class PopularVideoData(
     val list: List<UgcItem>,
     val nextPage: PopularVideoPage,
-    val noMore: Boolean
+    val noMore: Boolean,
 )
 
 data class PopularVideoPage(

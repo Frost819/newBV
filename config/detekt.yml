@@ -1,0 +1,87 @@
+complexity:
+  active: true
+  LongParameterList:
+    active: false
+  LongMethod:
+    active: false
+  ComplexCondition:
+    active: true
+    threshold: 5
+  CyclomaticComplexMethod:
+    active: false
+  LargeClass:
+    active: false
+  TooManyFunctions:
+    active: false
+  NestedBlockDepth:
+    active: false
+
+style:
+  active: true
+  ReturnCount:
+    active: false
+  WildcardImport:
+    active: false
+  MagicNumber:
+    active: false
+  UseDataClass:
+    active: false
+  UnusedPrivateMember:
+    active: true
+  MaxLineLength:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  UnusedParameter:
+    active: false
+  UseCheckOrError:
+    active: false
+  ProtectedMemberInFinalClass:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
+  UnusedPrivateProperty:
+    active: false
+  ThrowsCount:
+    active: false
+
+naming:
+  active: true
+  FunctionNaming:
+    active: false
+  VariableNaming:
+    active: true
+    variablePattern: '[a-z][A-Za-z0-9]*'
+  PackageNaming:
+    active: true
+    packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
+  ConstructorParameterNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+empty-blocks:
+  active: true
+  EmptyFunctionBlock:
+    active: false
+
+exceptions:
+  active: true
+  SwallowedException:
+    active: false
+  TooGenericExceptionCaught:
+    active: false
+  TooGenericExceptionThrown:
+    active: false
+
+potential-bugs:
+  active: true
+  UnsafeCallOnNullableType:
+    active: false
+  ImplicitDefaultLocale:
+    active: false
+
+performance:
+  active: true
+  ForEachOnRange:
+    active: false

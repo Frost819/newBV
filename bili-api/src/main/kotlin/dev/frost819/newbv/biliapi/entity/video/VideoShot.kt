@@ -14,36 +14,38 @@ data class VideoShot(
     val imageCountX: Int,
     val imageCountY: Int,
     val imageWidth: Int,
-    val imageHeight: Int
+    val imageHeight: Int,
 ) {
     companion object {
         suspend fun fromVideoShot(videoShot: dev.frost819.newbv.biliapi.http.entity.video.VideoShot): VideoShot? =
             withContext(Dispatchers.IO) {
-                val images = videoShot.image.map { imageUrl ->
-                    async {
-                        runCatching {
-                            BiliHttpApi.download(imageUrl)
-                        }.getOrNull()
-                    }
-                }.awaitAll()
+                val images =
+                    videoShot.image.map { imageUrl ->
+                        async {
+                            runCatching {
+                                BiliHttpApi.download(imageUrl)
+                            }.getOrNull()
+                        }
+                    }.awaitAll()
                 if (images.contains(null)) {
                     println("download video shot images failed")
                     return@withContext null
                 }
 
-                val timeBinary = runCatching {
-                    BiliHttpApi.download(
-                        videoShot.pvData ?: throw IllegalStateException("pvData is null")
-                    )
-                }.onFailure {
-                    println("download video shot times binary failed: ${it.stackTraceToString()}")
-                    return@withContext null
-                }.getOrNull()
+                val timeBinary =
+                    runCatching {
+                        BiliHttpApi.download(
+                            videoShot.pvData ?: throw IllegalStateException("pvData is null"),
+                        )
+                    }.onFailure {
+                        println("download video shot times binary failed: ${it.stackTraceToString()}")
+                        return@withContext null
+                    }.getOrNull()
 
                 val times = mutableListOf<UShort>()
                 runCatching {
                     DataInputStream(ByteArrayInputStream(timeBinary)).use {
-                        //if has next
+                        // if has next
                         while (it.available() > 0) {
                             times.add(it.readUnsignedShort().toUShort())
                         }
@@ -59,7 +61,7 @@ data class VideoShot(
                     imageCountX = videoShot.imgXLen,
                     imageCountY = videoShot.imgYLen,
                     imageWidth = videoShot.imgXSize,
-                    imageHeight = videoShot.imgYSize
+                    imageHeight = videoShot.imgYSize,
                 )
             }
     }

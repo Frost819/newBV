@@ -16,7 +16,7 @@ data class CaptchaData(
     val type: String,
     val token: String,
     val geetest: Geetest,
-    val tencent: Tencent
+    val tencent: Tencent,
 ) {
     /**
      * 极验captcha数据
@@ -27,12 +27,12 @@ data class CaptchaData(
     @Serializable
     data class Geetest(
         val challenge: String,
-        val gt: String
+        val gt: String,
     )
 
     @Serializable
     data class Tencent(
         @SerialName("appid")
-        val appId: String
+        val appId: String,
     )
 }

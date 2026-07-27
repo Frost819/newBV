@@ -22,8 +22,8 @@ data class PgcWebInitialStateData(
     @Serializable
     data class Modules(
         val banner: Banner,
-        //val index: Index,
-        //val ext:Ext,
+        // val index: Index,
+        // val ext:Ext,
     ) {
         @Serializable
         data class Banner(
@@ -35,7 +35,7 @@ data class PgcWebInitialStateData(
             val items: List<BannerItem>,
             val wids: JsonArray,
             @SerialName("module_id")
-            val moduleId: Int
+            val moduleId: Int,
         ) {
             @Serializable
             data class BannerItem(
@@ -78,20 +78,19 @@ data class PgcWebInitialStateData(
                 @SerialName("showReportData")
                 val showReportData: ShowReportData,
                 // 当前获取到的 json 中未包含 webpcover 和 webpbigcover
-                //@SerialName("webpcover")
-                //val webpCover: String,
-                //@SerialName("webpbigcover")
-                //val webpBigCover: String
+                // @SerialName("webpcover")
+                // val webpCover: String,
+                // @SerialName("webpbigcover")
+                // val webpBigCover: String
             ) {
-
                 @Serializable
                 data class Stat(
-                    val view: Long
+                    val view: Long,
                 )
 
                 @Serializable
                 data class UserStatus(
-                    val follow: Int
+                    val follow: Int,
                 )
 
                 @Serializable
@@ -103,7 +102,7 @@ data class PgcWebInitialStateData(
                     @SerialName("ep_id")
                     val epId: Int? = null,
                     @SerialName("season_id")
-                    val seasonId: Int? = null
+                    val seasonId: Int? = null,
                 )
             }
         }

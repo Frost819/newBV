@@ -9,9 +9,8 @@ import kotlinx.serialization.Transient
 data class RequestWebQRData(
     val url: String,
     @SerialName("qrcode_key")
-    val qrcodeKey: String
+    val qrcodeKey: String,
 )
-
 
 @Serializable
 data class QRLoginResponse(
@@ -20,7 +19,7 @@ data class QRLoginResponse(
     val ttl: Int,
     val data: WebQRLoginData,
     @Transient
-    var cookies: List<Cookie> = emptyList()
+    var cookies: List<Cookie> = emptyList(),
 )
 
 @Serializable
@@ -30,5 +29,5 @@ data class WebQRLoginData(
     val refreshToken: String,
     val timestamp: Long,
     val code: Int,
-    val message: String
+    val message: String,
 )

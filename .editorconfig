@@ -1,0 +1,27 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.{json,xml,yml,yaml,md,html,css,js}]
+indent_size = 2
+
+[*.kt]
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_filename = disabled
+ktlint_standard_function-naming = disabled
+ktlint_standard_property-naming = disabled
+ktlint_standard_package-name = disabled
+
+[**/build/generated/**]
+ktlint = disabled
+
+[*.kts]
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_filename = disabled

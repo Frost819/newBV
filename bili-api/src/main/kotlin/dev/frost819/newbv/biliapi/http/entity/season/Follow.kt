@@ -7,5 +7,5 @@ data class SeasonFollowData(
     val fmid: Int,
     val relation: Boolean,
     val status: Int,
-    val toast: String
+    val toast: String,
 )

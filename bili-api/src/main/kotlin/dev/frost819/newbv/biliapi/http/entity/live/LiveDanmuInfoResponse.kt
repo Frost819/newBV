@@ -16,7 +16,7 @@ data class DanmuInfoData(
     val maxDelay: Int,
     val token: String,
     @SerialName("host_list")
-    val hostList: List<HostListItem> = emptyList()
+    val hostList: List<HostListItem> = emptyList(),
 )
 
 @Serializable
@@ -26,5 +26,5 @@ data class HostListItem(
     @SerialName("wss_port")
     val wssPort: Int,
     @SerialName("ws_port")
-    val wsPort: Int
+    val wsPort: Int,
 )

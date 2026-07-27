@@ -7,5 +7,5 @@ data class DanmakuEvent(
     val mid: Long,
     val username: String,
     val medalName: String? = null,
-    val medalLevel: Int? = null
+    val medalLevel: Int? = null,
 ) : LiveEvent

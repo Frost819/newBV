@@ -2,19 +2,20 @@ package dev.frost819.newbv.biliapi.entity.user
 
 import bilibili.app.interfaces.v1.CursorItem
 
-//TODO 暂时仅解析 UGC 和 PGC
+// TODO 暂时仅解析 UGC 和 PGC
 data class ToViewData(
     val cursor: Long,
-    val data: List<ToViewItem>
+    val data: List<ToViewItem>,
 ) {
     companion object {
         fun fromToViewResponse(data: dev.frost819.newbv.biliapi.http.entity.toview.ToViewData) =
             ToViewData(
 //               cursor = data.cursor.viewAt,
                 cursor = 0,
-                data = data.list
+                data =
+                    data.list
 //                    .filter { it.history.business == "archive" || it.history.business == "pgc" }
-                    .map { ToViewItem.fromToViewItem(it) }
+                        .map { ToViewItem.fromToViewItem(it) },
             )
 
         // fun fromToViewResponse(data: bilibili.app.interfaces.v1.CursorV2Reply) = ToViewData(
@@ -39,7 +40,7 @@ data class ToViewItem(
     val mid: Long?,
     val duration: Int,
     val progress: Int,
-    val type: ToViewItemType
+    val type: ToViewItemType,
 ) {
     companion object {
         fun fromToViewItem(item: dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem) =
@@ -56,7 +57,7 @@ data class ToViewItem(
                 mid = item.owner.mid,
                 duration = item.duration,
                 progress = item.progress,
-                type = ToViewItemType.Archive
+                type = ToViewItemType.Archive,
                 // type = when (item.history.business) {
                 //     "archive" -> HistoryItemType.Archive
                 //     "pgc" -> HistoryItemType.Pgc
@@ -65,59 +66,71 @@ data class ToViewItem(
             )
 
         @Suppress("RemoveRedundantQualifierName")
-        fun fromToViewItem(item: bilibili.app.interfaces.v1.CursorItem) = ToViewItem(
-            oid = item.oid,
-            bvid = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.bvid
-                CursorItem.CardItemCase.CARD_OGV -> ""
-                else -> ""
-            },
-            cid = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.cid
-                CursorItem.CardItemCase.CARD_OGV -> 0
-                else -> 0
-            },
-            kid = item.kid.toInt(),
-            epid = null,
-            seasonId = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_OGV -> item.kid.toInt()
-                else -> null
-            },
-            title = item.title,
-            cover = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.cover
-                CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.cover
-                else -> ""
-            },
-            author = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.name
-                CursorItem.CardItemCase.CARD_OGV -> ""
-                else -> ""
-            },
-            mid = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.mid
-                CursorItem.CardItemCase.CARD_OGV -> null
-                else -> null
-            },
-            duration = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.duration.toInt()
-                CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.duration.toInt()
-                else -> 0
-            },
-            progress = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.progress.toInt()
-                CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.progress.toInt()
-                else -> 0
-            },
-            type = when (item.cardItemCase) {
-                CursorItem.CardItemCase.CARD_UGC -> ToViewItemType.Archive
-                CursorItem.CardItemCase.CARD_OGV -> ToViewItemType.Pgc
-                else -> ToViewItemType.Unknown
-            }
-        )
+        fun fromToViewItem(item: bilibili.app.interfaces.v1.CursorItem) =
+            ToViewItem(
+                oid = item.oid,
+                bvid =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.bvid
+                        CursorItem.CardItemCase.CARD_OGV -> ""
+                        else -> ""
+                    },
+                cid =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.cid
+                        CursorItem.CardItemCase.CARD_OGV -> 0
+                        else -> 0
+                    },
+                kid = item.kid.toInt(),
+                epid = null,
+                seasonId =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_OGV -> item.kid.toInt()
+                        else -> null
+                    },
+                title = item.title,
+                cover =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.cover
+                        CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.cover
+                        else -> ""
+                    },
+                author =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.name
+                        CursorItem.CardItemCase.CARD_OGV -> ""
+                        else -> ""
+                    },
+                mid =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.mid
+                        CursorItem.CardItemCase.CARD_OGV -> null
+                        else -> null
+                    },
+                duration =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.duration.toInt()
+                        CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.duration.toInt()
+                        else -> 0
+                    },
+                progress =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> item.cardUgc.progress.toInt()
+                        CursorItem.CardItemCase.CARD_OGV -> item.cardOgv.progress.toInt()
+                        else -> 0
+                    },
+                type =
+                    when (item.cardItemCase) {
+                        CursorItem.CardItemCase.CARD_UGC -> ToViewItemType.Archive
+                        CursorItem.CardItemCase.CARD_OGV -> ToViewItemType.Pgc
+                        else -> ToViewItemType.Unknown
+                    },
+            )
     }
 }
 
 enum class ToViewItemType {
-    Unknown, Archive, Pgc
+    Unknown,
+    Archive,
+    Pgc,
 }

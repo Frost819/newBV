@@ -26,7 +26,7 @@ data class UgcSeason(
     @SerialName("sign_state")
     val signState: Int,
     val attribute: Int,
-    val sections: List<Section>
+    val sections: List<Section>,
 ) {
     @Serializable
     data class Section(
@@ -35,7 +35,7 @@ data class UgcSeason(
         val id: Long,
         val title: String,
         val type: Int,
-        val episodes: List<Episode>
+        val episodes: List<Episode>,
     ) {
         @Serializable
         data class Episode(
@@ -51,7 +51,7 @@ data class UgcSeason(
             val arc: Arc,
             val page: VideoPage,
             val bvid: String,
-            val pages: List<VideoPage>
+            val pages: List<VideoPage>,
         ) {
             @Serializable
             data class Arc(
@@ -71,22 +71,22 @@ data class UgcSeason(
                 val state: Int,
                 val duration: Int,
                 val rights: VideoRights,
-                //val author: Author,
+                // val author: Author,
                 val stat: VideoStat,
                 val dynamic: String,
-                //val dimension: Dimension,
+                // val dimension: Dimension,
                 @SerialName("desc_v2")
                 val descV2: JsonElement? = null,
                 @SerialName("is_chargeable_season")
                 val isChargeableSeason: Boolean,
                 @SerialName("is_blooper")
-                val isBlooper: Boolean
+                val isBlooper: Boolean,
             ) {
                 @Serializable
                 data class Author(
                     val mid: Long,
                     val name: String,
-                    val face: String
+                    val face: String,
                 )
             }
         }

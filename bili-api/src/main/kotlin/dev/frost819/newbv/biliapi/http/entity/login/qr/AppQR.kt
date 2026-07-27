@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class AppQRDataRequest(
     val url: String,
     @SerialName("auth_code")
-    val authCode: String
+    val authCode: String,
 )
 
 @Serializable
@@ -25,7 +25,7 @@ data class AppQRLoginData(
     val tokenInfo: TokenInfo,
     @SerialName("cookie_info")
     val cookieInfo: CookieInfo,
-    val sso: List<String> = emptyList()
+    val sso: List<String> = emptyList(),
 ) {
     @Serializable
     data class TokenInfo(
@@ -35,13 +35,13 @@ data class AppQRLoginData(
         @SerialName("access_token")
         val accessToken: String,
         @SerialName("refresh_token")
-        val refreshToken: String
+        val refreshToken: String,
     )
 
     @Serializable
     data class CookieInfo(
         val cookies: List<Cookie>,
-        val domains: List<String>
+        val domains: List<String>,
     ) {
         @Serializable
         data class Cookie(
@@ -50,7 +50,7 @@ data class AppQRLoginData(
             @SerialName("http_only")
             var httpOnly: Int,
             val expires: Int,
-            var secure: Int
+            var secure: Int,
         )
     }
 }

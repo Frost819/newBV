@@ -91,7 +91,7 @@ data class VideoMoreInfo(
     val onlineCount: Int,
     @SerialName("dm_mask")
     val dmMask: DmMask? = null,
-    val subtitle: Subtitle? =  null,
+    val subtitle: Subtitle? = null,
     @SerialName("player_icon")
     val playerIcon: PlayerIcon? = null,
     @SerialName("view_points")
@@ -114,10 +114,10 @@ data class VideoMoreInfo(
     val fawkes: Fawkes,
     @SerialName("show_switch")
     val showSwitch: ShowSwitch,
-    //@SerialName("bgm_info")
-    //val bgmInfo: Any
+    // @SerialName("bgm_info")
+    // val bgmInfo: Any
     @SerialName("toast_block")
-    val toastBlock: Boolean
+    val toastBlock: Boolean,
 ) {
     /**
      * IP 信息
@@ -138,7 +138,7 @@ data class VideoMoreInfo(
         val zoneId: Int,
         val country: String,
         val province: String,
-        val city: String
+        val city: String,
     )
 
     /**
@@ -155,7 +155,7 @@ data class VideoMoreInfo(
         val fps: Int,
         val time: Int,
         @SerialName("mask_url")
-        val maskUrl: String
+        val maskUrl: String,
     )
 
     /**
@@ -171,7 +171,7 @@ data class VideoMoreInfo(
         val lan: String,
         @SerialName("lan_doc")
         val lanDoc: String,
-        val subtitles: List<SubtitleItem> = emptyList()
+        val subtitles: List<SubtitleItem> = emptyList(),
     )
 
     /**
@@ -203,7 +203,7 @@ data class VideoMoreInfo(
         @SerialName("ai_type")
         val aiType: Int,
         @SerialName("ai_status")
-        val aiStatus: Int
+        val aiStatus: Int,
     )
 
     /**
@@ -219,7 +219,7 @@ data class VideoMoreInfo(
         val hash1: String,
         val url2: String,
         val hash2: String,
-        val ctime: Int
+        val ctime: Int,
     )
 
     /**
@@ -229,7 +229,7 @@ data class VideoMoreInfo(
     @Serializable
     data class PcdnLoader(
         val flv: PcdnLoaderItem,
-        val dash: PcdnLoaderItem
+        val dash: PcdnLoaderItem,
     ) {
         /**
          * @param group
@@ -238,7 +238,7 @@ data class VideoMoreInfo(
         @Serializable
         data class PcdnLoaderItem(
             val group: String? = null,
-            val labels: Labels
+            val labels: Labels,
         ) {
             /**
              * @param pcdnVideoType
@@ -252,7 +252,7 @@ data class VideoMoreInfo(
                 @SerialName("pcdn_stage")
                 val pcdnStage: String,
                 @SerialName("pcdn_group")
-                val pcdnGroup: String
+                val pcdnGroup: String,
             )
         }
     }
@@ -266,7 +266,7 @@ data class VideoMoreInfo(
         @SerialName("is_360")
         val is360: Boolean,
         @SerialName("without_vip")
-        val withoutVip: Boolean
+        val withoutVip: Boolean,
     )
 
     /**
@@ -284,7 +284,7 @@ data class VideoMoreInfo(
         @SerialName("realtime_dm")
         val realtimeDm: String,
         @SerialName("subtitle_submit_switch")
-        val subtitleSubmitSwitch: String
+        val subtitleSubmitSwitch: String,
     )
 
     /**
@@ -296,7 +296,7 @@ data class VideoMoreInfo(
         @SerialName("config_version")
         val configVersion: Int,
         @SerialName("ff_version")
-        val ffVersion: Int
+        val ffVersion: Int,
     )
 
     /**
@@ -305,6 +305,6 @@ data class VideoMoreInfo(
     @Serializable
     data class ShowSwitch(
         @SerialName("long_progress")
-        val longProgress: Boolean
+        val longProgress: Boolean,
     )
 }

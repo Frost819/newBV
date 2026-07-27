@@ -27,20 +27,21 @@ data class Episode(
     val longTitle: String,
     val cover: String,
     val duration: Int,
-    val dimension: Dimension?
+    val dimension: Dimension?,
 ) {
     companion object {
-        fun fromEpisode(episode: bilibili.app.view.v1.Episode) = Episode(
-            id = episode.id.toInt(),
-            aid = episode.aid,
-            bvid = episode.bvid,
-            cid = episode.cid,
-            title = episode.title,
-            longTitle = episode.title,
-            cover = episode.cover,
-            duration = episode.page.duration.toInt(),
-            dimension = Dimension.fromDimension(episode.page.dimension)
-        )
+        fun fromEpisode(episode: bilibili.app.view.v1.Episode) =
+            Episode(
+                id = episode.id.toInt(),
+                aid = episode.aid,
+                bvid = episode.bvid,
+                cid = episode.cid,
+                title = episode.title,
+                longTitle = episode.title,
+                cover = episode.cover,
+                duration = episode.page.duration.toInt(),
+                dimension = Dimension.fromDimension(episode.page.dimension),
+            )
 
         fun fromEpisode(episode: dev.frost819.newbv.biliapi.http.entity.video.UgcSeason.Section.Episode) =
             Episode(
@@ -52,20 +53,21 @@ data class Episode(
                 longTitle = episode.title,
                 cover = episode.arc.pic,
                 duration = episode.arc.duration,
-                dimension = Dimension.fromDimension(episode.page.dimension)
+                dimension = Dimension.fromDimension(episode.page.dimension),
             )
 
-        fun fromEpisode(episode: dev.frost819.newbv.biliapi.http.entity.season.Episode) = Episode(
-            id = episode.id,
-            aid = episode.aid,
-            cid = episode.cid,
-            bvid = episode.bvid,
-            cover = episode.cover,
-            title = episode.title,
-            longTitle = episode.longTitle,
-            epid = episode.epId,
-            duration = episode.duration,
-            dimension = episode.dimension?.let { Dimension.fromDimension(it) }
-        )
+        fun fromEpisode(episode: dev.frost819.newbv.biliapi.http.entity.season.Episode) =
+            Episode(
+                id = episode.id,
+                aid = episode.aid,
+                cid = episode.cid,
+                bvid = episode.bvid,
+                cover = episode.cover,
+                title = episode.title,
+                longTitle = episode.longTitle,
+                epid = episode.epId,
+                duration = episode.duration,
+                dimension = episode.dimension?.let { Dimension.fromDimension(it) },
+            )
     }
 }

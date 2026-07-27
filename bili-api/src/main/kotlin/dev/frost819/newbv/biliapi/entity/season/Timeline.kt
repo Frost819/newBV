@@ -4,12 +4,13 @@ import java.util.Date
 
 enum class TimelineFilter(
     val webFilterId: Int,
-    val appFilterId: Int
+    val appFilterId: Int,
 ) {
     All(webFilterId = -1, appFilterId = 0),
     Anime(webFilterId = 1, appFilterId = 1),
     Following(webFilterId = -1, appFilterId = 2),
-    GuoChuang(webFilterId = 4, appFilterId = 3);
+    GuoChuang(webFilterId = 4, appFilterId = 3),
+    ;
 
     companion object {
         val webFilters = listOf(Anime, GuoChuang)
@@ -22,16 +23,17 @@ data class Timeline(
     val date: Date,
     val dayOfWeek: Int,
     val isToday: Boolean,
-    val episodes: List<TimelineEp>
+    val episodes: List<TimelineEp>,
 ) {
     companion object {
-        fun fromTimeline(timeline: dev.frost819.newbv.biliapi.http.entity.video.Timeline) = Timeline(
-            dateString = timeline.date,
-            date = Date(timeline.dateTs * 1000L),
-            dayOfWeek = timeline.dayOfWeek,
-            isToday = timeline.isToday,
-            episodes = timeline.episodes.map { TimelineEp.fromTimelineEpisode(it) }
-        )
+        fun fromTimeline(timeline: dev.frost819.newbv.biliapi.http.entity.video.Timeline) =
+            Timeline(
+                dateString = timeline.date,
+                date = Date(timeline.dateTs * 1000L),
+                dayOfWeek = timeline.dayOfWeek,
+                isToday = timeline.isToday,
+                episodes = timeline.episodes.map { TimelineEp.fromTimelineEpisode(it) },
+            )
     }
 }
 
@@ -41,7 +43,7 @@ data class TimelineEp(
     val seasonId: Int,
     val publishIndex: String,
     val publishTime: String,
-    val publishDate: Date
+    val publishDate: Date,
 ) {
     companion object {
         fun fromTimelineEpisode(episode: dev.frost819.newbv.biliapi.http.entity.video.Timeline.Episode) =
@@ -51,7 +53,7 @@ data class TimelineEp(
                 seasonId = episode.seasonId,
                 publishIndex = episode.pubIndex,
                 publishTime = episode.pubTime,
-                publishDate = Date(episode.pubTs * 1000L)
+                publishDate = Date(episode.pubTs * 1000L),
             )
     }
 }

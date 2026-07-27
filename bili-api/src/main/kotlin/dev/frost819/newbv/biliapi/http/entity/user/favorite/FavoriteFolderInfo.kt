@@ -47,5 +47,5 @@ data class FavoriteFolderInfo(
     @SerialName("like_state")
     val likeState: Int,
     @SerialName("media_count")
-    val mediaCount: Int
+    val mediaCount: Int,
 )

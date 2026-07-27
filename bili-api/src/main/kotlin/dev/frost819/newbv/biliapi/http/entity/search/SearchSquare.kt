@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class WebSearchSquareData(
-    val trending: Trending
+    val trending: Trending,
 ) {
     @Serializable
     data class Trending(
@@ -15,7 +15,7 @@ data class WebSearchSquareData(
         val trackId: String,
         val list: List<Hotword>,
         @SerialName("top_list")
-        val topList: JsonElement? = null
+        val topList: JsonElement? = null,
     )
 }
 
@@ -35,7 +35,7 @@ data class Hotword(
     val showName: String,
     val icon: String,
     val uri: String,
-    val goto: String
+    val goto: String,
 )
 
 @Serializable
@@ -46,7 +46,7 @@ data class AppSearchSquareData(
     @SerialName("search_ranking_meta")
     val searchRankingMeta: SearchRankingMeta? = null,
     @SerialName("history_hotword_display")
-    val historyHotwordDisplay: Int
+    val historyHotwordDisplay: Int,
 ) {
     @Serializable
     data class SquareData(
@@ -58,7 +58,7 @@ data class AppSearchSquareData(
         val expStr: String? = null,
         val list: List<SquareDataItem> = emptyList(),
         @SerialName("hotword_egg_info")
-        val hotwordEggInfo: Int? = null
+        val hotwordEggInfo: Int? = null,
     ) {
         @Serializable
         data class SquareDataItem(
@@ -95,12 +95,12 @@ data class AppSearchSquareData(
             @SerialName("more_search_type")
             val moreSearchType: Int? = null,
             @SerialName("share_from")
-            val shareFrom: String? = null
+            val shareFrom: String? = null,
         ) {
             @Serializable
             data class StatDatas(
                 @SerialName("is_commercial")
-                val isCommercial: Int
+                val isCommercial: Int,
             )
         }
     }
@@ -110,7 +110,7 @@ data class AppSearchSquareData(
         @SerialName("open_search_ranking")
         val openSearchRanking: Boolean,
         val text: String,
-        val link: String
+        val link: String,
     )
 }
 
@@ -122,7 +122,7 @@ data class SearchTendingData(
     @SerialName("exp_str")
     val expStr: String? = null,
     @SerialName("hotword_egg_info")
-    val hotwordEggInfo: Int
+    val hotwordEggInfo: Int,
 ) {
     @Serializable
     data class Hotword(
@@ -136,6 +136,6 @@ data class SearchTendingData(
         @SerialName("hot_id")
         val hotId: Int,
         @SerialName("is_commercial")
-        val isCommercial: Int
+        val isCommercial: Int,
     )
 }

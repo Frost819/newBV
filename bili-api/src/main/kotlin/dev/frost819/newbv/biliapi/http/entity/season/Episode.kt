@@ -83,7 +83,7 @@ data class Episode(
     val status: Int,
     val subtitle: String = "",
     val title: String,
-    val vid: String = ""
+    val vid: String = "",
 ) {
     /**
      * 标签
@@ -98,7 +98,7 @@ data class Episode(
         val bgColor: String,
         @SerialName("bg_color_night")
         val bgColorNight: String,
-        val text: String
+        val text: String,
     )
 
     /**
@@ -111,16 +111,16 @@ data class Episode(
      */
     @Serializable
     data class EpisodeRights(
-        //@SerialName("allow_demand")
-        //val allowDemand: Int,
+        // @SerialName("allow_demand")
+        // val allowDemand: Int,
         @SerialName("allow_dm")
         val allowDm: Int,
         @SerialName("allow_download")
         val allowDownload: Int,
         @SerialName("area_limit")
-        val areaLimit: Int
+        val areaLimit: Int,
     ) {
-        //val isAllowDemand = allowDemand == 1
+        // val isAllowDemand = allowDemand == 1
         val isAllowDm = allowDm == 1
         val isAllowDownload = allowDownload == 1
         val usAreaLimit = areaLimit == 1
@@ -135,7 +135,7 @@ data class Episode(
     @Serializable
     data class Skip(
         val op: SkipTime,
-        val ed: SkipTime
+        val ed: SkipTime,
     ) {
         /**
          * 跳过时间
@@ -146,7 +146,7 @@ data class Episode(
         @Serializable
         data class SkipTime(
             val start: Int,
-            val end: Int
+            val end: Int,
         )
     }
 
@@ -165,7 +165,7 @@ data class Episode(
         val sectionId: String,
         @SerialName("section_type")
         val sectionType: String,
-        val style: String? = null
+        val style: String? = null,
     )
 
     @Serializable
@@ -175,7 +175,7 @@ data class Episode(
         val likes: Int,
         val play: Int,
         val reply: Int,
-        val vt: Int
+        val vt: Int,
     )
 
     @Serializable
@@ -184,7 +184,7 @@ data class Episode(
         val danmaku: Danmaku,
         val likes: Int,
         val reply: Int,
-        val vt: Vt
+        val vt: Vt,
     ) {
         @Serializable
         data class Danmaku(
@@ -192,14 +192,14 @@ data class Episode(
             @SerialName("pure_text")
             val pureText: String,
             val text: String,
-            val value: Int
+            val value: Int,
         )
 
         @Serializable
         data class Vt(
             val icon: String,
             val text: String,
-            val value: Int
+            val value: Int,
         )
     }
 }

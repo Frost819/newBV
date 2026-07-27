@@ -20,5 +20,5 @@ data class VideoShot(
     val index: List<UShort>? = null,
     @SerialName("video_shots")
     var videoShots: JsonElement? = null,
-    var indexs: JsonElement? = null
+    var indexs: JsonElement? = null,
 )

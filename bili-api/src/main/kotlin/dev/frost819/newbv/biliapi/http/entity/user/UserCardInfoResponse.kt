@@ -27,7 +27,7 @@ data class UserCardData(
     val articleCount: Int,
     val follower: Int,
     @SerialName("like_num")
-    val likeNum: Int
+    val likeNum: Int,
 ) {
     /**
      * 用户卡片详细信息
@@ -80,7 +80,7 @@ data class UserCardData(
         val place: String,
         val description: String,
         val article: Int,
-        //val attentions: List<Any> = emptyList(),
+        // val attentions: List<Any> = emptyList(),
         val fans: Int,
         val friend: Int,
         val attention: Int,
@@ -95,7 +95,7 @@ data class UserCardData(
         val officialVerify: OfficialVerify,
         val vip: Vip,
         @SerialName("is_senior_member")
-        val isSeniorMember: Int
+        val isSeniorMember: Int,
     )
 
     /**
@@ -109,6 +109,6 @@ data class UserCardData(
         @SerialName("s_img")
         val sImg: String,
         @SerialName("l_img")
-        val lImg: String
+        val lImg: String,
     )
 }

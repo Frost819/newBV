@@ -27,29 +27,32 @@ data class UgcItem(
                 cover = rcmdItem.cover!!,
                 author = rcmdItem.args.upName ?: "",
                 authorMid = rcmdItem.args.upId,
-                play = with(rcmdItem.coverLeftText1) {
-                    runCatching {
-                        if (this!!.endsWith("万")) {
-                            (this.substring(0, this.length - 1).toDouble() * 10000).toInt()
-                        } else {
-                            this.toInt()
-                        }
-                    }.getOrDefault(-1)
-                },
-                danmaku = with(rcmdItem.coverLeftText2) {
-                    if (this == null) return@with -1
-                    runCatching {
-                        if (this.endsWith("万")) {
-                            (this.substring(0, this.length - 1).toDouble() * 10000).toInt()
-                        } else {
-                            this.toInt()
-                        }
-                    }.getOrDefault(-1)
-                },
-                duration = rcmdItem.playerArgs?.duration
-                    ?: rcmdItem.coverRightText?.convertStringTimeToSeconds()
-                    ?: 0,
-                idx = rcmdItem.idx
+                play =
+                    with(rcmdItem.coverLeftText1) {
+                        runCatching {
+                            if (this!!.endsWith("万")) {
+                                (this.substring(0, this.length - 1).toDouble() * 10000).toInt()
+                            } else {
+                                this.toInt()
+                            }
+                        }.getOrDefault(-1)
+                    },
+                danmaku =
+                    with(rcmdItem.coverLeftText2) {
+                        if (this == null) return@with -1
+                        runCatching {
+                            if (this.endsWith("万")) {
+                                (this.substring(0, this.length - 1).toDouble() * 10000).toInt()
+                            } else {
+                                this.toInt()
+                            }
+                        }.getOrDefault(-1)
+                    },
+                duration =
+                    rcmdItem.playerArgs?.duration
+                        ?: rcmdItem.coverRightText?.convertStringTimeToSeconds()
+                        ?: 0,
+                idx = rcmdItem.idx,
             )
 
         fun fromRcmdItem(rcmdItem: RcmdTopData.RcmdItem) =
@@ -63,7 +66,7 @@ data class UgcItem(
                 play = rcmdItem.stat?.view ?: -1,
                 danmaku = rcmdItem.stat?.danmaku ?: -1,
                 duration = rcmdItem.duration,
-                pubTime = rcmdItem.pubdate.smartDate
+                pubTime = rcmdItem.pubdate.smartDate,
             )
 
         fun fromVideoInfo(videoInfo: dev.frost819.newbv.biliapi.http.entity.video.VideoInfo) =
@@ -76,7 +79,7 @@ data class UgcItem(
                 cover = videoInfo.pic,
                 play = videoInfo.stat.view,
                 danmaku = videoInfo.stat.danmaku,
-                pubTime = videoInfo.pubdate.smartDate
+                pubTime = videoInfo.pubdate.smartDate,
             )
 
         fun fromSmallCoverV5(card: bilibili.app.card.v1.SmallCoverV5): UgcItem {
@@ -110,7 +113,7 @@ data class UgcItem(
                 cover = item.cover,
                 play = item.play ?: -1,
                 danmaku = item.danmaku ?: -1,
-                pubTime = item.pubDate.smartDate
+                pubTime = item.pubDate.smartDate,
             )
 
         fun fromRegionRcmdArchive(archive: dev.frost819.newbv.biliapi.http.entity.region.RegionFeedRcmd.Archive) =
@@ -123,7 +126,7 @@ data class UgcItem(
                 cover = archive.cover,
                 play = archive.stat.view,
                 danmaku = archive.stat.danmaku,
-                pubTime = archive.pubdate.toSmartDate()
+                pubTime = archive.pubdate.toSmartDate(),
             )
     }
 }

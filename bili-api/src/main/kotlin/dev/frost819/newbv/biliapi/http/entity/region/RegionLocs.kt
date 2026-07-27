@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.http.entity.region
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -13,7 +12,7 @@ data class RegionLocs(
     val count: Int,
     val data: Map<String, List<LocData>?>,
     val live: JsonObject? = null,
-    val message: String
+    val message: String,
 ) {
     @Serializable
     data class AdsControl(
@@ -22,7 +21,7 @@ data class RegionLocs(
         @SerialName("has_live_booking_ad")
         val hasLiveBookingAd: Boolean,
         @SerialName("under_player_scroller_seconds")
-        val underPlayerScrollerSeconds: Int
+        val underPlayerScrollerSeconds: Int,
     )
 
     @Serializable
@@ -98,7 +97,7 @@ data class RegionLocs(
         val title: String,
         @SerialName("track_id")
         val trackId: String,
-        val url: String
+        val url: String,
     ) {
         @Serializable
         data class Inline(
@@ -109,7 +108,7 @@ data class RegionLocs(
             @SerialName("inline_url")
             val inlineUrl: String,
             @SerialName("inline_use_same")
-            val inlineUseSame: Int
+            val inlineUseSame: Int,
         )
     }
 }

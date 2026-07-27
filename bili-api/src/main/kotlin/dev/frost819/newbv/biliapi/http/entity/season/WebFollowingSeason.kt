@@ -16,7 +16,7 @@ data class FollowingSeasonWebData(
     val pageNumber: Int,
     @SerialName("ps")
     val pageSize: Int,
-    val total: Int
+    val total: Int,
 )
 
 @Serializable
@@ -31,7 +31,7 @@ data class FollowingSeasonAppData(
     @SerialName("vip_tip")
     val vipTip: JsonArray? = null,
     val want: JsonArray? = null,
-    val watched: JsonArray? = null
+    val watched: JsonArray? = null,
 )
 
 @Serializable
@@ -115,7 +115,7 @@ data class WebFollowingSeason(
     val totalCount: Int,
     val url: String,
     @SerialName("viewable_crowd_type")
-    val viewableCrowdType: Int? = null
+    val viewableCrowdType: Int? = null,
 ) {
     @Serializable
     data class BadgeInfo(
@@ -132,14 +132,14 @@ data class WebFollowingSeason(
         data class MultiImg(
             val color: String,
             @SerialName("medium_remind")
-            val mediumRemind: String
+            val mediumRemind: String,
         )
     }
 
     @Serializable
     data class BadgeInfos(
         @SerialName("vip_or_pay")
-        val vipOrPay: BadgeInfo? = null
+        val vipOrPay: BadgeInfo? = null,
     )
 
     @Serializable
@@ -153,7 +153,7 @@ data class WebFollowingSeason(
         val longTitle: String? = null,
         @SerialName("pub_time")
         val pubTime: String? = null,
-        val title: String? = null
+        val title: String? = null,
     )
 
     @Serializable
@@ -161,7 +161,7 @@ data class WebFollowingSeason(
         @SerialName("is_contribute")
         val isContribute: Int? = null,
         val mid: Long,
-        val type: Int
+        val type: Int,
     )
 
     @Serializable
@@ -173,7 +173,7 @@ data class WebFollowingSeason(
         @SerialName("release_date")
         val releaseDate: String,
         @SerialName("release_date_show")
-        val releaseDateShow: String
+        val releaseDateShow: String,
     )
 
     @Serializable
@@ -183,7 +183,7 @@ data class WebFollowingSeason(
         @SerialName("is_selection")
         val isSelection: Int,
         @SerialName("selection_style")
-        val selectionStyle: Int
+        val selectionStyle: Int,
     )
 
     @Serializable
@@ -200,7 +200,7 @@ data class WebFollowingSeason(
         @SerialName("section_id")
         val sectionId: Int,
         @SerialName("watch_platform")
-        val watchPlatform: Int
+        val watchPlatform: Int,
     )
 
     @Serializable
@@ -213,7 +213,7 @@ data class WebFollowingSeason(
         val seriesId: Int? = null,
         @SerialName("series_ord")
         val seriesOrd: Int? = null,
-        val title: String? = null
+        val title: String? = null,
     )
 }
 
@@ -247,12 +247,12 @@ data class AppFollowingSeason(
     @SerialName("square_cover")
     val squareCover: String,
     val title: String,
-    val url: String
+    val url: String,
 ) {
     @Serializable
     data class Area(
         val id: Int,
-        val name: String
+        val name: String,
     )
 
     @Serializable
@@ -262,7 +262,7 @@ data class AppFollowingSeason(
         @SerialName("bg_color_night")
         val bgColorNight: String,
         val img: String? = null,
-        val text: String
+        val text: String,
     )
 
     @Serializable
@@ -274,7 +274,7 @@ data class AppFollowingSeason(
         val indexShow: String,
         @SerialName("is_new")
         private val _isNew: Int,
-        val isNew: Boolean = _isNew == 1
+        val isNew: Boolean = _isNew == 1,
     )
 
     @Serializable
@@ -291,7 +291,7 @@ data class AppFollowingSeason(
     data class Series(
         val count: Int,
         val id: Int,
-        val title: String
+        val title: String,
     )
 }
 

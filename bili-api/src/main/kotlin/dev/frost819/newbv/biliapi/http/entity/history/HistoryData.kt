@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 data class HistoryData(
     val cursor: Cursor,
     val tab: List<TabItem>,
-    val list: List<HistoryItem>
+    val list: List<HistoryItem>,
 ) {
     /**
      * 历史记录页面信息
@@ -30,7 +30,7 @@ data class HistoryData(
         @SerialName("view_at")
         val viewAt: Long,
         val business: String,
-        val ps: Int
+        val ps: Int,
     )
 
     /**
@@ -42,7 +42,7 @@ data class HistoryData(
     @Serializable
     data class TabItem(
         val type: String,
-        val name: String
+        val name: String,
     )
 }
 
@@ -108,7 +108,7 @@ data class HistoryItem(
     @SerialName("tag_name")
     val tagName: String,
     @SerialName("live_status")
-    val liveStatus: Int
+    val liveStatus: Int,
 ) {
     /**
      * 历史记录详细信息
@@ -131,6 +131,6 @@ data class HistoryItem(
         val cid: Long,
         val part: String,
         val business: String,
-        val dt: Int
+        val dt: Int,
     )
 }

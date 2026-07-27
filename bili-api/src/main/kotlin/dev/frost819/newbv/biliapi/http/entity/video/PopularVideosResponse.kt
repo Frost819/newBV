@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 data class PopularVideoData(
     val list: List<VideoInfo>,
     @SerialName("no_more")
-    val noMore: Boolean
+    val noMore: Boolean,
 )

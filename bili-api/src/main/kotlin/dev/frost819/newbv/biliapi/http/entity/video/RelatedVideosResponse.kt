@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 data class RelatedVideosResponse(
     val code: Int,
     val message: String,
-    val data: List<RelatedVideoInfo> = emptyList()
+    val data: List<RelatedVideoInfo> = emptyList(),
 )
 
 /**
@@ -74,5 +74,5 @@ data class RelatedVideoInfo(
     @SerialName("ogv_info")
     val ogvInfo: String? = null,
     @SerialName("rcmd_reason")
-    val rcmdReason: String
+    val rcmdReason: String,
 )

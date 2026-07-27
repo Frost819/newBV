@@ -7,12 +7,13 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi
 
 class ToViewRepository(
     private val authRepository: AuthRepository,
-    private val channelRepository: ChannelRepository
+    private val channelRepository: ChannelRepository,
 ) {
     private val historyStub
-        get() = runCatching {
-            HistoryGrpcKt.HistoryCoroutineStub(channelRepository.defaultChannel!!)
-        }.getOrNull()
+        get() =
+            runCatching {
+                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.defaultChannel!!)
+            }.getOrNull()
 
     private fun requireSessData(): String =
         authRepository.sessionData?.takeIf { it.isNotBlank() }
@@ -32,18 +33,20 @@ class ToViewRepository(
     ): ToViewData {
         return when (preferApiType) {
             ApiType.Web -> {
-                val data = BiliHttpApi.getToView(
-                    // viewAt = cursor,
-                    sessData = requireSessData(),
-                ).getResponseData()
+                val data =
+                    BiliHttpApi.getToView(
+                        // viewAt = cursor,
+                        sessData = requireSessData(),
+                    ).getResponseData()
                 ToViewData.fromToViewResponse(data)
             }
 
             ApiType.App -> {
-                val data = BiliHttpApi.getToView(
-                    // viewAt = cursor,
-                    accessKey = requireAccessToken(),
-                ).getResponseData()
+                val data =
+                    BiliHttpApi.getToView(
+                        // viewAt = cursor,
+                        accessKey = requireAccessToken(),
+                    ).getResponseData()
                 ToViewData.fromToViewResponse(data)
             }
         }
@@ -54,20 +57,23 @@ class ToViewRepository(
         bvid: String? = null,
         preferApiType: ApiType,
     ) {
-        val (success, message) = when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.addToView(
-                avid = aid,
-                bvid = bvid,
-                csrf = requireCsrf(),
-                sessData = requireSessData()
-            )
+        val (success, message) =
+            when (preferApiType) {
+                ApiType.Web ->
+                    BiliHttpApi.addToView(
+                        avid = aid,
+                        bvid = bvid,
+                        csrf = requireCsrf(),
+                        sessData = requireSessData(),
+                    )
 
-            ApiType.App -> BiliHttpApi.addToViewWithAccessKey(
-                avid = aid,
-                bvid = bvid,
-                accessKey = requireAccessToken()
-            )
-        }
+                ApiType.App ->
+                    BiliHttpApi.addToViewWithAccessKey(
+                        avid = aid,
+                        bvid = bvid,
+                        accessKey = requireAccessToken(),
+                    )
+            }
         if (!success) throw Exception("添加到稍后再看失败：$message")
     }
 
@@ -76,20 +82,23 @@ class ToViewRepository(
         viewed: Boolean = false,
         preferApiType: ApiType,
     ) {
-        val (success, message) = when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.delToView(
-                viewed = viewed,
-                avid = aid,
-                csrf = requireCsrf(),
-                sessData = requireSessData()
-            )
+        val (success, message) =
+            when (preferApiType) {
+                ApiType.Web ->
+                    BiliHttpApi.delToView(
+                        viewed = viewed,
+                        avid = aid,
+                        csrf = requireCsrf(),
+                        sessData = requireSessData(),
+                    )
 
-            ApiType.App -> BiliHttpApi.delToViewWithAccessKey(
-                viewed = viewed,
-                avid = aid,
-                accessKey = requireAccessToken()
-            )
-        }
+                ApiType.App ->
+                    BiliHttpApi.delToViewWithAccessKey(
+                        viewed = viewed,
+                        avid = aid,
+                        accessKey = requireAccessToken(),
+                    )
+            }
         if (!success) throw Exception("删除稍后再看失败：$message")
     }
 }

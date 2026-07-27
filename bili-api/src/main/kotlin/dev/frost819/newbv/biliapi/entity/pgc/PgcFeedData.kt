@@ -4,7 +4,7 @@ data class PgcFeedData(
     var hasNext: Boolean,
     var cursor: Int,
     var items: List<PgcItem> = emptyList(),
-    var ranks: List<FeedRank> = emptyList()
+    var ranks: List<FeedRank> = emptyList(),
 ) {
     companion object {
         fun fromPgcFeedData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData): PgcFeedData {
@@ -12,7 +12,7 @@ data class PgcFeedData(
                 hasNext = data.hasNext,
                 cursor = data.coursor,
                 items = data.items.map { PgcItem.fromFeedSubItem(it) },
-                ranks = emptyList()
+                ranks = emptyList(),
             )
         }
 
@@ -23,7 +23,7 @@ data class PgcFeedData(
                 hasNext = data.hasNext,
                 cursor = data.coursor,
                 items = itemsList?.subItems?.map { PgcItem.fromFeedSubItem(it) } ?: emptyList(),
-                ranks = ranksList?.subItems?.map { FeedRank.fromFeedSubItem(it) } ?: emptyList()
+                ranks = ranksList?.subItems?.map { FeedRank.fromFeedSubItem(it) } ?: emptyList(),
             )
         }
     }
@@ -32,19 +32,21 @@ data class PgcFeedData(
         var cover: String,
         var title: String,
         var subTitle: String,
-        var items: List<PgcItem>
+        var items: List<PgcItem>,
     ) {
         companion object {
-            fun fromFeedSubItem(feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem): FeedRank {
+            fun fromFeedSubItem(
+                feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem,
+            ): FeedRank {
                 return FeedRank(
                     cover = feedSubItem.cover,
                     title = feedSubItem.title,
                     subTitle = feedSubItem.subTitle,
-                    items = feedSubItem.subItems?.map { PgcItem.fromFeedSubItem(it) }
-                        ?: emptyList()
+                    items =
+                        feedSubItem.subItems?.map { PgcItem.fromFeedSubItem(it) }
+                            ?: emptyList(),
                 )
             }
         }
     }
 }
-

@@ -14,9 +14,9 @@ data class VideoDetail(
     val card: UserCardData,
     @SerialName("Tags")
     val tags: List<Tag>,
-    //TODO 评论
-    //@SerialName("Reply")
-    //val reply:Any
+    // TODO 评论
+    // @SerialName("Reply")
+    // val reply:Any
     @SerialName("Related")
     val related: List<RelatedVideoInfo>?,
     @SerialName("Spec")
@@ -30,13 +30,13 @@ data class VideoDetail(
     val guide: JsonObject? = null,
     @SerialName("query_tags")
     val queryTags: JsonObject? = null,
-    //@SerialName("is_old_user")
-    //val isOldUser: Boolean
+    // @SerialName("is_old_user")
+    // val isOldUser: Boolean
 ) {
     @Serializable
     data class HotShare(
         val show: Boolean,
-        val list: JsonArray
+        val list: JsonArray,
     )
 
     /**
@@ -59,6 +59,6 @@ data class VideoDetail(
         @SerialName("tag_type")
         val tagType: String,
         @SerialName("jump_url")
-        val jumpUrl: String
+        val jumpUrl: String,
     )
 }

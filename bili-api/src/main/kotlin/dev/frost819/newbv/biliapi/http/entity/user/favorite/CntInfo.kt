@@ -16,5 +16,5 @@ data class CntInfo(
     val danmaku: Int = 0,
     @SerialName("thumb_up")
     val thumbUp: Int = 0,
-    val share: Int = 0
+    val share: Int = 0,
 )

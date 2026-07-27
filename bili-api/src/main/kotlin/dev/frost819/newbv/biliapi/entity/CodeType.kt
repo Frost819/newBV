@@ -8,26 +8,30 @@ enum class CodeType(val str: String, val codecId: Int) {
     Code264("avc1", 7),
     Code265("hev1", 12),
     CodeAv1("av01", 13),
-    Unrecognized("unknown", 0);
+    Unrecognized("unknown", 0),
+    ;
 
-    companion object{
-        fun fromCodecId(code: Int?) = runCatching {
-            entries.find { it.codecId == code }!!
-        }.getOrDefault(NoCode)
+    companion object {
+        fun fromCodecId(code: Int?) =
+            runCatching {
+                entries.find { it.codecId == code }!!
+            }.getOrDefault(NoCode)
     }
 
-    fun toPlayerSharedCodeType() = when (this) {
-        NoCode -> PlayerSharedCodeType.NOCODE
-        Code264 -> PlayerSharedCodeType.CODE264
-        Code265 -> PlayerSharedCodeType.CODE265
-        CodeAv1 -> PlayerSharedCodeType.CODEAV1
-        Unrecognized -> PlayerSharedCodeType.UNRECOGNIZED
-    }
+    fun toPlayerSharedCodeType() =
+        when (this) {
+            NoCode -> PlayerSharedCodeType.NOCODE
+            Code264 -> PlayerSharedCodeType.CODE264
+            Code265 -> PlayerSharedCodeType.CODE265
+            CodeAv1 -> PlayerSharedCodeType.CODEAV1
+            Unrecognized -> PlayerSharedCodeType.UNRECOGNIZED
+        }
 
-    fun toPgcPlayUrlCodeType() = when (this) {
-        NoCode, CodeAv1 -> PgcPlayUrlCodeType.NOCODE
-        Code264 -> PgcPlayUrlCodeType.CODE264
-        Code265 -> PgcPlayUrlCodeType.CODE265
-        Unrecognized -> PgcPlayUrlCodeType.UNRECOGNIZED
-    }
+    fun toPgcPlayUrlCodeType() =
+        when (this) {
+            NoCode, CodeAv1 -> PgcPlayUrlCodeType.NOCODE
+            Code264 -> PgcPlayUrlCodeType.CODE264
+            Code265 -> PgcPlayUrlCodeType.CODE265
+            Unrecognized -> PgcPlayUrlCodeType.UNRECOGNIZED
+        }
 }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RegionFeedRcmd(
-    val archives: List<Archive>
+    val archives: List<Archive>,
 ) {
     @Serializable
     data class Archive(
@@ -21,19 +21,19 @@ data class RegionFeedRcmd(
         val trackid: String,
         val goto: String,
         @SerialName("rec_reason")
-        val recReason: String
+        val recReason: String,
     ) {
         @Serializable
         data class Stat(
             val view: Int,
             val like: Int,
-            val danmaku: Int
+            val danmaku: Int,
         )
 
         @Serializable
         data class Author(
             val mid: Long,
-            val name: String
+            val name: String,
         )
     }
 }

@@ -22,7 +22,7 @@ data class TimelineAppData(
     @SerialName("is_night_mode")
     val isNightMode: Int,
     @SerialName("navigation_title")
-    val navigationTitle: String
+    val navigationTitle: String,
 )
 
 /**
@@ -47,7 +47,7 @@ data class Timeline(
     val episodes: List<Episode> = emptyList(),
     @SerialName("is_today")
     private val _isToday: Int,
-    @Transient val isToday: Boolean = _isToday == 1
+    @Transient val isToday: Boolean = _isToday == 1,
 ) {
     /**
      * 时间表剧集信息
@@ -119,7 +119,7 @@ data class Timeline(
         val squareCover: String,
         val tags: List<Tag> = emptyList(),
         val title: String,
-        val url: String? = null
+        val url: String? = null,
     ) {
         @Serializable
         data class Report(
@@ -131,13 +131,13 @@ data class Timeline(
             @SerialName("is_published")
             val isPublished: String,
             @SerialName("season_id")
-            val seasonId: Int
+            val seasonId: Int,
         )
 
         @Serializable
         data class Tag(
             val text: String,
-            val type: Int
+            val type: Int,
         )
     }
 }
@@ -153,5 +153,5 @@ data class Timeline(
 @Serializable
 data class TimelineFilter(
     val desc: String,
-    val type: Int
+    val type: Int,
 )

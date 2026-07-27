@@ -6,22 +6,23 @@ data class UgcSeason(
     val id: Int,
     val title: String,
     val cover: String,
-    val sections: List<Section>
+    val sections: List<Section>,
 ) {
     companion object {
-        fun fromUgcSeason(ugcSeason: bilibili.app.view.v1.UgcSeason) = UgcSeason(
-            id = ugcSeason.id.toInt(),
-            title = ugcSeason.title,
-            cover = ugcSeason.cover,
-            sections = ugcSeason.sectionsList.map { Section.fromSection(it) }
-        )
+        fun fromUgcSeason(ugcSeason: bilibili.app.view.v1.UgcSeason) =
+            UgcSeason(
+                id = ugcSeason.id.toInt(),
+                title = ugcSeason.title,
+                cover = ugcSeason.cover,
+                sections = ugcSeason.sectionsList.map { Section.fromSection(it) },
+            )
 
         fun fromUgcSeason(ugcSeason: dev.frost819.newbv.biliapi.http.entity.video.UgcSeason) =
             UgcSeason(
                 id = ugcSeason.id,
                 title = ugcSeason.title,
                 cover = ugcSeason.cover,
-                sections = ugcSeason.sections.map { Section.fromSection(it) }
+                sections = ugcSeason.sections.map { Section.fromSection(it) },
             )
     }
 }
@@ -38,7 +39,7 @@ data class PgcSeason(
     val title: String?,
     val shortTitle: String,
     val cover: String,
-    val horizontalCover: String?
+    val horizontalCover: String?,
 ) {
     companion object {
         fun fromSeason(season: OtherSeason): PgcSeason {
@@ -47,7 +48,7 @@ data class PgcSeason(
                 title = season.title,
                 shortTitle = season.seasonTitle,
                 cover = season.cover,
-                horizontalCover = season.horizontalCover ?: season.newEp.cover
+                horizontalCover = season.horizontalCover ?: season.newEp.cover,
             )
         }
     }

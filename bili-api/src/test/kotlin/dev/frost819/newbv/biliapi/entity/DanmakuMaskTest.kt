@@ -84,7 +84,11 @@ class DanmakuMaskTest {
      * 核心辅助函数：将二进制像素数据转为 SVG (内嵌 Base64 PNG)
      * 利用 java.awt 在单元测试环境下生成图片
      */
-    private fun convertRawToSvg(width: Int, height: Int, rawData: ByteArray): String {
+    private fun convertRawToSvg(
+        width: Int,
+        height: Int,
+        rawData: ByteArray,
+    ): String {
         // --- A. 判定模式 (1-bit vs 8-bit) ---
         // 逻辑同解析器，用于决定如何渲染像素
         val pixelCount = width * height
@@ -147,6 +151,6 @@ class DanmakuMaskTest {
                 <rect width="100%" height="100%" fill="red" />
                 <image width="$width" height="$height" image-rendering="pixelated" href="data:image/png;base64,$base64Png" />
             </svg>
-        """.trimIndent()
+            """.trimIndent()
     }
 }

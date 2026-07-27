@@ -51,73 +51,84 @@ data class SearchResultData(
     @Transient
     val searchTypeResults: MutableList<SearchResultItem> = mutableListOf(),
     @SerialName("is_search_page_grayed")
-    val isSearchPageGrayed: Int? = null
+    val isSearchPageGrayed: Int? = null,
 ) {
     init {
         result.forEach { searchResultJsonElement ->
             val searchResultJsonObject = searchResultJsonElement.jsonObject
             var resultType = searchResultJsonObject["result_type"]?.jsonPrimitive?.content
-            val json = Json {
-                coerceInputValues = true
-                ignoreUnknownKeys = true
-                prettyPrint = true
-            }
+            val json =
+                Json {
+                    coerceInputValues = true
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                }
             if (resultType != null) {
                 // 综合搜索
                 val searchResultDataJsonArray = searchResultJsonObject["data"]!!.jsonArray
-                val data = when (resultType) {
-                    "activity" -> json.decodeFromJsonElement<List<SearchActivityResult>>(
-                        searchResultDataJsonArray
-                    )
+                val data =
+                    when (resultType) {
+                        "activity" ->
+                            json.decodeFromJsonElement<List<SearchActivityResult>>(
+                                searchResultDataJsonArray,
+                            )
 
-                    "media_bangumi", "media_ft" -> json.decodeFromJsonElement<List<SearchMediaResult>>(
-                        searchResultDataJsonArray
-                    )
+                        "media_bangumi", "media_ft" ->
+                            json.decodeFromJsonElement<List<SearchMediaResult>>(
+                                searchResultDataJsonArray,
+                            )
 
-                    "video" -> json.decodeFromJsonElement<List<SearchVideoResult>>(
-                        searchResultDataJsonArray
-                    )
+                        "video" ->
+                            json.decodeFromJsonElement<List<SearchVideoResult>>(
+                                searchResultDataJsonArray,
+                            )
 
-                    else -> {
-                        listOf()
+                        else -> {
+                            listOf()
+                        }
                     }
-                }
 
-                val resultResult = SearchResult(
-                    resultType = searchResultJsonObject["result_type"]!!.jsonPrimitive.content,
-                    data = data
-                )
+                val resultResult =
+                    SearchResult(
+                        resultType = searchResultJsonObject["result_type"]!!.jsonPrimitive.content,
+                        data = data,
+                    )
                 searchAllResults.add(resultResult)
             } else {
                 // 分类搜索
                 resultType = searchResultJsonObject["type"]?.jsonPrimitive?.content
-                val data = when (resultType) {
-                    "activity" -> json.decodeFromJsonElement<SearchActivityResult>(
-                        searchResultJsonObject
-                    )
+                val data =
+                    when (resultType) {
+                        "activity" ->
+                            json.decodeFromJsonElement<SearchActivityResult>(
+                                searchResultJsonObject,
+                            )
 
-                    "article" -> json.decodeFromJsonElement<SearchArticleResult>(
-                        searchResultJsonObject
-                    )
+                        "article" ->
+                            json.decodeFromJsonElement<SearchArticleResult>(
+                                searchResultJsonObject,
+                            )
 
-                    "bili_user" -> json.decodeFromJsonElement<SearchBiliUserResult>(
-                        searchResultJsonObject
-                    )
+                        "bili_user" ->
+                            json.decodeFromJsonElement<SearchBiliUserResult>(
+                                searchResultJsonObject,
+                            )
 
-                    // TODO live search result
-                    "live" -> return@forEach
+                        // TODO live search result
+                        "live" -> return@forEach
 
-                    "media_bangumi", "media_ft" -> json.decodeFromJsonElement<SearchMediaResult>(
-                        searchResultJsonObject
-                    )
+                        "media_bangumi", "media_ft" ->
+                            json.decodeFromJsonElement<SearchMediaResult>(
+                                searchResultJsonObject,
+                            )
 
-                    "topic" -> json.decodeFromJsonElement<SearchTopicResult>(searchResultJsonObject)
-                    "video" -> json.decodeFromJsonElement<SearchVideoResult>(searchResultJsonObject)
+                        "topic" -> json.decodeFromJsonElement<SearchTopicResult>(searchResultJsonObject)
+                        "video" -> json.decodeFromJsonElement<SearchVideoResult>(searchResultJsonObject)
 
-                    else -> {
-                        return@forEach
+                        else -> {
+                            return@forEach
+                        }
                     }
-                }
 
                 searchTypeResults.add(data)
             }
@@ -154,13 +165,13 @@ data class SearchResultData(
         val mediaBangumi: PageInfoData? = null,
         val special: PageInfoData? = null,
         @SerialName("live_user")
-        val liveUser: PageInfoData? = null
+        val liveUser: PageInfoData? = null,
     ) {
         @Serializable
         data class PageInfoData(
             var numResults: Int,
             val total: Int,
-            val pages: Int
+            val pages: Int,
         )
     }
 
@@ -200,7 +211,7 @@ data class SearchResultData(
     @Serializable
     data class AppDisplayOption(
         @SerialName("is_search_page_grayed")
-        val isSearchPageGrayed: Int
+        val isSearchPageGrayed: Int,
     )
 }
 
@@ -208,5 +219,5 @@ data class SearchResultData(
 data class SearchResult<T>(
     @SerialName("result_type")
     val resultType: String,
-    val data: List<T>
+    val data: List<T>,
 )

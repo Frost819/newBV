@@ -15,5 +15,5 @@ data class FavoriteFolderInfoListData(
     val info: FavoriteFolderInfo,
     val medias: List<FavoriteItem> = emptyList(),
     @SerialName("has_more")
-    val hasMore: Boolean
+    val hasMore: Boolean,
 )

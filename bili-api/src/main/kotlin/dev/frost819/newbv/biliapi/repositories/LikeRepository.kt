@@ -7,25 +7,28 @@ class LikeRepository(private val authRepository: AuthRepository) {
         aid: Long,
         bvid: String? = null,
     ): Boolean {
-        val like = BiliHttpApi.checkVideoLiked(
-            avid = aid,
-            bvid = bvid,
-            sessData = authRepository.sessionData!!
-        )
+        val like =
+            BiliHttpApi.checkVideoLiked(
+                avid = aid,
+                bvid = bvid,
+                sessData = authRepository.sessionData!!,
+            )
         return like
     }
+
     suspend fun updateVideoLiked(
         aid: Long,
         bvid: String? = null,
         like: Boolean,
-    ){
-        val (success, message) =  BiliHttpApi.sendVideoLike(
-            avid = aid,
-            bvid = bvid,
-            like = like,
-            csrf = authRepository.biliJct ?: "",
-            sessData = authRepository.sessionData!!,
-        )
+    ) {
+        val (success, message) =
+            BiliHttpApi.sendVideoLike(
+                avid = aid,
+                bvid = bvid,
+                like = like,
+                csrf = authRepository.biliJct ?: "",
+                sessData = authRepository.sessionData!!,
+            )
         if (!success) {
             throw Exception("点赞失败: $message")
         }

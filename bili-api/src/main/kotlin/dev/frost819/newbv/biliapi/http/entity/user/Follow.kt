@@ -15,7 +15,7 @@ data class UserFollowData(
     val list: List<FollowedUser> = emptyList(),
     @SerialName("re_version")
     val reVersion: Int,
-    val total: Int
+    val total: Int,
 ) {
     /**
      * 关注的用户信息
@@ -52,7 +52,7 @@ data class UserFollowData(
         @SerialName("rec_reason")
         val recReason: String,
         @SerialName("track_id")
-        val trackId: String
+        val trackId: String,
     ) {
         /**
          * 会员信息
@@ -75,18 +75,24 @@ data class UserFollowData(
             val vipStatus: Int,
             val vipStatusWarn: String,
             val themeType: Int,
-            val label: dev.frost819.newbv.biliapi.http.entity.user.Vip.Label
+            val label: dev.frost819.newbv.biliapi.http.entity.user.Vip.Label,
         )
     }
 }
 
 enum class FollowAction(val id: Int) {
-    AddFollow(1), DelFollow(2),
-    AddFollowQuietly(3), DelFollowQuietly(4),
-    AddBlackList(5), DelBlackList(6),
-    DelFan(7)
+    AddFollow(1),
+    DelFollow(2),
+    AddFollowQuietly(3),
+    DelFollowQuietly(4),
+    AddBlackList(5),
+    DelBlackList(6),
+    DelFan(7),
 }
 
 enum class FollowActionSource(val id: Int) {
-    Space(11), Video(14), Article(115), Activity(222)
+    Space(11),
+    Video(14),
+    Article(115),
+    Activity(222),
 }

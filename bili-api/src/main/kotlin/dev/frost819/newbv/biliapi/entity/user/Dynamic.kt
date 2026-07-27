@@ -8,30 +8,32 @@ data class DynamicVideoData(
     val videos: List<DynamicVideo>,
     val hasMore: Boolean,
     val historyOffset: String,
-    val updateBaseline: String
+    val updateBaseline: String,
 ) {
     companion object {
         private val logger = KotlinLogging.logger { }
+
         fun fromDynamicData(data: dev.frost819.newbv.biliapi.http.entity.dynamic.DynamicData) =
             DynamicVideoData(
                 videos = data.items.map { DynamicVideo.fromDynamicVideoItem(it) },
                 hasMore = data.hasMore,
                 historyOffset = data.offset,
-                updateBaseline = data.updateBaseline
+                updateBaseline = data.updateBaseline,
             ).also {
                 logger.info { "updateBaseline: ${data.updateBaseline}" }
                 logger.info { "offset: ${data.offset}" }
             }
 
-        fun fromDynamicData(data: bilibili.app.dynamic.v2.DynVideoReply) = DynamicVideoData(
-            videos = data.dynamicList.listList.mapNotNull { DynamicVideo.fromDynamicVideoItem(it) },
-            hasMore = data.dynamicList.hasMore,
-            historyOffset = data.dynamicList.historyOffset,
-            updateBaseline = data.dynamicList.updateBaseline
-        ).also {
-            logger.info { "updateBaseline: ${data.dynamicList.updateBaseline}" }
-            logger.info { "historyOffset: ${data.dynamicList.historyOffset}" }
-        }
+        fun fromDynamicData(data: bilibili.app.dynamic.v2.DynVideoReply) =
+            DynamicVideoData(
+                videos = data.dynamicList.listList.mapNotNull { DynamicVideo.fromDynamicVideoItem(it) },
+                hasMore = data.dynamicList.hasMore,
+                historyOffset = data.dynamicList.historyOffset,
+                updateBaseline = data.dynamicList.updateBaseline,
+            ).also {
+                logger.info { "updateBaseline: ${data.dynamicList.updateBaseline}" }
+                logger.info { "historyOffset: ${data.dynamicList.historyOffset}" }
+            }
     }
 }
 
@@ -74,15 +76,16 @@ data class DynamicVideo(
                 aid = archive.aid.toLong(),
                 bvid = archive.bvid,
                 cid = 0,
-                title = archive.title
-                    .replace("动态视频｜", ""),
+                title =
+                    archive.title
+                        .replace("动态视频｜", ""),
                 cover = archive.cover,
                 author = author.name,
                 authorMid = author.mid,
                 duration = convertStringTimeToSeconds(archive.durationText),
                 play = convertStringPlayCountToNumberPlayCount(archive.stat.play),
                 danmaku = convertStringPlayCountToNumberPlayCount(archive.stat.danmaku),
-                pubTime = author.pubTime
+                pubTime = author.pubTime,
             )
         }
 
@@ -101,15 +104,19 @@ data class DynamicVideo(
                         aid = archive.avid,
                         bvid = archive.bvid,
                         cid = archive.cid,
-                        title = if (!isDynamicVideo) archive.title
-                        else desc?.text?.replace("动态视频｜", "") ?: "",
+                        title =
+                            if (!isDynamicVideo) {
+                                archive.title
+                            } else {
+                                desc?.text?.replace("动态视频｜", "") ?: ""
+                            },
                         cover = archive.cover,
                         author = author.author.name,
                         authorMid = author.author.mid,
                         duration = convertStringTimeToSeconds(archive.coverLeftText1),
                         play = convertStringPlayCountToNumberPlayCount(archive.coverLeftText2),
                         danmaku = convertStringPlayCountToNumberPlayCount(archive.coverLeftText3),
-                        pubTime = author.ptimeLabelText.substringBefore(" ")
+                        pubTime = author.ptimeLabelText.substringBefore(" "),
                     )
                 }
 
@@ -128,7 +135,7 @@ data class DynamicVideo(
                         duration = convertStringTimeToSeconds(pgc.coverLeftText1),
                         play = convertStringPlayCountToNumberPlayCount(pgc.coverLeftText2),
                         danmaku = convertStringPlayCountToNumberPlayCount(pgc.coverLeftText3),
-                        pubTime = author.ptimeLabelText.substringBefore(" ")
+                        pubTime = author.ptimeLabelText.substringBefore(" "),
                     )
                 }
 
@@ -139,7 +146,7 @@ data class DynamicVideo(
 }
 
 private fun convertStringTimeToSeconds(time: String): Int {
-    //部分稿件可能没有时长，Web 接口返回 NaN:NaN:NaN，App 接口返回空字符串
+    // 部分稿件可能没有时长，Web 接口返回 NaN:NaN:NaN，App 接口返回空字符串
     if (time.startsWith("NaN") || time.isBlank()) return 0
 
     val parts = time.split(":")
@@ -149,15 +156,16 @@ private fun convertStringTimeToSeconds(time: String): Int {
     return (hours * 3600) + (minutes * 60) + seconds
 }
 
-//web 接口获取到的是“xx万”，而 grpc 接口获取到的是“xx.x万播放”
+// web 接口获取到的是“xx万”，而 grpc 接口获取到的是“xx.x万播放”
 private fun convertStringPlayCountToNumberPlayCount(play: String): Int {
     if (play.startsWith("-")) return 0
     runCatching {
-        val number = play
-            .replace("弹幕", "")
-            .replace("观看", "")
-            .replace("播放", "")
-            .substringBefore("万").toFloat()
+        val number =
+            play
+                .replace("弹幕", "")
+                .replace("观看", "")
+                .replace("播放", "")
+                .substringBefore("万").toFloat()
         return (if (play.contains("万")) number * 10000 else number).toInt()
     }.onFailure {
         println("convert play count [$play] failed: ${it.stackTraceToString()}")
@@ -166,5 +174,5 @@ private fun convertStringPlayCountToNumberPlayCount(play: String): Int {
 }
 
 enum class DynamicType {
-    Video
+    Video,
 }

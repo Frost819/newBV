@@ -10,10 +10,11 @@ import java.util.Properties
 
 class VideoDetailRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -37,7 +38,7 @@ class VideoDetailRepositoryTest {
     init {
         channelRepository.initDefaultChannel(
             VideoPlayRepositoryTest.ACCESS_TOKEN,
-            VideoPlayRepositoryTest.BUVID
+            VideoPlayRepositoryTest.BUVID,
         )
         BiliHttpApi.init(VideoPlayRepositoryTest.BUVID)
         authRepository.sessionData = VideoPlayRepositoryTest.SESSDATA
@@ -47,10 +48,11 @@ class VideoDetailRepositoryTest {
     fun `get video info with http`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 170001,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 170001,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -62,10 +64,11 @@ class VideoDetailRepositoryTest {
     fun `get video info with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 170001,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 170001,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -74,31 +77,36 @@ class VideoDetailRepositoryTest {
     }
 
     @Test
-    fun `get multi part video info with http`() = runBlocking {
-        val result = videoDetailRepository.getVideoDetail(
-            aid = 836207,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get multi part video info with http`() =
+        runBlocking {
+            val result =
+                videoDetailRepository.getVideoDetail(
+                    aid = 836207,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get multi part video info with grpc`() = runBlocking {
-        val result = videoDetailRepository.getVideoDetail(
-            aid = 836207,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get multi part video info with grpc`() =
+        runBlocking {
+            val result =
+                videoDetailRepository.getVideoDetail(
+                    aid = 836207,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @Test
     fun `get ugc season video info with http`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 954251211,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 954251211,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -110,10 +118,11 @@ class VideoDetailRepositoryTest {
     fun `get ugc season video info with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 954251211,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 954251211,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -125,10 +134,11 @@ class VideoDetailRepositoryTest {
     fun `get anime video info with http`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 314583081,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 314583081,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -140,10 +150,11 @@ class VideoDetailRepositoryTest {
     fun `get anime video info with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 314583081,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 314583081,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -155,10 +166,11 @@ class VideoDetailRepositoryTest {
     fun `get argue video info with http`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 996965888,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 996965888,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -170,10 +182,11 @@ class VideoDetailRepositoryTest {
     fun `get argue video info with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getVideoDetail(
-                    aid = 996965888,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoDetailRepository.getVideoDetail(
+                        aid = 996965888,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -185,10 +198,11 @@ class VideoDetailRepositoryTest {
     fun `get pgc season video prefer web api`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getPgcVideoDetail(
-                    epid = 752900,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoDetailRepository.getPgcVideoDetail(
+                        epid = 752900,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -200,10 +214,11 @@ class VideoDetailRepositoryTest {
     fun `get pgc season video prefer app api`() {
         runBlocking {
             runCatching {
-                val result = videoDetailRepository.getPgcVideoDetail(
-                    epid = 752900,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoDetailRepository.getPgcVideoDetail(
+                        epid = 752900,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()

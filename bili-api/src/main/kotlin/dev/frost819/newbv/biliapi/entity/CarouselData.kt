@@ -5,19 +5,22 @@ import dev.frost819.newbv.biliapi.util.toBv
 import io.ktor.http.Url
 
 data class CarouselData(
-    val items: List<CarouselItem>
+    val items: List<CarouselItem>,
 ) {
     companion object {
-        fun fromPgcWebInitialStateData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcWebInitialStateData): CarouselData {
+        fun fromPgcWebInitialStateData(
+            data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcWebInitialStateData,
+        ): CarouselData {
             val result = mutableListOf<CarouselItem>()
             var needParseIdFromUrl = false
             // 电影、电视剧、综艺板块里的轮播图数据里没有直接包含 episodeId 和 seasonId
-            if (listOf(1668, 1675, 1682).contains(data.modules.banner.moduleId))
+            if (listOf(1668, 1675, 1682).contains(data.modules.banner.moduleId)) {
                 needParseIdFromUrl = true
+            }
             data.modules.banner.items.filter {
-                it.episodeId != null
-                        || (needParseIdFromUrl && it.link.contains("bangumi/play/ep"))
-                        || (needParseIdFromUrl && it.link.contains("bangumi/play/ss"))
+                it.episodeId != null ||
+                    (needParseIdFromUrl && it.link.contains("bangumi/play/ep")) ||
+                    (needParseIdFromUrl && it.link.contains("bangumi/play/ss"))
             }.forEach {
                 var cover = it.bigCover ?: it.cover
                 if (cover.startsWith("//")) cover = "https:$cover"
@@ -37,14 +40,16 @@ data class CarouselData(
                         cover = cover,
                         title = it.title,
                         seasonId = it.seasonId ?: ssidFromUrl ?: -1,
-                        episodeId = it.episodeId ?: epidFromUrl ?: -1
-                    )
+                        episodeId = it.episodeId ?: epidFromUrl ?: -1,
+                    ),
                 )
             }
             return CarouselData(result)
         }
 
-        fun fromUgcRegionDynamicBanner(data: dev.frost819.newbv.biliapi.http.entity.region.RegionDynamic.Banner): CarouselData {
+        fun fromUgcRegionDynamicBanner(
+            data: dev.frost819.newbv.biliapi.http.entity.region.RegionDynamic.Banner,
+        ): CarouselData {
             val result = mutableListOf<CarouselItem>()
             data.top.forEach { top ->
                 if (!UrlUtil.isVideoUrl(top.uri)) return@forEach
@@ -55,8 +60,8 @@ data class CarouselData(
                         cover = top.image,
                         title = top.title,
                         avid = avid,
-                        bvid = bvid
-                    )
+                        bvid = bvid,
+                    ),
                 )
             }
             return CarouselData(result)
@@ -70,8 +75,8 @@ data class CarouselData(
                         CarouselItem(
                             cover = item.pic,
                             title = item.title,
-                            bvid = Url(item.url).rawSegments.last()
-                        )
+                            bvid = Url(item.url).rawSegments.last(),
+                        ),
                     )
                 }
             }
@@ -85,6 +90,6 @@ data class CarouselData(
         val seasonId: Int? = null,
         val episodeId: Int? = null,
         val avid: Long? = null,
-        val bvid: String? = null
+        val bvid: String? = null,
     )
 }

@@ -16,30 +16,32 @@ object SubtitleEncoder {
                     from = it.from.getBccTime(),
                     to = it.to.getBccTime(),
                     location = 2,
-                    content = it.content
-                )
+                    content = it.content,
+                ),
             )
         }
-        val bccSubtitle = BiliSubtitle(
-            fontSize = 0.4f,
-            fontColor = "#FFFFFF",
-            backgroundAlpha = 0.5f,
-            backgroundColor = "#9C27B0",
-            stroke = "none",
-            body = bccSubtitles
-        )
+        val bccSubtitle =
+            BiliSubtitle(
+                fontSize = 0.4f,
+                fontColor = "#FFFFFF",
+                backgroundAlpha = 0.5f,
+                backgroundColor = "#9C27B0",
+                stroke = "none",
+                body = bccSubtitles,
+            )
         return Json.encodeToString(bccSubtitle)
     }
 
     fun encodeToSrt(subtitles: List<SubtitleItem>): String {
         var result = ""
         subtitles.forEachIndexed { index, data ->
-            val srtSubtitleItem = SrtSubtitleItem(
-                index = index + 1,
-                from = data.from.getSrtTime(),
-                to = data.to.getSrtTime(),
-                content = data.content.replace("\n","\\n")
-            )
+            val srtSubtitleItem =
+                SrtSubtitleItem(
+                    index = index + 1,
+                    from = data.from.getSrtTime(),
+                    to = data.to.getSrtTime(),
+                    content = data.content.replace("\n", "\\n"),
+                )
             if (index != 0) result += "\n"
             result += srtSubtitleItem.toRaw()
         }

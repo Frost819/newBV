@@ -9,8 +9,8 @@ import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
 data class HistoryDanmaku(
-    //val admin:List<Any>,
-    val room: List<HistoryDanmakuItem>
+    // val admin:List<Any>,
+    val room: List<HistoryDanmakuItem>,
 ) {
     @Serializable
     data class HistoryDanmakuItem(
@@ -53,17 +53,18 @@ data class HistoryDanmaku(
         val checkInfo: CheckInfo,
         @SerialName("voice_dm_info")
         val voiceDmInfo: VoiceDmInfo,
-        val emoticon: Emoticon
+        val emoticon: Emoticon,
     ) {
         init {
-            medal = runCatching {
-                Medal(
-                    level = _medal[0].jsonPrimitive.int,
-                    name = _medal[1].jsonPrimitive.content,
-                    up = _medal[2].jsonPrimitive.content,
-                    roomId = _medal[3].jsonPrimitive.int
-                )
-            }.getOrNull()
+            medal =
+                runCatching {
+                    Medal(
+                        level = _medal[0].jsonPrimitive.int,
+                        name = _medal[1].jsonPrimitive.content,
+                        up = _medal[2].jsonPrimitive.content,
+                        roomId = _medal[3].jsonPrimitive.int,
+                    )
+                }.getOrNull()
         }
     }
 }
@@ -99,7 +100,7 @@ data class Medal(
     val level: Int,
     val name: String,
     val up: String,
-    val roomId: Int
+    val roomId: Int,
 )
 
 /*
@@ -123,7 +124,7 @@ data class Medal(
 @Serializable
 data class CheckInfo(
     val ts: Int,
-    val ct: String
+    val ct: String,
 )
 
 @Serializable
@@ -136,7 +137,7 @@ data class VoiceDmInfo(
     @SerialName("file_duration")
     val fileDuration: Int,
     @SerialName("file_id")
-    val fileId: String
+    val fileId: String,
 )
 
 @Serializable
@@ -154,5 +155,5 @@ data class Emoticon(
     @SerialName("is_dynamic")
     val isDynamic: Int,
     val height: Int,
-    val width: Int
+    val width: Int,
 )

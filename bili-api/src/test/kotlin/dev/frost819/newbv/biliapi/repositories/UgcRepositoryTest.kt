@@ -10,10 +10,11 @@ import kotlin.test.Test
 
 class UgcRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -37,24 +38,26 @@ class UgcRepositoryTest {
     }
 
     @Test
-    fun `get region data`() = runBlocking {
-        UgcType.entries
-            .filter { it.locId != -1 }
-            .forEach { ugcType ->
-                println("ugcType: $ugcType")
-                val result = ugcRepository.getRegionData(ugcType)
-                println(result)
-            }
-    }
+    fun `get region data`() =
+        runBlocking {
+            UgcType.entries
+                .filter { it.locId != -1 }
+                .forEach { ugcType ->
+                    println("ugcType: $ugcType")
+                    val result = ugcRepository.getRegionData(ugcType)
+                    println(result)
+                }
+        }
 
     @Test
-    fun `get region more data`() = runBlocking {
-        UgcType.entries
-            .filter { it.locId != -1 }
-            .forEach { ugcType ->
-                println("ugcType: $ugcType")
-                val result = ugcRepository.getRegionMoreData(ugcType)
-                println(result)
-            }
-    }
+    fun `get region more data`() =
+        runBlocking {
+            UgcType.entries
+                .filter { it.locId != -1 }
+                .forEach { ugcType ->
+                    println("ugcType: $ugcType")
+                    val result = ugcRepository.getRegionMoreData(ugcType)
+                    println(result)
+                }
+        }
 }

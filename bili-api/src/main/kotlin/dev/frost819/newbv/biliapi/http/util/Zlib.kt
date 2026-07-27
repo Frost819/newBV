@@ -7,10 +7,11 @@ import java.util.zip.Inflater
 
 fun ByteArray.zlibCompress(): ByteArray {
     val output = ByteArray(this.size * 4)
-    val compressor = Deflater().apply {
-        setInput(this@zlibCompress)
-        finish()
-    }
+    val compressor =
+        Deflater().apply {
+            setInput(this@zlibCompress)
+            finish()
+        }
     val compressedDataLength: Int = compressor.deflate(output)
     return output.copyOfRange(0, compressedDataLength)
 }

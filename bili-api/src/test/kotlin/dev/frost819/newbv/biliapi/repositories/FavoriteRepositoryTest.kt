@@ -10,10 +10,11 @@ import java.util.Properties
 
 class FavoriteRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -40,134 +41,153 @@ class FavoriteRepositoryTest {
     }
 
     @Test
-    fun `check video is favoured with cookies`() = runBlocking {
-        val result = favoriteRepository.checkVideoFavoured(
-            aid = 170001,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `check video is favoured with cookies`() =
+        runBlocking {
+            val result =
+                favoriteRepository.checkVideoFavoured(
+                    aid = 170001,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `check video is favoured with token`() = runBlocking {
-        val result = favoriteRepository.checkVideoFavoured(
-            aid = 170001,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `check video is favoured with token`() =
+        runBlocking {
+            val result =
+                favoriteRepository.checkVideoFavoured(
+                    aid = 170001,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `add video to favorite folder with cookies`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
-        favoriteRepository.addVideoToFavoriteFolder(
-            aid = 170001,
-            addMediaIds = listOf(defaultMediaId),
-            preferApiType = ApiType.Web
-        )
-    }
+    fun `add video to favorite folder with cookies`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
+            favoriteRepository.addVideoToFavoriteFolder(
+                aid = 170001,
+                addMediaIds = listOf(defaultMediaId),
+                preferApiType = ApiType.Web,
+            )
+        }
 
     @Test
-    fun `add video to favorite folder with token`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
-        favoriteRepository.addVideoToFavoriteFolder(
-            aid = 170001,
-            addMediaIds = listOf(defaultMediaId),
-            preferApiType = ApiType.App
-        )
-    }
+    fun `add video to favorite folder with token`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
+            favoriteRepository.addVideoToFavoriteFolder(
+                aid = 170001,
+                addMediaIds = listOf(defaultMediaId),
+                preferApiType = ApiType.App,
+            )
+        }
 
     @Test
-    fun `del video from favorite folder with cookies`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
-        favoriteRepository.delVideoFromFavoriteFolder(
-            aid = 170001,
-            delMediaIds = listOf(defaultMediaId),
-            preferApiType = ApiType.Web
-        )
-    }
+    fun `del video from favorite folder with cookies`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
+            favoriteRepository.delVideoFromFavoriteFolder(
+                aid = 170001,
+                delMediaIds = listOf(defaultMediaId),
+                preferApiType = ApiType.Web,
+            )
+        }
 
     @Test
-    fun `del video from favorite folder with token`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
-        favoriteRepository.delVideoFromFavoriteFolder(
-            aid = 170001,
-            delMediaIds = listOf(defaultMediaId),
-            preferApiType = ApiType.App
-        )
-    }
+    fun `del video from favorite folder with token`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
+            favoriteRepository.delVideoFromFavoriteFolder(
+                aid = 170001,
+                delMediaIds = listOf(defaultMediaId),
+                preferApiType = ApiType.App,
+            )
+        }
 
     @Test
-    fun `update video to favorite folder with cookies`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
-        favoriteRepository.updateVideoToFavoriteFolder(
-            aid = 170001,
-            addMediaIds = listOf(defaultMediaId),
-            delMediaIds = listOf(),
-            preferApiType = ApiType.Web
-        )
-    }
+    fun `update video to favorite folder with cookies`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
+            favoriteRepository.updateVideoToFavoriteFolder(
+                aid = 170001,
+                addMediaIds = listOf(defaultMediaId),
+                delMediaIds = listOf(),
+                preferApiType = ApiType.Web,
+            )
+        }
 
     @Test
-    fun `update video to favorite folder with token`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
-        favoriteRepository.updateVideoToFavoriteFolder(
-            aid = 170001,
-            addMediaIds = listOf(defaultMediaId),
-            delMediaIds = listOf(),
-            preferApiType = ApiType.App
-        )
-    }
+    fun `update video to favorite folder with token`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
+            favoriteRepository.updateVideoToFavoriteFolder(
+                aid = 170001,
+                addMediaIds = listOf(defaultMediaId),
+                delMediaIds = listOf(),
+                preferApiType = ApiType.App,
+            )
+        }
 
     @Test
-    fun `get all favorite folders metadata with cookies`() = runBlocking {
-        val result = favoriteRepository.getAllFavoriteFolderMetadataList(
-            mid = UID,
-            rid = 170001,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get all favorite folders metadata with cookies`() =
+        runBlocking {
+            val result =
+                favoriteRepository.getAllFavoriteFolderMetadataList(
+                    mid = UID,
+                    rid = 170001,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get all favorite folders metadata with token`() = runBlocking {
-        val result = favoriteRepository.getAllFavoriteFolderMetadataList(
-            mid = UID,
-            rid = 170001,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get all favorite folders metadata with token`() =
+        runBlocking {
+            val result =
+                favoriteRepository.getAllFavoriteFolderMetadataList(
+                    mid = UID,
+                    rid = 170001,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get favorite folder data with cookies`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
-        val result = favoriteRepository.getFavoriteFolderData(
-            mediaId = defaultMediaId,
-            pageSize = 20,
-            pageNumber = 1,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get favorite folder data with cookies`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.Web)
+            val result =
+                favoriteRepository.getFavoriteFolderData(
+                    mediaId = defaultMediaId,
+                    pageSize = 20,
+                    pageNumber = 1,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get favorite folder data with token`() = runBlocking {
-        val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
-        val result = favoriteRepository.getFavoriteFolderData(
-            mediaId = defaultMediaId,
-            pageSize = 20,
-            pageNumber = 1,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get favorite folder data with token`() =
+        runBlocking {
+            val defaultMediaId = getDefaultFavoriteFolderId(ApiType.App)
+            val result =
+                favoriteRepository.getFavoriteFolderData(
+                    mediaId = defaultMediaId,
+                    pageSize = 20,
+                    pageNumber = 1,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     private suspend fun getDefaultFavoriteFolderId(preferApiType: ApiType): Long {
-        val foldersInfoResult = favoriteRepository.getAllFavoriteFolderMetadataList(
-            mid = UID,
-            preferApiType = preferApiType
-        )
+        val foldersInfoResult =
+            favoriteRepository.getAllFavoriteFolderMetadataList(
+                mid = UID,
+                preferApiType = preferApiType,
+            )
         val id = foldersInfoResult.find { it.title == "默认收藏夹" }?.id ?: 0
         println("default media id: $id")
         return id

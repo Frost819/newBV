@@ -13,10 +13,11 @@ import java.util.Properties
 
 class UserRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -36,7 +37,7 @@ class UserRepositoryTest {
     init {
         channelRepository.initDefaultChannel(
             FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID
+            FavoriteRepositoryTest.BUVID,
         )
         BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
@@ -46,74 +47,86 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `get user space videos with web api`() = runBlocking {
-        var page = SpaceVideoPage()
-        while (page.hasNext) {
-            val spaceVideoData = userRepository.getSpaceVideos(
-                mid = 2,
-                order = SpaceVideoOrder.PubDate,
-                page = page,
-                preferApiType = ApiType.Web
-            )
-            page = spaceVideoData.page
-            println("page $page: $spaceVideoData")
-            delay((1000L..3000L).random())
+    fun `get user space videos with web api`() =
+        runBlocking {
+            var page = SpaceVideoPage()
+            while (page.hasNext) {
+                val spaceVideoData =
+                    userRepository.getSpaceVideos(
+                        mid = 2,
+                        order = SpaceVideoOrder.PubDate,
+                        page = page,
+                        preferApiType = ApiType.Web,
+                    )
+                page = spaceVideoData.page
+                println("page $page: $spaceVideoData")
+                delay((1000L..3000L).random())
+            }
         }
-    }
 
     @Test
-    fun `get user space videos with app api`() = runBlocking {
-        var page = SpaceVideoPage()
-        while (page.hasNext) {
-            val spaceVideoData = userRepository.getSpaceVideos(
-                mid = 2,
-                order = SpaceVideoOrder.PubDate,
-                page = page,
-                preferApiType = ApiType.App
-            )
-            page = spaceVideoData.page
-            println("page $page: $spaceVideoData")
-            delay((1000L..3000L).random())
+    fun `get user space videos with app api`() =
+        runBlocking {
+            var page = SpaceVideoPage()
+            while (page.hasNext) {
+                val spaceVideoData =
+                    userRepository.getSpaceVideos(
+                        mid = 2,
+                        order = SpaceVideoOrder.PubDate,
+                        page = page,
+                        preferApiType = ApiType.App,
+                    )
+                page = spaceVideoData.page
+                println("page $page: $spaceVideoData")
+                delay((1000L..3000L).random())
+            }
         }
-    }
 
     @Test
-    fun `get dynamic videos with web api`() = runBlocking {
-        val result = userRepository.getDynamicVideos(
-            page = 1,
-            offset = "",
-            updateBaseline = "",
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get dynamic videos with web api`() =
+        runBlocking {
+            val result =
+                userRepository.getDynamicVideos(
+                    page = 1,
+                    offset = "",
+                    updateBaseline = "",
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get dynamic videos with grpc api`() = runBlocking {
-        val result = userRepository.getDynamicVideos(
-            page = 1,
-            offset = "",
-            updateBaseline = "",
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get dynamic videos with grpc api`() =
+        runBlocking {
+            val result =
+                userRepository.getDynamicVideos(
+                    page = 1,
+                    offset = "",
+                    updateBaseline = "",
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get following users with web api`() = runBlocking {
-        val result = userRepository.getFollowedUsers(
-            mid = UID,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get following users with web api`() =
+        runBlocking {
+            val result =
+                userRepository.getFollowedUsers(
+                    mid = UID,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get following users with app api`() = runBlocking {
-        val result = userRepository.getFollowedUsers(
-            mid = UID,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get following users with app api`() =
+        runBlocking {
+            val result =
+                userRepository.getFollowedUsers(
+                    mid = UID,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 }

@@ -25,5 +25,5 @@ data class SeasonSection(
     val episodes: List<Episode> = emptyList(),
     val id: Long,
     val title: String,
-    val type: Int
+    val type: Int,
 )

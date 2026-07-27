@@ -7,16 +7,17 @@ data class VideoPage(
     val index: Int,
     val title: String,
     val duration: Int,
-    val dimension: Dimension
+    val dimension: Dimension,
 ) {
     companion object {
-        fun fromViewPage(viewPage: ViewPage) = VideoPage(
-            cid = viewPage.page.cid,
-            index = viewPage.page.page,
-            title = viewPage.page.part,
-            duration = viewPage.page.duration.toInt(),
-            dimension = Dimension.fromDimension(viewPage.page.dimension)
-        )
+        fun fromViewPage(viewPage: ViewPage) =
+            VideoPage(
+                cid = viewPage.page.cid,
+                index = viewPage.page.page,
+                title = viewPage.page.part,
+                duration = viewPage.page.duration.toInt(),
+                dimension = Dimension.fromDimension(viewPage.page.dimension),
+            )
 
         fun fromVideoPage(videoPage: dev.frost819.newbv.biliapi.http.entity.video.VideoPage) =
             VideoPage(
@@ -24,7 +25,7 @@ data class VideoPage(
                 index = videoPage.page,
                 title = videoPage.part,
                 duration = videoPage.duration,
-                dimension = Dimension.fromDimension(videoPage.dimension)
+                dimension = Dimension.fromDimension(videoPage.dimension),
             )
     }
 }

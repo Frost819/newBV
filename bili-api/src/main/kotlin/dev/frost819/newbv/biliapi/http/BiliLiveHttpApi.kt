@@ -28,26 +28,29 @@ object BiliLiveHttpApi {
     }
 
     private fun createClient() {
-        client = HttpClient(OkHttp) {
-            BiliUserAgent()
-            install(ContentNegotiation) {
-                json(Json {
-                    coerceInputValues = true
-                    ignoreUnknownKeys = true
-                    prettyPrint = true
-                })
-            }
-            install(ContentEncoding) {
-                deflate(1.0F)
-                gzip(0.9F)
-            }
-            defaultRequest {
-                url {
-                    host = "api.live.bilibili.com"
-                    protocol = URLProtocol.HTTPS
+        client =
+            HttpClient(OkHttp) {
+                BiliUserAgent()
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            coerceInputValues = true
+                            ignoreUnknownKeys = true
+                            prettyPrint = true
+                        },
+                    )
+                }
+                install(ContentEncoding) {
+                    deflate(1.0F)
+                    gzip(0.9F)
+                }
+                defaultRequest {
+                    url {
+                        host = "api.live.bilibili.com"
+                        protocol = URLProtocol.HTTPS
+                    }
                 }
             }
-        }
     }
 
     /**
@@ -73,5 +76,4 @@ object BiliLiveHttpApi {
         client.get("/xlive/web-room/v1/dM/gethistory") {
             parameter("roomid", roomId)
         }.body()
-
 }

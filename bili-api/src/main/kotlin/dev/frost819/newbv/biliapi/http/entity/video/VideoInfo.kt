@@ -127,21 +127,22 @@ data class VideoInfo(
     val isUpowerExclusive: Boolean? = null,
 ) {
     init {
-        rcmdReason = if (_rcmdReason == null) {
-            null
-        } else if (_rcmdReason is JsonObject) {
-            Json.decodeFromJsonElement<RcmdReason>(_rcmdReason)
-        } else {
-            val reason = _rcmdReason.jsonPrimitive.content
-            if (reason == "") null else RcmdReason(content = reason, cornerMark = 0)
-        }
+        rcmdReason =
+            if (_rcmdReason == null) {
+                null
+            } else if (_rcmdReason is JsonObject) {
+                Json.decodeFromJsonElement<RcmdReason>(_rcmdReason)
+            } else {
+                val reason = _rcmdReason.jsonPrimitive.content
+                if (reason == "") null else RcmdReason(content = reason, cornerMark = 0)
+            }
     }
 
     @Serializable
     data class RcmdReason(
         val content: String,
         @SerialName("corner_mark")
-        val cornerMark: Int
+        val cornerMark: Int,
     )
 }
 
@@ -197,9 +198,8 @@ data class VideoRights(
     @SerialName("arc_pay")
     val arcPay: Int,
     @SerialName("pay_free_watch")
-    val payFreeWatch: Int? = null
+    val payFreeWatch: Int? = null,
 )
-
 
 /**
  * 视频作者
@@ -212,9 +212,8 @@ data class VideoRights(
 data class VideoOwner(
     val mid: Long,
     val name: String,
-    val face: String
+    val face: String,
 )
-
 
 /**
  * 视频数据
@@ -252,8 +251,8 @@ data class VideoStat(
     val dislike: Int = 0,
     val evaluation: String = "",
     @SerialName("argue_msg")
-    val argueMsg: String = ""
-){
+    val argueMsg: String = "",
+) {
     val view: Int
         get() = if (_view > Int.MAX_VALUE) Int.MIN_VALUE else _view.toInt()
 }
@@ -269,7 +268,7 @@ data class VideoStat(
 data class Dimension(
     val width: Int,
     val height: Int,
-    val rotate: Int
+    val rotate: Int,
 )
 
 @Serializable
@@ -278,7 +277,7 @@ data class Premiere(
     @SerialName("start_time")
     val startTime: Long,
     @SerialName("room_id")
-    val roomId: Int
+    val roomId: Int,
 )
 
 /**
@@ -302,7 +301,7 @@ data class VideoPage(
     val duration: Int,
     val vid: String,
     val weblink: String,
-    val dimension: Dimension
+    val dimension: Dimension,
 )
 
 /**
@@ -312,7 +311,7 @@ data class VideoPage(
  */
 @Serializable
 data class HonorReply(
-    val honor: List<HonorReplyItem> = emptyList()
+    val honor: List<HonorReplyItem> = emptyList(),
 )
 
 /**
@@ -329,5 +328,5 @@ data class HonorReplyItem(
     val type: Int,
     val desc: String,
     @SerialName("weekly_recommend_num")
-    val weeklyRecommendNum: Int
+    val weeklyRecommendNum: Int,
 )

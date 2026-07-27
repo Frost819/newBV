@@ -22,5 +22,5 @@ data class Upper(
     @SerialName("vip_type")
     val vipType: Int = 0,
     @SerialName("vip_statue")
-    val vipStatue: Int = 0
+    val vipStatue: Int = 0,
 )

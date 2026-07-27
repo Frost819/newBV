@@ -91,7 +91,7 @@ data class PlayUrlData(
     @SerialName("clip_info_list")
     val clipInfoList: List<JsonElement> = emptyList(),
     @SerialName("record_info")
-    val recordInfo: RecordInfo? = null
+    val recordInfo: RecordInfo? = null,
 )
 
 @Serializable
@@ -105,18 +105,18 @@ data class PlayUrlV2Data(
     @SerialName("video_info")
     val videoInfo: PlayUrlData,
     @SerialName("view_info")
-    val viewInfo: ViewInfo
+    val viewInfo: ViewInfo,
 ) {
     @Serializable
     data class ExpInfo(
         @SerialName("buy_vip_donated_season")
-        val buyVipDonatedSeason: Int
+        val buyVipDonatedSeason: Int,
     )
 
     @Serializable
     data class PlayCheck(
         @SerialName("play_detail")
-        val playDetail: String
+        val playDetail: String,
     )
 
     @Serializable
@@ -126,7 +126,7 @@ data class PlayUrlV2Data(
         @SerialName("season_info")
         val seasonInfo: SeasonInfo,
         @SerialName("user_status")
-        val userStatus: UserStatus
+        val userStatus: UserStatus,
     ) {
         @Serializable
         data class EpisodeInfo(
@@ -144,11 +144,11 @@ data class PlayUrlV2Data(
             val interaction: Interaction,
             @SerialName("long_title")
             val longTitle: String,
-            val title: String
+            val title: String,
         ) {
             @Serializable
             data class Interaction(
-                val interaction: Boolean
+                val interaction: Boolean,
             )
         }
 
@@ -171,13 +171,13 @@ data class PlayUrlV2Data(
             @SerialName("vip_info")
             val vipInfo: VipInfo,
             @SerialName("watch_progress")
-            val watchProgress: WatchProgress
+            val watchProgress: WatchProgress,
         ) {
             @Serializable
             data class FollowInfo(
                 val follow: Int,
                 @SerialName("follow_status")
-                val followStatus: Int
+                val followStatus: Int,
             )
 
             @Serializable
@@ -186,13 +186,13 @@ data class PlayUrlV2Data(
                 val payCheck: Int,
                 @SerialName("pay_pack_paid")
                 val payPackPaid: Int,
-                val sponsor: Int
+                val sponsor: Int,
             )
 
             @Serializable
             data class VipInfo(
                 @SerialName("real_vip")
-                val realVip: Boolean
+                val realVip: Boolean,
             )
 
             @Serializable
@@ -202,7 +202,7 @@ data class PlayUrlV2Data(
                 @SerialName("last_ep_id")
                 val lastEpId: Int,
                 @SerialName("last_time")
-                val lastTime: Int
+                val lastTime: Int,
             )
         }
     }
@@ -217,23 +217,23 @@ data class PlayUrlV2Data(
         val extToast: JsonElement,
         @SerialName("qn_trial_info")
         val qnTrialInfo: QnTrialInfo,
-        val report: Report
+        val report: Report,
     ) {
         @Serializable
         data class AiRepairQnTrialInfo(
             @SerialName("trial_able")
-            val trialAble: Boolean
+            val trialAble: Boolean,
         )
 
         @Serializable
         data class EndPage(
-            val hide: Boolean
+            val hide: Boolean,
         )
 
         @Serializable
         data class QnTrialInfo(
             @SerialName("trial_able")
-            val trialAble: Boolean
+            val trialAble: Boolean,
         )
 
         @Serializable
@@ -251,7 +251,7 @@ data class PlayUrlV2Data(
             @SerialName("vip_status")
             val vipStatus: String,
             @SerialName("vip_type")
-            val vipType: String
+            val vipType: String,
         )
     }
 }
@@ -276,10 +276,10 @@ data class Durl(
     val vhead: String,
     val url: String,
     @SerialName("backup_url")
-    val backupUrl: List<String> = emptyList()
+    val backupUrl: List<String> = emptyList(),
 )
 
-//TODO
+// TODO
 @Serializable
 data class Dash(
     val duration: Int,
@@ -287,19 +287,19 @@ data class Dash(
     val video: List<DashData> = emptyList(),
     val audio: List<DashData>? = null,
     val dolby: DashDolby = DashDolby(),
-    val flac: DashFlac? = null
+    val flac: DashFlac? = null,
 )
 
 @Serializable
 data class DashDolby(
     val audio: List<DashData>? = null,
-    val type: Int = 2
+    val type: Int = 2,
 )
 
 @Serializable
 data class DashFlac(
     val display: Boolean,
-    val audio: DashData? = null
+    val audio: DashData? = null,
 )
 
 @Serializable
@@ -322,14 +322,14 @@ data class DashData(
     @SerialName("segment_base")
     val segmentBase: SegmentBase,
     @SerialName("codecid")
-    val codecId: Int
+    val codecId: Int,
 )
 
 @Serializable
 data class SegmentBase(
     val initialization: String,
     @SerialName("index_range")
-    val indexRange: String
+    val indexRange: String,
 )
 
 /**
@@ -360,7 +360,7 @@ data class SupportFormat(
     @SerialName("need_login")
     val needLogin: Boolean = false,
     @SerialName("need_vip")
-    val needVip: Boolean = false
+    val needVip: Boolean = false,
 )
 
 /**
@@ -373,7 +373,7 @@ data class SupportFormat(
 data class RecordInfo(
     @SerialName("record_icon")
     val recordIcon: String,
-    val record: String
+    val record: String,
 )
 
 @Serializable
@@ -389,5 +389,5 @@ enum class VideoQuality(val qn: Int, val displayName: String) {
     Q4K(120, ""),
     HDR(125, ""),
     Dolby(126, ""),
-    Q8K(127, "")
+    Q8K(127, ""),
 }

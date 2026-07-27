@@ -1,8 +1,13 @@
 package dev.frost819.newbv.biliapi.http.entity.index
 
 enum class IndexOrder(val id: Int) {
-    UpdateTime(0), DanmakuCount(1), PlayCount(2), FollowCount(3),
-    Score(4), StartTime(5), PublishTime(6)
+    UpdateTime(0),
+    DanmakuCount(1),
+    PlayCount(2),
+    FollowCount(3),
+    Score(4),
+    StartTime(5),
+    PublishTime(6),
 }
 
 private val animeIds = listOf(3, 0, 4, 2, 5)
@@ -18,4 +23,3 @@ val varietyIndexOrders by lazy { varietyIds.map { IndexOrder.entries[it] } }
 val tvIndexOrders by lazy { tvIds.map { IndexOrder.entries[it] } }
 val movieIndexOrders by lazy { movieIds.map { IndexOrder.entries[it] } }
 val documentaryIndexOrders by lazy { documentaryIds.map { IndexOrder.entries[it] } }
-

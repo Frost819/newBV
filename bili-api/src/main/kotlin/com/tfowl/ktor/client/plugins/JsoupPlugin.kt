@@ -28,12 +28,10 @@ import org.jsoup.parser.Parser
  * @property parsers Registered parsers for content types
  */
 class JsoupPlugin internal constructor(val parsers: Map<ContentType, Parser>) {
-
     /**
      * [JsoupPlugin] configuration that is used during installation
      */
     class Config {
-
         /**
          * [Parsers][Parser] that will be used for each [ContentType]
          *
@@ -41,11 +39,12 @@ class JsoupPlugin internal constructor(val parsers: Map<ContentType, Parser>) {
          *  - Html: [ContentType.Text.Html]
          *  - Xml: [ContentType.Text.Xml] and [ContentType.Application.Xml]
          */
-        var parsers = mutableMapOf(
-            ContentType.Text.Html to Parser.htmlParser(),
-            ContentType.Text.Xml to Parser.xmlParser(),
-            ContentType.Application.Xml to Parser.xmlParser()
-        )
+        var parsers =
+            mutableMapOf(
+                ContentType.Text.Html to Parser.htmlParser(),
+                ContentType.Text.Xml to Parser.xmlParser(),
+                ContentType.Application.Xml to Parser.xmlParser(),
+            )
     }
 
     /**
@@ -54,22 +53,27 @@ class JsoupPlugin internal constructor(val parsers: Map<ContentType, Parser>) {
     companion object Plugin : HttpClientPlugin<Config, JsoupPlugin> {
         override val key: AttributeKey<JsoupPlugin> = AttributeKey("Jsoup")
 
-        override fun prepare(block: Config.() -> Unit): JsoupPlugin =
-            JsoupPlugin(Config().apply(block).parsers)
+        override fun prepare(block: Config.() -> Unit): JsoupPlugin = JsoupPlugin(Config().apply(block).parsers)
 
-        override fun install(plugin: JsoupPlugin, scope: HttpClient) {
+        override fun install(
+            plugin: JsoupPlugin,
+            scope: HttpClient,
+        ) {
             scope.responsePipeline.intercept(HttpResponsePipeline.Transform) { (info, body) ->
-                if (body !is ByteReadChannel)
+                if (body !is ByteReadChannel) {
                     return@intercept
+                }
 
-                if (!info.type.java.isAssignableFrom(Document::class.java))
+                if (!info.type.java.isAssignableFrom(Document::class.java)) {
                     return@intercept
+                }
 
                 val responseContentType = context.response.contentType() ?: return@intercept
 
-                val parser = plugin.parsers.firstNotNullOfOrNull { (type, parser) ->
-                    parser.takeIf { responseContentType.match(type) }
-                } ?: return@intercept
+                val parser =
+                    plugin.parsers.firstNotNullOfOrNull { (type, parser) ->
+                        parser.takeIf { responseContentType.match(type) }
+                    } ?: return@intercept
 
                 val bodyContent = body.readRemaining().readText()
                 val baseUri = context.request.url.toString()

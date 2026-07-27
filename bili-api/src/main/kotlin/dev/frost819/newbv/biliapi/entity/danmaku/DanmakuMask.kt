@@ -14,30 +14,31 @@ data class DanmakuMaskSegment(
 )
 
 sealed class DanmakuMaskFrame(
-    open val range: LongRange
+    open val range: LongRange,
 )
 
 data class DanmakuWebMaskFrame(
     override val range: LongRange,
-    val svg: String
+    val svg: String,
 ) : DanmakuMaskFrame(range)
 
 data class DanmakuMobMaskFrame(
     override val range: LongRange,
     val width: Int,
     val height: Int,
-    val image: ByteArray
+    val image: ByteArray,
 ) : DanmakuMaskFrame(range) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DanmakuMobMaskFrame) return false
         return range == other.range && width == other.width &&
-                height == other.height && image.contentEquals(other.image)
+            height == other.height && image.contentEquals(other.image)
     }
 
     override fun hashCode(): Int {
         var r = range.hashCode()
-        r = 31 * r + width; r = 31 * r + height
+        r = 31 * r + width
+        r = 31 * r + height
         r = 31 * r + image.contentHashCode()
         return r
     }
@@ -45,8 +46,10 @@ data class DanmakuMobMaskFrame(
 
 // ── 内部目录条目：只记录时间范围 + 压缩数据在文件中的字节偏移，不持有数据 ──
 private data class SegmentEntry(
-    val segRange: LongRange,        // segment 对应的播放时间范围
-    val compressedBytes: ByteArray, // 该 segment 的 gzip 压缩块（原始字节，未解压）
+    // segment 对应的播放时间范围
+    val segRange: LongRange,
+    // 该 segment 的 gzip 压缩块（原始字节，未解压）
+    val compressedBytes: ByteArray,
 )
 
 // ── 主数据类 ─────────────────────────────────────────────────────────────────
@@ -72,7 +75,6 @@ class DanmakuMask private constructor(
         return decompressEntry(entry, type)
     }
 
-
     val segmentCount: Int get() = entries.size
 
     /**
@@ -85,10 +87,13 @@ class DanmakuMask private constructor(
     }
 
     // ── 解压单个 segment ────────────────────────────────────────────────────
-    private fun decompressEntry(entry: SegmentEntry, type: DanmakuMaskType): DanmakuMaskSegment {
+    private fun decompressEntry(
+        entry: SegmentEntry,
+        type: DanmakuMaskType,
+    ): DanmakuMaskSegment {
         val compressedBuffer = Buffer().write(entry.compressedBytes)
         val frames = mutableListOf<DanmakuMaskFrame>()
-        var lastTime = entry.segRange.first    // 注：segment 内帧时间是连续的，首帧 range 起点在解压时确定
+        var lastTime = entry.segRange.first // 注：segment 内帧时间是连续的，首帧 range 起点在解压时确定
 
         GzipSource(compressedBuffer).buffer().use { gz ->
             when (type) {
@@ -99,8 +104,9 @@ class DanmakuMask private constructor(
                         gz.require(svgLength)
                         val raw = gz.readUtf8(svgLength)
                         val commaIdx = raw.indexOf(',')
-                        val b64 = (if (commaIdx != -1) raw.substring(commaIdx + 1) else raw)
-                            .replace("\n", "")
+                        val b64 =
+                            (if (commaIdx != -1) raw.substring(commaIdx + 1) else raw)
+                                .replace("\n", "")
                         val svg = b64.decodeBase64()?.utf8() ?: ""
                         frames.add(DanmakuWebMaskFrame(range = lastTime until time, svg = svg))
                         lastTime = time
@@ -126,18 +132,26 @@ class DanmakuMask private constructor(
     }
 
     companion object {
-
         /** 推荐：流式读取，只把每个 segment 的压缩块存入内存，不解压 */
-        fun fromStream(input: InputStream, type: DanmakuMaskType): DanmakuMask {
+        fun fromStream(
+            input: InputStream,
+            type: DanmakuMaskType,
+        ): DanmakuMask {
             return input.source().buffer().use { parseFromSource(it, type) }
         }
 
         /** 兼容旧调用 */
-        fun fromBinary(binary: ByteArray, type: DanmakuMaskType): DanmakuMask {
+        fun fromBinary(
+            binary: ByteArray,
+            type: DanmakuMaskType,
+        ): DanmakuMask {
             return parseFromSource(Buffer().write(binary), type)
         }
 
-        private fun parseFromSource(source: BufferedSource, type: DanmakuMaskType): DanmakuMask {
+        private fun parseFromSource(
+            source: BufferedSource,
+            type: DanmakuMaskType,
+        ): DanmakuMask {
             val magic = source.readByteString(4)
             require(magic.utf8() == "MASK") { "Not a mask file" }
 
@@ -181,5 +195,6 @@ class DanmakuMask private constructor(
 }
 
 enum class DanmakuMaskType {
-    WebMask, MobMask
+    WebMask,
+    MobMask,
 }

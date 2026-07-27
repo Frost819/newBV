@@ -92,5 +92,5 @@ data class MyInfoData(
     val levelExp: LevelInfo,
     val coins: Float,
     val following: Int,
-    val follower: Int
+    val follower: Int,
 )

@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import AppConfiguration
-
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
@@ -23,7 +21,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -40,16 +38,16 @@ android {
 
     packaging {
         resources {
-            excludes += listOf(
-                "/META-INF/{INDEX.LIST,AL2.0,LGPL2.1}",
-                "/META-INF/LICENSE.md",
-                "/META-INF/LICENSE-notice.md",
-                "META-INF/versions/9/OSGI-INF/MANIFEST{MF,.MF}"
-            )
+            excludes +=
+                listOf(
+                    "/META-INF/{INDEX.LIST,AL2.0,LGPL2.1}",
+                    "/META-INF/LICENSE.md",
+                    "/META-INF/LICENSE-notice.md",
+                    "META-INF/versions/9/OSGI-INF/MANIFEST{MF,.MF}",
+                )
         }
     }
 }
-
 
 dependencies {
     implementation(project(":core"))

@@ -35,7 +35,7 @@ data class SeasonDetail(
     val seasons: List<PgcSeason> = emptyList(),
     val episodes: List<Episode> = emptyList(),
     val sections: List<Section> = emptyList(),
-    var playerIcon: PlayerIcon? = null
+    var playerIcon: PlayerIcon? = null,
 ) {
     companion object {
         fun fromSeasonData(seasonData: WebSeasonData): SeasonDetail {
@@ -52,8 +52,10 @@ data class SeasonDetail(
                 newEpDesc = seasonData.newEp.desc,
                 seasons = seasonData.seasons.map { PgcSeason.fromSeason(it) },
                 episodes = seasonData.episodes.map { Episode.fromEpisode(it) },
-                sections = seasonData.section.map { Section.fromSection(it) }
-                    .filter { it.episodes.isNotEmpty() }    // 过滤掉跳转别的 pgc 的视频后可能出现空列表
+                sections =
+                    seasonData.section.map { Section.fromSection(it) }
+                        // 过滤掉跳转别的 pgc 的视频后可能出现空列表
+                        .filter { it.episodes.isNotEmpty() },
             )
         }
 
@@ -69,20 +71,23 @@ data class SeasonDetail(
                 userStatus = UserStatus.fromUserStatus(seasonData.userStatus),
                 publish = Publish.fromPublish(seasonData.publish),
                 newEpDesc = seasonData.newEp.desc,
-                seasons = seasonData.modules
-                    .firstOrNull { it.style == "season" }
-                    ?.data?.seasons
-                    ?.map { PgcSeason.fromSeason(it) }
-                    ?: emptyList(),
-                episodes = seasonData.modules
-                    .firstOrNull { it.style == "positive" }
-                    ?.data?.episodes
-                    ?.map { Episode.fromEpisode(it) }
-                    ?: emptyList(),
-                sections = seasonData.modules
-                    .filter { it.style == "section" }
-                    .map { Section.fromModule(it) },
-                playerIcon = PlayerIcon.fromPlayerIcon(seasonData.playerIcon)
+                seasons =
+                    seasonData.modules
+                        .firstOrNull { it.style == "season" }
+                        ?.data?.seasons
+                        ?.map { PgcSeason.fromSeason(it) }
+                        ?: emptyList(),
+                episodes =
+                    seasonData.modules
+                        .firstOrNull { it.style == "positive" }
+                        ?.data?.episodes
+                        ?.map { Episode.fromEpisode(it) }
+                        ?: emptyList(),
+                sections =
+                    seasonData.modules
+                        .filter { it.style == "section" }
+                        .map { Section.fromModule(it) },
+                playerIcon = PlayerIcon.fromPlayerIcon(seasonData.playerIcon),
             )
         }
     }
@@ -97,20 +102,21 @@ data class SeasonDetail(
     data class UserStatus(
         val follow: Boolean,
         val pay: Boolean,
-        val progress: Progress? = null
+        val progress: Progress? = null,
     ) {
         companion object {
             fun fromUserStatus(userStatus: WebSeasonData.UserStatus): UserStatus {
                 return UserStatus(
                     follow = userStatus.follow == 1,
                     pay = userStatus.pay == 1,
-                    progress = userStatus.progress?.let {
-                        Progress(
-                            lastEpId = it.lastEpId,
-                            lastEpIndex = it.lastEpIndex,
-                            lastTime = it.lastTime
-                        )
-                    }
+                    progress =
+                        userStatus.progress?.let {
+                            Progress(
+                                lastEpId = it.lastEpId,
+                                lastEpIndex = it.lastEpIndex,
+                                lastTime = it.lastTime,
+                            )
+                        },
                 )
             }
 
@@ -118,13 +124,14 @@ data class SeasonDetail(
                 return UserStatus(
                     follow = userStatus.follow == 1,
                     pay = userStatus.pay == 1,
-                    progress = userStatus.progress?.let {
-                        Progress(
-                            lastEpId = it.lastEpId,
-                            lastEpIndex = it.lastEpIndex,
-                            lastTime = it.lastTime
-                        )
-                    }
+                    progress =
+                        userStatus.progress?.let {
+                            Progress(
+                                lastEpId = it.lastEpId,
+                                lastEpIndex = it.lastEpIndex,
+                                lastTime = it.lastTime,
+                            )
+                        },
                 )
             }
         }
@@ -139,19 +146,19 @@ data class SeasonDetail(
         data class Progress(
             val lastEpId: Int,
             val lastEpIndex: String,
-            val lastTime: Int
+            val lastTime: Int,
         )
     }
 
     data class Publish(
         val isPublished: Boolean,
-        val publishDate: String
+        val publishDate: String,
     ) {
         companion object {
             fun fromPublish(publish: dev.frost819.newbv.biliapi.http.entity.season.Publish): Publish {
                 return Publish(
                     isPublished = publish.isStarted,
-                    publishDate = publish.pubTimeShow
+                    publishDate = publish.pubTimeShow,
                 )
             }
         }

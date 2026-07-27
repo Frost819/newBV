@@ -7,16 +7,17 @@ import kotlinx.serialization.Serializable
 data class NavResponseData(
     val isLogin: Boolean,
     @SerialName("wbi_img")
-    val wbiImg: WbiImg
+    val wbiImg: WbiImg,
 ) {
     @Serializable
     data class WbiImg(
         @SerialName("img_url")
         val imgUrl: String,
         @SerialName("sub_url")
-        val subUrl: String
+        val subUrl: String,
     ) {
         fun getImgKey(): String = imgUrl.split("/").last().split(".").first()
+
         fun getSubKey(): String = subUrl.split("/").last().split(".").first()
     }
 }

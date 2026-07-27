@@ -38,31 +38,33 @@ object LiveDataWebSocket {
     private lateinit var client: HttpClient
     private val logger = KotlinLogging.logger { }
 
-    private val heartbeat = byteArrayOf(
-        0, 0, 0, 0x1f,
-        0, 0x10, 0, 0x1,
-        0, 0, 0, 0x2,
-        0, 0, 0, 0x1,
-        0x5b, 0x6f, 0x62, 0x6a,
-        0x65, 0x63, 0x74, 0x20,
-        0x4f, 0x62, 0x6a, 0x65,
-        0x63, 0x74, 0x5d
-    )
+    private val heartbeat =
+        byteArrayOf(
+            0, 0, 0, 0x1f,
+            0, 0x10, 0, 0x1,
+            0, 0, 0, 0x2,
+            0, 0, 0, 0x1,
+            0x5b, 0x6f, 0x62, 0x6a,
+            0x65, 0x63, 0x74, 0x20,
+            0x4f, 0x62, 0x6a, 0x65,
+            0x63, 0x74, 0x5d,
+        )
 
     init {
         createClient()
     }
 
     private fun createClient() {
-        client = HttpClient(OkHttp) {
-            BiliUserAgent()
-            install(WebSockets)
-        }
+        client =
+            HttpClient(OkHttp) {
+                BiliUserAgent()
+                install(WebSockets)
+            }
     }
 
     suspend fun connectLiveEvent(
         roomId: Int,
-        onEvent: (event: LiveEvent) -> Unit
+        onEvent: (event: LiveEvent) -> Unit,
     ) {
         val danmuInfo =
             BiliLiveHttpApi.getLiveDanmuInfo(roomId).data ?: throw CancellationException()
@@ -71,52 +73,54 @@ object LiveDataWebSocket {
                 ?: throw CancellationException()
         val hosts = danmuInfo.hostList.last()
 
-        val data = buildJsonObject {
-            put("uid", 0)
-            put("roomid", realRoomId)
-            put("protover", 2)
-            put("platform", "web")
-            put("type", 2)
-            put("key", danmuInfo.token)
-        }.toString().toByteArray()
-        val b = buildPacket {
-            val size = 16 + data.size
-            writeInt(size) // 封包总大小
-            writeShort(0x10) // 头部大小
-            writeShort(1) // 协议版本
-            writeInt(7) // 类型
-            writeInt(1)
-            writePacket(ByteReadPacket(data))
-        }
+        val data =
+            buildJsonObject {
+                put("uid", 0)
+                put("roomid", realRoomId)
+                put("protover", 2)
+                put("platform", "web")
+                put("type", 2)
+                put("key", danmuInfo.token)
+            }.toString().toByteArray()
+        val b =
+            buildPacket {
+                val size = 16 + data.size
+                writeInt(size) // 封包总大小
+                writeShort(0x10) // 头部大小
+                writeShort(1) // 协议版本
+                writeInt(7) // 类型
+                writeInt(1)
+                writePacket(ByteReadPacket(data))
+            }
 
-        val job = client.launch {
-            client.wss(
-                host = hosts.host,
-                port = hosts.wssPort,
-                path = "/sub"
-            ) {
-                val byte = b.readByteArray()
-                outgoing.send(Frame.Binary(true, byte))
-                launch {
-                    delay(5000)
-                    while (isActive) {
-                        //println("send heart")
-                        outgoing.send(Frame.Binary(true, heartbeat))
-                        delay(30_000)
-                    }
-                }
-                while (isActive) {
-                    val frame = incoming.receive()
-                    val eventData = frame.data
+        val job =
+            client.launch {
+                client.wss(
+                    host = hosts.host,
+                    port = hosts.wssPort,
+                    path = "/sub",
+                ) {
+                    val byte = b.readByteArray()
+                    outgoing.send(Frame.Binary(true, byte))
                     launch {
-
-                        handleLiveEventData(eventData).forEach { event ->
-                            onEvent(event)
+                        delay(5000)
+                        while (isActive) {
+                            // println("send heart")
+                            outgoing.send(Frame.Binary(true, heartbeat))
+                            delay(30_000)
+                        }
+                    }
+                    while (isActive) {
+                        val frame = incoming.receive()
+                        val eventData = frame.data
+                        launch {
+                            handleLiveEventData(eventData).forEach { event ->
+                                onEvent(event)
+                            }
                         }
                     }
                 }
             }
-        }
         job.invokeOnCompletion {
             it?.printStackTrace()
         }
@@ -134,32 +138,35 @@ object LiveDataWebSocket {
         return result
     }
 
-    private fun handleLiveEventBody(head: FrameHeader, data: ByteArray): List<LiveEvent> {
+    private fun handleLiveEventBody(
+        head: FrameHeader,
+        data: ByteArray,
+    ): List<LiveEvent> {
         val result = mutableListOf<LiveEvent>()
         val bytePack = ByteReadPacket(data)
         when (head.type) {
-            //心跳包回复（人气值）
+            // 心跳包回复（人气值）
             3 -> {
-                //println("接收心跳，房间人气值: ${bytePack.readInt()}")
+                // println("接收心跳，房间人气值: ${bytePack.readInt()}")
             }
 
-            //普通包（命令）
+            // 普通包（命令）
             5 -> {
                 when (head.version.toInt()) {
-                    //0 普通包正文不使用压缩
-                    //1 心跳及认证包正文不使用压缩
+                    // 0 普通包正文不使用压缩
+                    // 1 心跳及认证包正文不使用压缩
                     0, 1 -> {
                         val strData = bytePack.readByteArray().decodeToString()
                         handleLiveCMDEventString(strData)?.let { result += it }
                     }
 
-                    //普通包正文使用zlib压缩
+                    // 普通包正文使用zlib压缩
                     2 -> {
                         val decompress = bytePack.readByteArray().zlibDecompress()
                         result += handleLiveEventBodyDecompress(decompress)
                     }
 
-                    //普通包正文使用brotli压缩,解压为一个带头部的协议0普通包
+                    // 普通包正文使用brotli压缩,解压为一个带头部的协议0普通包
                     3 -> {
                         logger.warn { "todo package version: ${head.version}" }
                         bytePack.readByteArray()
@@ -172,7 +179,7 @@ object LiveDataWebSocket {
                 }
             }
 
-            //认证包回复
+            // 认证包回复
             8 -> {
                 bytePack.readByteArray(10)
             }
@@ -182,11 +189,15 @@ object LiveDataWebSocket {
                 bytePack.readByteArray()
             }
         }
-        return if (bytePack.remaining > 16) result + handleLiveEventBody(
-            bytePack.readFrameHeader(),
-            bytePack.readByteArray()
-        )
-        else result
+        return if (bytePack.remaining > 16) {
+            result +
+                handleLiveEventBody(
+                    bytePack.readFrameHeader(),
+                    bytePack.readByteArray(),
+                )
+        } else {
+            result
+        }
     }
 
     private fun handleLiveEventBodyDecompress(data: ByteArray): List<LiveEvent> {
@@ -198,7 +209,10 @@ object LiveDataWebSocket {
         return if (bytePack.remaining > 0) result + handleLiveEventBodyDecompress(bytePack.readByteArray()) else result
     }
 
-    private fun handleLiveCMDEvent(head: FrameHeader, data: ByteArray): List<LiveEvent> {
+    private fun handleLiveCMDEvent(
+        head: FrameHeader,
+        data: ByteArray,
+    ): List<LiveEvent> {
         val result = mutableListOf<LiveEvent>()
         val strData: String
         when (head.version.toInt()) {
@@ -213,10 +227,11 @@ object LiveDataWebSocket {
                 val body =
                     bytePack.readByteArray((packageHeader.totalLength - packageHeader.headerLength))
                 if (bytePack.remaining > 16) {
-                    result += handleLiveEventBody(
-                        bytePack.readFrameHeader(),
-                        bytePack.readByteArray()
-                    )
+                    result +=
+                        handleLiveEventBody(
+                            bytePack.readFrameHeader(),
+                            bytePack.readByteArray(),
+                        )
                 }
                 strData = body.decodeToString()
             }
@@ -253,7 +268,7 @@ object LiveDataWebSocket {
                         mid = senderMid,
                         username = senderUsername,
                         medalName = medalName,
-                        medalLevel = medalLevel
+                        medalLevel = medalLevel,
                     )
                 }.onFailure {
                     logger.warn { "Parse danmaku content failed: ${it.message}" }
@@ -261,9 +276,9 @@ object LiveDataWebSocket {
             }
 
             "ENTRY_EFFECT" -> {}
-            //有人上舰
+            // 有人上舰
             "GUARD_BUY" -> {}
-            //千舰通知
+            // 千舰通知
             "GUARD_HONOR_THOUSAND" -> {
                 println(dataJson)
             }
@@ -289,11 +304,11 @@ object LiveDataWebSocket {
             "ROOM_REAL_TIME_MESSAGE_UPDATE" -> {}
             "SEND_GIFT" -> {}
             "STOP_LIVE_ROOM_LIST" -> {}
-            //醒目留言入口提醒（氪金提醒）
+            // 醒目留言入口提醒（氪金提醒）
             "SUPER_CHAT_ENTRANCE" -> {}
-            //醒目留言
+            // 醒目留言
             "SUPER_CHAT_MESSAGE" -> {}
-            //醒目留言
+            // 醒目留言
             "SUPER_CHAT_MESSAGE_JPN" -> {}
             "SYS_MSG" -> {
                 println(dataJson)

@@ -107,6 +107,7 @@ class ExoMediaPlayer(
         }
 
         val mediaSources = listOfNotNull(videoMediaSource, audioMediaSource)
+        @Suppress("SpreadOperator")
         mMediaSource = MergingMediaSource(*mediaSources.toTypedArray())
     }
 

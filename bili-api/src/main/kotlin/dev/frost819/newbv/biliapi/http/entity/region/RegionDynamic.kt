@@ -19,11 +19,11 @@ data class RegionDynamic(
     val cBottom: Long,
     @SerialName("ctop")
     val cTop: Long,
-    val new: List<RegionDynamicList.Item>
+    val new: List<RegionDynamicList.Item>,
 ) {
     @Serializable
     data class Banner(
-        val top: List<Top>
+        val top: List<Top>,
     ) {
         @Serializable
         data class Top(
@@ -48,7 +48,7 @@ data class RegionDynamic(
             @SerialName("src_id")
             val srcId: Int? = null,
             val title: String,
-            val uri: String
+            val uri: String,
         )
     }
 
@@ -58,7 +58,7 @@ data class RegionDynamic(
         @SerialName("card_id")
         val cardId: Int,
         val title: String,
-        val type: String
+        val type: String,
     )
 
     @Serializable
@@ -85,6 +85,6 @@ data class RegionDynamic(
         val rName: String? = null,
         val title: String,
         val uri: String,
-        val children: List<Item>? = null
+        val children: List<Item>? = null,
     )
 }

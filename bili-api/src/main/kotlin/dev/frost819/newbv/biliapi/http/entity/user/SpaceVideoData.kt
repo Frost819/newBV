@@ -39,7 +39,7 @@ data class WebSpaceVideoData(
     @Serializable
     data class SpaceVideoListItem(
         val tlist: Map<String, Tid>? = null,
-        val vlist: List<VListItem>
+        val vlist: List<VListItem>,
     ) {
         /**
          * @param count 投稿至该分区的视频数
@@ -50,7 +50,7 @@ data class WebSpaceVideoData(
         data class Tid(
             var tid: Int,
             val count: Int,
-            val name: String
+            val name: String,
         )
 
         /**
@@ -114,7 +114,7 @@ data class WebSpaceVideoData(
             @Transient
             val isAvoided: Boolean = _isAvoided == 1,
             @SerialName("attribute")
-            val attribute: Int
+            val attribute: Int,
         ) {
             /**
              * 合集信息
@@ -136,7 +136,7 @@ data class WebSpaceVideoData(
                 val firstAid: Long? = null,
                 val ptime: Int,
                 @SerialName("ep_num")
-                val epNum: Int
+                val epNum: Int,
             )
         }
     }
@@ -154,7 +154,6 @@ data class WebSpaceVideoData(
         val pageSize: Int,
         val count: Int,
     )
-
 }
 
 /**
@@ -175,7 +174,7 @@ data class AppSpaceVideoData(
     val lastWatchedLocator: LastWatchedLocator,
     @SerialName("has_next")
     val hasNext: Boolean,
-    val hasPre: Boolean = false
+    val hasPre: Boolean = false,
 ) {
     /**
      * 排序方式
@@ -186,7 +185,7 @@ data class AppSpaceVideoData(
     @Serializable
     data class Order(
         val title: String,
-        val value: String
+        val value: String,
     )
 
     @Serializable
@@ -228,7 +227,7 @@ data class AppSpaceVideoData(
         @SerialName("cursor_attr")
         val cursorAttr: CursorAttr,
         @SerialName("icon_type")
-        val iconType: Int
+        val iconType: Int,
     ) {
         @Serializable
         data class ThreePointItem(
@@ -244,14 +243,14 @@ data class AppSpaceVideoData(
             @SerialName("short_link")
             val shortLink: String? = null,
             @SerialName("share_subtitle")
-            val shareSubtitle: String? = null
+            val shareSubtitle: String? = null,
         )
 
         @Serializable
         data class CursorAttr(
             @SerialName("is_last_watched_arc")
             val isLastWatchedArc: Boolean,
-            val rank: Int
+            val rank: Int,
         )
     }
 
@@ -261,7 +260,7 @@ data class AppSpaceVideoData(
         val displayThreshold: Int,
         @SerialName("insert_ranking")
         val insertRanking: Int,
-        val text: String
+        val text: String,
     )
 }
 
@@ -274,5 +273,5 @@ data class AppSpaceVideoData(
 @Serializable
 data class EpisodicButton(
     val text: String,
-    val uri: String
+    val uri: String,
 )

@@ -28,7 +28,7 @@ data class VideoDetail(
     val userActions: UserActions,
     val history: History,
     val playerIcon: PlayerIcon? = null,
-    val isUpowerExclusive: Boolean = false
+    val isUpowerExclusive: Boolean = false,
 ) {
     companion object {
         fun fromViewReply(viewReply: ViewReply): VideoDetail {
@@ -47,14 +47,15 @@ data class VideoDetail(
                     ugcSeason = viewReply.ugcSeasonOrNull?.let { UgcSeason.fromUgcSeason(it) },
                     relatedVideos = viewReply.relatesList.map { RelatedVideo.fromRelate(it) },
                     redirectToEp = viewReply.arc.redirectUrl.contains("ep"),
-                    epid = runCatching {
-                        viewReply.arc.redirectUrl.split("ep", "?")[1].toInt()
-                    }.getOrNull(),
+                    epid =
+                        runCatching {
+                            viewReply.arc.redirectUrl.split("ep", "?")[1].toInt()
+                        }.getOrNull(),
                     argueTip = viewReply.argueMsg.takeIf { it.isNotEmpty() },
                     tags = viewReply.tagList.map { Tag.fromTag(it) },
                     userActions = UserActions.fromReqUser(viewReply.reqUser),
                     history = History.fromHistory(viewReply.history),
-                    playerIcon = viewReply.playerIcon?.let { PlayerIcon.fromPlayerIcon(it) }
+                    playerIcon = viewReply.playerIcon?.let { PlayerIcon.fromPlayerIcon(it) },
                 )
             } else {
                 return VideoDetail(
@@ -68,25 +69,28 @@ data class VideoDetail(
                     stat = Stat.fromStat(viewReply.activitySeason.arc.stat),
                     author = Author.fromAuthor(viewReply.activitySeason.arc.author),
                     pages = viewReply.activitySeason.pagesList.map { VideoPage.fromViewPage(it) },
-                    ugcSeason = viewReply.activitySeason.ugcSeasonOrNull?.let {
-                        UgcSeason.fromUgcSeason(
-                            it
-                        )
-                    },
+                    ugcSeason =
+                        viewReply.activitySeason.ugcSeasonOrNull?.let {
+                            UgcSeason.fromUgcSeason(
+                                it,
+                            )
+                        },
                     relatedVideos = viewReply.relatesList.map { RelatedVideo.fromRelate(it) },
                     redirectToEp = viewReply.activitySeason.arc.redirectUrl.contains("ep"),
-                    epid = runCatching {
-                        viewReply.activitySeason.arc.redirectUrl.split("ep", "?")[1].toInt()
-                    }.getOrNull(),
+                    epid =
+                        runCatching {
+                            viewReply.activitySeason.arc.redirectUrl.split("ep", "?")[1].toInt()
+                        }.getOrNull(),
                     argueTip = viewReply.activitySeason.argueMsg.takeIf { it.isNotEmpty() },
                     tags = viewReply.tagList.map { Tag.fromTag(it) },
                     userActions = UserActions.fromReqUser(viewReply.activitySeason.reqUser),
                     history = History.fromHistory(viewReply.activitySeason.history),
-                    playerIcon = viewReply.activitySeason.playerIcon?.let {
-                        PlayerIcon.fromPlayerIcon(
-                            it
-                        )
-                    }
+                    playerIcon =
+                        viewReply.activitySeason.playerIcon?.let {
+                            PlayerIcon.fromPlayerIcon(
+                                it,
+                            )
+                        },
                 )
             }
         }
@@ -104,8 +108,9 @@ data class VideoDetail(
                 author = Author.fromVideoOwner(videoDetail.view.owner),
                 pages = videoDetail.view.pages.map { VideoPage.fromVideoPage(it) },
                 ugcSeason = videoDetail.view.ugcSeason?.let { UgcSeason.fromUgcSeason(it) },
-                relatedVideos = videoDetail.related?.map { RelatedVideo.fromRelate(it) }
-                    ?: emptyList(),
+                relatedVideos =
+                    videoDetail.related?.map { RelatedVideo.fromRelate(it) }
+                        ?: emptyList(),
                 redirectToEp = videoDetail.view.redirectUrl?.contains("ep") ?: false,
                 epid = videoDetail.view.redirectUrl?.split("ep", "?")?.get(1)?.toInt(),
                 argueTip = videoDetail.view.stat.argueMsg.takeIf { it.isNotEmpty() },
@@ -113,7 +118,7 @@ data class VideoDetail(
                 userActions = UserActions(),
                 history = History(0, 0),
                 playerIcon = null,
-                isUpowerExclusive = videoDetail.view.isUpowerExclusive?: false
+                isUpowerExclusive = videoDetail.view.isUpowerExclusive ?: false,
             )
     }
 
@@ -125,68 +130,72 @@ data class VideoDetail(
         val coin: Int,
         val share: Int,
         val like: Int,
-        val historyRank: Int
+        val historyRank: Int,
     ) {
         companion object {
-            fun fromStat(stat: bilibili.app.archive.v1.Stat) = Stat(
-                view = stat.view,
-                danmaku = stat.danmaku,
-                reply = stat.reply,
-                favorite = stat.fav,
-                coin = stat.coin,
-                share = stat.share,
-                like = stat.like,
-                historyRank = stat.hisRank
-            )
+            fun fromStat(stat: bilibili.app.archive.v1.Stat) =
+                Stat(
+                    view = stat.view,
+                    danmaku = stat.danmaku,
+                    reply = stat.reply,
+                    favorite = stat.fav,
+                    coin = stat.coin,
+                    share = stat.share,
+                    like = stat.like,
+                    historyRank = stat.hisRank,
+                )
 
-            fun fromVideoStat(videoStat: VideoStat) = Stat(
-                view = videoStat.view,
-                danmaku = videoStat.danmaku,
-                reply = videoStat.reply,
-                favorite = videoStat.favorite,
-                coin = videoStat.coin,
-                share = videoStat.share,
-                like = videoStat.like,
-                historyRank = videoStat.hisRank
-            )
+            fun fromVideoStat(videoStat: VideoStat) =
+                Stat(
+                    view = videoStat.view,
+                    danmaku = videoStat.danmaku,
+                    reply = videoStat.reply,
+                    favorite = videoStat.favorite,
+                    coin = videoStat.coin,
+                    share = videoStat.share,
+                    like = videoStat.like,
+                    historyRank = videoStat.hisRank,
+                )
         }
     }
 
     data class History(
         val progress: Int,
-        val lastPlayedCid: Long
+        val lastPlayedCid: Long,
     ) {
         companion object {
-            fun fromHistory(history: bilibili.app.view.v1.History) = History(
-                progress = history.progress.toInt(),
-                lastPlayedCid = history.cid
-            )
+            fun fromHistory(history: bilibili.app.view.v1.History) =
+                History(
+                    progress = history.progress.toInt(),
+                    lastPlayedCid = history.cid,
+                )
         }
     }
 
     data class PlayerIcon(
         val idle: String,
-        val moving: String
+        val moving: String,
     ) {
         companion object {
             fun fromPlayerIcon(playerIcon: dev.frost819.newbv.biliapi.http.entity.video.VideoMoreInfo.PlayerIcon?) =
                 playerIcon?.let {
                     PlayerIcon(
                         idle = playerIcon.url2,
-                        moving = playerIcon.url1
+                        moving = playerIcon.url1,
                     )
                 }
 
-            fun fromPlayerIcon(playerIcon: bilibili.app.view.v1.PlayerIcon) = PlayerIcon(
-                idle = playerIcon.url2,
-                moving = playerIcon.url1
-            )
+            fun fromPlayerIcon(playerIcon: bilibili.app.view.v1.PlayerIcon) =
+                PlayerIcon(
+                    idle = playerIcon.url2,
+                    moving = playerIcon.url1,
+                )
 
             fun fromPlayerIcon(playerIcon: dev.frost819.newbv.biliapi.http.entity.season.AppSeasonData.PlayerIcon?) =
                 playerIcon?.let {
                     PlayerIcon(
                         idle = playerIcon.url2 ?: return@let null,
-                        moving = playerIcon.url1 ?: return@let null
+                        moving = playerIcon.url1 ?: return@let null,
                     )
                 }
         }
@@ -197,7 +206,7 @@ data class UserActions(
     val like: Boolean = false,
     val favorite: Boolean = false,
     val coin: Boolean = false,
-    val dislike: Boolean = false
+    val dislike: Boolean = false,
 ) {
     companion object {
         fun fromReqUser(reqUser: ReqUser): UserActions {
@@ -205,7 +214,7 @@ data class UserActions(
                 like = reqUser.like == 1,
                 favorite = reqUser.favorite == 1,
                 coin = reqUser.coin == 1,
-                dislike = reqUser.dislike == 1
+                dislike = reqUser.dislike == 1,
             )
         }
     }

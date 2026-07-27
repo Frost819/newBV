@@ -5,6 +5,7 @@ import android.os.Build
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.BufferedReader
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
@@ -157,7 +158,8 @@ class CrashHandler(
         runCatching {
             val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
-            OutputStreamWriter(file.outputStream().also { it.channel.position(file.length()) }).use { writer ->
+            // 使用 append 模式，避免覆盖 writeCrashContext 已写入的内容
+            OutputStreamWriter(FileOutputStream(file, true)).use { writer ->
                 writer.appendLine("======== Logcat ========")
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {

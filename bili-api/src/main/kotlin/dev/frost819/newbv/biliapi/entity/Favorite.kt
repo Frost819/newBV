@@ -1,19 +1,21 @@
 package dev.frost819.newbv.biliapi.entity
 
+import dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteFolderInfoListData
 import dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteItemId
+import dev.frost819.newbv.biliapi.http.entity.user.favorite.UserFavoriteFoldersData
 import kotlinx.serialization.Serializable
 
 data class FavoriteFolderItemId(
     val id: Long,
     val type: FavoriteItemType,
-    val bvid: String
+    val bvid: String,
 ) {
     companion object {
         fun fromFavoriteItemId(favoriteItemId: FavoriteItemId): FavoriteFolderItemId {
             return FavoriteFolderItemId(
                 id = favoriteItemId.id,
                 type = FavoriteItemType.fromValue(favoriteItemId.type),
-                bvid = favoriteItemId.bvid
+                bvid = favoriteItemId.bvid,
             )
         }
     }
@@ -23,13 +25,13 @@ enum class FavoriteItemType(val value: Int) {
     All(0),
     Video(2),
     Audio(12),
-    VideoCollection(21);
+    VideoCollection(21),
+    ;
 
     companion object {
         fun fromValue(typeId: Int) = entries.first { it.value == typeId }
     }
 }
-
 
 /**
  * 收藏夹元数据
@@ -48,10 +50,12 @@ data class FavoriteFolderMetadata(
     val title: String,
     val cover: String?,
     var videoInThisFav: Boolean,
-    val mediaCount: Int
+    val mediaCount: Int,
 ) {
     companion object {
-        fun fromHttpFavoriteFolderInfo(httpFavoriteFolderInfo: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteFolderInfo): FavoriteFolderMetadata {
+        fun fromHttpFavoriteFolderInfo(
+            httpFavoriteFolderInfo: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteFolderInfo,
+        ): FavoriteFolderMetadata {
             return FavoriteFolderMetadata(
                 id = httpFavoriteFolderInfo.id,
                 fid = httpFavoriteFolderInfo.fid,
@@ -59,11 +63,13 @@ data class FavoriteFolderMetadata(
                 title = httpFavoriteFolderInfo.title,
                 cover = httpFavoriteFolderInfo.cover,
                 videoInThisFav = httpFavoriteFolderInfo.favState == 1,
-                mediaCount = httpFavoriteFolderInfo.mediaCount
+                mediaCount = httpFavoriteFolderInfo.mediaCount,
             )
         }
 
-        fun fromHttpUserFavoriteFolder(httpUserFavoriteFoldersData: dev.frost819.newbv.biliapi.http.entity.user.favorite.UserFavoriteFoldersData.UserFavoriteFolder): FavoriteFolderMetadata {
+        fun fromHttpUserFavoriteFolder(
+            httpUserFavoriteFoldersData: UserFavoriteFoldersData.UserFavoriteFolder,
+        ): FavoriteFolderMetadata {
             return FavoriteFolderMetadata(
                 id = httpUserFavoriteFoldersData.id,
                 fid = httpUserFavoriteFoldersData.fid,
@@ -71,7 +77,7 @@ data class FavoriteFolderMetadata(
                 title = httpUserFavoriteFoldersData.title,
                 cover = null,
                 videoInThisFav = httpUserFavoriteFoldersData.favState == 1,
-                mediaCount = httpUserFavoriteFoldersData.mediaCount
+                mediaCount = httpUserFavoriteFoldersData.mediaCount,
             )
         }
     }
@@ -80,20 +86,24 @@ data class FavoriteFolderMetadata(
 data class FavoriteFolderData(
     val info: FavoriteFolderMetadata,
     val medias: List<FavoriteItem>,
-    val hasMore: Boolean
+    val hasMore: Boolean,
 ) {
     companion object {
-        fun fromHttpFavoriteFolderInfoListData(httpFavoriteFolderInfoListData: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteFolderInfoListData): FavoriteFolderData {
+        fun fromHttpFavoriteFolderInfoListData(
+            httpFavoriteFolderInfoListData: FavoriteFolderInfoListData,
+        ): FavoriteFolderData {
             return FavoriteFolderData(
-                info = FavoriteFolderMetadata.fromHttpFavoriteFolderInfo(
-                    httpFavoriteFolderInfoListData.info
-                ),
-                medias = httpFavoriteFolderInfoListData.medias.map {
-                    FavoriteItem.fromHttpFavoriteItem(
-                        it
-                    )
-                },
-                hasMore = httpFavoriteFolderInfoListData.hasMore
+                info =
+                    FavoriteFolderMetadata.fromHttpFavoriteFolderInfo(
+                        httpFavoriteFolderInfoListData.info,
+                    ),
+                medias =
+                    httpFavoriteFolderInfoListData.medias.map {
+                        FavoriteItem.fromHttpFavoriteItem(
+                            it,
+                        )
+                    },
+                hasMore = httpFavoriteFolderInfoListData.hasMore,
             )
         }
     }
@@ -110,10 +120,12 @@ data class FavoriteItem(
     val upper: Upper,
     val link: String,
     val pubtime: Long,
-    val bvid: String
+    val bvid: String,
 ) {
     companion object {
-        fun fromHttpFavoriteItem(httpFavoriteItem: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteItem): FavoriteItem {
+        fun fromHttpFavoriteItem(
+            httpFavoriteItem: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteItem,
+        ): FavoriteItem {
             return FavoriteItem(
                 id = httpFavoriteItem.id,
                 type = FavoriteItemType.fromValue(httpFavoriteItem.type),
@@ -125,7 +137,7 @@ data class FavoriteItem(
                 upper = Upper.fromHttpUpper(httpFavoriteItem.upper),
                 link = httpFavoriteItem.link,
                 pubtime = httpFavoriteItem.pubtime,
-                bvid = httpFavoriteItem.bvid
+                bvid = httpFavoriteItem.bvid,
             )
         }
     }
@@ -135,14 +147,14 @@ data class FavoriteItem(
 data class Upper(
     val mid: Long,
     val name: String,
-    val face: String
+    val face: String,
 ) {
     companion object {
         fun fromHttpUpper(httpUpper: dev.frost819.newbv.biliapi.http.entity.user.favorite.Upper): Upper {
             return Upper(
                 mid = httpUpper.mid,
                 name = httpUpper.name,
-                face = httpUpper.face
+                face = httpUpper.face,
             )
         }
     }

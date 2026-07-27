@@ -1,7 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import bilibili.rpc.Status
-//import com.google.rpc.Status
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.grpc.utils.getDetail
@@ -17,10 +16,11 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 class VideoPlayRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -49,11 +49,12 @@ class VideoPlayRepositoryTest {
     fun `get flac video with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPlayData(
-                    aid = 993403941,
-                    cid = 1051761130,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = 993403941,
+                        cid = 1051761130,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -65,11 +66,12 @@ class VideoPlayRepositoryTest {
     fun `get flac video with http`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPlayData(
-                    aid = 993403941,
-                    cid = 1051761130,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = 993403941,
+                        cid = 1051761130,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -81,11 +83,12 @@ class VideoPlayRepositoryTest {
     fun `get 8k video with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPlayData(
-                    aid = 934637444,
-                    cid = 455439756,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = 934637444,
+                        cid = 455439756,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -97,11 +100,12 @@ class VideoPlayRepositoryTest {
     fun `get 8k video with http`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPlayData(
-                    aid = 934637444,
-                    cid = 455439756,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = 934637444,
+                        cid = 455439756,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -110,24 +114,28 @@ class VideoPlayRepositoryTest {
     }
 
     @Test
-    fun `get multi part video with http`() = runBlocking {
-        val result = videoPlayRepository.getPlayData(
-            aid = 836207,
-            cid = 1215693,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get multi part video with http`() =
+        runBlocking {
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 836207,
+                    cid = 1215693,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get multi part video with grpc`() = runBlocking {
-        val result = videoPlayRepository.getPlayData(
-            aid = 836207,
-            cid = 1215693,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get multi part video with grpc`() =
+        runBlocking {
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 836207,
+                    cid = 1215693,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @OptIn(ExperimentalEncodingApi::class)
     @Test
@@ -143,12 +151,13 @@ class VideoPlayRepositoryTest {
     fun `get pgc video with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPgcPlayData(
-                    aid = 210680503,
-                    cid = 486114279,
-                    epid = 469110,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoPlayRepository.getPgcPlayData(
+                        aid = 210680503,
+                        cid = 486114279,
+                        epid = 469110,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -160,12 +169,13 @@ class VideoPlayRepositoryTest {
     fun `get pgc video with http`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPgcPlayData(
-                    aid = 210680503,
-                    cid = 486114279,
-                    epid = 469110,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoPlayRepository.getPgcPlayData(
+                        aid = 210680503,
+                        cid = 486114279,
+                        epid = 469110,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -177,12 +187,13 @@ class VideoPlayRepositoryTest {
     fun `get paid pgc video with grpc`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPgcPlayData(
-                    aid = 741219885,
-                    cid = 1132332811,
-                    epid = 750015,
-                    preferApiType = ApiType.App
-                )
+                val result =
+                    videoPlayRepository.getPgcPlayData(
+                        aid = 741219885,
+                        cid = 1132332811,
+                        epid = 750015,
+                        preferApiType = ApiType.App,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -194,12 +205,13 @@ class VideoPlayRepositoryTest {
     fun `get paid pgc video with http`() {
         runBlocking {
             runCatching {
-                val result = videoPlayRepository.getPgcPlayData(
-                    aid = 741219885,
-                    cid = 1132332811,
-                    epid = 750015,
-                    preferApiType = ApiType.Web
-                )
+                val result =
+                    videoPlayRepository.getPgcPlayData(
+                        aid = 741219885,
+                        cid = 1132332811,
+                        epid = 750015,
+                        preferApiType = ApiType.Web,
+                    )
                 println(result)
             }.onFailure {
                 it.printStackTrace()
@@ -208,104 +220,113 @@ class VideoPlayRepositoryTest {
     }
 
     @Test
-    fun `get subtitle with web api`() = runBlocking {
-        val result = videoPlayRepository.getSubtitle(
-            aid = 913498989,
-            cid = 1203020250,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
-
-    @Test
-    fun `get subtitle with app api`() = runBlocking {
-        val result = videoPlayRepository.getSubtitle(
-            aid = 913498989,
-            cid = 1203020250,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
-
-    @Test
-    fun `send heartbeat with web api`() = runBlocking {
-        val randomTime = (0..100).random()
-        println("random time: $randomTime")
-        videoPlayRepository.sendHeartbeat(
-            aid = 170001,
-            cid = 280468,
-            time = randomTime,
-            preferApiType = ApiType.Web
-        )
-        videoPlayRepository.sendHeartbeat(
-            aid = 476982015,
-            cid = 1107179650,
-            type = HeartbeatVideoType.Season,
-            subType = 4,
-            time = randomTime,
-            epid = 706666,
-            seasonId = 39707,
-            preferApiType = ApiType.Web
-        )
-    }
-
-    @Test
-    fun `send heartbeat with app api`() = runBlocking {
-        val randomTime = (0..100).random()
-        println("random time: $randomTime")
-        videoPlayRepository.sendHeartbeat(
-            aid = 170001,
-            cid = 280468,
-            time = randomTime,
-            preferApiType = ApiType.App
-        )
-        videoPlayRepository.sendHeartbeat(
-            aid = 476982015,
-            cid = 1107179650,
-            type = HeartbeatVideoType.Season,
-            subType = 4,
-            time = randomTime,
-            epid = 706666,
-            seasonId = 39707,
-            preferApiType = ApiType.App
-        )
-    }
-
-    @Test
-    fun `get play url domain`() = runBlocking {
-        val getUrlDomain: (String) -> String = {
-            val url = URL(it)
-            "${url.protocol}://${url.host}"
-        }
-        ApiType.entries.forEach { apiType ->
-            val result = videoPlayRepository.getPlayData(
-                aid = 934637444,
-                cid = 455439756,
-                preferApiType = apiType
-            )
-            println("api type: $apiType")
-
-            result.dashVideos.forEach { video ->
-                println("video quality: ${video.quality}")
-                val videoUrls = mutableListOf<String>()
-                videoUrls.add(video.baseUrl)
-                videoUrls.addAll(video.backUrl)
-                videoUrls.forEach { println(getUrlDomain(it)) }
-            }
-        }
-    }
-
-    @Test
-    fun `get video shots`() = runBlocking {
-        ApiType.entries.forEach { apiType ->
-            val result = videoPlayRepository.getVideoShot(
-                aid = 170001,
-                cid = 279786,
-                preferApiType = apiType
-            )
-            println("api type: $apiType")
+    fun `get subtitle with web api`() =
+        runBlocking {
+            val result =
+                videoPlayRepository.getSubtitle(
+                    aid = 913498989,
+                    cid = 1203020250,
+                    preferApiType = ApiType.Web,
+                )
             println(result)
         }
-    }
-}
 
+    @Test
+    fun `get subtitle with app api`() =
+        runBlocking {
+            val result =
+                videoPlayRepository.getSubtitle(
+                    aid = 913498989,
+                    cid = 1203020250,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
+
+    @Test
+    fun `send heartbeat with web api`() =
+        runBlocking {
+            val randomTime = (0..100).random()
+            println("random time: $randomTime")
+            videoPlayRepository.sendHeartbeat(
+                aid = 170001,
+                cid = 280468,
+                time = randomTime,
+                preferApiType = ApiType.Web,
+            )
+            videoPlayRepository.sendHeartbeat(
+                aid = 476982015,
+                cid = 1107179650,
+                type = HeartbeatVideoType.Season,
+                subType = 4,
+                time = randomTime,
+                epid = 706666,
+                seasonId = 39707,
+                preferApiType = ApiType.Web,
+            )
+        }
+
+    @Test
+    fun `send heartbeat with app api`() =
+        runBlocking {
+            val randomTime = (0..100).random()
+            println("random time: $randomTime")
+            videoPlayRepository.sendHeartbeat(
+                aid = 170001,
+                cid = 280468,
+                time = randomTime,
+                preferApiType = ApiType.App,
+            )
+            videoPlayRepository.sendHeartbeat(
+                aid = 476982015,
+                cid = 1107179650,
+                type = HeartbeatVideoType.Season,
+                subType = 4,
+                time = randomTime,
+                epid = 706666,
+                seasonId = 39707,
+                preferApiType = ApiType.App,
+            )
+        }
+
+    @Test
+    fun `get play url domain`() =
+        runBlocking {
+            val getUrlDomain: (String) -> String = {
+                val url = URL(it)
+                "${url.protocol}://${url.host}"
+            }
+            ApiType.entries.forEach { apiType ->
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = 934637444,
+                        cid = 455439756,
+                        preferApiType = apiType,
+                    )
+                println("api type: $apiType")
+
+                result.dashVideos.forEach { video ->
+                    println("video quality: ${video.quality}")
+                    val videoUrls = mutableListOf<String>()
+                    videoUrls.add(video.baseUrl)
+                    videoUrls.addAll(video.backUrl)
+                    videoUrls.forEach { println(getUrlDomain(it)) }
+                }
+            }
+        }
+
+    @Test
+    fun `get video shots`() =
+        runBlocking {
+            ApiType.entries.forEach { apiType ->
+                val result =
+                    videoPlayRepository.getVideoShot(
+                        aid = 170001,
+                        cid = 279786,
+                        preferApiType = apiType,
+                    )
+                println("api type: $apiType")
+                println(result)
+            }
+        }
+}

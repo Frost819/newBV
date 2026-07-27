@@ -23,7 +23,7 @@ class BiliUserAgentConfig(
     var model: String = BiliAppConf.model,
     var osVersion: String = BiliAppConf.osVersion,
     var network: Int = BiliAppConf.NETWORK,
-    var webViewVersion: Int = BiliWebConf.webViewVersion
+    var webViewVersion: Int = BiliWebConf.webViewVersion,
 ) {
     var appUserAgent = ""
         private set
@@ -32,9 +32,11 @@ class BiliUserAgentConfig(
 
     fun buildUserAgents() {
         appUserAgent =
-            "Mozilla/5.0 BiliDroid/$version (bbcallen@gmail.com) os/$platform model/$model mobi_app/$mobiApp build/$buildCode channel/$channel innerVer/$buildCode osVer/$osVersion network/$network"
+            "Mozilla/5.0 BiliDroid/$version (bbcallen@gmail.com) os/$platform model/$model mobi_app/$mobiApp " +
+            "build/$buildCode channel/$channel innerVer/$buildCode osVer/$osVersion network/$network"
         webUserAgent =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
     }
 }
 
@@ -58,6 +60,5 @@ val BiliUserAgent: ClientPlugin<BiliUserAgentConfig> =
 @Suppress("FunctionName")
 fun HttpClientConfig<*>.BiliUserAgent() {
     install(BiliUserAgent) {
-
     }
 }

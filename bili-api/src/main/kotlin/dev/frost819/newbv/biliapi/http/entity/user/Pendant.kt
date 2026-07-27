@@ -22,5 +22,5 @@ data class Pendant(
     @SerialName("image_enhance")
     val imageEnhance: String? = null,
     @SerialName("image_enhance_frame")
-    val imageEnhanceFrame: String? = null
+    val imageEnhanceFrame: String? = null,
 )

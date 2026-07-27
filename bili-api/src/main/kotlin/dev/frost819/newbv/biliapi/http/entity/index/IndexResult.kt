@@ -10,7 +10,7 @@ data class IndexResultData(
     val list: List<IndexResultItem>,
     val num: Int,
     val size: Int,
-    val total: Int
+    val total: Int,
 ) {
     @Serializable
     data class IndexResultItem(
@@ -42,7 +42,7 @@ data class IndexResultData(
         val subTitle: String,
         val title: String,
         @SerialName("title_icon")
-        val titleIcon: String
+        val titleIcon: String,
     ) {
         @Serializable
         data class BadgeInfo(
@@ -50,14 +50,14 @@ data class IndexResultData(
             val bgColor: String,
             @SerialName("bg_color_night")
             val bgColorNight: String,
-            val text: String
+            val text: String,
         )
 
         @Serializable
         data class FirstEp(
             val cover: String,
             @SerialName("ep_id")
-            val epId: Int
+            val epId: Int,
         )
     }
 }

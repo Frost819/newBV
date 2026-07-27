@@ -11,7 +11,7 @@ data class PgcFeedV3Data(
     var coursor: Int,
     @SerialName("has_next")
     val hasNext: Boolean,
-    val items: List<FeedItem>
+    val items: List<FeedItem>,
 ) {
     @Serializable
     data class FeedItem(
@@ -19,7 +19,7 @@ data class PgcFeedV3Data(
         val rankId: Int,
         @SerialName("sub_items")
         val subItems: List<FeedSubItem>,
-        val text: JsonArray? = null
+        val text: JsonArray? = null,
     ) {
         @Serializable
         data class FeedSubItem(
@@ -49,7 +49,7 @@ data class PgcFeedV3Data(
             val subTitle: String,
             val text: JsonArray? = null,
             val title: String,
-            val userStatus: UserStatus? = null
+            val userStatus: UserStatus? = null,
         ) {
             @Serializable
             data class Inline(
@@ -63,26 +63,26 @@ data class PgcFeedV3Data(
                 val materialNo: String? = null,
                 val scene: Int,
                 @SerialName("start_time")
-                val startTime: Int? = null
+                val startTime: Int? = null,
             )
 
             @Serializable
             data class Report(
                 @SerialName("first_ep")
                 val firstEp: Int? = null,
-                val scene: Int? = null
+                val scene: Int? = null,
             )
 
             @Serializable
             data class Stat(
                 val danmaku: Int,
                 val duration: Int,
-                val view: Long
+                val view: Long,
             )
 
             @Serializable
             data class UserStatus(
-                val follow: Int
+                val follow: Int,
             )
         }
     }

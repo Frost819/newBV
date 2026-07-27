@@ -37,7 +37,7 @@ data class RoomPlayInfoData(
     val specialType: Int,
     val playUrl: String? = null,
     @SerialName("all_special_types")
-    val allSpecialTypes: List<Int> = emptyList()
+    val allSpecialTypes: List<Int> = emptyList(),
 )
 /*
 "data": {

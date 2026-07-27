@@ -79,8 +79,8 @@ data class AppSeasonData(
     val status: Int,
     val styles: List<Style> = emptyList(),
     val subtitle: String,
-    //@SerialName("test_switch")
-    //val testSwitch:TestSwitch
+    // @SerialName("test_switch")
+    // val testSwitch:TestSwitch
     val title: String,
     val total: Int,
     val type: Int,
@@ -91,7 +91,7 @@ data class AppSeasonData(
     @SerialName("user_status")
     val userStatus: UserStatus,
     @SerialName("user_thumbup")
-    val userThumbup: UserThumbup? = null
+    val userThumbup: UserThumbup? = null,
 ) {
     @Serializable
     data class ActivityEntrance(
@@ -107,7 +107,7 @@ data class AppSeasonData(
         val activityType: Int,
         val report: Report,
         @SerialName("word_tag")
-        val wordTag: String
+        val wordTag: String,
     ) {
         @Serializable
         data class Report(
@@ -115,7 +115,7 @@ data class AppSeasonData(
             val clickEventId: String,
             val extends: Extends,
             @SerialName("show_event_id")
-            val showEventId: String
+            val showEventId: String,
         ) {
             @Serializable
             data class Extends(
@@ -137,13 +137,13 @@ data class AppSeasonData(
     @Serializable
     data class Actor(
         val info: String,
-        val title: String
+        val title: String,
     )
 
     @Serializable
     data class AllButtons(
         @SerialName("watch_formal")
-        val watchFormal: String
+        val watchFormal: String,
     )
 
     @Serializable
@@ -160,7 +160,7 @@ data class AppSeasonData(
         @SerialName("verify_type2")
         val verifyType2: Int,
         @SerialName("vip_label")
-        val vipLabel: VipLabel
+        val vipLabel: VipLabel,
     ) {
         /**
          * 大会员标签
@@ -176,14 +176,14 @@ data class AppSeasonData(
             @SerialName("label_theme")
             val labelTheme: String,
             val path: String,
-            val text: String
+            val text: String,
         )
     }
 
     @Serializable
     data class Area(
         val id: Int,
-        val name: String
+        val name: String,
     )
 
     @Serializable
@@ -193,7 +193,7 @@ data class AppSeasonData(
         val link: String,
         val name: String,
         @SerialName("tag_report")
-        val tagReport: TagReport
+        val tagReport: TagReport,
     ) {
         @Serializable
         data class TagReport(
@@ -202,20 +202,20 @@ data class AppSeasonData(
             @SerialName("tag_type_name")
             val tagTypeName: String,
             @SerialName("version_style")
-            val versionStyle: String
+            val versionStyle: String,
         )
     }
 
     @Serializable
     data class EarphoneConf(
         @SerialName("sp_phones")
-        val spPhones: JsonArray
+        val spPhones: JsonArray,
     )
 
     @Serializable
     data class IconFont(
         val name: String,
-        val text: String
+        val text: String,
     )
 
     /**
@@ -238,7 +238,7 @@ data class AppSeasonData(
         val more: String = "",
         val report: Report? = null,
         val style: String,
-        val title: String
+        val title: String,
     ) {
         /**
          * 板块内容，当内容为“seasons”时仅包含seasons，当内容为“episodes”时仅包含episodes，当内容为“section”时包含除seasons以外的所有内容
@@ -258,13 +258,13 @@ data class AppSeasonData(
             val splitText: String? = null,
             val title: String? = null,
             val type: Int? = null,
-            val type2: Int? = null
+            val type2: Int? = null,
         )
 
         @Serializable
         data class ModuleStyle(
             val hidden: Int = 0,
-            val line: Int
+            val line: Int,
         )
 
         @Serializable
@@ -278,13 +278,13 @@ data class AppSeasonData(
             @SerialName("section_id")
             val sectionId: String,
             @SerialName("section_type")
-            val sectionType: String
+            val sectionType: String,
         )
     }
 
     @Serializable
     data class NewKeepActivityMaterial(
-        val activityId: Int
+        val activityId: Int,
     )
 
     @Serializable
@@ -302,12 +302,12 @@ data class AppSeasonData(
         @SerialName("vip_discount_price")
         val vipDiscountPrice: String,
         @SerialName("vip_promotion")
-        val vipPromotion: String
+        val vipPromotion: String,
     ) {
         @Serializable
         data class PayType(
             @SerialName("allow_ticket")
-            val allowTicket: Int
+            val allowTicket: Int,
         )
     }
 
@@ -317,7 +317,7 @@ data class AppSeasonData(
         val autoPlayToast: String,
         @SerialName("recommend_show_strategy")
         val recommendShowStrategy: Int,
-        val strategies: List<String> = emptyList()
+        val strategies: List<String> = emptyList(),
     )
 
     @Serializable
@@ -330,13 +330,13 @@ data class AppSeasonData(
         @SerialName("no_drag_data")
         val noDragData: JsonElement? = null,
         val url1: String? = null,
-        val url2: String? = null
+        val url2: String? = null,
     )
 
     @Serializable
     data class Reserve(
         val episodes: JsonElement,
-        val tip: String
+        val tip: String,
     )
 
     @Serializable
@@ -346,13 +346,13 @@ data class AppSeasonData(
         @SerialName("series_id")
         val seriesId: Int,
         @SerialName("series_title")
-        val seriesTitle: String
+        val seriesTitle: String,
     )
 
     @Serializable
     data class Staff(
         val info: String,
-        val title: String
+        val title: String,
     )
 
     @Serializable
@@ -367,7 +367,7 @@ data class AppSeasonData(
         val reply: Int,
         val share: Int,
         val views: Long,
-        val vt: Int
+        val vt: Int,
     )
 
     /**
@@ -377,7 +377,7 @@ data class AppSeasonData(
     data class Style(
         val id: Int,
         val name: String,
-        val url: String? = null
+        val url: String? = null,
     )
 
     /**
@@ -407,7 +407,7 @@ data class AppSeasonData(
         val sponsor: Int,
         val vip: Int,
         @SerialName("vip_frozen")
-        val vipFrozen: Int
+        val vipFrozen: Int,
     ) {
         /**
          * 上次播放进度
@@ -423,7 +423,7 @@ data class AppSeasonData(
             @SerialName("last_ep_index")
             val lastEpIndex: String,
             @SerialName("last_time")
-            val lastTime: Int
+            val lastTime: Int,
         )
 
         @Serializable
@@ -432,7 +432,7 @@ data class AppSeasonData(
             val articleUrl: String,
             @SerialName("is_open")
             val isOpen: Int,
-            val score: Int
+            val score: Int,
         )
     }
 

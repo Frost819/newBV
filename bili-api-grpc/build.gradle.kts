@@ -1,11 +1,10 @@
+
 import com.google.protobuf.gradle.proto
-import ProtobufConfiguration
 
 plugins {
     alias(libs.plugins.google.protobuf)
     alias(libs.plugins.kotlin.jvm)
 }
-
 
 dependencies {
     api(libs.grpc.kotlin.stub)

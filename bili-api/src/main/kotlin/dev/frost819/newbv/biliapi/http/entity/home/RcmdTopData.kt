@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.http.entity.home
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -20,7 +19,7 @@ data class RcmdTopData(
     @SerialName("side_bar_column")
     val sideBarColumn: List<SideBarColumn>? = emptyList(),
     @SerialName("user_feature")
-    val userFeature: JsonElement? = null
+    val userFeature: JsonElement? = null,
 ) {
     @Serializable
     data class RcmdItem(
@@ -55,7 +54,7 @@ data class RcmdTopData(
         val title: String,
         @SerialName("track_id")
         val trackId: String,
-        val uri: String
+        val uri: String,
     ) {
         @Serializable
         data class BusinessInfo(
@@ -117,7 +116,7 @@ data class RcmdTopData(
             @SerialName("sub_title")
             val subTitle: String,
             val title: String,
-            val url: String
+            val url: String,
         ) {
             @Serializable
             data class BusinessMark(
@@ -142,7 +141,7 @@ data class RcmdTopData(
                 val textColor: String,
                 @SerialName("text_color_night")
                 val textColorNight: String,
-                val type: Int
+                val type: Int,
             )
 
             @Serializable
@@ -154,7 +153,7 @@ data class RcmdTopData(
                 @SerialName("inline_url")
                 val inlineUrl: String,
                 @SerialName("inline_use_same")
-                val inlineUseSame: Int
+                val inlineUseSame: Int,
             )
         }
 
@@ -162,14 +161,14 @@ data class RcmdTopData(
         data class Owner(
             val face: String,
             val mid: Long,
-            val name: String
+            val name: String,
         )
 
         @Serializable
         data class RcmdReason(
             val content: String? = null,
             @SerialName("reason_type")
-            val reasonType: Int
+            val reasonType: Int,
         )
 
         @Serializable
@@ -177,7 +176,7 @@ data class RcmdTopData(
             val danmaku: Int,
             val like: Int,
             val view: Int,
-            val vt: Int
+            val vt: Int,
         )
     }
 
@@ -222,7 +221,7 @@ data class RcmdTopData(
         val title: String,
         @SerialName("track_id")
         val trackId: String,
-        val url: String
+        val url: String,
     ) {
         @Serializable
         data class NewEp(
@@ -237,7 +236,7 @@ data class RcmdTopData(
             val longTitle: String? = null,
             @SerialName("pub_time")
             val pubTime: String?,
-            val title: String
+            val title: String,
         )
 
         @Serializable
@@ -246,7 +245,7 @@ data class RcmdTopData(
             val isContribute: Int,
             val mid: Long,
             val name: String,
-            val type: Int
+            val type: Int,
         )
 
         @Serializable
@@ -261,7 +260,7 @@ data class RcmdTopData(
             val seriesFollow: Int? = null,
             @SerialName("series_view")
             val seriesView: Int? = null,
-            val view: Int
+            val view: Int,
         )
     }
 }

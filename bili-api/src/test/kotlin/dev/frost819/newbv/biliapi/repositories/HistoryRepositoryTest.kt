@@ -10,10 +10,11 @@ import java.util.Properties
 
 class HistoryRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -33,7 +34,7 @@ class HistoryRepositoryTest {
     init {
         channelRepository.initDefaultChannel(
             FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID
+            FavoriteRepositoryTest.BUVID,
         )
         BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
@@ -43,20 +44,24 @@ class HistoryRepositoryTest {
     }
 
     @Test
-    fun `get histories with web api`() = runBlocking {
-        val result = historyRepository.getHistories(
-            cursor = 0,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get histories with web api`() =
+        runBlocking {
+            val result =
+                historyRepository.getHistories(
+                    cursor = 0,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get histories with app api`() = runBlocking {
-        val result = historyRepository.getHistories(
-            cursor = 1688955898,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get histories with app api`() =
+        runBlocking {
+            val result =
+                historyRepository.getHistories(
+                    cursor = 1688955898,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 }

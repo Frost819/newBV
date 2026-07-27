@@ -21,7 +21,7 @@ data class BiliSubtitle(
     val type: String? = null,
     val lang: String? = null,
     val version: String? = null,
-    val body: List<BiliSubtitleItem> = emptyList()
+    val body: List<BiliSubtitleItem> = emptyList(),
 )
 
 @Serializable
@@ -32,5 +32,6 @@ data class BiliSubtitleItem(
     val location: Int? = null,
     val content: String,
     val music: Float? = null,
-    val version: String? = null // 自动翻译字幕特有属性
+    // 自动翻译字幕特有属性
+    val version: String? = null,
 )

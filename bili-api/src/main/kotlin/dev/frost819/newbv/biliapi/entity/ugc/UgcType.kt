@@ -141,6 +141,5 @@ enum class UgcType(val rid: Int, val codename: String, val locId: Int = -1) {
     AnimalReptiles(222, "reptiles"),
     AnimalWildAnima(221, "wild_animal"),
     AnimalSecondEdition(220, "second_edition"),
-    AnimalComposite(75, "animal_composite")
-
+    AnimalComposite(75, "animal_composite"),
 }

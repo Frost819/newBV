@@ -3,7 +3,6 @@ package dev.frost819.newbv.biliapi.http.entity.video
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 /**
  * 视频标签
  *
@@ -49,7 +48,7 @@ data class Tag(
     val liked: Int,
     val hated: Int,
     @SerialName("extra_attr")
-    val extraAttr: Int
+    val extraAttr: Int,
 ) {
     /**
      * Tag 状态数
@@ -62,7 +61,7 @@ data class Tag(
     data class Count(
         val view: Int,
         val use: Int,
-        val atten: Int
+        val atten: Int,
     )
 }
 
@@ -77,7 +76,7 @@ data class Tag(
 data class TagDetail(
     val info: Tag,
     val similar: List<SimilarTag>,
-    val news: NewTags
+    val news: NewTags,
 ) {
     /**
      * 相似的 Tag
@@ -89,7 +88,7 @@ data class TagDetail(
         val tid: Int,
         val cover: String,
         val atten: Int,
-        val tname: String
+        val tname: String,
     )
 
     /**
@@ -98,7 +97,7 @@ data class TagDetail(
     @Serializable
     data class NewTags(
         val count: Int,
-        val archives: List<VideoInfo>
+        val archives: List<VideoInfo>,
     )
 }
 
@@ -107,5 +106,5 @@ data class TagTopVideosResponse(
     val code: Int,
     val message: String,
     val total: Int,
-    val data: List<VideoInfo>
+    val data: List<VideoInfo>,
 )

@@ -11,7 +11,7 @@ data class BiliResponse<T>(
     val message: String,
     val ttl: Int? = null,
     val data: T? = null,
-    val result: T? = null
+    val result: T? = null,
 ) {
     @Throws()
     fun getResponseData(): T {
@@ -32,7 +32,7 @@ data class BiliResponse<T>(
 data class BiliResponseWithoutData(
     val code: Int,
     val message: String,
-    val ttl: Int
+    val ttl: Int,
 )
 
 @Suppress("unused")

@@ -11,10 +11,11 @@ import java.util.UUID
 
 class SearchRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -34,7 +35,7 @@ class SearchRepositoryTest {
     init {
         channelRepository.initDefaultChannel(
             FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID
+            FavoriteRepositoryTest.BUVID,
         )
         BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
 
@@ -45,52 +46,62 @@ class SearchRepositoryTest {
     }
 
     @Test
-    fun `get search hot words with web api`() = runBlocking {
-        val result = searchRepository.getSearchHotwords(
-            limit = 50,
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get search hot words with web api`() =
+        runBlocking {
+            val result =
+                searchRepository.getSearchHotwords(
+                    limit = 50,
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get search hot words with app api`() = runBlocking {
-        val result = searchRepository.getSearchHotwords(
-            limit = 50,
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get search hot words with app api`() =
+        runBlocking {
+            val result =
+                searchRepository.getSearchHotwords(
+                    limit = 50,
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get search suggest with web api`() = runBlocking {
-        val result = searchRepository.getSearchSuggest(
-            keyword = "00",
-            preferApiType = ApiType.Web
-        )
-        println(result)
-    }
+    fun `get search suggest with web api`() =
+        runBlocking {
+            val result =
+                searchRepository.getSearchSuggest(
+                    keyword = "00",
+                    preferApiType = ApiType.Web,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get search suggest with app api`() = runBlocking {
-        val result = searchRepository.getSearchSuggest(
-            keyword = "00",
-            preferApiType = ApiType.App
-        )
-        println(result)
-    }
+    fun `get search suggest with app api`() =
+        runBlocking {
+            val result =
+                searchRepository.getSearchSuggest(
+                    keyword = "00",
+                    preferApiType = ApiType.App,
+                )
+            println(result)
+        }
 
     @Test
-    fun `search type test`() = runBlocking {
-        val reply = searchRepository.searchType(
-            keyword = "fate",
-            type = SearchType.Video,
-            page = SearchTypePage(),
-            tid = 0,
-            order = SearchFilterOrderType.MostComment,
-            duration = SearchFilterDuration.All,
-            preferApiType = ApiType.App
-        )
-        println(reply)
-    }
+    fun `search type test`() =
+        runBlocking {
+            val reply =
+                searchRepository.searchType(
+                    keyword = "fate",
+                    type = SearchType.Video,
+                    page = SearchTypePage(),
+                    tid = 0,
+                    order = SearchFilterOrderType.MostComment,
+                    duration = SearchFilterDuration.All,
+                    preferApiType = ApiType.App,
+                )
+            println(reply)
+        }
 }

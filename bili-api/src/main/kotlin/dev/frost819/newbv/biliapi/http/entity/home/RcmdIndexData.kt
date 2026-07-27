@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.http.entity.home
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -10,7 +9,7 @@ data class RcmdIndexData(
     val config: Config,
     @SerialName("interest_choose")
     val interestChoose: JsonElement? = null,
-    val items: List<RcmdItem>
+    val items: List<RcmdItem>,
 ) {
     @Serializable
     data class Config(
@@ -57,13 +56,13 @@ data class RcmdIndexData(
         @SerialName("video_mode")
         val videoMode: Int? = null,
         @SerialName("visible_area")
-        val visibleArea: Int
+        val visibleArea: Int,
     )
 
     @Serializable
     data class RcmdItem(
-        //@SerialName("ad_info")
-        //val adInfo: AdInfo,
+        // @SerialName("ad_info")
+        // val adInfo: AdInfo,
         val args: Args,
         @SerialName("can_play")
         val canPlay: Int? = null,
@@ -118,7 +117,7 @@ data class RcmdIndexData(
         val title: String? = null,
         @SerialName("track_id")
         val trackId: String? = null,
-        val uri: String? = null
+        val uri: String? = null,
     ) {
         @Serializable
         data class Args(
@@ -130,7 +129,7 @@ data class RcmdIndexData(
             @SerialName("up_id")
             val upId: Long? = null,
             @SerialName("up_name")
-            val upName: String? = null
+            val upName: String? = null,
         )
 
         @Serializable
@@ -138,7 +137,7 @@ data class RcmdIndexData(
             val event: String,
             val text: String,
             val type: Int,
-            val uri: String? = null
+            val uri: String? = null,
         )
 
         @Serializable
@@ -150,7 +149,7 @@ data class RcmdIndexData(
             @SerialName("icon_url")
             val iconUrl: String,
             @SerialName("icon_width")
-            val iconWidth: Int
+            val iconWidth: Int,
         )
 
         @Serializable
@@ -158,7 +157,7 @@ data class RcmdIndexData(
             val aid: Long,
             val cid: Long,
             val duration: Int,
-            val type: String
+            val type: String,
         )
 
         @Serializable
@@ -177,7 +176,7 @@ data class RcmdIndexData(
             @SerialName("text_color")
             val textColor: String,
             @SerialName("text_color_night")
-            val textColorNight: String
+            val textColorNight: String,
         )
 
         @Serializable
@@ -186,20 +185,20 @@ data class RcmdIndexData(
             val dislikeReasons: List<DislikeReason>,
             val feedbacks: List<Feedback>? = null,
             @SerialName("watch_later")
-            val watchLater: Int? = null
+            val watchLater: Int? = null,
         ) {
             @Serializable
             data class DislikeReason(
                 val id: Int,
                 val name: String,
-                val toast: String
+                val toast: String,
             )
 
             @Serializable
             data class Feedback(
                 val id: Int,
                 val name: String,
-                val toast: String
+                val toast: String,
             )
         }
 
@@ -209,13 +208,13 @@ data class RcmdIndexData(
             val reasons: List<Reason> = emptyList(),
             val subtitle: String? = null,
             val title: String? = null,
-            val type: String
+            val type: String,
         ) {
             @Serializable
             data class Reason(
                 val id: Int,
                 val name: String,
-                val toast: String
+                val toast: String,
             )
         }
     }

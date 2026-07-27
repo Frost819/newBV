@@ -75,30 +75,30 @@ data class UserInfoData(
     val isFollowed: Boolean,
     @SerialName("top_photo")
     val topPhoto: String,
-    //val theme: Any? = null,
+    // val theme: Any? = null,
     val sys_notice: SysNotice,
     val live_room: LiveRoom,
     val birthday: String,
     val school: School? = null,
     val profession: Profession,
-    //val tags: Any? = null,
+    // val tags: Any? = null,
     val series: Series,
     @SerialName("is_senior_member")
     val isSeniorMember: Int,
-    //val mcn_info: Any? = null,
+    // val mcn_info: Any? = null,
     @SerialName("gaia_res_type")
     val gaiaResType: Int,
-    //val gaia_data: Any? = null,
+    // val gaia_data: Any? = null,
     @SerialName("is_risk")
     val isRisk: Boolean,
     val elec: Elec,
-    val contract: Contract? = null
+    val contract: Contract? = null,
 ) {
     @Serializable
     data class FansMedal(
         val show: Boolean,
         val wear: Boolean,
-        val medal: Medal? = null
+        val medal: Medal? = null,
     ) {
         /**
          * 粉丝勋章
@@ -152,10 +152,9 @@ data class UserInfoData(
             val lightStatus: Int,
             @SerialName("wearing_status")
             val wearingStatus: Int,
-            val score: Int
+            val score: Int,
         )
     }
-
 
     /**
      * 系统提示
@@ -180,7 +179,7 @@ data class UserInfoData(
         @SerialName("text_color")
         val textColor: String? = null,
         @SerialName("bg_color")
-        val bgColor: String? = null
+        val bgColor: String? = null,
     )
 
     /**
@@ -208,7 +207,7 @@ data class UserInfoData(
         val roomId: Int,
         val roundStatus: Int,
         @SerialName("broadcast_type")
-        val broadcastType: Int
+        val broadcastType: Int,
     ) {
         @Serializable
         data class WatchedShow(
@@ -222,7 +221,7 @@ data class UserInfoData(
             @SerialName("icon_location")
             val iconLocation: String,
             @SerialName("icon_web")
-            val iconWeb: String
+            val iconWeb: String,
         )
     }
 
@@ -233,7 +232,7 @@ data class UserInfoData(
      */
     @Serializable
     data class School(
-        val name: String
+        val name: String,
     )
 
     @Serializable
@@ -241,7 +240,7 @@ data class UserInfoData(
         @SerialName("user_upgrade_status")
         val userUpgradeStatus: Int,
         @SerialName("show_upgrade_window")
-        val showUpgradeWindow: Boolean
+        val showUpgradeWindow: Boolean,
     )
 
     /**
@@ -252,7 +251,7 @@ data class UserInfoData(
     @Serializable
     data class Elec(
         @SerialName("show_info")
-        val showInfo: ElecShowInfo
+        val showInfo: ElecShowInfo,
     ) {
         /**
          * 充电显示信息
@@ -270,7 +269,7 @@ data class UserInfoData(
             val title: String,
             val icon: String,
             @SerialName("jump_url")
-            val jumpUrl: String
+            val jumpUrl: String,
         )
     }
 
@@ -285,6 +284,6 @@ data class UserInfoData(
         @SerialName("is_display")
         val isDisplay: Boolean,
         @SerialName("is_follow_display")
-        val isFollowDisplay: Boolean
+        val isFollowDisplay: Boolean,
     )
 }

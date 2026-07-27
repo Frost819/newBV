@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.entity.search
 
-
 data class Hotword(
     val keyword: String,
     val showName: String,
@@ -11,21 +10,23 @@ data class Hotword(
             Hotword(
                 keyword = hotword.keyword,
                 showName = hotword.showName,
-                icon = hotword.icon
+                icon = hotword.icon,
             )
 
-        fun fromHttpAppSquareDataItem(squareDataItem: dev.frost819.newbv.biliapi.http.entity.search.AppSearchSquareData.SquareData.SquareDataItem) =
-            Hotword(
-                keyword = squareDataItem.keyword ?: "",
-                showName = squareDataItem.showName ?: "",
-                icon = squareDataItem.icon
-            )
+        fun fromHttpAppSquareDataItem(
+            squareDataItem: dev.frost819.newbv.biliapi.http.entity.search.AppSearchSquareData.SquareData.SquareDataItem,
+        ) = Hotword(
+            keyword = squareDataItem.keyword ?: "",
+            showName = squareDataItem.showName ?: "",
+            icon = squareDataItem.icon,
+        )
 
-        fun fromHttpAppSearchTrendingHotword(hotword: dev.frost819.newbv.biliapi.http.entity.search.SearchTendingData.Hotword) =
-            Hotword(
-                keyword = hotword.keyword,
-                showName = hotword.showName,
-                icon = hotword.icon
-            )
+        fun fromHttpAppSearchTrendingHotword(
+            hotword: dev.frost819.newbv.biliapi.http.entity.search.SearchTendingData.Hotword,
+        ) = Hotword(
+            keyword = hotword.keyword,
+            showName = hotword.showName,
+            icon = hotword.icon,
+        )
     }
 }

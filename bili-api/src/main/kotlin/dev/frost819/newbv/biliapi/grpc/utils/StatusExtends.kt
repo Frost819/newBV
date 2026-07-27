@@ -2,7 +2,6 @@ package dev.frost819.newbv.biliapi.grpc.utils
 
 import bilibili.rpc.Status
 import com.google.protobuf.Message
-//import com.google.rpc.Status
 import io.grpc.Metadata
 import io.grpc.StatusException
 
@@ -10,6 +9,7 @@ import io.grpc.StatusException
 // 这时候生成的代码会将很多 class 放在同一个 class 里面
 // 例如 bilibili.rpc.Status 会被放在 bilibili.rpc.StatusOuterClass$Status 中
 // 这时候直接从 typeUrl 中获取 class 名称是不对的
+
 /*
 @Suppress("UNCHECKED_CAST")
 fun Status.getTypeClass(): Class<Message> {
@@ -37,9 +37,11 @@ fun Status.getDetail(): Any {
 fun handleGrpcException(it: Throwable) {
     when (it) {
         is StatusException -> {
-            val statusDetailsKey = Metadata.Key.of(
-                "grpc-status-details-bin", Metadata.BINARY_BYTE_MARSHALLER
-            )
+            val statusDetailsKey =
+                Metadata.Key.of(
+                    "grpc-status-details-bin",
+                    Metadata.BINARY_BYTE_MARSHALLER,
+                )
             val data = it.trailers[statusDetailsKey]
             val status = Status.parseFrom(data).getDetail()
             when (status) {

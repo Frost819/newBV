@@ -1,10 +1,9 @@
-import AppConfiguration
+
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
 }
-
 
 dependencies {
     implementation(project(":bili-api-grpc"))
@@ -30,4 +29,19 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    filter {
+        excludeTestsMatching("*HttpApiTest")
+        excludeTestsMatching("*RepositoryTest")
+        excludeTestsMatching("*WebSocketTest")
+    }
 }
+
+val integrationTest =
+    tasks.register<Test>("integrationTest") {
+        useJUnitPlatform()
+        filter {
+            includeTestsMatching("*HttpApiTest")
+            includeTestsMatching("*RepositoryTest")
+            includeTestsMatching("*WebSocketTest")
+        }
+    }

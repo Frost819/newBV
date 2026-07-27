@@ -6,7 +6,10 @@ import io.grpc.ManagedChannel
 class ChannelRepository {
     var defaultChannel: ManagedChannel? = null
 
-    fun initDefaultChannel(accessKey: String, buvid: String) {
+    fun initDefaultChannel(
+        accessKey: String,
+        buvid: String,
+    ) {
         defaultChannel?.shutdownNow()
         defaultChannel = generateChannel(accessKey, buvid)
     }

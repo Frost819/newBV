@@ -10,5 +10,5 @@ package dev.frost819.newbv.biliapi.entity.login
 data class Captcha(
     val token: String,
     val challenge: String,
-    val gt: String
+    val gt: String,
 )

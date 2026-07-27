@@ -11,7 +11,7 @@ data class PgcFeedData(
     var coursor: Int,
     @SerialName("has_next")
     val hasNext: Boolean,
-    var items: List<FeedSubItem> = emptyList()
+    var items: List<FeedSubItem> = emptyList(),
 ) {
     @Serializable
     data class FeedSubItem(
@@ -32,18 +32,18 @@ data class PgcFeedData(
         val subTitle: String,
         val text: JsonArray? = null,
         val title: String,
-        val userStatus: UserStatus? = null
+        val userStatus: UserStatus? = null,
     ) {
         @Serializable
         data class Stat(
             val danmaku: Int,
             val duration: Int,
-            val view: Long
+            val view: Long,
         )
 
         @Serializable
         data class UserStatus(
-            val follow: Int
+            val follow: Int,
         )
     }
 }

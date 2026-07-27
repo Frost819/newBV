@@ -9,4 +9,5 @@ fun String.convertStringTimeToSeconds(): Int {
 }
 
 fun Long.toBv(): String = AvBvConverter.av2bv(this)
+
 fun String.toAv(): Long = AvBvConverter.bv2av(this)

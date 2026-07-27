@@ -15,5 +15,5 @@ data class CardBg(
     @SerialName("no_prefix")
     val noPrefix: String,
     @SerialName("no_color_format")
-    val noColorFormat: JsonObject? = null
+    val noColorFormat: JsonObject? = null,
 )

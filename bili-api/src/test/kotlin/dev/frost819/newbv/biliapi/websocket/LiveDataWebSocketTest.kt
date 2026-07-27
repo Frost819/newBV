@@ -5,7 +5,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 internal class LiveDataWebSocketTest {
-
     @Test
     fun connectLiveEvent() {
         runBlocking {

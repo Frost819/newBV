@@ -21,5 +21,5 @@ data class Staff(
     val face: String,
     val vip: Vip,
     val official: Official,
-    val follower: Int
+    val follower: Int,
 )

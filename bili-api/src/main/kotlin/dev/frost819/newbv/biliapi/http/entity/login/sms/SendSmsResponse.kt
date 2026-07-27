@@ -11,5 +11,5 @@ data class SendSmsResponse(
     @SerialName("captcha_key")
     val captchaKey: String,
     @SerialName("recaptcha_url")
-    val recaptchaUrl: String
+    val recaptchaUrl: String,
 )

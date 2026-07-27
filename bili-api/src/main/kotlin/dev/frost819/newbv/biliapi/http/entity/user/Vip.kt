@@ -40,7 +40,7 @@ data class Vip(
     @SerialName("tv_vip_status")
     val tvVipStatus: Int = 0,
     @SerialName("tv_vip_pay_type")
-    val tvVipPayType: Int = 0
+    val tvVipPayType: Int = 0,
 ) {
     /**
      * 大会员标签
@@ -81,6 +81,6 @@ data class Vip(
         @SerialName("img_label_uri_hans_static")
         val imgLabelUriHansStatic: String = "",
         @SerialName("img_label_uri_hant_static")
-        val imgLabelUriHantStatic: String = ""
+        val imgLabelUriHantStatic: String = "",
     )
 }

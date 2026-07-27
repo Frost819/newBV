@@ -14,9 +14,14 @@ import kotlinx.serialization.json.Json
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
-internal fun Source.readFrameHeader(): FrameHeader = FrameHeader(
-    readInt(), readShort(), readShort(), readInt(), readInt()
-)
+internal fun Source.readFrameHeader(): FrameHeader =
+    FrameHeader(
+        readInt(),
+        readShort(),
+        readShort(),
+        readInt(),
+        readInt(),
+    )
 
 /**
  * 数据包头部
@@ -32,9 +37,10 @@ data class FrameHeader(
     val headerLength: Short,
     val version: Short,
     val type: Int,
-    val sequence: Int
+    val sequence: Int,
 ) {
     val dataLength get() = totalLength - headerLength
+
     fun toBinary(): Source {
         return buildPacket {
             writeInt(this@FrameHeader.totalLength)
@@ -47,7 +53,11 @@ data class FrameHeader(
 }
 
 enum class FrameType(val code: Int) {
-    HeartRequest(2), HeartResponse(3), Normal(5), AuthRequest(7), AuthResponse(8)
+    HeartRequest(2),
+    HeartResponse(3),
+    Normal(5),
+    AuthRequest(7),
+    AuthResponse(8),
 }
 
 interface RequestFrame {
@@ -63,17 +73,18 @@ data class AuthRequest(
     val protoVer: Int = 3,
     val platform: String = "web",
     val type: Int = 2,
-    val key: String = ""
+    val key: String = "",
 ) : RequestFrame {
     override fun toBinary(): Source {
         val data = Json.encodeToString(this).toByteArray()
-        val header = FrameHeader(
-            totalLength = data.size + 16,
-            headerLength = 16,
-            version = 1,
-            type = FrameType.AuthRequest.code,
-            sequence = 1
-        )
+        val header =
+            FrameHeader(
+                totalLength = data.size + 16,
+                headerLength = 16,
+                version = 1,
+                type = FrameType.AuthRequest.code,
+                sequence = 1,
+            )
         return buildPacket {
             this.writePacket(header.toBinary())
             writePacket(ByteReadPacket(data))
@@ -83,7 +94,7 @@ data class AuthRequest(
 
 @Serializable
 data class AuthResponse(
-    val code: Int = -1
+    val code: Int = -1,
 ) {
     companion object {
         fun parse(data: ByteArray): AuthResponse {
@@ -95,11 +106,10 @@ data class AuthResponse(
             val type = dis.readInt()
             val sequence = dis.readInt()
 
-            //TODO do some verity
+            // TODO do some verity
 
             val jsonString = String(dis.readBytes())
             return Json.decodeFromString(jsonString)
         }
     }
-
 }

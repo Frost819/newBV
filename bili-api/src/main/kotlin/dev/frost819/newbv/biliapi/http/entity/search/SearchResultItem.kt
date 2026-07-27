@@ -29,7 +29,7 @@ data class SearchActivityResult(
     val cardValue: String,
     val type: String,
     val id: Int,
-    val desc: String
+    val desc: String,
 ) : SearchResultItem()
 
 /**
@@ -63,7 +63,7 @@ data class SearchArticleResult(
     val type: String,
     val id: Int,
     @SerialName("category_name")
-    val categoryName: String
+    val categoryName: String,
 ) : SearchResultItem()
 
 /**
@@ -98,7 +98,7 @@ data class SearchBiliUserResult(
     @SerialName("hit_columns")
     val hitColumns: List<String>,
     @SerialName("is_senior_member")
-    val isSeniorMember: Int
+    val isSeniorMember: Int,
 ) : SearchResultItem()
 
 /**
@@ -196,9 +196,8 @@ data class SearchMediaResult(
     val pgcSeasonId: Int,
     val corner: Int,
     @SerialName("index_show")
-    val indexShow: String
+    val indexShow: String,
 ) : SearchResultItem() {
-
     /**
      * 分集信息
      *
@@ -223,7 +222,7 @@ data class SearchMediaResult(
         @SerialName("index_title")
         val indexTitle: String,
         @SerialName("long_title")
-        val longTitle: String
+        val longTitle: String,
     )
 
     /**
@@ -236,7 +235,7 @@ data class SearchMediaResult(
     data class MediaScore(
         val score: Float,
         @SerialName("user_count")
-        val userCount: Int
+        val userCount: Int,
     )
 
     /**
@@ -265,7 +264,7 @@ data class SearchMediaResult(
         @SerialName("border_color_night")
         val borderColorNight: String,
         @SerialName("bg_style")
-        val bgStyle: Int
+        val bgStyle: Int,
     )
 }
 
@@ -320,7 +319,7 @@ data class SearchTopicResult(
     @SerialName("arcurl")
     val arcUrl: String,
     @SerialName("rank_score")
-    val rankScore: Int? = null
+    val rankScore: Int? = null,
 ) : SearchResultItem()
 
 /**
@@ -438,5 +437,5 @@ data class SearchVideoResult(
     @SerialName("release_status")
     val releaseStatus: Int,
     @SerialName("is_intervene")
-    val isIntervene: Int
+    val isIntervene: Int,
 ) : SearchResultItem()

@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import AppConfiguration
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -32,7 +30,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
         debug {
@@ -51,7 +49,6 @@ android {
         buildConfig = true
     }
 }
-
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")

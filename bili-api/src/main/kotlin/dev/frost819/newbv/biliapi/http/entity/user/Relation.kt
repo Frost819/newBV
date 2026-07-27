@@ -17,7 +17,7 @@ import kotlinx.serialization.Transient
 data class RelationData(
     val relation: Relation,
     @SerialName("be_relation")
-    val beRelation: Relation
+    val beRelation: Relation,
 )
 
 /**
@@ -38,18 +38,22 @@ data class Relation(
     val tag: List<Int>? = null,
     private val special: Int,
     @Transient
-    val isSpecialFollowing: Boolean = special == 1
+    val isSpecialFollowing: Boolean = special == 1,
 )
 
 private object RelationTypeSerializer : CommonEnumIntSerializer<RelationType>(
     "RelationType",
     RelationType.entries.toTypedArray(),
-    RelationType.entries.toTypedArray().serial()
+    RelationType.entries.toTypedArray().serial(),
 )
 
 @Serializable(with = RelationTypeSerializer::class)
 enum class RelationType(override val serialNumber: Int) : SerialEnum {
-    None(0), FollowedQuietly(1), Followed(2), BothFollowed(6), BlackList(128)
+    None(0),
+    FollowedQuietly(1),
+    Followed(2),
+    BothFollowed(6),
+    BlackList(128),
 }
 
 @Serializable
@@ -58,5 +62,5 @@ data class RelationStat(
     val follower: Int,
     val following: Int,
     val mid: Long,
-    val whisper: Int
+    val whisper: Int,
 )

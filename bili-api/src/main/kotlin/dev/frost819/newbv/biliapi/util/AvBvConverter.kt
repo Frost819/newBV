@@ -35,7 +35,10 @@ object AvBvConverter {
         return xor.toLong()
     }
 
-    private fun CharArray.swap(i: Int, j: Int) {
+    private fun CharArray.swap(
+        i: Int,
+        j: Int,
+    ) {
         this[i] = this[j].also { this[j] = this[i] }
     }
 }

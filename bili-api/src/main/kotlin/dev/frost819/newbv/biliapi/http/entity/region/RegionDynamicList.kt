@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.http.entity.region
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,7 +9,7 @@ data class RegionDynamicList(
     val cBottom: Long,
     @SerialName("ctop")
     val cTop: Long,
-    val new: List<Item>
+    val new: List<Item>,
 ) {
     @Serializable
     data class Item(
@@ -35,6 +34,6 @@ data class RegionDynamicList(
         @SerialName("rname")
         val rName: String,
         val title: String,
-        val uri: String
+        val uri: String,
     )
 }

@@ -47,7 +47,7 @@ data class FavoriteItem(
 data class FavoriteItemIdListResponse(
     val code: Int,
     val message: String,
-    val data: List<FavoriteItemId>? = null
+    val data: List<FavoriteItemId>? = null,
 )
 
 /**
@@ -61,5 +61,5 @@ data class FavoriteItemIdListResponse(
 data class FavoriteItemId(
     val id: Long,
     val type: Int,
-    val bvid: String
+    val bvid: String,
 )

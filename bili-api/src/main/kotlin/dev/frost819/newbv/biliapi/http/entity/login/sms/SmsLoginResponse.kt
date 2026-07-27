@@ -16,7 +16,7 @@ data class SmsLoginResponse(
     @SerialName("is_new")
     val isNew: Boolean,
     @SerialName("is_tourist")
-    val isTourist: Boolean
+    val isTourist: Boolean,
 ) {
     @Serializable
     data class TokenInfo(
@@ -26,13 +26,13 @@ data class SmsLoginResponse(
         @SerialName("access_token")
         val accessToken: String,
         @SerialName("refresh_token")
-        val refreshToken: String
+        val refreshToken: String,
     )
 
     @Serializable
     data class CookieInfo(
         val cookies: List<Cookie>,
-        val domains: List<String>
+        val domains: List<String>,
     ) {
         @Serializable
         data class Cookie(
@@ -43,7 +43,7 @@ data class SmsLoginResponse(
             val expires: Int,
             var secure: Int,
             @SerialName("same_site")
-            val sameSite: Int
+            val sameSite: Int,
         )
     }
 }

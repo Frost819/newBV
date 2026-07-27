@@ -16,12 +16,12 @@ import java.nio.file.Paths
 import java.util.Properties
 
 internal class BiliHttpApiTest {
-
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
         val BILI_JCT: String =
@@ -82,14 +82,15 @@ internal class BiliHttpApiTest {
     fun `get video play url`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getVideoPlayUrl(
-                    av = 648092492,
-                    cid = 903675075,
-                    fnval = 4048,
-                    qn = 127,
-                    sessData = SESSDATA,
-                    dedeUserID = UID
-                )
+                val response =
+                    BiliHttpApi.getVideoPlayUrl(
+                        av = 648092492,
+                        cid = 903675075,
+                        fnval = 4048,
+                        qn = 127,
+                        sessData = SESSDATA,
+                        dedeUserID = UID,
+                    )
                 println(response)
             }
         }
@@ -105,8 +106,8 @@ internal class BiliHttpApiTest {
                     fnval = 4048,
                     qn = 127,
                     sessData = SESSDATA,
-                    dedeUserID = UID
-                )
+                    dedeUserID = UID,
+                ),
             )
         }
     }
@@ -120,8 +121,8 @@ internal class BiliHttpApiTest {
                     cid = 331748015,
                     fnval = 4048,
                     qn = 127,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -140,10 +141,11 @@ internal class BiliHttpApiTest {
     fun `get dynamic list with type all`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getDynamicList(
-                    type = "article",
-                    sessData = SESSDATA
-                )
+                val response =
+                    BiliHttpApi.getDynamicList(
+                        type = "article",
+                        sessData = SESSDATA,
+                    )
                 println(response)
             }
         }
@@ -153,10 +155,11 @@ internal class BiliHttpApiTest {
     fun `get user info from Mr_He`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getUserInfo(
-                    uid = 163637592,
-                    sessData = SESSDATA
-                )
+                val response =
+                    BiliHttpApi.getUserInfo(
+                        uid = 163637592,
+                        sessData = SESSDATA,
+                    )
                 println(response)
             }
         }
@@ -166,11 +169,12 @@ internal class BiliHttpApiTest {
     fun `get user card info from Mr_He`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getUserCardInfo(
-                    uid = 163637592,
-                    photo = true,
-                    sessData = SESSDATA
-                )
+                val response =
+                    BiliHttpApi.getUserCardInfo(
+                        uid = 163637592,
+                        photo = true,
+                        sessData = SESSDATA,
+                    )
                 println(response)
             }
         }
@@ -180,9 +184,10 @@ internal class BiliHttpApiTest {
     fun `get self user info`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getUserSelfInfo(
-                    sessData = SESSDATA
-                )
+                val response =
+                    BiliHttpApi.getUserSelfInfo(
+                        sessData = SESSDATA,
+                    )
                 println(response)
             }
         }
@@ -192,10 +197,11 @@ internal class BiliHttpApiTest {
     fun `get histories`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getHistories(
-                    viewAt = 0,
-                    sessData = SESSDATA
-                )
+                val response =
+                    BiliHttpApi.getHistories(
+                        viewAt = 0,
+                        sessData = SESSDATA,
+                    )
                 println(response)
             }
         }
@@ -205,9 +211,10 @@ internal class BiliHttpApiTest {
     fun `get related vidoes`() {
         assertDoesNotThrow {
             runBlocking {
-                val response = BiliHttpApi.getRelatedVideos(
-                    avid = 170001
-                )
+                val response =
+                    BiliHttpApi.getRelatedVideos(
+                        avid = 170001,
+                    )
                 println(response)
             }
         }
@@ -216,9 +223,10 @@ internal class BiliHttpApiTest {
     @Test
     fun `get favorite folder metadata from id 2333`() {
         runBlocking {
-            val response = BiliHttpApi.getFavoriteFolderInfo(
-                mediaId = 2333
-            )
+            val response =
+                BiliHttpApi.getFavoriteFolderInfo(
+                    mediaId = 2333,
+                )
             println(response)
         }
     }
@@ -226,10 +234,11 @@ internal class BiliHttpApiTest {
     @Test
     fun `get all favorite folders metadata`() {
         runBlocking {
-            val response = BiliHttpApi.getAllFavoriteFoldersInfo(
-                mid = 2333,
-                sessData = SESSDATA
-            )
+            val response =
+                BiliHttpApi.getAllFavoriteFoldersInfo(
+                    mid = 2333,
+                    sessData = SESSDATA,
+                )
             println(response)
         }
     }
@@ -237,10 +246,11 @@ internal class BiliHttpApiTest {
     @Test
     fun `get all favorite item ids`() {
         runBlocking {
-            val response = BiliHttpApi.getFavoriteIdList(
-                mediaId = 2333,
-                sessData = SESSDATA
-            )
+            val response =
+                BiliHttpApi.getFavoriteIdList(
+                    mediaId = 2333,
+                    sessData = SESSDATA,
+                )
             println(response)
         }
     }
@@ -248,10 +258,11 @@ internal class BiliHttpApiTest {
     @Test
     fun `get favorite list`() {
         runBlocking {
-            val response = BiliHttpApi.getFavoriteList(
-                mediaId = 2333,
-                sessData = SESSDATA
-            )
+            val response =
+                BiliHttpApi.getFavoriteList(
+                    mediaId = 2333,
+                    sessData = SESSDATA,
+                )
             println(response)
         }
     }
@@ -259,12 +270,13 @@ internal class BiliHttpApiTest {
     @Test
     fun `send heartbeat`() {
         runBlocking {
-            val response = BiliHttpApi.sendHeartbeat(
-                avid = 170001,
-                cid = 280468,
-                playedTime = 23,
-                sessData = SESSDATA
-            )
+            val response =
+                BiliHttpApi.sendHeartbeat(
+                    avid = 170001,
+                    cid = 280468,
+                    playedTime = 23,
+                    sessData = SESSDATA,
+                )
             println(response)
         }
     }
@@ -272,12 +284,13 @@ internal class BiliHttpApiTest {
     @Test
     fun `get video more info`() {
         runBlocking {
-            val response = BiliHttpApi.getVideoMoreInfo(
-                avid = 170001,
-                cid = 279786,
-                sessData = SESSDATA,
-                buvid3 = generateBuvid()
-            ).getResponseData()
+            val response =
+                BiliHttpApi.getVideoMoreInfo(
+                    avid = 170001,
+                    cid = 279786,
+                    sessData = SESSDATA,
+                    buvid3 = generateBuvid(),
+                ).getResponseData()
             println("lastPlayTime: ${response.lastPlayTime}")
             println("lastPlayCid: ${response.lastPlayCid}")
         }
@@ -291,8 +304,8 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     like = true,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -303,8 +316,8 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoLiked(
                     avid = 170001,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -318,7 +331,7 @@ internal class BiliHttpApiTest {
                     csrf = BILI_JCT,
                     sessData = SESSDATA,
                     buvid3 = BUVID,
-                )
+                ),
             )
         }
     }
@@ -329,8 +342,8 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoSentCoin(
                     avid = 170001,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -343,8 +356,8 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     addMediaIds = listOf(46912037),
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -357,8 +370,8 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     delMediaIds = listOf(46912037),
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -369,117 +382,127 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoFavoured(
                     avid = 170001,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
 
     @Test
-    fun `send one click triple action`(){
+    fun `send one click triple action`() {
         runBlocking {
             println(
                 BiliHttpApi.sendVideoOneClickTripleAction(
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
+
     @Test
-    fun `get user space videos`() = runBlocking {
-        println(
-            BiliHttpApi.getWebUserSpaceVideos(
-                mid = 1,
-                sessData = SESSDATA
+    fun `get user space videos`() =
+        runBlocking {
+            println(
+                BiliHttpApi.getWebUserSpaceVideos(
+                    mid = 1,
+                    sessData = SESSDATA,
+                ),
             )
-        )
-    }
+        }
 
     @Test
     fun `get web season info data`() {
         runBlocking {
             println(
                 BiliHttpApi.getWebSeasonInfo(
-                    epId = 705917
-                )
+                    epId = 705917,
+                ),
             )
         }
     }
 
     @Test
-    fun `get app season info data`() = runBlocking {
-        println(
-            BiliHttpApi.getAppSeasonInfo(
-                epId = 752900,
-                seasonId = 45303,
-                mobiApp = "android_hd",
-                accessKey = ACCESS_TOKEN
+    fun `get app season info data`() =
+        runBlocking {
+            println(
+                BiliHttpApi.getAppSeasonInfo(
+                    epId = 752900,
+                    seasonId = 45303,
+                    mobiApp = "android_hd",
+                    accessKey = ACCESS_TOKEN,
+                ),
             )
-        )
-    }
+        }
 
     @Test
-    fun `get user season status data`() = runBlocking {
-        println(
-            BiliHttpApi.getSeasonUserStatus(
-                seasonId = 44152,
-                sessData = SESSDATA
+    fun `get user season status data`() =
+        runBlocking {
+            println(
+                BiliHttpApi.getSeasonUserStatus(
+                    seasonId = 44152,
+                    sessData = SESSDATA,
+                ),
             )
-        )
-    }
+        }
 
     @Test
     fun `get video tags`() {
         runBlocking {
             println(
                 BiliHttpApi.getVideoTags(
-                    avid = 170001
-                )
+                    avid = 170001,
+                ),
             )
         }
     }
 
     @Test
-    fun `get tag detail`() = runBlocking {
-        println(
-            BiliHttpApi.getTagDetail(
-                tagId = 6020278,
-                pageNumber = 1,
-                pageSize = 20
+    fun `get tag detail`() =
+        runBlocking {
+            println(
+                BiliHttpApi.getTagDetail(
+                    tagId = 6020278,
+                    pageNumber = 1,
+                    pageSize = 20,
+                ),
             )
-        )
-    }
+        }
 
     @Test
-    fun `get tag popular videos`() = runBlocking {
-        println(
-            BiliHttpApi.getTagTopVideos(
-                tagId = 6020278,
-                pageNumber = 1,
-                pageSize = 20
+    fun `get tag popular videos`() =
+        runBlocking {
+            println(
+                BiliHttpApi.getTagTopVideos(
+                    tagId = 6020278,
+                    pageNumber = 1,
+                    pageSize = 20,
+                ),
             )
-        )
-    }
+        }
 
     @Test
-    fun `get web timeline`() = runBlocking {
-        val result = BiliHttpApi.getTimeline(
-            type = 1,
-            before = 7,
-            after = 7
-        )
-        println(result)
-    }
+    fun `get web timeline`() =
+        runBlocking {
+            val result =
+                BiliHttpApi.getTimeline(
+                    type = 1,
+                    before = 7,
+                    after = 7,
+                )
+            println(result)
+        }
 
     @Test
-    fun `get app timeline`() = runBlocking {
-        val result = BiliHttpApi.getTimeline(
-            filterType = 0
-        )
-        println(result)
-    }
+    fun `get app timeline`() =
+        runBlocking {
+            val result =
+                BiliHttpApi.getTimeline(
+                    filterType = 0,
+                )
+            println(result)
+        }
 
     @Test
     fun `get follow list`() {
@@ -487,8 +510,8 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getUserFollow(
                     mid = 3066511,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -502,8 +525,8 @@ internal class BiliHttpApiTest {
                     action = FollowAction.AddFollow,
                     actionSource = FollowActionSource.Space,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -517,8 +540,8 @@ internal class BiliHttpApiTest {
                     action = FollowAction.DelFollow,
                     actionSource = FollowActionSource.Space,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -529,8 +552,8 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getRelations(
                     mid = 11336264,
-                    sessData = SESSDATA
-                )
+                    sessData = SESSDATA,
+                ),
             )
         }
     }
@@ -540,26 +563,29 @@ internal class BiliHttpApiTest {
         runBlocking {
             println(
                 BiliHttpApi.getRelationStat(
-                    mid = 11336264
-                )
+                    mid = 11336264,
+                ),
             )
         }
     }
 
     @Test
-    fun `get web search hot words`() = runBlocking {
-        println(BiliHttpApi.getWebSearchSquare())
-    }
+    fun `get web search hot words`() =
+        runBlocking {
+            println(BiliHttpApi.getWebSearchSquare())
+        }
 
     @Test
-    fun `get app search hot words`() = runBlocking {
-        println(BiliHttpApi.getAppSearchSquare())
-    }
+    fun `get app search hot words`() =
+        runBlocking {
+            println(BiliHttpApi.getAppSearchSquare())
+        }
 
     @Test
-    fun `get app search trending ranking`() = runBlocking {
-        println(BiliHttpApi.getSearchTrendRank())
-    }
+    fun `get app search trending ranking`() =
+        runBlocking {
+            println(BiliHttpApi.getSearchTrendRank())
+        }
 
     @Test
     fun `get search keyword suggests`() {
@@ -567,8 +593,8 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getKeywordSuggest(
                     term = "和奥托一起泡温泉",
-                    buvid = BUVID
-                )
+                    buvid = BUVID,
+                ),
             )
         }
     }
@@ -578,8 +604,8 @@ internal class BiliHttpApiTest {
         runBlocking {
             println(
                 BiliHttpApi.searchAll(
-                    keyword = "007"
-                )
+                    keyword = "007",
+                ),
             )
         }
     }
@@ -593,7 +619,7 @@ internal class BiliHttpApiTest {
                 runCatching {
                     BiliHttpApi.searchType(
                         keyword = "007",
-                        type = type
+                        type = type,
                     )
                 }.onSuccess { println(it) }
                     .onFailure { println("search type [$type] failed: ${it.message}") }
@@ -608,7 +634,7 @@ internal class BiliHttpApiTest {
                 println("type: ${pgcType.name}")
                 println(
                     BiliHttpApi.getPgcWebInitialStateData(pgcType)
-                        .toString().replace("\n", "")
+                        .toString().replace("\n", ""),
                 )
             }
         }
@@ -623,13 +649,13 @@ internal class BiliHttpApiTest {
                     PgcType.Anime, PgcType.GuoChuang ->
                         println(
                             BiliHttpApi.getPgcFeedV3(name = pgcType.name.lowercase())
-                                .toString().replace("\n", "")
+                                .toString().replace("\n", ""),
                         )
 
                     PgcType.Tv, PgcType.Movie, PgcType.Documentary, PgcType.Variety ->
                         println(
                             BiliHttpApi.getPgcFeed(name = pgcType.name.lowercase())
-                                .toString().replace("\n", "")
+                                .toString().replace("\n", ""),
                         )
                 }
             }
@@ -649,8 +675,8 @@ internal class BiliHttpApiTest {
                             pageNumber = 1,
                             pageSize = 1,
                             mid = UID,
-                            sessData = SESSDATA
-                        )
+                            sessData = SESSDATA,
+                        ),
                     )
                 }
             }
@@ -670,8 +696,8 @@ internal class BiliHttpApiTest {
                             pageNumber = 1,
                             pageSize = 1,
                             build = 6830300,
-                            accessKey = ACCESS_TOKEN
-                        )
+                            accessKey = ACCESS_TOKEN,
+                        ),
                     )
                 }
             }
@@ -679,148 +705,171 @@ internal class BiliHttpApiTest {
     }
 
     @Test
-    fun `get web homepage recommend items`() = runBlocking {
-        val result = BiliHttpApi.getFeedRcmd()
-        println(result)
-    }
-
-    @Test
-    fun `get app homepage recommend items`() = runBlocking {
-        val result = BiliHttpApi.getFeedIndex()
-        println(result)
-    }
-
-    @Test
-    fun `get anime index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexAnimeResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get guochuang index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexGuochuangResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get movie index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexMovieResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get tv index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexTvResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get variety season index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexVarietyResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get documentary season index`() = runBlocking {
-        val result = BiliHttpApi.seasonIndexDocumentaryResult()
-        println(result.data?.list?.map { it.title })
-    }
-
-    @Test
-    fun `get web video shot`() = runBlocking {
-        val result = BiliHttpApi.getWebVideoShot(aid = 170001)
-        println(result)
-    }
-
-    @Test
-    fun `get app video shot`() = runBlocking {
-        val result = BiliHttpApi.getAppVideoShot(aid = 170001, cid = 279786)
-        println(result)
-    }
-
-    @Test
-    fun `get app region dynamic`() = runBlocking {
-        val rids = listOf(
-            1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
-            211, 217, 119, 155, 202, 5, 181, 177, 23, 11
-        )
-        rids
-            .shuffled()
-            .forEach { rid ->
-                println("rid $rid:")
-                val result = BiliHttpApi.getRegionDynamic(
-                    rid = rid,
-                    accessKey = ACCESS_TOKEN
-                )
-                println(result)
-                delay((800L..2000L).random())
-            }
-    }
-
-
-    @Test
-    fun `get app region dynamic list`() = runBlocking {
-        val rids = listOf(
-            1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
-            211, 217, 119, 155, 202, 5, 181, 177, 23, 11
-        )
-        rids
-            .shuffled()
-            .forEach { rid ->
-                println("rid $rid:")
-                val result = BiliHttpApi.getRegionDynamicList(
-                    rid = rid,
-                    accessKey = ACCESS_TOKEN
-                )
-                println(result)
-                delay((800L..2000L).random())
-            }
-    }
-
-    @Test
-    fun `get locs`() = runBlocking {
-        val locIds = listOf(
-            4973, 4991, 5004, 4979, 4985, 5008, 5007, 4997,
-            4998, 5005, 5002, 5001, 5000, 5006, 4999, 5003
-        )
-
-        locIds.chunked(3).forEach { locs ->
-            println("${locs.joinToString(",")}:")
-            val result = BiliHttpApi.getLocs(
-                ids = locs
-            )
+    fun `get web homepage recommend items`() =
+        runBlocking {
+            val result = BiliHttpApi.getFeedRcmd()
             println(result)
-            delay((800L..2000L).random())
         }
-    }
 
     @Test
-    fun `add to watch later`() = runBlocking {
-        val result = BiliHttpApi.addToView(
-            avid = 170001,
-            csrf = BILI_JCT,
-            sessData = SESSDATA
-        )
-        println(result)
-        assert(result.first)
-    }
+    fun `get app homepage recommend items`() =
+        runBlocking {
+            val result = BiliHttpApi.getFeedIndex()
+            println(result)
+        }
 
     @Test
-    fun `delete from watch later`() = runBlocking {
-        val addRes = BiliHttpApi.addToView(
-            avid = 170001,
-            csrf = BILI_JCT,
-            sessData = SESSDATA
-        )
-        println(addRes)
-        assert(addRes.first)
-        val result = BiliHttpApi.delToView(
-            viewed = false,
-            avid = 170001,
-            csrf = BILI_JCT,
-            sessData = SESSDATA
-        )
-        println(result)
-        assert(result.first)
-    }
+    fun `get anime index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexAnimeResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get guochuang index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexGuochuangResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get movie index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexMovieResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get tv index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexTvResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get variety season index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexVarietyResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get documentary season index`() =
+        runBlocking {
+            val result = BiliHttpApi.seasonIndexDocumentaryResult()
+            println(result.data?.list?.map { it.title })
+        }
+
+    @Test
+    fun `get web video shot`() =
+        runBlocking {
+            val result = BiliHttpApi.getWebVideoShot(aid = 170001)
+            println(result)
+        }
+
+    @Test
+    fun `get app video shot`() =
+        runBlocking {
+            val result = BiliHttpApi.getAppVideoShot(aid = 170001, cid = 279786)
+            println(result)
+        }
+
+    @Test
+    fun `get app region dynamic`() =
+        runBlocking {
+            val rids =
+                listOf(
+                    1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
+                    211, 217, 119, 155, 202, 5, 181, 177, 23, 11,
+                )
+            rids
+                .shuffled()
+                .forEach { rid ->
+                    println("rid $rid:")
+                    val result =
+                        BiliHttpApi.getRegionDynamic(
+                            rid = rid,
+                            accessKey = ACCESS_TOKEN,
+                        )
+                    println(result)
+                    delay((800L..2000L).random())
+                }
+        }
+
+    @Test
+    fun `get app region dynamic list`() =
+        runBlocking {
+            val rids =
+                listOf(
+                    1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
+                    211, 217, 119, 155, 202, 5, 181, 177, 23, 11,
+                )
+            rids
+                .shuffled()
+                .forEach { rid ->
+                    println("rid $rid:")
+                    val result =
+                        BiliHttpApi.getRegionDynamicList(
+                            rid = rid,
+                            accessKey = ACCESS_TOKEN,
+                        )
+                    println(result)
+                    delay((800L..2000L).random())
+                }
+        }
+
+    @Test
+    fun `get locs`() =
+        runBlocking {
+            val locIds =
+                listOf(
+                    4973, 4991, 5004, 4979, 4985, 5008, 5007, 4997,
+                    4998, 5005, 5002, 5001, 5000, 5006, 4999, 5003,
+                )
+
+            locIds.chunked(3).forEach { locs ->
+                println("${locs.joinToString(",")}:")
+                val result =
+                    BiliHttpApi.getLocs(
+                        ids = locs,
+                    )
+                println(result)
+                delay((800L..2000L).random())
+            }
+        }
+
+    @Test
+    fun `add to watch later`() =
+        runBlocking {
+            val result =
+                BiliHttpApi.addToView(
+                    avid = 170001,
+                    csrf = BILI_JCT,
+                    sessData = SESSDATA,
+                )
+            println(result)
+            assert(result.first)
+        }
+
+    @Test
+    fun `delete from watch later`() =
+        runBlocking {
+            val addRes =
+                BiliHttpApi.addToView(
+                    avid = 170001,
+                    csrf = BILI_JCT,
+                    sessData = SESSDATA,
+                )
+            println(addRes)
+            assert(addRes.first)
+            val result =
+                BiliHttpApi.delToView(
+                    viewed = false,
+                    avid = 170001,
+                    csrf = BILI_JCT,
+                    sessData = SESSDATA,
+                )
+            println(result)
+            assert(result.first)
+        }
 }

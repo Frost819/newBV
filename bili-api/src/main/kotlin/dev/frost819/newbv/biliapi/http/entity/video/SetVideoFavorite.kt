@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class SetVideoFavorite(
-    val prompt:Boolean
+    val prompt: Boolean,
 )
 
 /**
@@ -20,6 +20,6 @@ data class SetVideoFavorite(
  */
 @Serializable
 data class CheckVideoFavoured(
-    val count:Int,
-    val favoured:Boolean
+    val count: Int,
+    val favoured: Boolean,
 )

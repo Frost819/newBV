@@ -22,106 +22,110 @@ import kotlin.math.ceil
 
 class UserRepository(
     private val authRepository: AuthRepository,
-    private val channelRepository: ChannelRepository
+    private val channelRepository: ChannelRepository,
 ) {
     private val dynamicStub
-        get() = runCatching {
-            DynamicGrpcKt.DynamicCoroutineStub(channelRepository.defaultChannel!!)
-        }.getOrNull()
+        get() =
+            runCatching {
+                DynamicGrpcKt.DynamicCoroutineStub(channelRepository.defaultChannel!!)
+            }.getOrNull()
 
     private suspend fun modifyFollow(
         mid: Long,
         action: FollowAction,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): Boolean {
-        val response = when (preferApiType) {
-            ApiType.Web -> {
-                BiliHttpApi.modifyFollow(
-                    mid = mid,
-                    action = action,
-                    actionSource = FollowActionSource.Space,
-                    csrf = authRepository.biliJct,
-                    sessData = authRepository.sessionData
-                )
-            }
+        val response =
+            when (preferApiType) {
+                ApiType.Web -> {
+                    BiliHttpApi.modifyFollow(
+                        mid = mid,
+                        action = action,
+                        actionSource = FollowActionSource.Space,
+                        csrf = authRepository.biliJct,
+                        sessData = authRepository.sessionData,
+                    )
+                }
 
-            ApiType.App -> {
-                BiliHttpApi.modifyFollow(
-                    mid = mid,
-                    action = action,
-                    actionSource = FollowActionSource.Space,
-                    accessKey = authRepository.accessToken
-                )
+                ApiType.App -> {
+                    BiliHttpApi.modifyFollow(
+                        mid = mid,
+                        action = action,
+                        actionSource = FollowActionSource.Space,
+                        accessKey = authRepository.accessToken,
+                    )
+                }
             }
-        }
         return response.code == 0
     }
 
     suspend fun followUser(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): Boolean = modifyFollow(mid, FollowAction.AddFollow, preferApiType)
 
     suspend fun unfollowUser(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): Boolean = modifyFollow(mid, FollowAction.DelFollow, preferApiType)
 
     suspend fun checkIsFollowing(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): Boolean? {
         if (authRepository.sessionData == null && authRepository.accessToken == null) return null
         return runCatching {
-            val response = when (preferApiType) {
-                ApiType.Web -> {
-                    BiliHttpApi.getRelations(
-                        mid = mid,
-                        sessData = authRepository.sessionData
-                    )
-                }
+            val response =
+                when (preferApiType) {
+                    ApiType.Web -> {
+                        BiliHttpApi.getRelations(
+                            mid = mid,
+                            sessData = authRepository.sessionData,
+                        )
+                    }
 
-                ApiType.App -> {
-                    BiliHttpApi.getRelations(
-                        mid = mid,
-                        //移动端貌似并没有使用这个接口，目前该接口返回-663鉴权失败，直接改用sessdata获取
-                        sessData = authRepository.sessionData
-                        //accessKey = authRepository.accessToken
-                    )
-                }
-            }.getResponseData()
+                    ApiType.App -> {
+                        BiliHttpApi.getRelations(
+                            mid = mid,
+                            // 移动端貌似并没有使用这个接口，目前该接口返回-663鉴权失败，直接改用sessdata获取
+                            sessData = authRepository.sessionData,
+                            // accessKey = authRepository.accessToken
+                        )
+                    }
+                }.getResponseData()
             listOf(
                 RelationType.Followed,
                 RelationType.FollowedQuietly,
-                RelationType.BothFollowed
+                RelationType.BothFollowed,
             ).contains(response.relation.attribute)
         }.onFailure {
             it.printStackTrace()
         }.getOrNull()
     }
 
-    //TODO 改成返回 关注数，粉丝数，黑名单数
+    // TODO 改成返回 关注数，粉丝数，黑名单数
     suspend fun getFollowingUpCount(
         mid: Long,
-        preferApiType: ApiType
+        preferApiType: ApiType,
     ): Int {
         if (authRepository.sessionData == null && authRepository.accessToken == null) return 0
         return runCatching {
-            val response = when (preferApiType) {
-                ApiType.Web -> {
-                    BiliHttpApi.getRelationStat(
-                        mid = mid,
-                        sessData = authRepository.sessionData
-                    )
-                }
+            val response =
+                when (preferApiType) {
+                    ApiType.Web -> {
+                        BiliHttpApi.getRelationStat(
+                            mid = mid,
+                            sessData = authRepository.sessionData,
+                        )
+                    }
 
-                ApiType.App -> {
-                    BiliHttpApi.getRelationStat(
-                        mid = mid,
-                        accessKey = authRepository.accessToken
-                    )
-                }
-            }.getResponseData()
+                    ApiType.App -> {
+                        BiliHttpApi.getRelationStat(
+                            mid = mid,
+                            accessKey = authRepository.accessToken,
+                        )
+                    }
+                }.getResponseData()
             response.following
         }.onFailure {
             it.printStackTrace()
@@ -130,37 +134,41 @@ class UserRepository(
 
     suspend fun addSeasonFollow(
         seasonId: Int,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): String {
         return when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.addSeasonFollow(
-                seasonId = seasonId,
-                csrf = authRepository.biliJct!!,
-                sessData = authRepository.sessionData!!
-            )
+            ApiType.Web ->
+                BiliHttpApi.addSeasonFollow(
+                    seasonId = seasonId,
+                    csrf = authRepository.biliJct!!,
+                    sessData = authRepository.sessionData!!,
+                )
 
-            ApiType.App -> BiliHttpApi.addSeasonFollow(
-                seasonId = seasonId,
-                accessKey = authRepository.accessToken!!
-            )
+            ApiType.App ->
+                BiliHttpApi.addSeasonFollow(
+                    seasonId = seasonId,
+                    accessKey = authRepository.accessToken!!,
+                )
         }.getResponseData().toast
     }
 
     suspend fun delSeasonFollow(
         seasonId: Int,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): String {
         return when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.delSeasonFollow(
-                seasonId = seasonId,
-                csrf = authRepository.biliJct!!,
-                sessData = authRepository.sessionData!!
-            )
+            ApiType.Web ->
+                BiliHttpApi.delSeasonFollow(
+                    seasonId = seasonId,
+                    csrf = authRepository.biliJct!!,
+                    sessData = authRepository.sessionData!!,
+                )
 
-            ApiType.App -> BiliHttpApi.delSeasonFollow(
-                seasonId = seasonId,
-                accessKey = authRepository.accessToken!!
-            )
+            ApiType.App ->
+                BiliHttpApi.delSeasonFollow(
+                    seasonId = seasonId,
+                    accessKey = authRepository.accessToken!!,
+                )
         }.getResponseData().toast
     }
 
@@ -168,29 +176,31 @@ class UserRepository(
         mid: Long,
         order: SpaceVideoOrder = SpaceVideoOrder.PubDate,
         page: SpaceVideoPage = SpaceVideoPage(),
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): SpaceVideoData {
         return when (preferApiType) {
             ApiType.Web -> {
-                val webSpaceVideoData = BiliHttpApi.getWebUserSpaceVideos(
-                    mid = mid,
-                    order = order.value,
-                    pageNumber = page.nextWebPageNumber,
-                    pageSize = page.nextWebPageSize,
-                    sessData = authRepository.sessionData ?: "",
-                    dedeUserID = authRepository.mid
-                ).getResponseData()
+                val webSpaceVideoData =
+                    BiliHttpApi.getWebUserSpaceVideos(
+                        mid = mid,
+                        order = order.value,
+                        pageNumber = page.nextWebPageNumber,
+                        pageSize = page.nextWebPageSize,
+                        sessData = authRepository.sessionData ?: "",
+                        dedeUserID = authRepository.mid,
+                    ).getResponseData()
                 SpaceVideoData.fromWebSpaceVideoData(webSpaceVideoData)
             }
 
             ApiType.App -> {
-                val appSpaceVideoData = BiliHttpApi.getAppUserSpaceVideos(
-                    mid = mid,
-                    lastAvid = page.lastAvid,
-                    order = order.value,
-                    ts = System.currentTimeMillis(),
-                    accessKey = authRepository.accessToken ?: ""
-                ).getResponseData()
+                val appSpaceVideoData =
+                    BiliHttpApi.getAppUserSpaceVideos(
+                        mid = mid,
+                        lastAvid = page.lastAvid,
+                        order = order.value,
+                        ts = System.currentTimeMillis(),
+                        accessKey = authRepository.accessToken ?: "",
+                    ).getResponseData()
                 SpaceVideoData.fromAppSpaceVideoData(appSpaceVideoData)
             }
         }
@@ -200,30 +210,34 @@ class UserRepository(
         page: Int,
         offset: String,
         updateBaseline: String,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): DynamicVideoData {
         return when (preferApiType) {
             ApiType.Web -> {
-                val responseData = BiliHttpApi.getDynamicList(
-                    type = "video",
-                    page = page,
-                    offset = offset,
-                    sessData = authRepository.sessionData ?: ""
-                ).getResponseData()
+                val responseData =
+                    BiliHttpApi.getDynamicList(
+                        type = "video",
+                        page = page,
+                        offset = offset,
+                        sessData = authRepository.sessionData ?: "",
+                    ).getResponseData()
                 DynamicVideoData.fromDynamicData(responseData)
             }
 
             ApiType.App -> {
                 var result: DynamicVideoData? = null
                 runCatching {
-                    val dynVideoReply = dynamicStub?.dynVideo(dynVideoReq {
-                        this.page = page
-                        this.offset = offset
-                        this.updateBaseline = updateBaseline
-                        localTime = 8
-                        refreshType =
-                            if (offset == "") Refresh.refresh_new else Refresh.refresh_history
-                    })
+                    val dynVideoReply =
+                        dynamicStub?.dynVideo(
+                            dynVideoReq {
+                                this.page = page
+                                this.offset = offset
+                                this.updateBaseline = updateBaseline
+                                localTime = 8
+                                refreshType =
+                                    if (offset == "") Refresh.refresh_new else Refresh.refresh_history
+                            },
+                        )
                     result = DynamicVideoData.fromDynamicData(dynVideoReply!!)
                 }.onFailure {
                     handleGrpcException(it)
@@ -235,15 +249,16 @@ class UserRepository(
 
     suspend fun getFollowedUsers(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): List<FollowedUser> {
         return when (preferApiType) {
             ApiType.Web -> {
                 val result = mutableListOf<FollowedUser>()
-                val firstResponse = BiliHttpApi.getUserFollow(
-                    mid = mid,
-                    sessData = authRepository.sessionData!!
-                ).getResponseData()
+                val firstResponse =
+                    BiliHttpApi.getUserFollow(
+                        mid = mid,
+                        sessData = authRepository.sessionData!!,
+                    ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
                 result.addAll(firstResponse.list.map { FollowedUser.fromHttpFollowedUser(it) })
@@ -253,7 +268,7 @@ class UserRepository(
                             BiliHttpApi.getUserFollow(
                                 mid = mid,
                                 pageNumber = pageNumber,
-                                sessData = authRepository.sessionData!!
+                                sessData = authRepository.sessionData!!,
                             ).getResponseData()
                         }
                     }.awaitAll().forEach { userFollowData ->
@@ -265,10 +280,11 @@ class UserRepository(
 
             ApiType.App -> {
                 val result = mutableListOf<FollowedUser>()
-                val firstResponse = BiliHttpApi.getUserFollow(
-                    mid = mid,
-                    accessKey = authRepository.accessToken!!
-                ).getResponseData()
+                val firstResponse =
+                    BiliHttpApi.getUserFollow(
+                        mid = mid,
+                        accessKey = authRepository.accessToken!!,
+                    ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
                 result.addAll(firstResponse.list.map { FollowedUser.fromHttpFollowedUser(it) })
@@ -278,7 +294,7 @@ class UserRepository(
                             BiliHttpApi.getUserFollow(
                                 mid = mid,
                                 pageNumber = pageNumber,
-                                accessKey = authRepository.accessToken!!
+                                accessKey = authRepository.accessToken!!,
                             ).getResponseData()
                         }
                     }.awaitAll().forEach { userFollowData ->

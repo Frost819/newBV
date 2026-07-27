@@ -26,7 +26,7 @@ data class Item(
     @SerialName("sale_time_end")
     val saleTimeEnd: Long,
     @SerialName("sale_surplus")
-    val saleSurplus: Int
+    val saleSurplus: Int,
 ) {
     /**
      * 用户装扮属性
@@ -119,7 +119,7 @@ data class Item(
         val squaredImage: String? = null,
         @SerialName("static_icon_image")
         val staticIconImage: String? = null,
-        val ver: String? = null
+        val ver: String? = null,
     ) {
         fun isLottieDragIcon() = dragIcon != null
     }

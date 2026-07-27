@@ -24,7 +24,10 @@ object BooleanAsIntSerializer : KSerializer<Boolean> {
         }
     }
 
-    override fun serialize(encoder: Encoder, value: Boolean) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Boolean,
+    ) {
         encoder.encodeInt(if (value) 1 else 0)
     }
 }

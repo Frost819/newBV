@@ -94,8 +94,7 @@ data class WebSeasonData(
     @SerialName("up_info")
     val upInfo: UpInfo? = null,
     @SerialName("user_status")
-    val userStatus: UserStatus
-
+    val userStatus: UserStatus,
 ) {
     /**
      * 当前推广活动
@@ -109,7 +108,7 @@ data class WebSeasonData(
         @SerialName("head_bg_url")
         val headBgUrl: String,
         val id: Int,
-        val title: String
+        val title: String,
     )
 
     /**
@@ -137,7 +136,7 @@ data class WebSeasonData(
         @SerialName("vip_first_promotion")
         val vipFirstPromotion: String,
         @SerialName("vip_promotion")
-        val vipPromotion: String
+        val vipPromotion: String,
     ) {
         /**
          * 支付方式
@@ -162,7 +161,7 @@ data class WebSeasonData(
             @SerialName("allow_vip_discount")
             val allowVipDiscount: Int,
             @SerialName("forbid_bb")
-            val forbidBb: Int
+            val forbidBb: Int,
         )
     }
 
@@ -173,7 +172,7 @@ data class WebSeasonData(
     @Serializable
     data class Positive(
         val id: Int,
-        val title: String
+        val title: String,
     )
 
     /**
@@ -190,7 +189,7 @@ data class WebSeasonData(
         @SerialName("series_id")
         val seriesId: Int,
         @SerialName("series_title")
-        val seriesTitle: String
+        val seriesTitle: String,
     )
 
     /**
@@ -201,7 +200,7 @@ data class WebSeasonData(
     @Serializable
     data class Show(
         @SerialName("wide_screen")
-        val wideScreen: Int
+        val wideScreen: Int,
     )
 
     /**
@@ -223,7 +222,7 @@ data class WebSeasonData(
         val likes: Int,
         val reply: Int,
         val share: Int,
-        val views: Long
+        val views: Long,
     )
 
     /**
@@ -265,7 +264,7 @@ data class WebSeasonData(
         @SerialName("vip_status")
         val vipStatus: Int,
         @SerialName("vip_type")
-        val vipType: Int
+        val vipType: Int,
     )
 
     /**
@@ -300,9 +299,8 @@ data class WebSeasonData(
         val progress: Progress? = null,
         val sponsor: Int,
         @SerialName("vip_info")
-        val vipInfo: VipInfo? = null
+        val vipInfo: VipInfo? = null,
     ) {
-
         /**
          * 开通大会员按钮文案
          */
@@ -311,12 +309,12 @@ data class WebSeasonData(
             @SerialName("btn_right")
             val btnRight: BtnRight,
             val desc: String,
-            val title: String
+            val title: String,
         ) {
             @Serializable
             data class BtnRight(
                 val title: String,
-                val type: String
+                val type: String,
             )
         }
 
@@ -334,7 +332,7 @@ data class WebSeasonData(
             @SerialName("last_ep_index")
             val lastEpIndex: String,
             @SerialName("last_time")
-            val lastTime: Int
+            val lastTime: Int,
         )
 
         /**
@@ -349,7 +347,7 @@ data class WebSeasonData(
             @SerialName("due_date")
             val dueDate: Long,
             val status: Int,
-            val type: Int
+            val type: Int,
         )
     }
 }
@@ -397,7 +395,7 @@ data class OtherSeason(
     @SerialName("season_type")
     val seasonType: Int? = null,
     val stat: Stat? = null,
-    val title: String? = null
+    val title: String? = null,
 ) {
     /**
      * 剧集数据信息
@@ -411,7 +409,7 @@ data class OtherSeason(
         val favorites: Int,
         @SerialName("series_follow")
         val seriesFollow: Int,
-        val views: Long
+        val views: Long,
     )
 
     @Serializable
@@ -423,7 +421,7 @@ data class OtherSeason(
         @SerialName("season_type")
         val seasonType: String,
         @SerialName("version_style")
-        val versionStyle: String
+        val versionStyle: String,
     )
 }
 
@@ -446,7 +444,7 @@ data class NewEP(
     val indexShow: String = "",
     @SerialName("is_new")
     private val _isNew: Int = 0,
-    val title: String = ""
+    val title: String = "",
 ) {
     val isNew = _isNew == 1
 }
@@ -482,7 +480,7 @@ data class Publish(
     val unknowPubDate: Int,
     @SerialName("update_info_desc")
     val updateInfoDesc: String? = null,
-    val weekday: Int
+    val weekday: Int,
 ) {
     val isFinish = _isFinish == 1
     val isStarted = _isStarted == 1
@@ -497,7 +495,7 @@ data class Publish(
 @Serializable
 data class Rating(
     val count: Int,
-    val score: Float
+    val score: Float,
 )
 
 /**
@@ -548,5 +546,5 @@ data class SeasonRights(
     val onlyVipDownload: Int,
     val resource: String,
     @SerialName("watch_platform")
-    val watchPlatform: Int
+    val watchPlatform: Int,
 )

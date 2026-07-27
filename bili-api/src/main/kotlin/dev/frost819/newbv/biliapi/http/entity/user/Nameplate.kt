@@ -21,5 +21,5 @@ data class Nameplate(
     @SerialName("image_small")
     val imageSmall: String,
     val level: String,
-    val condition: String
+    val condition: String,
 )

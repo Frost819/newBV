@@ -17,5 +17,5 @@ data class Profession(
     val department: String,
     val title: String,
     @SerialName("is_show")
-    val isShow: Int
+    val isShow: Int,
 )

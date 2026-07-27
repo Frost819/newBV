@@ -9,7 +9,7 @@ data class PgcItem(
     var seasonId: Int,
     var episodeId: Int,
     var seasonType: SeasonIndexType,
-    var rating: String
+    var rating: String,
 ) {
     companion object {
         fun fromFeedSubItem(feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData.FeedSubItem): PgcItem {
@@ -20,11 +20,13 @@ data class PgcItem(
                 seasonId = feedSubItem.seasonId!!,
                 episodeId = feedSubItem.episodeId,
                 seasonType = SeasonIndexType.fromId(feedSubItem.seasonType!!),
-                rating = feedSubItem.rating ?: "0"
+                rating = feedSubItem.rating ?: "0",
             )
         }
 
-        fun fromFeedSubItem(feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem): PgcItem {
+        fun fromFeedSubItem(
+            feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem,
+        ): PgcItem {
             return PgcItem(
                 cover = feedSubItem.cover,
                 title = feedSubItem.title,
@@ -32,11 +34,13 @@ data class PgcItem(
                 seasonId = feedSubItem.seasonId!!,
                 episodeId = feedSubItem.episodeId ?: feedSubItem.inline!!.epId,
                 seasonType = SeasonIndexType.fromId(feedSubItem.seasonType!!),
-                rating = feedSubItem.rating ?: "0"
+                rating = feedSubItem.rating ?: "0",
             )
         }
 
-        fun fromIndexResultItem(indexResultItem: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData.IndexResultItem): PgcItem {
+        fun fromIndexResultItem(
+            indexResultItem: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData.IndexResultItem,
+        ): PgcItem {
             return PgcItem(
                 cover = indexResultItem.cover,
                 title = indexResultItem.title,
@@ -44,7 +48,7 @@ data class PgcItem(
                 seasonId = indexResultItem.seasonId,
                 episodeId = indexResultItem.firstEp.epId,
                 seasonType = SeasonIndexType.fromId(indexResultItem.seasonType),
-                rating = indexResultItem.score
+                rating = indexResultItem.score,
             )
         }
     }

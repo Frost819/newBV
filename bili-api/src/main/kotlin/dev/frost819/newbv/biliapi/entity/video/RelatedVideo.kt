@@ -13,23 +13,30 @@ data class RelatedVideo(
     val jumpToSeason: Boolean,
     val epid: Int?,
     val view: Int,
-    val danmaku: Int
+    val danmaku: Int,
 ) {
     companion object {
-        fun fromRelate(relate: bilibili.app.view.v1.Relate) = RelatedVideo(
-            aid = relate.aid,
-            cid = relate.cid,
-            cover = relate.pic,
-            title = relate.title,
-            duration = relate.duration.toInt(),
-            author = relate.authorOrNull?.let { Author.fromAuthor(it) }
-                ?: relate.desc?.let { Author(0, it, "") },
-            jumpToSeason = relate.goto.needJumpToSeason(),
-            epid = if (relate.goto.needJumpToSeason()) relate.uri.substringBeforeLast("?")
-                .substringAfterLast("/ep").toInt() else null,
-            view = relate.stat.view,
-            danmaku = relate.stat.danmaku
-        )
+        fun fromRelate(relate: bilibili.app.view.v1.Relate) =
+            RelatedVideo(
+                aid = relate.aid,
+                cid = relate.cid,
+                cover = relate.pic,
+                title = relate.title,
+                duration = relate.duration.toInt(),
+                author =
+                    relate.authorOrNull?.let { Author.fromAuthor(it) }
+                        ?: relate.desc?.let { Author(0, it, "") },
+                jumpToSeason = relate.goto.needJumpToSeason(),
+                epid =
+                    if (relate.goto.needJumpToSeason()) {
+                        relate.uri.substringBeforeLast("?")
+                            .substringAfterLast("/ep").toInt()
+                    } else {
+                        null
+                    },
+                view = relate.stat.view,
+                danmaku = relate.stat.danmaku,
+            )
 
         fun fromRelate(relate: dev.frost819.newbv.biliapi.http.entity.video.RelatedVideoInfo) =
             RelatedVideo(
@@ -42,7 +49,7 @@ data class RelatedVideo(
                 jumpToSeason = false,
                 epid = null,
                 view = relate.stat.view,
-                danmaku = relate.stat.danmaku
+                danmaku = relate.stat.danmaku,
             )
     }
 }

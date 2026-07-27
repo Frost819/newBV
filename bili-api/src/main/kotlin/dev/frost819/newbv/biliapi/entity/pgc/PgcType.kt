@@ -6,5 +6,5 @@ enum class PgcType {
     Movie,
     Documentary,
     Tv,
-    Variety
+    Variety,
 }

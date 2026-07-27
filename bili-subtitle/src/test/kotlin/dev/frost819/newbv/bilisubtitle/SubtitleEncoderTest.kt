@@ -4,7 +4,6 @@ import java.io.File
 import kotlin.test.Test
 
 class SubtitleEncoderTest {
-
     @Test
     fun `encode to bcc`() {
         val fileContent = this::class.java.getResource("/example.srt")?.readText()!!

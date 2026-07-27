@@ -53,13 +53,14 @@ class BiliPassportHttpApiTest {
 
     @Test
     fun `get app qr login url`() {
-        val response = runBlocking {
-            BiliPassportHttpApi.getAppQRUrl(
-                localId = "1",
-                ts = (System.currentTimeMillis() / 1000).toInt(),
-                mobiApp = "android_hd"
-            )
-        }
+        val response =
+            runBlocking {
+                BiliPassportHttpApi.getAppQRUrl(
+                    localId = "1",
+                    ts = (System.currentTimeMillis() / 1000).toInt(),
+                    mobiApp = "android_hd",
+                )
+            }
         println(response)
         println("qr url: ${response.data?.url}")
         println("qr key: ${response.data?.authCode}")
@@ -68,26 +69,28 @@ class BiliPassportHttpApiTest {
 
     @Test
     fun `request app qr login result`() {
-        val qrUrlResponse = runBlocking {
-            BiliPassportHttpApi.getAppQRUrl(
-                localId = "1",
-                ts = (System.currentTimeMillis() / 1000).toInt(),
-                mobiApp = "android_hd"
-            )
-        }
+        val qrUrlResponse =
+            runBlocking {
+                BiliPassportHttpApi.getAppQRUrl(
+                    localId = "1",
+                    ts = (System.currentTimeMillis() / 1000).toInt(),
+                    mobiApp = "android_hd",
+                )
+            }
         val url = qrUrlResponse.data?.url
         val key = qrUrlResponse.data?.authCode
         println("qr url: $url")
         println("qr key: $key")
         var loop = true
         while (loop) {
-            val loginResponse = runBlocking {
-                BiliPassportHttpApi.loginWithAppQR(
-                    authCode = key!!,
-                    localId = "1",
-                    ts = (System.currentTimeMillis() / 1000).toInt()
-                )
-            }
+            val loginResponse =
+                runBlocking {
+                    BiliPassportHttpApi.loginWithAppQR(
+                        authCode = key!!,
+                        localId = "1",
+                        ts = (System.currentTimeMillis() / 1000).toInt(),
+                    )
+                }
             println(loginResponse)
             when (val result = loginResponse.code) {
                 0 -> {
@@ -116,9 +119,10 @@ class BiliPassportHttpApiTest {
     }
 
     @Test
-    fun `get captcha`() = runBlocking {
-        println(BiliPassportHttpApi.getCaptcha())
-    }
+    fun `get captcha`() =
+        runBlocking {
+            println(BiliPassportHttpApi.getCaptcha())
+        }
 
     // this is a random phone number
     val tel = 13300000001L
@@ -129,49 +133,52 @@ class BiliPassportHttpApiTest {
     val buvid = "XYaa24a8d76a1140a332c16e1e2d4d66318ff"
 
     @Test
-    fun `send sms`() = runBlocking {
-        println(
-            BiliPassportHttpApi.sendSms(
-                cid = 86,
-                tel = tel,
-                loginSessionId = loginSessionId,
-                channel = "bili",
-                buvid = buvid,
-                statistics = """{"appId":1,"platform":3,"version":"7.27.0","abtest":""}""",
-                ts = System.currentTimeMillis() / 1000
+    fun `send sms`() =
+        runBlocking {
+            println(
+                BiliPassportHttpApi.sendSms(
+                    cid = 86,
+                    tel = tel,
+                    loginSessionId = loginSessionId,
+                    channel = "bili",
+                    buvid = buvid,
+                    statistics = """{"appId":1,"platform":3,"version":"7.27.0","abtest":""}""",
+                    ts = System.currentTimeMillis() / 1000,
+                ),
             )
-        )
-    }
+        }
 
     @Test
-    fun `send sms with captcha`() = runBlocking {
-        println(
-            BiliPassportHttpApi.sendSms(
-                cid = 86,
-                tel = tel,
-                loginSessionId = loginSessionId,
-                recaptchaToken = recaptchaToken,
-                geeChallenge = geeChallenge,
-                geeValidate = geeValidate,
-                geeSeccode = "$geeValidate|jordan",
-                channel = "bili",
-                buvid = buvid,
-                statistics = """{"appId":1,"platform":3,"version":"7.27.0","abtest":""}""",
-                ts = System.currentTimeMillis() / 1000
+    fun `send sms with captcha`() =
+        runBlocking {
+            println(
+                BiliPassportHttpApi.sendSms(
+                    cid = 86,
+                    tel = tel,
+                    loginSessionId = loginSessionId,
+                    recaptchaToken = recaptchaToken,
+                    geeChallenge = geeChallenge,
+                    geeValidate = geeValidate,
+                    geeSeccode = "$geeValidate|jordan",
+                    channel = "bili",
+                    buvid = buvid,
+                    statistics = """{"appId":1,"platform":3,"version":"7.27.0","abtest":""}""",
+                    ts = System.currentTimeMillis() / 1000,
+                ),
             )
-        )
-    }
+        }
 
     @Test
-    fun `login with sms`() = runBlocking {
-        println(
-            BiliPassportHttpApi.loginWithSms(
-                cid = 86,
-                tel = tel,
-                loginSessionId = loginSessionId,
-                code = 23,
-                captchaKey = ""
+    fun `login with sms`() =
+        runBlocking {
+            println(
+                BiliPassportHttpApi.loginWithSms(
+                    cid = 86,
+                    tel = tel,
+                    loginSessionId = loginSessionId,
+                    code = 23,
+                    captchaKey = "",
+                ),
             )
-        )
-    }
+        }
 }

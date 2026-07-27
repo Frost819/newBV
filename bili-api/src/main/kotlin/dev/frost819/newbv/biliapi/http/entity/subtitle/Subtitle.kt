@@ -3,7 +3,6 @@ package dev.frost819.newbv.biliapi.http.entity.subtitle
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 /**
  * 字幕信息
  * @param allowSubmit 是否允许提交字幕
@@ -12,7 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Subtitle(
     val allowSubmit: Boolean = false,
-    val list: List<SubtitleListItem> = emptyList()
+    val list: List<SubtitleListItem> = emptyList(),
 )
 
 /**
@@ -38,7 +37,7 @@ data class SubtitleListItem(
     val authorMid: Long? = null,
     @SerialName("subtitle_url")
     val subtitleUrl: String,
-    val author: SubtitleAuthor
+    val author: SubtitleAuthor,
 )
 
 /**
@@ -66,5 +65,5 @@ data class SubtitleAuthor(
     @SerialName("is_fake_account")
     val isFakeAccount: Int,
     @SerialName("is_deleted")
-    val isDeleted: Int
+    val isDeleted: Int,
 )

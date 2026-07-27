@@ -24,10 +24,11 @@ import kotlin.test.Test
 
 class PgcRepositoryTest {
     companion object {
-        private val localProperties = Properties().apply {
-            val path = Paths.get("../local.properties").toAbsolutePath().toString()
-            load(File(path).bufferedReader())
-        }
+        private val localProperties =
+            Properties().apply {
+                val path = Paths.get("../local.properties").toAbsolutePath().toString()
+                load(File(path).bufferedReader())
+            }
         val BUVID: String =
             runCatching { localProperties.getProperty("test.buvid") }.getOrNull() ?: ""
     }
@@ -54,37 +55,39 @@ class PgcRepositoryTest {
         runBlocking {
             PgcType.entries.forEach { pgcType ->
                 println("pgcType: $pgcType")
-                val data = pgcRepository.getFeed(
-                    pgcType = pgcType,
-                    cursor = 0
-                )
+                val data =
+                    pgcRepository.getFeed(
+                        pgcType = pgcType,
+                        cursor = 0,
+                    )
                 println(data)
             }
         }
     }
 
     @Test
-    fun `get pgc index`(){
+    fun `get pgc index`() {
         runBlocking {
             PgcType.entries.forEach { pgcType ->
                 println("pgcType: $pgcType")
-                val data=pgcRepository.getPgcIndex(
-                    pgcType = pgcType,
-                    indexOrder = IndexOrder.PlayCount,
-                    indexOrderType = IndexOrderType.Desc,
-                    seasonVersion = SeasonVersion.All,
-                    spokenLanguage = SpokenLanguage.All,
-                    area=Area.All,
-                    isFinish = IsFinish.All,
-                    copyright = Copyright.All,
-                    seasonStatus = SeasonStatus.All,
-                    seasonMonth = SeasonMonth.All,
-                    producer = Producer.All,
-                    year = Year.All,
-                    releaseDate = ReleaseDate.All,
-                    style = Style.All,
-                    page = PgcIndexData.PgcIndexPage()
-                )
+                val data =
+                    pgcRepository.getPgcIndex(
+                        pgcType = pgcType,
+                        indexOrder = IndexOrder.PlayCount,
+                        indexOrderType = IndexOrderType.Desc,
+                        seasonVersion = SeasonVersion.All,
+                        spokenLanguage = SpokenLanguage.All,
+                        area = Area.All,
+                        isFinish = IsFinish.All,
+                        copyright = Copyright.All,
+                        seasonStatus = SeasonStatus.All,
+                        seasonMonth = SeasonMonth.All,
+                        producer = Producer.All,
+                        year = Year.All,
+                        releaseDate = ReleaseDate.All,
+                        style = Style.All,
+                        page = PgcIndexData.PgcIndexPage(),
+                    )
                 println(data)
             }
         }

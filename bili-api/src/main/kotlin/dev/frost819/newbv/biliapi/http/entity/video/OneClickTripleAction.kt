@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class OneClickTripleAction(
     val like: Boolean,
     val coin: Boolean,
-    val fav:  Boolean
+    val fav: Boolean,
 )

@@ -23,23 +23,29 @@ fun generateChannel(
     buvid: String,
     endPoint: String = BiliAppConf.GRPC_HOST,
     port: Int = BiliAppConf.GRPC_PORT,
-    enableTransportSecurity: Boolean = true
-): ManagedChannel = ManagedChannelBuilder
-    .forAddress(endPoint, port)
-    .apply { if (enableTransportSecurity) useTransportSecurity() else usePlaintext() }
-    .executor(Dispatchers.IO.asExecutor())
-    .intercept(MetadataInterceptor(accessKey, buvid))
-    .build()
+    enableTransportSecurity: Boolean = true,
+): ManagedChannel =
+    ManagedChannelBuilder
+        .forAddress(endPoint, port)
+        .apply { if (enableTransportSecurity) useTransportSecurity() else usePlaintext() }
+        .executor(Dispatchers.IO.asExecutor())
+        .intercept(MetadataInterceptor(accessKey, buvid))
+        .build()
 
 private class MetadataInterceptor(
     private val accessKey: String,
-    private val buvid: String
+    private val buvid: String,
 ) : ClientInterceptor {
     override fun <ReqT, RespT> interceptCall(
-        method: MethodDescriptor<ReqT, RespT>, callOptions: CallOptions, next: Channel
+        method: MethodDescriptor<ReqT, RespT>,
+        callOptions: CallOptions,
+        next: Channel,
     ): ClientCall<ReqT, RespT> {
         return object : SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-            override fun start(responseListener: Listener<RespT>, headers: GrpcMetadata) {
+            override fun start(
+                responseListener: Listener<RespT>,
+                headers: GrpcMetadata,
+            ) {
                 headers.apply {
                     putAuthorization(accessKey)
                     putMetadataBin(accessKey, buvid)
@@ -56,11 +62,14 @@ private class MetadataInterceptor(
 fun GrpcMetadata.putAuthorization(accessKey: String) {
     put(
         GrpcMetadata.Key.of("authorization", GrpcMetadata.ASCII_STRING_MARSHALLER),
-        "identify_v1 $accessKey"
+        "identify_v1 $accessKey",
     )
 }
 
-fun GrpcMetadata.putMetadataBin(accessKey: String, buvid: String) {
+fun GrpcMetadata.putMetadataBin(
+    accessKey: String,
+    buvid: String,
+) {
     put(
         GrpcMetadata.Key.of("x-bili-metadata-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         metadata {
@@ -71,7 +80,7 @@ fun GrpcMetadata.putMetadataBin(accessKey: String, buvid: String) {
             channel = BiliAppConf.CHANNEL
             this.buvid = buvid
             platform = BiliAppConf.PLATFORM
-        }.toByteArray()
+        }.toByteArray(),
     )
 }
 
@@ -86,7 +95,7 @@ fun GrpcMetadata.putDeviceBin(buvid: String) {
             channel = BiliAppConf.CHANNEL
             this.buvid = buvid
             platform = BiliAppConf.PLATFORM
-        }.toByteArray()
+        }.toByteArray(),
     )
 }
 
@@ -95,7 +104,7 @@ fun GrpcMetadata.putLocalBin() {
         io.grpc.Metadata.Key.of("x-bili-local-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         locale {
             timezone = BiliAppConf.TIMEZONE
-        }.toByteArray()
+        }.toByteArray(),
     )
 }
 
@@ -104,6 +113,6 @@ fun GrpcMetadata.putNetworkBin() {
         io.grpc.Metadata.Key.of("x-bili-network-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         network {
             type = NetworkType.WIFI
-        }.toByteArray()
+        }.toByteArray(),
     )
 }

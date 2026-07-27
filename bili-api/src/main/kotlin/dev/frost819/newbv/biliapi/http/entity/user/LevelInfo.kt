@@ -20,5 +20,5 @@ data class LevelInfo(
     @SerialName("current_exp")
     val currentExp: Int,
     @SerialName("next_exp")
-    val nextExp: Int
+    val nextExp: Int,
 )

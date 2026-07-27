@@ -10,7 +10,7 @@ import java.util.Date
  */
 data class QrLoginData(
     val url: String,
-    val key: String
+    val key: String,
 )
 
 /**
@@ -23,7 +23,7 @@ data class QrLoginResult(
     val state: QrLoginState,
     val accessToken: String? = null,
     val refreshToken: String? = null,
-    val cookies: WebCookies? = null
+    val cookies: WebCookies? = null,
 )
 
 enum class QrLoginState {
@@ -34,7 +34,7 @@ enum class QrLoginState {
     Expired,
     Success,
     Error,
-    Unknown
+    Unknown,
 }
 
 data class WebCookies(
@@ -43,5 +43,5 @@ data class WebCookies(
     val sid: String,
     val biliJct: String,
     val sessData: String,
-    val expiredDate: Date
+    val expiredDate: Date,
 )

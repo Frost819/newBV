@@ -15,7 +15,7 @@ data class Official(
     val role: Int,
     val title: String,
     val desc: String,
-    val type: Int
+    val type: Int,
 )
 
 /**
@@ -27,5 +27,5 @@ data class Official(
 @Serializable
 data class OfficialVerify(
     val type: Int,
-    val desc: String
+    val desc: String,
 )

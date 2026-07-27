@@ -7,11 +7,12 @@ class CoinRepository(private val authRepository: AuthRepository) {
         aid: Long,
         bvid: String? = null,
     ): Boolean {
-        val like = BiliHttpApi.checkVideoSentCoin(
-            avid = aid,
-            bvid = bvid,
-            sessData = authRepository.sessionData!!
-        )
+        val like =
+            BiliHttpApi.checkVideoSentCoin(
+                avid = aid,
+                bvid = bvid,
+                sessData = authRepository.sessionData!!,
+            )
         return like
     }
 
@@ -20,14 +21,15 @@ class CoinRepository(private val authRepository: AuthRepository) {
         bvid: String? = null,
         multiply: Int = 1,
     ) {
-        val (success, message) = BiliHttpApi.sendVideoCoin(
-            avid = aid,
-            bvid = bvid,
-            multiply = multiply,
-            csrf = authRepository.biliJct ?: "",
-            sessData = authRepository.sessionData!!,
-            buvid3 = authRepository.buvid3!!,
-        )
+        val (success, message) =
+            BiliHttpApi.sendVideoCoin(
+                avid = aid,
+                bvid = bvid,
+                multiply = multiply,
+                csrf = authRepository.biliJct ?: "",
+                sessData = authRepository.sessionData!!,
+                buvid3 = authRepository.buvid3!!,
+            )
         if (!success) throw Exception("投币失败：$message")
     }
 }

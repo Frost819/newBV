@@ -12,17 +12,19 @@ import dev.frost819.newbv.biliapi.http.util.smartDate
 
 class SearchRepository(
     private val authRepository: AuthRepository,
-    private val channelRepository: ChannelRepository
+    private val channelRepository: ChannelRepository,
 ) {
     private val searchSuggestStub
-        get() = runCatching {
-            bilibili.app.interfaces.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
-        }.getOrNull()
+        get() =
+            runCatching {
+                bilibili.app.interfaces.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
+            }.getOrNull()
 
     private val searchResultStub
-        get() = runCatching {
-            bilibili.polymer.app.search.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
-        }.getOrNull()
+        get() =
+            runCatching {
+                bilibili.polymer.app.search.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
+            }.getOrNull()
 
     /*private val searchStub
         get() = runCatching {
@@ -59,12 +61,13 @@ class SearchRepository(
 
     suspend fun getSearchHotwords(
         limit: Int = 30,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType = ApiType.Web,
     ): List<Hotword> {
         return when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.getWebSearchSquare(limit = limit)
-                .getResponseData().trending.list
-                .map { Hotword.fromHttpWebHotword(it) }
+            ApiType.Web ->
+                BiliHttpApi.getWebSearchSquare(limit = limit)
+                    .getResponseData().trending.list
+                    .map { Hotword.fromHttpWebHotword(it) }
 
             /*ApiType.App -> BiliHttpApi.getAppSearchSquare(limit = limit)
                 .getResponseData()
@@ -73,26 +76,31 @@ class SearchRepository(
                 ?.map { Hotword.fromHttpAppSquareDataItem(it) }
                 ?: emptyList()*/
 
-            ApiType.App -> BiliHttpApi.getSearchTrendRank(limit = 50)
-                .getResponseData().list
-                .map { Hotword.fromHttpAppSearchTrendingHotword(it) }
+            ApiType.App ->
+                BiliHttpApi.getSearchTrendRank(limit = 50)
+                    .getResponseData().list
+                    .map { Hotword.fromHttpAppSearchTrendingHotword(it) }
         }
     }
 
     suspend fun getSearchSuggest(
         keyword: String,
-        preferApiType: ApiType = ApiType.App
+        preferApiType: ApiType = ApiType.App,
     ): List<String> {
         return when (preferApiType) {
-            ApiType.Web -> BiliHttpApi.getKeywordSuggest(
-                term = keyword,
-                buvid = authRepository.buvid ?: "",
-            ).suggests.map { it.value }
+            ApiType.Web ->
+                BiliHttpApi.getKeywordSuggest(
+                    term = keyword,
+                    buvid = authRepository.buvid ?: "",
+                ).suggests.map { it.value }
 
-            //TODO 返回的关键词提示中可能包含通过avid/bvid/专栏id等的直达跳转结果项，需要过滤掉或进行单独处理
-            ApiType.App -> searchSuggestStub?.suggest3(suggestionResult3Req {
-                this.keyword = keyword
-            })?.listList?.map { it.keyword } ?: emptyList()
+            // TODO 返回的关键词提示中可能包含通过avid/bvid/专栏id等的直达跳转结果项，需要过滤掉或进行单独处理
+            ApiType.App ->
+                searchSuggestStub?.suggest3(
+                    suggestionResult3Req {
+                        this.keyword = keyword
+                    },
+                )?.listList?.map { it.keyword } ?: emptyList()
         }
     }
 
@@ -108,37 +116,41 @@ class SearchRepository(
         order: SearchFilterOrderType,
         duration: SearchFilterDuration,
         page: SearchTypePage,
-        preferApiType: ApiType = ApiType.App
+        preferApiType: ApiType = ApiType.App,
     ): SearchTypeResult {
         return when (preferApiType) {
             ApiType.Web -> {
-                val response = BiliHttpApi.searchType(
-                    keyword = keyword,
-                    type = type.httpTypeParam,
-                    page = page.nextPageForWeb,
-                    tid = tid,
-                    order = order.httpOrderParam,
-                    duration = duration.httpDurationParam,
-                    buvid3 = authRepository.buvid3!!,
-                ).getResponseData()
+                val response =
+                    BiliHttpApi.searchType(
+                        keyword = keyword,
+                        type = type.httpTypeParam,
+                        page = page.nextPageForWeb,
+                        tid = tid,
+                        order = order.httpOrderParam,
+                        duration = duration.httpDurationParam,
+                        buvid3 = authRepository.buvid3!!,
+                    ).getResponseData()
                 SearchTypeResult.fromSearchTypeResult(response)
             }
 
             ApiType.App -> {
-                val searchTypeReply = runCatching {
-                    val searchTypeRequest = searchByTypeRequest {
-                        this.keyword = keyword
-                        this.type = type.grpcTypeParam
-                        categorySort = order.grpcOrderParam
-                        userType = SearchByTypeRequest.UserType.ALL
-                        userSort = SearchByTypeRequest.UserSort.USER_SORT_DEFAULT
-                        pagination = pagination {
-                            next = page.nextPageForApp
-                        }
-                    }
-                    searchResultStub?.searchByType(searchTypeRequest)
-                        ?: throw IllegalStateException("Search result stub is not initialized")
-                }.onFailure { handleGrpcException(it) }.getOrThrow()
+                val searchTypeReply =
+                    runCatching {
+                        val searchTypeRequest =
+                            searchByTypeRequest {
+                                this.keyword = keyword
+                                this.type = type.grpcTypeParam
+                                categorySort = order.grpcOrderParam
+                                userType = SearchByTypeRequest.UserType.ALL
+                                userSort = SearchByTypeRequest.UserSort.USER_SORT_DEFAULT
+                                pagination =
+                                    pagination {
+                                        next = page.nextPageForApp
+                                    }
+                            }
+                        searchResultStub?.searchByType(searchTypeRequest)
+                            ?: throw IllegalStateException("Search result stub is not initialized")
+                    }.onFailure { handleGrpcException(it) }.getOrThrow()
                 SearchTypeResult.fromSearchTypeResult(searchTypeReply)
             }
         }
@@ -147,53 +159,54 @@ class SearchRepository(
 
 data class SearchTypePage(
     val nextPageForWeb: Int = 1,
-    val nextPageForApp: String = ""
+    val nextPageForApp: String = "",
 )
 
 enum class SearchType(
     val httpTypeParam: String,
-    val grpcTypeParam: Int
+    val grpcTypeParam: Int,
 ) {
     Video(httpTypeParam = "video", grpcTypeParam = 10),
     MediaBangumi(httpTypeParam = "media_bangumi", grpcTypeParam = 7),
     MediaFt(httpTypeParam = "media_ft", grpcTypeParam = 8),
     BiliUser(httpTypeParam = "bili_user", grpcTypeParam = 2),
-    //Live grpcTypeParam = 4/5
-    //Article grpcTypeParam = 6
+    // Live grpcTypeParam = 4/5
+    // Article grpcTypeParam = 6
 }
 
 enum class SearchFilterOrderType(
     val httpOrderParam: String?,
-    val grpcOrderParam: SearchByTypeRequest.CategorySort
+    val grpcOrderParam: SearchByTypeRequest.CategorySort,
 ) {
     ComprehensiveSort(
         httpOrderParam = null,
-        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_DEFAULT
+        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_DEFAULT,
     ),
     MostClicks(
         httpOrderParam = "click",
-        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_CLICK_COUNT
+        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_CLICK_COUNT,
     ),
     LatestPublish(
         httpOrderParam = "pubdate",
-        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_PUBLISH_TIME
+        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_PUBLISH_TIME,
     ),
     MostDanmaku(
         httpOrderParam = "dm",
-        grpcOrderParam = SearchByTypeRequest.CategorySort.UNRECOGNIZED
+        grpcOrderParam = SearchByTypeRequest.CategorySort.UNRECOGNIZED,
     ),
     MostFavorites(
         httpOrderParam = "stow",
-        grpcOrderParam = SearchByTypeRequest.CategorySort.UNRECOGNIZED
+        grpcOrderParam = SearchByTypeRequest.CategorySort.UNRECOGNIZED,
     ),
     MostComment(
         httpOrderParam = null,
-        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_COMMENT_COUNT
+        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_COMMENT_COUNT,
     ),
     MostLikes(
         httpOrderParam = null,
-        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_LIKE_COUNT
-    );
+        grpcOrderParam = SearchByTypeRequest.CategorySort.CATEGORY_SORT_LIKE_COUNT,
+    ),
+    ;
 
     companion object {
         val webFilters =
@@ -205,42 +218,59 @@ enum class SearchFilterOrderType(
 
 enum class SearchFilterDuration(
     val httpDurationParam: Int?,
-    //val grpcOrderParam: SearchByTypeRequest.
+    // val grpcOrderParam: SearchByTypeRequest.
 ) {
     All(null),
     LessThan10Minutes(1),
     Between10And30Minutes(2),
     Between30And60Minutes(3),
-    MoreThan60Minutes(4);
+    MoreThan60Minutes(4),
 }
 
 data class SearchTypeResult(
     val videos: List<Video> = emptyList(),
     val pgcs: List<Pgc> = emptyList(),
     val users: List<User> = emptyList(),
-    val page: SearchTypePage
+    val page: SearchTypePage,
 ) {
     companion object {
-        fun fromSearchTypeResult(result: dev.frost819.newbv.biliapi.http.entity.search.SearchResultData): SearchTypeResult {
+        fun fromSearchTypeResult(
+            result: dev.frost819.newbv.biliapi.http.entity.search.SearchResultData,
+        ): SearchTypeResult {
             return when (result.searchTypeResults.first()) {
                 is dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult -> {
                     SearchTypeResult(
-                        videos = result.searchTypeResults.map { Video.fromSearchVideoResult(it as dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult) },
-                        page = SearchTypePage(nextPageForWeb = result.page + 1)
+                        videos =
+                            result.searchTypeResults.map {
+                                Video.fromSearchVideoResult(
+                                    it as dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult,
+                                )
+                            },
+                        page = SearchTypePage(nextPageForWeb = result.page + 1),
                     )
                 }
 
                 is dev.frost819.newbv.biliapi.http.entity.search.SearchMediaResult -> {
                     SearchTypeResult(
-                        pgcs = result.searchTypeResults.map { Pgc.fromSearchPgcResult(it as dev.frost819.newbv.biliapi.http.entity.search.SearchMediaResult) },
-                        page = SearchTypePage(nextPageForWeb = result.page + 1)
+                        pgcs =
+                            result.searchTypeResults.map {
+                                Pgc.fromSearchPgcResult(
+                                    it as dev.frost819.newbv.biliapi.http.entity.search.SearchMediaResult,
+                                )
+                            },
+                        page = SearchTypePage(nextPageForWeb = result.page + 1),
                     )
                 }
 
                 is dev.frost819.newbv.biliapi.http.entity.search.SearchBiliUserResult -> {
                     SearchTypeResult(
-                        users = result.searchTypeResults.map { User.fromSearchUserResult(it as dev.frost819.newbv.biliapi.http.entity.search.SearchBiliUserResult) },
-                        page = SearchTypePage(nextPageForWeb = result.page + 1)
+                        users =
+                            result.searchTypeResults.map {
+                                User.fromSearchUserResult(
+                                    it as dev.frost819.newbv.biliapi.http.entity.search.SearchBiliUserResult,
+                                )
+                            },
+                        page = SearchTypePage(nextPageForWeb = result.page + 1),
                     )
                 }
 
@@ -255,21 +285,21 @@ data class SearchTypeResult(
                 bilibili.polymer.app.search.v1.Item.CardItemCase.AV -> {
                     SearchTypeResult(
                         videos = result.itemsList.map { Video.fromSearchVideoCard(it) },
-                        page = SearchTypePage(nextPageForApp = result.pagination.next)
+                        page = SearchTypePage(nextPageForApp = result.pagination.next),
                     )
                 }
 
                 bilibili.polymer.app.search.v1.Item.CardItemCase.BANGUMI -> {
                     SearchTypeResult(
                         pgcs = result.itemsList.map { Pgc.fromSearchPgcCard(it) },
-                        page = SearchTypePage(nextPageForApp = result.pagination.next)
+                        page = SearchTypePage(nextPageForApp = result.pagination.next),
                     )
                 }
 
                 bilibili.polymer.app.search.v1.Item.CardItemCase.AUTHOR -> {
                     SearchTypeResult(
                         users = result.itemsList.map { User.fromSearchUserCard(it) },
-                        page = SearchTypePage(nextPageForApp = result.pagination.next)
+                        page = SearchTypePage(nextPageForApp = result.pagination.next),
                     )
                 }
 
@@ -292,7 +322,7 @@ data class SearchTypeResult(
         val duration: Int,
         val play: Int,
         val danmaku: Int,
-        val pubTime: String? = null
+        val pubTime: String? = null,
     ) : SearchTypeResultItem {
         companion object {
             fun fromSearchVideoResult(video: dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult) =
@@ -306,7 +336,7 @@ data class SearchTypeResult(
                     duration = convertStringTimeToSeconds(video.duration),
                     play = video.play ?: 0,
                     danmaku = video.danmaku,
-                    pubTime = video.pubDate.smartDate
+                    pubTime = video.pubDate.smartDate,
                 )
 
             fun fromSearchVideoCard(video: bilibili.polymer.app.search.v1.Item) =
@@ -319,7 +349,7 @@ data class SearchTypeResult(
                     mid = video.av.mid,
                     duration = convertStringTimeToSeconds(video.av.duration),
                     play = video.av.play,
-                    danmaku = video.av.danmaku
+                    danmaku = video.av.danmaku,
                 )
         }
     }
@@ -328,7 +358,7 @@ data class SearchTypeResult(
         val title: String,
         val cover: String,
         val star: Float,
-        val seasonId: Int
+        val seasonId: Int,
     ) : SearchTypeResultItem {
         companion object {
             fun fromSearchPgcResult(pgc: dev.frost819.newbv.biliapi.http.entity.search.SearchMediaResult) =
@@ -336,7 +366,7 @@ data class SearchTypeResult(
                     title = pgc.title,
                     cover = pgc.cover,
                     star = pgc.mediaScore.score,
-                    seasonId = pgc.seasonId
+                    seasonId = pgc.seasonId,
                 )
 
             fun fromSearchPgcCard(pgc: bilibili.polymer.app.search.v1.Item) =
@@ -344,7 +374,7 @@ data class SearchTypeResult(
                     title = pgc.bangumi.title,
                     cover = pgc.bangumi.cover,
                     star = pgc.bangumi.rating.toFloat(),
-                    seasonId = pgc.bangumi.seasonId.toInt()
+                    seasonId = pgc.bangumi.seasonId.toInt(),
                 )
         }
     }
@@ -353,7 +383,7 @@ data class SearchTypeResult(
         val mid: Long,
         val name: String,
         val avatar: String,
-        val sign: String
+        val sign: String,
     ) : SearchTypeResultItem {
         companion object {
             fun fromSearchUserResult(user: dev.frost819.newbv.biliapi.http.entity.search.SearchBiliUserResult) =
@@ -361,7 +391,7 @@ data class SearchTypeResult(
                     mid = user.mid,
                     name = user.uname,
                     avatar = "https:${user.upic}",
-                    sign = user.usign
+                    sign = user.usign,
                 )
 
             fun fromSearchUserCard(user: bilibili.polymer.app.search.v1.Item) =
@@ -369,7 +399,7 @@ data class SearchTypeResult(
                     mid = user.param.toLong(),
                     name = user.author.title,
                     avatar = user.author.cover,
-                    sign = user.author.sign
+                    sign = user.author.sign,
                 )
         }
     }

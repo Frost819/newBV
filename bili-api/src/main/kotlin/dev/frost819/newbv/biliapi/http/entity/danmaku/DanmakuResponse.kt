@@ -1,6 +1,5 @@
 package dev.frost819.newbv.biliapi.http.entity.danmaku
 
-
 data class DanmakuResponse(
     val chatserver: String,
     val chatId: Long,
@@ -8,7 +7,7 @@ data class DanmakuResponse(
     val state: Int,
     val realName: Int,
     val source: String,
-    val data: List<DanmakuData> = emptyList()
+    val data: List<DanmakuData> = emptyList(),
 )
 
 data class DanmakuData(
@@ -21,10 +20,13 @@ data class DanmakuData(
     val midHash: String,
     val dmid: Long,
     val level: Int,
-    val text: String
+    val text: String,
 ) {
     companion object {
-        fun fromString(p: String, text: String): DanmakuData {
+        fun fromString(
+            p: String,
+            text: String,
+        ): DanmakuData {
             val data = p.split(",")
             return DanmakuData(
                 time = data[0].toFloat(),
@@ -36,7 +38,7 @@ data class DanmakuData(
                 midHash = data[6],
                 dmid = data[7].toLong(),
                 level = data[8].toInt(),
-                text = text
+                text = text,
             )
         }
     }

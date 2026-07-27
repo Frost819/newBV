@@ -297,118 +297,239 @@ enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = n
     MysticismHoroscope(2190, "horoscope"),
     MysticismMetaphysics(2191, "metaphysics"),
     MysticismHealing(2192, "healing"),
-    MysticismOther(2193, "other");
+    MysticismOther(2193, "other"),
+    ;
 
     companion object {
-        val dougaList = listOf(
-            DougaFanAnime, DougaGarageKit, DougaCosplay, DougaOffline, DougaEditing,
-            DougaCommentary, DougaQuickView, DougaVoice, DougaInformation, DougaInterpret,
-            DougaVup, DougaTokusatsu, DougaPuppetry, DougaComic, DougaMotion, DougaReaction,
-            DougaTutorial, DougaOther
-        )
-        val gameList = listOf(
-            GameRpg, GameMmorpg, GameStandAlone, GameSlg, GameTbs, GameRts, GameMoba, GameStg,
-            GameSpg, GameAct, GameMsc, GameSim, GameOtome, GamePuz, GameSandbox, GameOther
-        )
-        val kichikuList = listOf(
-            KichikuGuide, KichikuTheatre, KichikuManualVocaloid, KichikuMad, KichikuOther
-        )
-        val musicList = listOf(
-            MusicOriginal, MusicMv, MusicLive, MusicFanVideos, MusicCover, MusicPerform,
-            MusicVocaloid, MusicAiMusic, MusicRadio, MusicTutorial, MusicCommentary, MusicOther
-        )
-        val danceList = listOf(
-            DanceOtaku, DanceHiphop, DanceGestures, DanceStar, DanceChina,
-            DanceTutorial, DanceBallet, DanceWota, DanceOther
-        )
-        val cinephileList = listOf(
-            CinephileCommentary, CinephileMontage, CinephileInformation, CinephilePorterage,
-            CinephileShortFilm, CinephileAi, CinephileReaction, CinephileOther
-        )
-        val entList = listOf(
-            EntCommentary, EntMontage, EntFansVideo, EntInformation, EntReaction, EntVariety,
-            EntOther
-        )
-        val knowledgeList = listOf(
-            KnowledgeExam, KnowledgeLangSkill, KnowledgeCampus, KnowledgeBusiness,
-            KnowledgeSocialObservation, KnowledgePolitics, KnowledgeHumanityHistory,
-            KnowledgeDesign, KnowledgePsychology, KnowledgeCareer, KnowledgeScience,
-            KnowledgeOther
-        )
-        val techList = listOf(
-            TechComputer, TechPhone, TechPad, TechPhotography, TechMachine, TechCreate, TechOther
-        )
-        val informationList = listOf(
-            InformationPolitics, InformationOverseas, InformationSocial, InformationOther
-        )
-        val foodList = listOf(
-            FoodMake, FoodDetective, FoodCommentary, FoodRecord, FoodOther
-        )
-        val shortplayList = listOf(
-            ShortplayPlot, ShortplayLang, ShortplayUpVariety, ShortplayInterview
-        )
-        val carList = listOf(
-            CarCommentary, CarCulture, CarLife, CarTech, CarOther
-        )
-        val fashionList = listOf(
-            FashionMakeup, FashionSkincare, FashionCos, FashionOutfits, FashionAccessories,
-            FashionJewelry, FashionTrick, FashionCommentary, FashionOther
-        )
-        val sportsList = listOf(
-            SportsTrend, SportsFootball, SportsBasketball, SportsRunning, SportsKungfu,
-            SportsFighting, SportsBadminton, SportsInformation, SportsMatch, SportsOther
-        )
-        val animalList = listOf(
-            AnimalCat, AnimalDog, AnimalReptiles, AnimalScience, AnimalOther
-        )
-        val vlogList = listOf(
-            VlogLife, VlogStudent, VlogCareer, VlogOther
-        )
-        val paintingList = listOf(
-            PaintingAcg, PaintingNoneAcg, PaintingTutorial, PaintingOther
-        )
-        val aiList = listOf(
-            AiTutorial, AiInformation, AiOther
-        )
-        val homeList = listOf(
-            HomeTrade, HomeRenovation, HomeFurniture, HomeAppliances
-        )
-        val outdoorsList = listOf(
-            OutdoorsCamping, OutdoorsHiking, OutdoorsExplore, OutdoorsOther
-        )
-        val gymList = listOf(
-            GymScience, GymTutorial, GymRecord, GymFigure, GymOther
-        )
-        val handmakeList = listOf(
-            HandmakeHandbook, HandmakeLight, HandmakeTraditional, HandmakeRelief, HandmakeDiy,
-            HandmakeOther
-        )
-        val travelList = listOf(
-            TravelRecord, TravelStrategy, TravelCity, TravelTransport
-        )
-        val ruralList = listOf(
-            RuralPlanting, RuralFishing, RuralHarvest, RuralTech, RuralLife
-        )
-        val parentingList = listOf(
-            ParentingPregnantCare, ParentingInfantCare, ParentingTalent, ParentingCute,
-            ParentingInteraction, ParentingEducation, ParentingOther
-        )
-        val healthList = listOf(
-            HealthScience, HealthRegimen, HealthSexes, HealthPsychology, HealthAsmr,
-            HealthOther
-        )
-        val emotionList = listOf(
-            EmotionFamily, EmotionRomantic, EmotionInterpersonal, EmotionGrowth
-        )
-        val lifeJoyList = listOf(
-            LifeJoyLeisure, LifeJoyOnSite, LifeJoyArtisticProducts, LifeJoyTrendyToys, LifeJoyOther
-        )
-        val lifeExperienceList = listOf(
-            LifeExperienceSkills, LifeExperienceProcedures, LifeExperienceMarriage
-        )
-        val mysticismList = listOf(
-            MysticismTarot, MysticismHoroscope, MysticismMetaphysics, MysticismHealing,
-            MysticismOther
-        )
+        val dougaList =
+            listOf(
+                DougaFanAnime, DougaGarageKit, DougaCosplay, DougaOffline, DougaEditing,
+                DougaCommentary, DougaQuickView, DougaVoice, DougaInformation, DougaInterpret,
+                DougaVup, DougaTokusatsu, DougaPuppetry, DougaComic, DougaMotion, DougaReaction,
+                DougaTutorial, DougaOther,
+            )
+        val gameList =
+            listOf(
+                GameRpg, GameMmorpg, GameStandAlone, GameSlg, GameTbs, GameRts, GameMoba, GameStg,
+                GameSpg, GameAct, GameMsc, GameSim, GameOtome, GamePuz, GameSandbox, GameOther,
+            )
+        val kichikuList =
+            listOf(
+                KichikuGuide,
+                KichikuTheatre,
+                KichikuManualVocaloid,
+                KichikuMad,
+                KichikuOther,
+            )
+        val musicList =
+            listOf(
+                MusicOriginal, MusicMv, MusicLive, MusicFanVideos, MusicCover, MusicPerform,
+                MusicVocaloid, MusicAiMusic, MusicRadio, MusicTutorial, MusicCommentary, MusicOther,
+            )
+        val danceList =
+            listOf(
+                DanceOtaku, DanceHiphop, DanceGestures, DanceStar, DanceChina,
+                DanceTutorial, DanceBallet, DanceWota, DanceOther,
+            )
+        val cinephileList =
+            listOf(
+                CinephileCommentary,
+                CinephileMontage,
+                CinephileInformation,
+                CinephilePorterage,
+                CinephileShortFilm,
+                CinephileAi,
+                CinephileReaction,
+                CinephileOther,
+            )
+        val entList =
+            listOf(
+                EntCommentary,
+                EntMontage,
+                EntFansVideo,
+                EntInformation,
+                EntReaction,
+                EntVariety,
+                EntOther,
+            )
+        val knowledgeList =
+            listOf(
+                KnowledgeExam, KnowledgeLangSkill, KnowledgeCampus, KnowledgeBusiness,
+                KnowledgeSocialObservation, KnowledgePolitics, KnowledgeHumanityHistory,
+                KnowledgeDesign, KnowledgePsychology, KnowledgeCareer, KnowledgeScience,
+                KnowledgeOther,
+            )
+        val techList =
+            listOf(
+                TechComputer,
+                TechPhone,
+                TechPad,
+                TechPhotography,
+                TechMachine,
+                TechCreate,
+                TechOther,
+            )
+        val informationList =
+            listOf(
+                InformationPolitics,
+                InformationOverseas,
+                InformationSocial,
+                InformationOther,
+            )
+        val foodList =
+            listOf(
+                FoodMake,
+                FoodDetective,
+                FoodCommentary,
+                FoodRecord,
+                FoodOther,
+            )
+        val shortplayList =
+            listOf(
+                ShortplayPlot,
+                ShortplayLang,
+                ShortplayUpVariety,
+                ShortplayInterview,
+            )
+        val carList =
+            listOf(
+                CarCommentary,
+                CarCulture,
+                CarLife,
+                CarTech,
+                CarOther,
+            )
+        val fashionList =
+            listOf(
+                FashionMakeup, FashionSkincare, FashionCos, FashionOutfits, FashionAccessories,
+                FashionJewelry, FashionTrick, FashionCommentary, FashionOther,
+            )
+        val sportsList =
+            listOf(
+                SportsTrend, SportsFootball, SportsBasketball, SportsRunning, SportsKungfu,
+                SportsFighting, SportsBadminton, SportsInformation, SportsMatch, SportsOther,
+            )
+        val animalList =
+            listOf(
+                AnimalCat,
+                AnimalDog,
+                AnimalReptiles,
+                AnimalScience,
+                AnimalOther,
+            )
+        val vlogList =
+            listOf(
+                VlogLife,
+                VlogStudent,
+                VlogCareer,
+                VlogOther,
+            )
+        val paintingList =
+            listOf(
+                PaintingAcg,
+                PaintingNoneAcg,
+                PaintingTutorial,
+                PaintingOther,
+            )
+        val aiList =
+            listOf(
+                AiTutorial,
+                AiInformation,
+                AiOther,
+            )
+        val homeList =
+            listOf(
+                HomeTrade,
+                HomeRenovation,
+                HomeFurniture,
+                HomeAppliances,
+            )
+        val outdoorsList =
+            listOf(
+                OutdoorsCamping,
+                OutdoorsHiking,
+                OutdoorsExplore,
+                OutdoorsOther,
+            )
+        val gymList =
+            listOf(
+                GymScience,
+                GymTutorial,
+                GymRecord,
+                GymFigure,
+                GymOther,
+            )
+        val handmakeList =
+            listOf(
+                HandmakeHandbook,
+                HandmakeLight,
+                HandmakeTraditional,
+                HandmakeRelief,
+                HandmakeDiy,
+                HandmakeOther,
+            )
+        val travelList =
+            listOf(
+                TravelRecord,
+                TravelStrategy,
+                TravelCity,
+                TravelTransport,
+            )
+        val ruralList =
+            listOf(
+                RuralPlanting,
+                RuralFishing,
+                RuralHarvest,
+                RuralTech,
+                RuralLife,
+            )
+        val parentingList =
+            listOf(
+                ParentingPregnantCare,
+                ParentingInfantCare,
+                ParentingTalent,
+                ParentingCute,
+                ParentingInteraction,
+                ParentingEducation,
+                ParentingOther,
+            )
+        val healthList =
+            listOf(
+                HealthScience,
+                HealthRegimen,
+                HealthSexes,
+                HealthPsychology,
+                HealthAsmr,
+                HealthOther,
+            )
+        val emotionList =
+            listOf(
+                EmotionFamily,
+                EmotionRomantic,
+                EmotionInterpersonal,
+                EmotionGrowth,
+            )
+        val lifeJoyList =
+            listOf(
+                LifeJoyLeisure,
+                LifeJoyOnSite,
+                LifeJoyArtisticProducts,
+                LifeJoyTrendyToys,
+                LifeJoyOther,
+            )
+        val lifeExperienceList =
+            listOf(
+                LifeExperienceSkills,
+                LifeExperienceProcedures,
+                LifeExperienceMarriage,
+            )
+        val mysticismList =
+            listOf(
+                MysticismTarot,
+                MysticismHoroscope,
+                MysticismMetaphysics,
+                MysticismHealing,
+                MysticismOther,
+            )
     }
 }

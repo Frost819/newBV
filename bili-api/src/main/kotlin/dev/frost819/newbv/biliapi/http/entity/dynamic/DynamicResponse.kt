@@ -15,7 +15,7 @@ data class DynamicData(
     val updateBaseline: String,
     @SerialName("update_num")
     val updateNum: Int,
-    val items: List<DynamicItem> = emptyList()
+    val items: List<DynamicItem> = emptyList(),
 )
 
 @Serializable
@@ -25,7 +25,7 @@ data class DynamicItem(
     val idStr: String,
     val modules: Modules,
     val type: String,
-    val visible: Boolean
+    val visible: Boolean,
 ) {
     @Serializable
     data class Basic(
@@ -36,7 +36,7 @@ data class DynamicItem(
         @SerialName("like_icon")
         val likeIcon: LikeIcon,
         @SerialName("rid_str")
-        val ridStr: String
+        val ridStr: String,
     ) {
         @Serializable
         data class LikeIcon(
@@ -46,7 +46,7 @@ data class DynamicItem(
             val endUrl: String,
             val id: Long,
             @SerialName("start_url")
-            val startUrl: String
+            val startUrl: String,
         )
     }
 
@@ -59,7 +59,7 @@ data class DynamicItem(
         @SerialName("module_more")
         val moduleMore: More,
         @SerialName("module_stat")
-        val moduleStat: Stat
+        val moduleStat: Stat,
     ) {
         @Serializable
         data class Author(
@@ -85,12 +85,12 @@ data class DynamicItem(
             @SerialName("pub_ts")
             val pubTs: Int,
             val type: String,
-            val vip: Vip
+            val vip: Vip,
         ) {
             @Serializable
             data class OfficialVerify(
                 val desc: String,
-                val type: Int
+                val type: Int,
             )
         }
 
@@ -99,13 +99,13 @@ data class DynamicItem(
             val additional: Additional? = null,
             val desc: Desc? = null,
             val major: Major? = null,
-            val topic: Topic? = null
+            val topic: Topic? = null,
         ) {
             @Serializable
             data class Additional(
                 val common: Common? = null,
                 val reserve: Reserve? = null,
-                val type: String
+                val type: String,
             ) {
                 @Serializable
                 data class Common(
@@ -122,7 +122,7 @@ data class DynamicItem(
                     val style: Int,
                     @SerialName("sub_type")
                     val subType: String,
-                    val title: String
+                    val title: String,
                 )
             }
 
@@ -135,13 +135,13 @@ data class DynamicItem(
                 @SerialName("jump_style")
                 val jumpStyle: ButtonItem? = null,
                 @SerialName("jump_url")
-                val jumpUrl: String? = null
+                val jumpUrl: String? = null,
             ) {
                 @Serializable
                 data class ButtonItem(
                     @SerialName("icon_url")
                     val iconUrl: String? = null,
-                    val text: String
+                    val text: String,
                 )
             }
 
@@ -159,13 +159,13 @@ data class DynamicItem(
                 val stypc: Int,
                 val title: String,
                 @SerialName("up_mid")
-                val upMid: Int
+                val upMid: Int,
             ) {
                 @Serializable
                 data class Desc(
                     val style: Int,
                     val text: String,
-                    val visible: Boolean
+                    val visible: Boolean,
                 )
             }
 
@@ -173,7 +173,7 @@ data class DynamicItem(
             data class Desc(
                 @SerialName("rich_text_nodes")
                 val richTextNodes: List<RichTextNodeItem>,
-                val text: String
+                val text: String,
             ) {
                 @Serializable
                 data class RichTextNodeItem(
@@ -181,7 +181,7 @@ data class DynamicItem(
                     @SerialName("orig_text")
                     val origText: String,
                     val text: String,
-                    val type: String
+                    val type: String,
                 ) {
                     @Serializable
                     data class Emoji(
@@ -189,7 +189,7 @@ data class DynamicItem(
                         val iconUrl: String,
                         val size: Int,
                         val text: String,
-                        val type: Int
+                        val type: Int,
                     )
                 }
             }
@@ -199,7 +199,7 @@ data class DynamicItem(
                 val archive: Archive? = null,
                 @SerialName("live_rcmd")
                 val liveRcmd: LiveRcmd? = null,
-                val type: String
+                val type: String,
             ) {
                 @Serializable
                 data class Archive(
@@ -216,20 +216,20 @@ data class DynamicItem(
                     val jumpUrl: String,
                     val stat: Stat,
                     val title: String,
-                    val type: Int
+                    val type: Int,
                 ) {
                     @Serializable
                     data class Badge(
                         @SerialName("bg_color")
                         val bgColor: String,
                         val color: String,
-                        val text: String
+                        val text: String,
                     )
 
                     @Serializable
                     data class Stat(
                         val danmaku: String,
-                        val play: String
+                        val play: String,
                     )
                 }
 
@@ -237,7 +237,7 @@ data class DynamicItem(
                 data class LiveRcmd(
                     val content: String,
                     @SerialName("reserve_type")
-                    val reserveType: Int
+                    val reserveType: Int,
                 )
             }
 
@@ -246,19 +246,19 @@ data class DynamicItem(
                 val id: Int,
                 @SerialName("jump_url")
                 val jumpUrl: String,
-                val name: String
+                val name: String,
             )
         }
 
         @Serializable
         data class More(
             @SerialName("three_point_items")
-            val threePointItems: List<MoreItem> = emptyList()
+            val threePointItems: List<MoreItem> = emptyList(),
         ) {
             @Serializable
             data class MoreItem(
                 val label: String,
-                val type: String
+                val type: String,
             )
         }
 
@@ -266,13 +266,13 @@ data class DynamicItem(
         data class Stat(
             val comment: StatItem,
             val forward: StatItem,
-            val like: StatItem
+            val like: StatItem,
         ) {
             @Serializable
             data class StatItem(
                 val count: Int,
                 val forbidden: Boolean,
-                val statue: Boolean = false
+                val statue: Boolean = false,
             )
         }
     }

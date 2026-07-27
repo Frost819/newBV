@@ -14,24 +14,24 @@ data class KeywordSuggest(
     @SerialName("exp_str")
     val expStr: String,
     val code: Int,
-    //val cost: Cost,
+    // val cost: Cost,
     val msg: String? = null,
     val result: JsonElement? = null,
     @Transient
     val suggests: MutableList<Result.Tag> = mutableListOf(),
-    //@SerialName("page caches")
-    //val pageCaches: PageCaches,
-    //val sengine: Sengine,
-    val stoken: String
+    // @SerialName("page caches")
+    // val pageCaches: PageCaches,
+    // val sengine: Sengine,
+    val stoken: String,
 ) {
     @Serializable
     data class Cost(
-        val about: SearchCost
+        val about: SearchCost,
     )
 
     @Serializable
     data class Result(
-        val tag: List<Tag>
+        val tag: List<Tag>,
     ) {
         /**
          * @param value 关键词内容
@@ -46,18 +46,18 @@ data class KeywordSuggest(
             val term: String,
             val ref: Int,
             val name: String,
-            val spid: Int
+            val spid: Int,
         )
     }
 
     @Serializable
     data class PageCaches(
         @SerialName("save cache")
-        val saveCache: String
+        val saveCache: String,
     )
 
     @Serializable
     data class Sengine(
-        val usage: Int
+        val usage: Int,
     )
 }
