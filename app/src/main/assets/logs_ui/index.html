@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <base href="/logs_ui/">
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>new BV 日志管理</title>
+    <link rel="stylesheet" href="./mdui.css" />
+    <link rel="stylesheet" href="./icon.css" />
+    <script src="./mdui.global.js"></script>
+    <script src="./server.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .panel {
+            padding: 12px;
+        }
+
+        .log-list {
+            display: grid;
+            gap: 12px;
+
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        }
+
+        mdui-card.log-card {
+            box-sizing: border-box;
+            width: 100%;
+            background-color: rgba(var(--mdui-color-surface-container-low));
+        }
+
+        mdui-button-icon.download-btn {
+            color: rgba(var(--mdui-color-primary));
+            transform: translateY(1px);
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            height: 44px;
+            padding-inline: 12px;
+        }
+
+        .side {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .side--left {
+            justify-content: flex-start;
+        }
+
+        .side--right {
+            justify-content: flex-end;
+        }
+
+        .log-name {
+            font-size: 14px;
+            line-height: 1.4;
+            text-align: center;
+            flex: 0 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+
+    <script>
+        mdui.setColorScheme("#fe7297");
+
+        function syncThemeColorFromMdui() {
+          try {
+              const v = getComputedStyle(document.documentElement)
+                  .getPropertyValue("--mdui-color-primary-container")
+                  .trim();
+              const normalized = v.replace(/,/g, " ").trim().replace(/\s+/g, " ");
+              let color = v;
+              if (/^\d+\s+\d+\s+\d+$/.test(normalized)) {
+                  color = `rgb(${normalized.split(" ").join(", ")})`;
+              }
+              const meta = document.querySelector('meta[name="theme-color"]');
+              if (meta && color) meta.setAttribute("content", color);
+          } catch (e) {
+              console.error("syncThemeColorFromMdui failed", e);
+          }
+      }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            requestAnimationFrame(syncThemeColorFromMdui);
+
+            const dialog = document.getElementById("createLogDialog");
+            const btnOpen = document.getElementById("btnOpenCreateDialog");
+            const btnCancel = document.getElementById("btnCreateCancel");
+            const btnConfirm = document.getElementById("btnCreateConfirm");
+
+            if (btnOpen && dialog) btnOpen.addEventListener("click", () => (dialog.open = true));
+            if (btnCancel && dialog)
+                btnCancel.addEventListener("click", () => (dialog.open = false));
+            if (btnConfirm && dialog)
+                btnConfirm.addEventListener("click", async () => {
+                    dialog.open = false;
+                    if (
+                        window.LogService &&
+                        typeof window.LogService.createManualAndDownload === "function"
+                    ) {
+                        await window.LogService.createManualAndDownload();
+                    }
+                });
+
+            if (window.LogService && typeof window.LogService.init === "function") {
+                window.LogService.init({
+                    manualListId: "manualLogList",
+                    crashListId: "crashLogList",
+                    interactionListId: "interactionLogList",
+                });
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+    <mdui-top-app-bar variant="center-aligned" style="background-color: rgba(var(--mdui-color-primary-container));color: rgba(var(--mdui-color-on-primary-container))">
+        <mdui-button-icon></mdui-button-icon>
+        <mdui-top-app-bar-title>日志管理</mdui-top-app-bar-title>
+        <div style="flex-grow: 1"></div>
+        <mdui-button-icon id="btnOpenCreateDialog" icon="sim_card_download" style="color: rgba(var(--mdui-color-primary))"></mdui-button-icon>
+    </mdui-top-app-bar>
+
+    <mdui-tabs full-width value="tab-1">
+        <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-1">手动保存</mdui-tab>
+        <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-2">崩溃日志</mdui-tab>
+        <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-3">交互日志</mdui-tab>
+
+        <mdui-tab-panel slot="panel" value="tab-1">
+            <div class="panel">
+                <div id="manualLogList" class="log-list"></div>
+            </div>
+        </mdui-tab-panel>
+
+        <mdui-tab-panel slot="panel" value="tab-2">
+            <div class="panel">
+                <div id="crashLogList" class="log-list"></div>
+            </div>
+        </mdui-tab-panel>
+
+        <mdui-tab-panel slot="panel" value="tab-3">
+            <div class="panel">
+                <div id="interactionLogList" class="log-list"></div>
+            </div>
+        </mdui-tab-panel>
+    </mdui-tabs>
+
+    <mdui-dialog id="createLogDialog" headline="手动保存日志">
+        <div>日志生成完后，可在"手动保存"标签页看到新日志，并立刻开始下载</div>
+
+        <mdui-button slot="action" variant="text" id="btnCreateCancel">取消</mdui-button>
+        <mdui-button slot="action" variant="filled" id="btnCreateConfirm">确认</mdui-button>
+    </mdui-dialog>
+
+    <mdui-navigation-bar value="item-1" style="background-color: rgba(var(--mdui-color-surface-container-low))">
+        <mdui-navigation-bar-item icon="article" value="item-1" style="color: rgba(var(--mdui-color-primary))">日志</mdui-navigation-bar-item>
+    </mdui-navigation-bar>
+</body>
+
+</html>

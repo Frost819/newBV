@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
@@ -13,12 +14,13 @@ import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
 import dev.frost819.newbv.data.datastore.BuvidGenerator
 import java.io.File
+import java.io.FileNotFoundException
 import javax.inject.Singleton
 
 /**
  * 网络与基础设施 Hilt 模块。
  *
- * 提供 BiliHttpApi 初始化、AuthRepository、日志组件的单例绑定。
+ * 提供 BiliHttpApi 初始化、AuthRepository、日志组件、HttpServer 的单例绑定。
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -84,4 +86,44 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideInteractionTracker(): InteractionTracker = InteractionTracker()
+
+    /**
+     * 提供 [HttpServer] 单例。
+     *
+     * Ktor 本地日志管理服务器，在随机端口启动，提供 Web UI 和 REST API。
+     * 服务于以下场景：
+     * - 用户通过浏览器访问日志管理页面
+     * - 下载日志文件（手动/崩溃/交互日志）
+     * - 创建手动日志
+     *
+     * 依赖 [CrashHandler]（日志文件读写）和 [InteractionLogger]（交互日志读写）。
+     * 由 [dev.frost819.newbv.app.BVApplication] 在应用启动时调用 [HttpServer.start] 启动。
+     */
+    @Provides
+    @Singleton
+    fun provideHttpServer(
+        @ApplicationContext context: Context,
+        crashHandler: CrashHandler,
+        interactionLogger: InteractionLogger
+    ): HttpServer {
+        val assetProvider: (String) -> ByteArray? = { path ->
+            runCatching {
+                context.assets.open(path).use { it.readBytes() }
+            }.recoverCatching { e ->
+                if (e is FileNotFoundException) null else throw e
+            }.getOrNull()
+        }
+
+        val logFileProvider: () -> List<File> = {
+            crashHandler.listManualLogs() + crashHandler.listCrashLogs() + interactionLogger.listLogFiles()
+        }
+
+        val manualLogCreator: () -> File? = { crashHandler.createManualLog() }
+
+        return HttpServer(
+            assetProvider = assetProvider,
+            logFileProvider = logFileProvider,
+            manualLogCreator = manualLogCreator
+        )
+    }
 }
