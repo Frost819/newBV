@@ -1,3 +1,44 @@
 <resources>
     <string name="app_name">new BV</string>
+
+    <!-- Login -->
+    <string name="login_requesting">正在获取二维码…</string>
+    <string name="login_wait_for_scan">请使用 B 站 App 扫描二维码</string>
+    <string name="login_wait_for_confirm">请在 B 站 App 确认登录</string>
+    <string name="login_expired">二维码已过期</string>
+    <string name="login_success">登录成功</string>
+    <string name="login_error">登录失败</string>
+    <string name="login_retry">按确认键重试</string>
+    <string name="login_title">登录</string>
+
+    <!-- User Switch -->
+    <string name="user_switch_title">账号管理</string>
+    <string name="user_switch_add">添加账号</string>
+    <string name="user_switch_manage">管理</string>
+    <string name="user_switch_delete_confirm">确定删除该账号？</string>
+    <string name="user_switch_delete_confirm_btn">删除</string>
+    <string name="user_switch_cancel">取消</string>
+    <string name="user_switch_show_token">查看凭证</string>
+    <string name="user_switch_lock_settings">用户锁</string>
+    <string name="user_switch_delete">删除账号</string>
+    <string name="user_switch_no_users">暂无账号，请登录</string>
+    <string name="user_switch_current">当前</string>
+
+    <!-- User Panel -->
+    <string name="user_panel_incognito">无痕模式</string>
+    <string name="user_panel_following">关注</string>
+    <string name="user_panel_account">账号管理</string>
+    <string name="user_panel_not_login">未登录</string>
+
+    <!-- User Lock -->
+    <string name="lock_input_password">请输入密码</string>
+    <string name="lock_choose_user">选择用户</string>
+    <string name="lock_set_new">设置新密码</string>
+    <string name="lock_confirm_new">确认新密码</string>
+    <string name="lock_input_old">输入旧密码</string>
+    <string name="lock_mismatch">两次密码不一致，请重新设置</string>
+    <string name="lock_wrong">密码错误</string>
+    <string name="lock_hint_blank_remove">留空并按确认键可取消用户锁</string>
+    <string name="lock_saved">用户锁已保存</string>
+    <string name="lock_unlocked">已解锁</string>
 </resources>

@@ -9,10 +9,14 @@ import dagger.hilt.components.SingletonComponent
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.LoginRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
 import dev.frost819.newbv.data.datastore.BuvidGenerator
+import dev.frost819.newbv.data.db.dao.UserDao
+import dev.frost819.newbv.data.repository.AccountRepository
+import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import java.io.File
 import java.io.FileNotFoundException
 import javax.inject.Singleton
@@ -86,6 +90,27 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideInteractionTracker(): InteractionTracker = InteractionTracker()
+
+    /**
+     * 提供 [LoginRepository] 单例。
+     *
+     * 封装 B 站登录接口（QR 登录、SMS 登录）。
+     */
+    @Provides
+    @Singleton
+    fun provideLoginRepository(): LoginRepository = LoginRepository()
+
+    /**
+     * 提供 [AccountRepository] 单例。
+     *
+     * 绑定 [AccountRepositoryImpl] 实现，聚合 UserDao + Prefs + AuthRepository。
+     */
+    @Provides
+    @Singleton
+    fun provideAccountRepository(
+        userDao: UserDao,
+        authRepository: AuthRepository,
+    ): AccountRepository = AccountRepositoryImpl(userDao, authRepository)
 
     /**
      * 提供 [HttpServer] 单例。

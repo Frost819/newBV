@@ -13,7 +13,7 @@ import dev.frost819.newbv.app.ui.screen.player.seasonPlayerScreen
 import dev.frost819.newbv.app.ui.screen.player.videoPlayerScreen
 import dev.frost819.newbv.app.ui.screen.search.searchScreen
 import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
-import dev.frost819.newbv.app.ui.screen.settings.userSwitchScreen
+import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
 
 /**

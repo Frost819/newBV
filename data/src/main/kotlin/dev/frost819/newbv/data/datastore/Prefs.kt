@@ -431,7 +431,8 @@ object Prefs {
      *
      * 生产代码禁止调用。
      */
-    internal fun resetForTesting() {
+    @androidx.annotation.VisibleForTesting
+    fun resetForTesting() {
         initialized = false
         dataStoreRef = null
         delegateMap.forEach { (_, delegate) -> delegate.resetToDefault() }
