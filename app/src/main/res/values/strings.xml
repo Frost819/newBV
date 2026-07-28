@@ -41,4 +41,7 @@
     <string name="lock_hint_blank_remove">留空并按确认键可取消用户锁</string>
     <string name="lock_saved">用户锁已保存</string>
     <string name="lock_unlocked">已解锁</string>
+
+    <!-- Common -->
+    <string name="loading">加载中…</string>
 </resources>

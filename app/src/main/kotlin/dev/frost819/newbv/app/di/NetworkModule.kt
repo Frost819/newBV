@@ -9,7 +9,10 @@ import dagger.hilt.components.SingletonComponent
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
+import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
+import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
@@ -99,6 +102,40 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLoginRepository(): LoginRepository = LoginRepository()
+
+    /**
+     * 提供 [ChannelRepository] 单例。
+     *
+     * 管理 gRPC ManagedChannel，用于 App 接口调用。
+     * 在用户登录后由 [dev.frost819.newbv.app.data.AccountRepositoryImpl] 初始化。
+     */
+    @Provides
+    @Singleton
+    fun provideChannelRepository(): ChannelRepository = ChannelRepository()
+
+    /**
+     * 提供 [RecommendVideoRepository] 单例。
+     *
+     * 封装推荐视频和热门视频接口（Web HTTP + App gRPC）。
+     */
+    @Provides
+    @Singleton
+    fun provideRecommendVideoRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): RecommendVideoRepository = RecommendVideoRepository(authRepository, channelRepository)
+
+    /**
+     * 提供 [UserRepository] 单例。
+     *
+     * 封装用户动态、用户空间等接口（Web HTTP + App gRPC）。
+     */
+    @Provides
+    @Singleton
+    fun provideUserRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): UserRepository = UserRepository(authRepository, channelRepository)
 
     /**
      * 提供 [AccountRepository] 单例。

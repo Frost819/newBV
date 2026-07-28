@@ -40,13 +40,15 @@ import dev.frost819.newbv.app.viewmodel.user.UserViewModel
  * - 账号管理入口
  *
  * @param viewModel 用户 ViewModel。
- * @param onNavigateUserSwitch 跳转账号管理回调。
+ * @param onHide 隐藏面板回调。
+ * @param onGoUserSwitch 跳转账号管理回调。
  */
 @Composable
 fun UserPanel(
     modifier: Modifier = Modifier,
     viewModel: UserViewModel = hiltViewModel(),
-    onNavigateUserSwitch: () -> Unit = {},
+    onHide: () -> Unit = {},
+    onGoUserSwitch: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -109,7 +111,7 @@ fun UserPanel(
                 Button(onClick = { viewModel.toggleIncognitoMode() }) {
                     Text(text = stringResource(R.string.user_panel_incognito))
                 }
-                Button(onClick = onNavigateUserSwitch) {
+                Button(onClick = onGoUserSwitch) {
                     Text(text = stringResource(R.string.user_panel_account))
                 }
             }
