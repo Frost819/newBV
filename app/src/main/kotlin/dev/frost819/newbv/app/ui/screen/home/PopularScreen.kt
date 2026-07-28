@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -42,7 +44,7 @@ fun PopularScreen(
     viewModel: HomeViewModel,
     navController: NavController,
 ) {
-    val state = viewModel.uiState.value
+    val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
 
     LaunchedEffect(gridState) {

@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            BVTheme(themeMode = ThemeMode.Dark) {
+            BVTheme(themeMode = ThemeMode.Dark, density = 2.0f) {
                 CompositionLocalProvider(
                     LocalInteractionTracker provides interactionTracker
                 ) {

@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Scaffold as Material3Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -44,7 +46,7 @@ fun DynamicsScreen(
     viewModel: HomeViewModel,
     navController: NavController,
 ) {
-    val state = viewModel.uiState.value
+    val state by viewModel.uiState.collectAsState()
 
     if (!state.isLogin) {
         Box(

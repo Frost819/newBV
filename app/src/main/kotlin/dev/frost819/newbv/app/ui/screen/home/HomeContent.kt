@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,7 @@ fun HomeContent(
     val firstTab = remember { Prefs.firstHomeTopNavItem }
     var selectedTab by remember { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
 
     val reorderedItems = remember {
         val allItems = HomeTopNavItem.entries
@@ -72,7 +74,7 @@ fun HomeContent(
                 onSelectedChanged = { nav ->
                     val tab = (nav as HomeTabItem).item
                     selectedTab = tab
-                    if (tab == HomeTopNavItem.Dynamics && viewModel.uiState.value.dynamicItems.isEmpty()) {
+                    if (tab == HomeTopNavItem.Dynamics && uiState.dynamicItems.isEmpty()) {
                         viewModel.loadDynamic()
                     }
                 },

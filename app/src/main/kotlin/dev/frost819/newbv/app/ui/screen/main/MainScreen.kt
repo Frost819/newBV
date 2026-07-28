@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ fun MainScreen(
     navController: NavController,
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
+    val userUiState by userViewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showUserPanel by remember { mutableStateOf(false) }
     var lastPressBack: Long by remember { mutableLongStateOf(0L) }
@@ -92,8 +94,8 @@ fun MainScreen(
         modifier = modifier,
         drawerContent = {
             LeftNaviContent(
-                isLogin = userViewModel.uiState.value.isLogin,
-                avatar = userViewModel.uiState.value.avatar,
+                isLogin = userUiState.isLogin,
+                avatar = userUiState.avatar,
                 selectedItem = selectedDrawerItem,
                 onLeftNaviItemChanged = { selectedDrawerItem = it },
                 onOpenSettings = {

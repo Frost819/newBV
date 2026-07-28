@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
@@ -44,7 +46,7 @@ fun RecommendScreen(
     viewModel: HomeViewModel,
     navController: NavController,
 ) {
-    val state = viewModel.uiState.value
+    val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
@@ -103,7 +105,7 @@ fun RecommendScreen(
                 ) {
                     LoadingTip()
                 }
-            } else {
+            } else if (!state.recommendHasMore && state.recommendItems.isNotEmpty()) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
