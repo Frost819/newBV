@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.viewmodel.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import dev.frost819.newbv.biliapi.entity.home.RecommendPage
 import dev.frost819.newbv.biliapi.entity.rank.PopularVideoPage
 import dev.frost819.newbv.biliapi.entity.ugc.UgcItem
@@ -13,12 +14,20 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.biliapi.entity.ApiType as BiliApiType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
+
+/** 网络请求超时时间（毫秒）。 */
+private const val LOAD_TIMEOUT_MS = 10_000L
 
 /**
  * 首页 Tab 状态。
@@ -27,13 +36,17 @@ data class HomeUiState(
     val recommendItems: List<UgcItem> = emptyList(),
     val recommendLoading: Boolean = false,
     val recommendHasMore: Boolean = true,
+    val recommendError: Boolean = false,
     val popularItems: List<UgcItem> = emptyList(),
     val popularLoading: Boolean = false,
     val popularHasMore: Boolean = true,
+    val popularError: Boolean = false,
     val dynamicItems: List<DynamicVideo> = emptyList(),
     val dynamicLoading: Boolean = false,
     val dynamicHasMore: Boolean = true,
+    val dynamicError: Boolean = false,
     val isLogin: Boolean = false,
+    val currentUid: Long = 0L,
 )
 
 /**
@@ -44,11 +57,13 @@ data class HomeUiState(
  *
  * @property recommendVideoRepository 推荐/热门数据仓库。
  * @property userRepository 动态数据仓库。
+ * @property accountRepository 账户仓库（监听登录状态变化）。
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val recommendVideoRepository: RecommendVideoRepository,
     private val userRepository: UserRepository,
+    private val accountRepository: AccountRepositoryImpl,
 ) : ViewModel() {
 
     private val logger = KotlinLogging.logger("HomeViewModel")
@@ -73,36 +88,56 @@ class HomeViewModel @Inject constructor(
         loadRecommend()
         loadPopular()
         if (Prefs.isLogin) loadDynamic()
+
+        viewModelScope.launch {
+            accountRepository.uiState
+                .map { it.uid to it.isLogin }
+                .distinctUntilChanged()
+                .collect { (uid, isLogin) ->
+                    if (isLogin != _uiState.value.isLogin) {
+                        updateLoginState(isLogin)
+                    } else if (isLogin && uid != 0L && uid != _uiState.value.currentUid) {
+                        onUserSwitched(uid)
+                    }
+                }
+        }
     }
 
     /**
      * 加载更多推荐视频。
      *
      * 首次加载时连续请求直到 >= 24 条或达到 3 次重试上限。
+     * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
      */
     fun loadRecommend() {
         viewModelScope.launch {
             val current = _uiState.value
             if (current.recommendLoading) return@launch
 
-            _uiState.update { it.copy(recommendLoading = true) }
+            _uiState.update { it.copy(recommendLoading = true, recommendError = false) }
 
             var loadCount = 0
             val maxLoadCount = 3
             runCatching {
-                while (_uiState.value.recommendItems.size < 24 && loadCount < maxLoadCount) {
-                    val data = recommendVideoRepository.getRecommendVideos(
-                        page = recommendNextPage,
-                        preferApiType = prefApiType(),
-                    )
-                    recommendNextPage = data.nextPage
-                    _uiState.update {
-                        it.copy(recommendItems = it.recommendItems + data.items)
+                withTimeout(LOAD_TIMEOUT_MS) {
+                    while (_uiState.value.recommendItems.size < 24 && loadCount < maxLoadCount) {
+                        val data = recommendVideoRepository.getRecommendVideos(
+                            page = recommendNextPage,
+                            preferApiType = prefApiType(),
+                        )
+                        recommendNextPage = data.nextPage
+                        _uiState.update {
+                            it.copy(recommendItems = it.recommendItems + data.items)
+                        }
+                        loadCount++
                     }
-                    loadCount++
                 }
             }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) {
+                    throw error
+                }
                 logger.error(error) { "Failed to load recommend videos" }
+                _uiState.update { it.copy(recommendError = true) }
             }
 
             _uiState.update { it.copy(recommendLoading = false) }
@@ -115,35 +150,43 @@ class HomeViewModel @Inject constructor(
     fun refreshRecommend() {
         recommendNextPage = RecommendPage()
         _uiState.update {
-            it.copy(recommendItems = emptyList(), recommendHasMore = true)
+            it.copy(recommendItems = emptyList(), recommendHasMore = true, recommendError = false)
         }
         loadRecommend()
     }
 
     /**
      * 加载更多热门视频。
+     *
+     * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
      */
     fun loadPopular() {
         viewModelScope.launch {
             val current = _uiState.value
             if (current.popularLoading) return@launch
 
-            _uiState.update { it.copy(popularLoading = true) }
+            _uiState.update { it.copy(popularLoading = true, popularError = false) }
 
             runCatching {
-                val data = recommendVideoRepository.getPopularVideos(
-                    page = popularNextPage,
-                    preferApiType = prefApiType(),
-                )
-                popularNextPage = data.nextPage
-                _uiState.update {
-                    it.copy(
-                        popularItems = it.popularItems + data.list,
-                        popularHasMore = !data.noMore,
+                withTimeout(LOAD_TIMEOUT_MS) {
+                    val data = recommendVideoRepository.getPopularVideos(
+                        page = popularNextPage,
+                        preferApiType = prefApiType(),
                     )
+                    popularNextPage = data.nextPage
+                    _uiState.update {
+                        it.copy(
+                            popularItems = it.popularItems + data.list,
+                            popularHasMore = !data.noMore,
+                        )
+                    }
                 }
             }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) {
+                    throw error
+                }
                 logger.error(error) { "Failed to load popular videos" }
+                _uiState.update { it.copy(popularError = true) }
             }
 
             _uiState.update { it.copy(popularLoading = false) }
@@ -156,7 +199,7 @@ class HomeViewModel @Inject constructor(
     fun refreshPopular() {
         popularNextPage = PopularVideoPage()
         _uiState.update {
-            it.copy(popularItems = emptyList(), popularHasMore = true)
+            it.copy(popularItems = emptyList(), popularHasMore = true, popularError = false)
         }
         loadPopular()
     }
@@ -165,6 +208,7 @@ class HomeViewModel @Inject constructor(
      * 加载更多动态视频。
      *
      * 需要登录，未登录时不执行。
+     * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
      */
     fun loadDynamic() {
         if (!_uiState.value.isLogin) return
@@ -172,27 +216,33 @@ class HomeViewModel @Inject constructor(
             val current = _uiState.value
             if (current.dynamicLoading || !current.dynamicHasMore) return@launch
 
-            _uiState.update { it.copy(dynamicLoading = true) }
+            _uiState.update { it.copy(dynamicLoading = true, dynamicError = false) }
 
             val nextPage = dynamicCurrentPage + 1
             runCatching {
-                val data = userRepository.getDynamicVideos(
-                    page = nextPage,
-                    offset = dynamicHistoryOffset.orEmpty(),
-                    updateBaseline = dynamicUpdateBaseline.orEmpty(),
-                    preferApiType = prefApiType(),
-                )
-                dynamicCurrentPage = nextPage
-                dynamicHistoryOffset = data.historyOffset
-                dynamicUpdateBaseline = data.updateBaseline
-                _uiState.update {
-                    it.copy(
-                        dynamicItems = it.dynamicItems + data.videos,
-                        dynamicHasMore = data.hasMore,
+                withTimeout(LOAD_TIMEOUT_MS) {
+                    val data = userRepository.getDynamicVideos(
+                        page = nextPage,
+                        offset = dynamicHistoryOffset.orEmpty(),
+                        updateBaseline = dynamicUpdateBaseline.orEmpty(),
+                        preferApiType = prefApiType(),
                     )
+                    dynamicCurrentPage = nextPage
+                    dynamicHistoryOffset = data.historyOffset
+                    dynamicUpdateBaseline = data.updateBaseline
+                    _uiState.update {
+                        it.copy(
+                            dynamicItems = it.dynamicItems + data.videos,
+                            dynamicHasMore = data.hasMore,
+                        )
+                    }
                 }
             }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) {
+                    throw error
+                }
                 logger.error(error) { "Failed to load dynamic videos" }
+                _uiState.update { it.copy(dynamicError = true) }
             }
 
             _uiState.update { it.copy(dynamicLoading = false) }
@@ -207,7 +257,7 @@ class HomeViewModel @Inject constructor(
         dynamicHistoryOffset = null
         dynamicUpdateBaseline = null
         _uiState.update {
-            it.copy(dynamicItems = emptyList(), dynamicHasMore = true)
+            it.copy(dynamicItems = emptyList(), dynamicHasMore = true, dynamicError = false)
         }
         loadDynamic()
     }
@@ -250,8 +300,22 @@ class HomeViewModel @Inject constructor(
             dynamicHistoryOffset = null
             dynamicUpdateBaseline = null
             _uiState.update {
-                it.copy(dynamicItems = emptyList(), dynamicHasMore = true)
+                it.copy(dynamicItems = emptyList(), dynamicHasMore = true, dynamicError = false, currentUid = 0L)
             }
         }
+    }
+
+    /**
+     * 切换用户后刷新所有数据。
+     *
+     * 清空推荐/热门/动态列表并重新加载，确保展示新用户的个性化内容。
+     *
+     * @param uid 新用户 UID。
+     */
+    private fun onUserSwitched(uid: Long) {
+        _uiState.update { it.copy(currentUid = uid) }
+        refreshRecommend()
+        refreshPopular()
+        refreshDynamic()
     }
 }

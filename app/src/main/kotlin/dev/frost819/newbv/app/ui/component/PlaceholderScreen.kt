@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
  * 占位页面。
@@ -23,5 +24,13 @@ fun PlaceholderScreen(title: String) {
             text = title,
             style = MaterialTheme.typography.headlineMedium
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PlaceholderScreenPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        PlaceholderScreen(title = "搜索")
     }
 }

@@ -4,6 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.data.AccountRepositoryImpl
+import dev.frost819.newbv.app.data.AccountUiState
 import dev.frost819.newbv.biliapi.entity.home.RecommendData
 import dev.frost819.newbv.biliapi.entity.home.RecommendPage
 import dev.frost819.newbv.biliapi.entity.rank.PopularVideoData
@@ -15,10 +17,13 @@ import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import java.io.IOException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,6 +52,7 @@ class HomeViewModelTest {
 
     private lateinit var recommendRepo: RecommendVideoRepository
     private lateinit var userRepo: UserRepository
+    private lateinit var accountRepo: AccountRepositoryImpl
     private lateinit var viewModel: HomeViewModel
 
     companion object {
@@ -103,6 +109,8 @@ class HomeViewModelTest {
 
         recommendRepo = mockk()
         userRepo = mockk()
+        accountRepo = mockk()
+        every { accountRepo.uiState } returns MutableStateFlow(AccountUiState())
 
         coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
             items = listOf(fakeUgcItem(1), fakeUgcItem(2)),
@@ -121,7 +129,7 @@ class HomeViewModelTest {
         )
     }
 
-    private fun createViewModel() = HomeViewModel(recommendRepo, userRepo)
+    private fun createViewModel() = HomeViewModel(recommendRepo, userRepo, accountRepo)
 
     @AfterEach
     fun tearDown() {
@@ -188,7 +196,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `loadRecommend on error sets loading false`() = runTest(testDispatcher) {
+    fun `loadRecommend on error sets loading false and error true`() = runTest(testDispatcher) {
         viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -199,10 +207,11 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertThat(state.recommendLoading).isFalse()
+        assertThat(state.recommendError).isTrue()
     }
 
     @Test
-    fun `loadPopular on error sets loading false`() = runTest(testDispatcher) {
+    fun `loadPopular on error sets loading false and error true`() = runTest(testDispatcher) {
         viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -213,6 +222,58 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertThat(state.popularLoading).isFalse()
+        assertThat(state.popularError).isTrue()
+    }
+
+    @Test
+    fun `loadRecommend on timeout sets error true`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws IOException("timeout")
+
+        viewModel.refreshRecommend()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertThat(state.recommendLoading).isFalse()
+        assertThat(state.recommendError).isTrue()
+    }
+
+    @Test
+    fun `loadPopular on timeout sets error true`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { recommendRepo.getPopularVideos(any(), any()) } throws IOException("timeout")
+
+        viewModel.refreshPopular()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertThat(state.popularLoading).isFalse()
+        assertThat(state.popularError).isTrue()
+    }
+
+    @Test
+    fun `refreshRecommend clears error`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("error")
+        viewModel.refreshRecommend()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.recommendError).isTrue()
+
+        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
+            items = listOf(fakeUgcItem(1)),
+            nextPage = RecommendPage(),
+        )
+        viewModel.refreshRecommend()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.recommendError).isFalse()
+        assertThat(viewModel.uiState.value.recommendItems).isNotEmpty()
     }
 
     @Test

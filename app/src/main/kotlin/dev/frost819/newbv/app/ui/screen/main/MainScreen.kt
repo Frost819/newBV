@@ -3,7 +3,6 @@ package dev.frost819.newbv.app.ui.screen.main
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -13,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.DrawerValue
@@ -145,32 +148,37 @@ fun MainScreen(
                 }
             }
 
-            AnimatedVisibility(
-                visible = showUserPanel,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
+            if (showUserPanel) {
                 val userPanelFocusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) {
                     runCatching { userPanelFocusRequester.requestFocus() }
                 }
                 BackHandler { showUserPanel = false }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f)),
+                Dialog(
+                    onDismissRequest = { showUserPanel = false },
+                    properties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        dismissOnBackPress = true,
+                    ),
                 ) {
-                    UserPanel(
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(12.dp),
-                        focusRequester = userPanelFocusRequester,
-                        onHide = { showUserPanel = false },
-                        onGoUserSwitch = {
-                            showUserPanel = false
-                            navController.navigate(dev.frost819.newbv.app.ui.navigation.UserSwitchRoute)
-                        },
-                    )
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.6f)),
+                    ) {
+                        UserPanel(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .width(400.dp)
+                                .padding(12.dp),
+                            focusRequester = userPanelFocusRequester,
+                            onHide = { showUserPanel = false },
+                            onGoUserSwitch = {
+                                showUserPanel = false
+                                navController.navigate(dev.frost819.newbv.app.ui.navigation.UserSwitchRoute)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -190,5 +198,13 @@ private fun PlaceholderContent(title: String) {
             text = "$title (待实现)",
             style = androidx.tv.material3.MaterialTheme.typography.displaySmall,
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PlaceholderContentPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        PlaceholderContent(title = "分区")
     }
 }

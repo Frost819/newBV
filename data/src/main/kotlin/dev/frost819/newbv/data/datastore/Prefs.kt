@@ -316,7 +316,7 @@ object Prefs {
     /** 首页置顶 Tab。 */
     var firstHomeTopNavItem by pref(
         PrefKeys.firstHomeTopNavItem,
-        HomeTopNavItem.Recommend,
+        HomeTopNavItem.Dynamics,
         save = { it.code },
         restore = { HomeTopNavItem.fromCode(it) }
     )

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -203,4 +204,21 @@ private fun Modifier.selectionIndicator(color: Color): Modifier = this.drawBehin
         topLeft = Offset.Zero,
         size = Size(width = strokeWidth, height = size.height),
     )
+}
+
+@Preview(showBackground = true, heightDp = 1080)
+@Composable
+private fun LeftNaviContentPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        LeftNaviContent(
+            isLogin = true,
+            avatar = "",
+            selectedItem = LeftNaviItem.Home,
+            onLeftNaviItemChanged = {},
+            onOpenSettings = {},
+            onShowUserPanel = {},
+            onFocusToContent = {},
+            onLogin = {},
+        )
+    }
 }

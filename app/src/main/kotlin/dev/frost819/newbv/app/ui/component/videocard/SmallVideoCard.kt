@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,11 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +33,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
@@ -41,12 +45,19 @@ import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.R
 
 /**
  * 小型视频卡片。
  *
  * 展示视频封面、播放数/弹幕数/时长、标题、UP 主名、发布时间。
  * 支持长按显示快捷操作（稍后再看/详情/UP 页）。
+ *
+ * 长按行为（与原版 BV 一致）：
+ * - 长按后 [showActions] 切为 true，封面替换为操作按钮行
+ * - 自动将焦点移至第一个操作按钮
+ * - D-Pad center 释放不会误触发按钮点击（[releaseLongPress] 守卫）
+ * - 失焦或返回键自动关闭操作面板
  *
  * @param data 卡片数据。
  * @param onClick 点击卡片回调。
@@ -68,6 +79,10 @@ fun SmallVideoCard(
     val firstButtonRequester = remember { FocusRequester() }
 
     val hasAnyAction = onAddWatchLater != null || onGoToDetailPage != null || onGoToUpPage != null
+
+    BackHandler(enabled = showActions) {
+        showActions = false
+    }
 
     LaunchedEffect(showActions) {
         if (showActions && hasAnyAction) {
@@ -98,6 +113,7 @@ fun SmallVideoCard(
             ),
         ) {
             if (showActions) {
+                val isFirst = onAddWatchLater != null
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -105,26 +121,40 @@ fun SmallVideoCard(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    onAddWatchLater?.let {
+                    onAddWatchLater?.let { action ->
                         IconButton(
                             onClick = {
                                 if (!releaseLongPress) {
                                     releaseLongPress = true
                                     return@IconButton
                                 }
-                                it()
+                                action()
                             },
                             modifier = Modifier.focusRequester(firstButtonRequester),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.PlaylistAdd,
+                                imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                                 contentDescription = "稍后再看",
                             )
                         }
                     }
 
-                    onGoToDetailPage?.let {
-                        IconButton(onClick = { it() }) {
+                    onGoToDetailPage?.let { action ->
+                        val detailIsFirst = !isFirst && onAddWatchLater == null
+                        IconButton(
+                            onClick = {
+                                if (detailIsFirst && !releaseLongPress) {
+                                    releaseLongPress = true
+                                    return@IconButton
+                                }
+                                action()
+                            },
+                            modifier = if (detailIsFirst) {
+                                Modifier.focusRequester(firstButtonRequester)
+                            } else {
+                                Modifier
+                            },
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = "详情",
@@ -132,8 +162,22 @@ fun SmallVideoCard(
                         }
                     }
 
-                    onGoToUpPage?.let {
-                        IconButton(onClick = { it() }) {
+                    onGoToUpPage?.let { action ->
+                        val upIsFirst = !isFirst && onAddWatchLater == null && onGoToDetailPage == null
+                        IconButton(
+                            onClick = {
+                                if (upIsFirst && !releaseLongPress) {
+                                    releaseLongPress = true
+                                    return@IconButton
+                                }
+                                action()
+                            },
+                            modifier = if (upIsFirst) {
+                                Modifier.focusRequester(firstButtonRequester)
+                            } else {
+                                Modifier
+                            },
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "UP主主页",
@@ -205,28 +249,44 @@ private fun CardCover(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (play.isNotBlank()) {
-                Text(
-                    text = "▶ $play",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White,
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_play_count),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    text = play,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.width(6.dp))
             }
             if (danmaku.isNotBlank()) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_danmaku_count),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(2.dp))
                 Text(
-                    text = "💬 $danmaku",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = danmaku,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color.White,
+                    maxLines = 1,
                 )
             }
             Spacer(Modifier.weight(1f))
             Text(
                 text = time,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = Color.White,
                 maxLines = 1,
             )
@@ -261,6 +321,12 @@ private fun CardInfo(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_up),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp),
+            )
             Text(
                 modifier = Modifier.weight(1f),
                 text = upName,
@@ -277,3 +343,61 @@ private fun CardInfo(
         }
     }
 }
+
+// region Previews
+
+@Preview(showBackground = true)
+@Composable
+private fun SmallVideoCardPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        SmallVideoCard(
+            modifier = Modifier.width(380.dp),
+            data = VideoCardData(
+                avid = 1L,
+                cid = 10L,
+                title = "这是一个测试视频标题，可能会很长很长很长很长很长",
+                cover = "",
+                upName = "测试UP主名称",
+                upMid = 100L,
+                playString = "12.3万",
+                danmakuString = "9999",
+                timeString = "10:42",
+                pubTime = "7月29日",
+            ),
+            onClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CardCoverPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        Box(modifier = Modifier.width(380.dp)) {
+            Box(modifier = Modifier.aspectRatio(1.6f)) {
+                CardCover(
+                    cover = "",
+                    play = "12.3万",
+                    danmaku = "9999",
+                    time = "10:42",
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CardInfoPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        Box(modifier = Modifier.width(380.dp)) {
+            CardInfo(
+                title = "这是一个测试视频标题，可能会很长很长很长很长很长",
+                upName = "测试UP主名称",
+                pubTime = "7月29日",
+            )
+        }
+    }
+}
+
+// endregion

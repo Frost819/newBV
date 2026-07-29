@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -19,11 +18,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.tv.material3.Text
-import dev.frost819.newbv.app.ui.component.LoadingTip
+import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
@@ -114,21 +112,12 @@ fun DynamicsScreen(
         }
 
         item(span = { GridItemSpan(maxLineSpan) }) {
-            if (state.dynamicLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    LoadingTip()
-                }
-            } else if (!state.dynamicHasMore) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = "没有更多了捏",
-                    color = Color.White,
-                )
-            }
+            ListFooterTip(
+                isLoading = state.dynamicLoading,
+                isError = state.dynamicError,
+                hasMore = state.dynamicHasMore,
+                itemsIsEmpty = state.dynamicItems.isEmpty(),
+            )
         }
     }
 }

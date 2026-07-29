@@ -681,23 +681,68 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) { ... }
 
 ### 6.4 错误处理
 
+#### 6.4.1 ViewModel 层：超时 + 错误统一处理
+
+所有涉及网络资源加载的 ViewModel **必须**遵循以下模式：
+
+1. **超时保护**：用 `withTimeout(10_000L)` 包裹网络请求，防止无限 loading
+2. **错误状态**：UiState 中为每个加载源添加 `xxxError: Boolean` 字段
+3. **CancellationException 陷阱**：`withTimeout` 超时抛出 `TimeoutCancellationException`（是 `CancellationException` 子类），但普通协程取消（如 ViewModel cleared）也会抛 `CancellationException`，**必须 re-throw** 非 timeout 的取消异常，否则会破坏协程取消机制
+4. **刷新清除错误**：`refreshXxx()` 必须清除对应 error 字段
+
 ```kotlin
-// Repository 返回 sealed Result
-sealed interface Result<out T> {
-    data class Success<T>(val data: T) : Result<T>
-    data class Error(val exception: Throwable) : Result<Throwable>
+companion object {
+    private const val LOAD_TIMEOUT_MS = 10_000L
 }
 
-// ViewModel 处理
 fun loadRecommend() {
     viewModelScope.launch {
-        when (val result = repository.getRecommend()) {
-            is Result.Success -> _uiState.update { it.copy(items = result.data) }
-            is Result.Error -> _uiState.update { it.copy(error = result.exception) }
+        if (_uiState.value.recommendLoading) return@launch
+
+        _uiState.update { it.copy(recommendLoading = true, recommendError = false) }
+
+        runCatching {
+            withTimeout(LOAD_TIMEOUT_MS) {
+                // 网络请求逻辑
+            }
+        }.onFailure { error ->
+            // ⚠️ 必须 re-throw 非 timeout 的 CancellationException
+            if (error is CancellationException && error !is TimeoutCancellationException) {
+                throw error
+            }
+            logger.error(error) { "Failed to load" }
+            _uiState.update { it.copy(recommendError = true) }
         }
+
+        _uiState.update { it.copy(recommendLoading = false) }
     }
 }
+
+fun refreshRecommend() {
+    recommendNextPage = RecommendPage()
+    _uiState.update {
+        it.copy(recommendItems = emptyList(), recommendHasMore = true, recommendError = false)
+    }
+    loadRecommend()
+}
 ```
+
+#### 6.4.2 UI 层：ListFooterTip 统一提示组件
+
+所有分页列表页底部**必须**使用 `ListFooterTip` 组件，统一 loading/error/no-more 三态显示：
+
+```kotlin
+item(span = { GridItemSpan(maxLineSpan) }) {
+    ListFooterTip(
+        isLoading = state.recommendLoading,
+        isError = state.recommendError,
+        hasMore = state.recommendHasMore,
+        itemsIsEmpty = state.recommendItems.isEmpty(),
+    )
+}
+```
+
+状态优先级：`loading > error > noMore`（空列表不显示"没有更多"）。
 
 ### 6.5 ViewModel 拆分原则
 
@@ -808,3 +853,241 @@ test(bili-api): 补全 VideoPlayRepository 单测
 - [Media3](https://developer.android.com/media/media3)
 - [MockK](https://mockk.io/)
 - [Turbine](https://github.com/cashapp/turbine)
+
+---
+
+## 11. 踩坑经验总结
+
+> 以下是 Phase 1 开发中实际遇到的问题，记录避免重复踩坑。
+
+### 11.1 Android TV 适配
+
+#### 11.1.1 Manifest Launcher Category
+
+Android TV 的首页只显示 `LEANBACK_LAUNCHER`，不认 `LAUNCHER`（手机用）。不设置则 App 不出现在 TV 桌面应用列表中。
+
+```xml
+<!-- ✅ 正确：TV -->
+<category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+
+<!-- ❌ 错误：手机 -->
+<category android:name="android.intent.category.LAUNCHER" />
+```
+
+#### 11.1.2 density 适配
+
+1080p TV 模拟器系统 density 为 320（即 320/160 = 2.0f）。在 `MainActivity.setContent` 中需设置 `LocalDensity.current.density = 2.0f`，否则 UI 元素尺寸异常。
+
+#### 11.1.3 自定义 Typography
+
+TV 观看距离远（3m+），Compose 默认字号偏小。需在 `core/theme/Typography.kt` 中自定义字号，比 Material3 默认大 1.2-1.5 倍。
+
+#### 11.1.4 HTTP 明文流量
+
+B 站部分 CDN 返回 HTTP（非 HTTPS），Android 9 默认禁止明文流量。需配置 `network_security_config.xml` 白名单 B 站域名：
+
+```xml
+<domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">bilivideo.com</domain>
+    <domain includeSubdomains="true">bilivideo.cn</domain>
+    <domain includeSubdomains="true">hdslb.com</domain>
+    <!-- 其他 B 站 CDN 域名 -->
+</domain-config>
+```
+
+### 11.2 Compose TV 焦点管理
+
+#### 11.2.1 弹窗必须用 Dialog 而非 AnimatedVisibility
+
+**问题**：用 `AnimatedVisibility` + 全屏 `Box` + `.focusable()` 实现弹窗，D-Pad 方向键会穿透到下层内容（如左侧导航栏），`.focusable()` 无法阻止。
+
+**原因**：`AnimatedVisibility` 只是叠层在内容上，Compose 焦点系统仍可在所有可见的 focusable 节点间导航。
+
+**解决方案**：使用 `Dialog`，它创建独立窗口，焦点被正确限制在弹窗内。
+
+```kotlin
+// ✅ 正确：Dialog 创建独立窗口，焦点不外逃
+Dialog(
+    onDismissRequest = { showPanel = false },
+    properties = DialogProperties(usePlatformDefaultWidth = false),
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.6f)),
+    ) {
+        PanelContent(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(400.dp),
+        )
+    }
+}
+
+// ❌ 错误：AnimatedVisibility 焦点会穿透
+AnimatedVisibility(visible = showPanel) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.6f))
+            .focusable(),  // 无效，D-Pad 仍可逃逸
+    ) { ... }
+}
+```
+
+#### 11.2.2 AnimatedVisibility 需手动请求焦点
+
+`AnimatedVisibility` 内容出现时不会自动聚焦。需要：
+
+```kotlin
+val focusRequester = remember { FocusRequester() }
+LaunchedEffect(Unit) {
+    runCatching { focusRequester.requestFocus() }
+}
+BackHandler { visible = false }  // 同时处理返回键
+```
+
+#### 11.2.3 TV Material3 Card 选中框
+
+TV Material3 的 `Card` 自带 `border` 参数。**不要**在 modifier 上再叠加 `focusedBorder()` 扩展，否则选中时出现双层边框。
+
+```kotlin
+// ✅ 正确：用 CardDefaults.border
+Card(
+    border = CardDefaults.border(focusedBorder = Border(width = 2.dp, color = ...)),
+) { ... }
+
+// ❌ 错误：叠加 focusedBorder modifier 导致双层
+Card(
+    modifier = Modifier.focusedBorder(),
+) { ... }
+```
+
+#### 11.2.4 弹窗宽度限制
+
+弹窗组件内部不要用 `fillMaxWidth()`（撑满屏幕宽度太大），应由调用方通过 `Modifier.width(400.dp)` 控制宽度。
+
+### 11.3 StateFlow 与 Compose
+
+#### 11.3.1 必须用 collectAsState()
+
+在 Composable 中读取 `StateFlow` 必须用 `collectAsState()`，**不能**用 `.value`。`.value` 只读取当前值，不会在数据更新时重组 UI。
+
+```kotlin
+// ✅ 正确：UI 随数据更新
+val uiState by viewModel.uiState.collectAsState()
+
+// ❌ 错误：UI 不响应更新
+val uiState = viewModel.uiState.value
+```
+
+### 11.4 第三方库迁移注意事项
+
+#### 11.4.1 Coil 3 vs Coil 2
+
+Coil 3 是 breaking change：网络组件不再自动包含。必须手动配置 `SingletonImageLoader` + `OkHttpNetworkFetcherFactory`，否则无法加载远程图片（Coil 2 自动包含网络组件）。
+
+```kotlin
+// BVApplication.onCreate()
+val imageLoader = ImageLoader.Builder(this)
+    .components {
+        add(OkHttpNetworkFetcherFactory(callFactory = ::buildOkHttpClient))
+    }
+    .build()
+SingletonImageLoader.setSafe(imageLoader)
+```
+
+#### 11.4.2 BiliHttpApi 是 object 单例
+
+`BiliHttpApi` 是 Kotlin `object` 单例，不是通过构造注入的。Hilt 的 `@Provides` 返回 `BiliHttpApi` 时不会触发其 `init()`。必须在 `BVApplication.onCreate()` 中手动调用 `BiliHttpApi.init(buvid3)`，否则 Repository 调用 API 时 buvid3 为空，请求失败。
+
+#### 11.4.3 两个 ApiType 枚举
+
+项目中存在两个 `ApiType` 枚举：
+- `data.datastore.ApiType` — Prefs 存储 用户偏好用
+- `biliapi.entity.ApiType` — Repository 调用接口时用
+
+两者枚举值不同，需要手动映射转换。
+
+### 11.5 测试踩坑
+
+#### 11.5.1 ViewModel 测试中的 Dispatcher
+
+ViewModel 中**不要**用 `Dispatchers.IO`，用默认 `viewModelScope.launch {}`。测试时用 `Dispatchers.setMain(testDispatcher)` 拦截，否则测试无法控制协程执行。
+
+```kotlin
+@BeforeEach
+fun setUp() {
+    Dispatchers.setMain(testDispatcher)
+}
+
+@AfterEach
+fun tearDown() {
+    Dispatchers.resetMain()
+}
+
+@Test
+fun `test something`() = runTest(testDispatcher) {
+    // ...
+    advanceUntilIdle()  // 等待协程完成
+}
+```
+
+#### 11.5.2 Prefs 单例测试
+
+Prefs 是全局单例，测试时需注意：
+- 用 `@TestInstance(PER_CLASS)` + `@BeforeAll` 初始化 DataStore
+- `@BeforeEach` 中 `runBlocking { Prefs.clear() }` 清空状态
+- **不要**在 `@AfterAll` 中调 `resetForTesting()`，会导致后续测试 NPE
+
+#### 11.5.3 Compose UI 插桩测试
+
+- 用 `@HiltAndroidTest` + `HiltAndroidRule(order=0)` + `createAndroidComposeRule<MainActivity>(order=1)`
+- `SmallVideoCard` 等组件测试需包裹 `TvMaterialTheme` + `Box(Modifier.width(300.dp))` 提供尺寸约束
+- TV Material3 的 alpha 限制导致点击/长按交互在插桩测试中不稳定，暂不纳入断言
+
+### 11.6 构建与部署
+
+#### 11.6.1 ADB 安装降级
+
+模拟器上已安装高版本 APK 时，安装低版本会报 `INSTALL_FAILED_VERSION_DOWNGRADE`。需加 `-d` 标志：
+
+```bash
+adb install -r -d app-debug.apk
+```
+
+#### 11.6.2 包名与 R 类
+
+- Debug 包名带 suffix：`dev.frost819.newbv.debug`（非 `dev.frost819.newbv`）
+- R 类包名：`dev.frost819.newbv.R`（非 `dev.frost819.newbv.app.R`）
+- Activity 全路径：`dev.frost819.newbv.app.MainActivity`
+
+#### 11.6.3 模拟器 UI 自动化测试
+
+可用 `adb shell uiautomator dump` + `adb shell cat` 导出 UI 层级 XML，配合 Python 解析验证焦点位置：
+
+```bash
+# 导出 UI 层级
+adb shell uiautomator dump /sdcard/ui.xml
+adb shell cat /sdcard/ui.xml
+
+# 解析焦点节点
+adb shell cat /sdcard/ui.xml | python3 -c "
+import sys, xml.dom.minidom
+dom = xml.dom.minidom.parseString(sys.stdin.read())
+for node in dom.getElementsByTagName('node'):
+    if node.getAttribute('focused') == 'true':
+        print(f'focused bounds={node.getAttribute(\"bounds\")}')
+"
+```
+
+#### 11.6.4 D-Pad 方向键测试
+
+```bash
+adb shell input keyevent KEYCODE_DPAD_UP
+adb shell input keyevent KEYCODE_DPAD_DOWN
+adb shell input keyevent KEYCODE_DPAD_LEFT
+adb shell input keyevent KEYCODE_DPAD_RIGHT
+adb shell input keyevent KEYCODE_DPAD_CENTER  # 确认键
+adb shell input keyevent KEYCODE_BACK
+```

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
@@ -111,4 +112,23 @@ private fun TabRowScope.NavItemTab(
  */
 interface TopNavItem {
     val displayName: String
+}
+
+private data class DummyTopNavItem(
+    override val displayName: String,
+) : TopNavItem
+
+@Preview(showBackground = true)
+@Composable
+private fun TopNavPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        TopNav(
+            items = listOf(
+                DummyTopNavItem("推荐"),
+                DummyTopNavItem("热门"),
+                DummyTopNavItem("动态"),
+            ),
+            isLargePadding = true,
+        )
+    }
 }

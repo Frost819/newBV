@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,6 +19,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Button
@@ -29,6 +29,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
+import dev.frost819.newbv.app.data.AccountUiState
 import dev.frost819.newbv.app.viewmodel.user.UserViewModel
 
 /**
@@ -55,9 +56,28 @@ fun UserPanel(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    UserPanelContent(
+        modifier = modifier,
+        focusRequester = focusRequester,
+        uiState = uiState,
+        onToggleIncognito = { viewModel.toggleIncognitoMode() },
+        onGoUserSwitch = onGoUserSwitch,
+    )
+}
+
+/**
+ * 用户面板内容（无 ViewModel 依赖，可 Preview）。
+ */
+@Composable
+private fun UserPanelContent(
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
+    uiState: AccountUiState,
+    onToggleIncognito: () -> Unit = {},
+    onGoUserSwitch: () -> Unit = {},
+) {
     Surface(
         modifier = modifier
-            .fillMaxWidth()
             .let { if (focusRequester != null) it.focusRequester(focusRequester) else it },
         shape = MaterialTheme.shapes.medium,
     ) {
@@ -113,13 +133,35 @@ fun UserPanel(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(onClick = { viewModel.toggleIncognitoMode() }) {
-                    Text(text = stringResource(R.string.user_panel_incognito))
+                Button(onClick = onToggleIncognito) {
+                    Text(
+                        text = stringResource(R.string.user_panel_incognito) +
+                            if (uiState.incognitoMode) "：开" else "：关",
+                    )
                 }
                 Button(onClick = onGoUserSwitch) {
                     Text(text = stringResource(R.string.user_panel_account))
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UserPanelContentPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        UserPanelContent(
+            uiState = AccountUiState(
+                isLogin = true,
+                uid = 12345L,
+                username = "测试用户",
+                avatar = "",
+                level = 6,
+                exp = 5000,
+                nextExp = 8000,
+                incognitoMode = false,
+            ),
+        )
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
@@ -66,5 +67,23 @@ internal fun UserSelectCard(
                 Text(text = "🔒", style = MaterialTheme.typography.labelSmall)
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UserSelectCardPreview() {
+    dev.frost819.newbv.core.theme.BVTheme {
+        UserSelectCard(
+            user = UserEntity(
+                uid = 12345L,
+                username = "测试用户",
+                avatar = "",
+                auth = "",
+                lock = "1234",
+            ),
+            alpha = 1f,
+            onClick = {},
+        )
     }
 }

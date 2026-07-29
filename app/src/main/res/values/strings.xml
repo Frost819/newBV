@@ -44,4 +44,5 @@
 
     <!-- Common -->
     <string name="loading">加载中…</string>
+    <string name="load_failed">加载失败</string>
 </resources>
