@@ -150,6 +150,11 @@ fun MainScreen(
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
+                val userPanelFocusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) {
+                    runCatching { userPanelFocusRequester.requestFocus() }
+                }
+                BackHandler { showUserPanel = false }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -159,6 +164,7 @@ fun MainScreen(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(12.dp),
+                        focusRequester = userPanelFocusRequester,
                         onHide = { showUserPanel = false },
                         onGoUserSwitch = {
                             showUserPanel = false

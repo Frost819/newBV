@@ -3,6 +3,10 @@ package dev.frost819.newbv.app
 import android.app.Application
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
 import dagger.hilt.android.HiltAndroidApp
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
@@ -16,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 /**
@@ -60,6 +65,17 @@ class BVApplication : Application() {
 
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             interactionLogger.log(LogCategory.LIFECYCLE, "Application started")
+        }
+
+        coil3.SingletonImageLoader.setSafe {
+            ImageLoader.Builder(this)
+                .crossfade(true)
+                .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
+                .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
+                .components {
+                    add(OkHttpNetworkFetcherFactory(OkHttpClient()))
+                }
+                .build()
         }
     }
 }

@@ -33,13 +33,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Border
 import androidx.tv.material3.Card
+import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import dev.frost819.newbv.core.focus.focusedBorder
 
 /**
  * 小型视频卡片。
@@ -87,8 +88,14 @@ fun SmallVideoCard(
                 .aspectRatio(1.6f)
                 .onFocusChanged { focusState ->
                     if (!focusState.hasFocus) showActions = false
-                }
-                .focusedBorder(shape = MaterialTheme.shapes.large),
+                },
+            shape = CardDefaults.shape(MaterialTheme.shapes.large),
+            border = CardDefaults.border(
+                focusedBorder = Border(
+                    border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+                    shape = MaterialTheme.shapes.large,
+                ),
+            ),
         ) {
             if (showActions) {
                 Row(

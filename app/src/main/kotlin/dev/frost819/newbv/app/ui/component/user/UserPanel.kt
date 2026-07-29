@@ -16,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,6 +48,7 @@ import dev.frost819.newbv.app.viewmodel.user.UserViewModel
 @Composable
 fun UserPanel(
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
     viewModel: UserViewModel = hiltViewModel(),
     onHide: () -> Unit = {},
     onGoUserSwitch: () -> Unit = {},
@@ -53,7 +56,9 @@ fun UserPanel(
     val uiState by viewModel.uiState.collectAsState()
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .let { if (focusRequester != null) it.focusRequester(focusRequester) else it },
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(
