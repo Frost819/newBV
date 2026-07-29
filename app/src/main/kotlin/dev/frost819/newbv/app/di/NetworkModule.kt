@@ -70,20 +70,14 @@ object NetworkModule {
     fun provideAuthRepository(): AuthRepository = AuthRepository()
 
     /**
-     * 初始化 [BiliHttpApi]。
+     * 提供 [BiliHttpApi] 单例。
      *
-     * BiliHttpApi 是 `object` 单例，需要先调用 [BiliHttpApi.init] 传入 buvid3。
-     * buvid3 由 [BuvidGenerator.generateBuvid3] 生成（每次启动重新生成，
-     * 与 Prefs 中的 buvid3 一致性由应用层保证）。
+     * BiliHttpApi 是 `object` 单例，在 [BVApplication.onCreate] 中完成 [BiliHttpApi.init]。
+     * 此处仅返回引用，供需要依赖注入的组件使用。
      */
     @Provides
     @Singleton
-    fun provideBiliHttpApi(authRepository: AuthRepository): BiliHttpApi {
-        val buvid3 = BuvidGenerator.generateBuvid3()
-        authRepository.buvid3 = buvid3
-        BiliHttpApi.init(buvid3)
-        return BiliHttpApi
-    }
+    fun provideBiliHttpApi(): BiliHttpApi = BiliHttpApi
 
     /**
      * 提供 [InteractionTracker] 单例。

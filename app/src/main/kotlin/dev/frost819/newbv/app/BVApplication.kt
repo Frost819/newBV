@@ -5,9 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import dagger.hilt.android.HiltAndroidApp
 import dev.frost819.newbv.app.network.HttpServer
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
 import dev.frost819.newbv.core.log.LogCategory
+import dev.frost819.newbv.data.datastore.BuvidGenerator
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,10 +43,17 @@ class BVApplication : Application() {
     @Inject
     lateinit var httpServer: HttpServer
 
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     override fun onCreate() {
         super.onCreate()
 
         Prefs.init(dataStore)
+
+        val buvid3 = BuvidGenerator.generateBuvid3()
+        authRepository.buvid3 = buvid3
+        BiliHttpApi.init(buvid3)
 
         @Suppress("UNUSED_EXPRESSION")
         crashHandler
