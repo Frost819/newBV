@@ -11,7 +11,10 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
+import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
+import dev.frost819.newbv.biliapi.repositories.SeasonRepository
+import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
@@ -130,6 +133,35 @@ object NetworkModule {
         authRepository: AuthRepository,
         channelRepository: ChannelRepository,
     ): UserRepository = UserRepository(authRepository, channelRepository)
+
+    /**
+     * 提供 [UgcRepository] 单例。
+     *
+     * 封装 UGC 分区推荐信息流接口（Web HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideUgcRepository(authRepository: AuthRepository): UgcRepository =
+        UgcRepository(authRepository)
+
+    /**
+     * 提供 [PgcRepository] 单例。
+     *
+     * 封装 PGC 影视首页接口（轮播 + Feed + 索引）。
+     */
+    @Provides
+    @Singleton
+    fun providePgcRepository(): PgcRepository = PgcRepository()
+
+    /**
+     * 提供 [SeasonRepository] 单例。
+     *
+     * 封装追番列表与番剧时间表接口（Web HTTP + App gRPC）。
+     */
+    @Provides
+    @Singleton
+    fun provideSeasonRepository(authRepository: AuthRepository): SeasonRepository =
+        SeasonRepository(authRepository)
 
     /**
      * 提供 [AccountRepository] 单例。

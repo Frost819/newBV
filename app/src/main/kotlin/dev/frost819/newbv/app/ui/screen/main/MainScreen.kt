@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,7 +64,8 @@ fun MainScreen(
     val context = LocalContext.current
     var showUserPanel by remember { mutableStateOf(false) }
     var lastPressBack: Long by remember { mutableLongStateOf(0L) }
-    var selectedDrawerItem by remember { mutableStateOf(Prefs.homeLeftNavItem) }
+    var selectedDrawerItem by rememberSaveable { mutableStateOf(Prefs.homeLeftNavItem) }
+    var focusInitialized by rememberSaveable { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val homeFocusRequester = remember { FocusRequester() }
@@ -80,13 +82,17 @@ fun MainScreen(
 
     val onFocusToContent: () -> Unit = {
         when (selectedDrawerItem) {
-            LeftNaviItem.Home -> runCatching { homeFocusRequester.requestFocus() }
+            LeftNaviItem.Home, LeftNaviItem.UGC, LeftNaviItem.PGC ->
+                runCatching { homeFocusRequester.requestFocus() }
             else -> {}
         }
     }
 
     LaunchedEffect(Unit) {
-        runCatching { onFocusToContent() }
+        if (!focusInitialized) {
+            focusInitialized = true
+            runCatching { onFocusToContent() }
+        }
     }
 
     BackHandler {
@@ -142,8 +148,14 @@ fun MainScreen(
                         selectedDrawerItem = LeftNaviItem.Home
                     }
                     LeftNaviItem.Personal -> PlaceholderContent("个人")
-                    LeftNaviItem.UGC -> PlaceholderContent("分区")
-                    LeftNaviItem.PGC -> PlaceholderContent("影视")
+                    LeftNaviItem.UGC -> dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                    )
+                    LeftNaviItem.PGC -> dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                    )
                     LeftNaviItem.Live -> PlaceholderContent("直播")
                 }
             }
