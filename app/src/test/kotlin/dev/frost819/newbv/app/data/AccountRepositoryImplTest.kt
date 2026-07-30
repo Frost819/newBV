@@ -134,14 +134,15 @@ class AccountRepositoryImplTest {
     }
 
     @Test
-    fun `upsertUser updates when user exists`() = runTest {
-        val existing = UserEntity(id = 1, uid = 100L, username = "old", avatar = "", auth = "{}")
-        val updated = existing.copy(username = "new")
+    fun `upsertUser updates auth when user exists`() = runTest {
+        val existing = UserEntity(id = 1, uid = 100L, username = "old", avatar = "old_url", auth = "{}")
+        val updated = UserEntity(id = null, uid = 100L, username = "", avatar = "", auth = "new_auth")
         coEvery { userDao.findUserByUid(100L) } returns existing
 
         repository.upsertUser(updated)
 
-        coVerify { userDao.update(updated) }
+        coVerify { userDao.update(existing) }
+        assertThat(existing.auth).isEqualTo("new_auth")
     }
 
     @Test

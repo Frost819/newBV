@@ -351,10 +351,9 @@ object Prefs {
      *
      * **必须在 Application.onCreate 调用**，且在依赖 Prefs 的模块初始化之前。
      *
-     * 执行步骤：
-     * 1. 阻塞读取 DataStore 首帧数据，填充所有委托的内存缓存。
-     * 2. 检查并生成缺失的 buvid / buvid3。
-     * 3. 启动长连接 collect，DataStore 变化时同步内存缓存。
+     * 阻塞读取 DataStore 首帧数据，填充所有委托的内存缓存。
+     * 之后不再监听 DataStore 变化——所有写入都经过 [PrefDelegate.setValue]，
+     * 已同步更新内存缓存，无需 collect 反向同步（且避免部分写入时的竞态）。
      *
      * @param dataStore DataStore 实例（由 Hilt 注入）。
      */
@@ -364,22 +363,12 @@ object Prefs {
         initialized = true
 
         val initialPrefs = runBlocking { dataStore.data.first() }
-        updateMemoryCache(initialPrefs)
-        checkAndInitBuvid(initialPrefs)
-
-        scope.launch {
-            dataStore.data.collect { preferences -> updateMemoryCache(preferences) }
-        }
-    }
-
-    /** 将 DataStore 数据同步到所有委托的内存缓存。 */
-    private fun updateMemoryCache(preferences: Preferences) {
         delegateMap.forEach { (key, delegate) ->
-            if (preferences.contains(key)) {
-                val value = preferences[key]
-                (delegate as PrefDelegate<Any?, Any?>).flow.value = value
+            if (initialPrefs.contains(key)) {
+                (delegate as PrefDelegate<Any?, Any?>).flow.value = initialPrefs[key]
             }
         }
+        checkAndInitBuvid(initialPrefs)
     }
 
     /** 检查 buvid / buvid3 是否缺失，缺失则自动生成并持久化。 */

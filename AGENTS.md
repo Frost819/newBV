@@ -1091,3 +1091,45 @@ adb shell input keyevent KEYCODE_DPAD_RIGHT
 adb shell input keyevent KEYCODE_DPAD_CENTER  # 确认键
 adb shell input keyevent KEYCODE_BACK
 ```
+
+### 11.7 Prefs 与 DataStore
+
+#### 11.7.1 不要用 `dataStore.data.collect` 监听变化
+
+**问题**：原版 BV 和早期 new BV 都在 `Prefs.init()` 中启动 `dataStore.data.collect { updateMemoryCache(it) }`，意图是让磁盘变化同步到内存。但这会引入竞态：
+
+`PrefDelegate.setValue()` 逐字段异步写 DataStore。例如 `AuthData.saveToPrefs()` 连续写 9 个字段，`uid` 写完后 `collect` 触发，此时磁盘快照包含新 `uid` 但旧 `sessData`，`updateMemoryCache` 用这个不完整快照覆盖全部内存缓存，导致 `Prefs.sessData` 被旧值覆盖。
+
+**解决方案**：去掉 `collect`。`PrefDelegate.setValue()` 已经先更新内存再异步写磁盘，内存永远比磁盘先更新。`init()` 只需 `runBlocking { dataStore.data.first() }` 做一次初始加载即可。
+
+#### 11.7.2 Room @Update 必须有有效主键
+
+**问题**：`UserEntity` 用自增 `id` 作主键。`addUser()` 构造 `UserEntity(id = null, ...)` 后调 `upsertUser()`，若用户已存在走 `userDao.update(user)` 分支，但 `user.id` 为 null，Room `@Update` 按主键匹配，静默失败。
+
+**解决方案**：`upsertUser()` 从 DB 查出 existing entity（有有效 id），更新其字段后 `update(existing)`：
+
+```kotlin
+override suspend fun upsertUser(user: UserEntity) {
+    val existing = userDao.findUserByUid(user.uid)
+    if (existing != null) {
+        existing.auth = user.auth
+        userDao.update(existing)
+    } else {
+        userDao.insert(user)
+    }
+}
+```
+
+#### 11.7.3 B 站经验进度条计算
+
+B 站 API `next_exp` 是"下一等级所需的经验值**门槛**"（不是剩余），`current_min` 是当前等级的起点。正确公式：
+
+```kotlin
+val progress = if (nextExp > currentMin) {
+    ((exp - currentMin).toFloat() / (nextExp - currentMin).toFloat()).coerceIn(0f, 1f)
+} else {
+    1f  // Lv6 满级
+}
+```
+
+`setCurrentUser()` 切换账号时必须先重置 level/exp/currentMin/nextExp 为 0，再调 `refreshUserInfo()` 从网络拉取新数据，否则 UI 会短暂显示旧用户等级。

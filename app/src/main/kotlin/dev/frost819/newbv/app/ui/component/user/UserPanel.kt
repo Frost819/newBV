@@ -112,10 +112,11 @@ private fun UserPanelContent(
                     }
                 }
 
-                val expProgress = if (uiState.nextExp > 0) {
-                    (uiState.exp.toFloat() / uiState.nextExp.toFloat()).coerceIn(0f, 1f)
+                val expProgress = if (uiState.nextExp > uiState.currentMin) {
+                    ((uiState.exp - uiState.currentMin).toFloat() /
+                        (uiState.nextExp - uiState.currentMin).toFloat()).coerceIn(0f, 1f)
                 } else {
-                    0f
+                    1f
                 }
                 LinearProgressIndicator(
                     progress = { expProgress },

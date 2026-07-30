@@ -98,7 +98,8 @@ class AccountRepositoryImpl @Inject constructor(
     override suspend fun upsertUser(user: UserEntity) {
         val existing = userDao.findUserByUid(user.uid)
         if (existing != null) {
-            userDao.update(user)
+            existing.auth = user.auth
+            userDao.update(existing)
         } else {
             userDao.insert(user)
         }
@@ -138,8 +139,13 @@ class AccountRepositoryImpl @Inject constructor(
                 uid = user.uid,
                 username = user.username,
                 avatar = user.avatar,
+                level = 0,
+                currentMin = 0,
+                exp = 0,
+                nextExp = 0,
             )
         }
+        refreshUserInfo()
     }
 
     /**
@@ -193,6 +199,7 @@ class AccountRepositoryImpl @Inject constructor(
                     username = response.name,
                     avatar = response.face,
                     level = response.levelExp.currentLevel,
+                    currentMin = response.levelExp.currentMin,
                     exp = response.levelExp.currentExp,
                     nextExp = response.levelExp.nextExp,
                 )
@@ -268,8 +275,9 @@ class AccountRepositoryImpl @Inject constructor(
  * @property username 用户名。
  * @property avatar 头像 URL。
  * @property level 用户等级。
- * @property exp 当前经验值。
- * @property nextExp 升级所需经验值。
+ * @property currentMin 当前等级经验最低值。
+ * @property exp 当前经验值（总经验）。
+ * @property nextExp 下一等级所需经验值（门槛，非剩余）。Lv6 满级时为 0。
  * @property incognitoMode 无痕模式。
  */
 data class AccountUiState(
@@ -278,6 +286,7 @@ data class AccountUiState(
     val username: String = "",
     val avatar: String = "",
     val level: Int = 0,
+    val currentMin: Int = 0,
     val exp: Int = 0,
     val nextExp: Int = 0,
     val incognitoMode: Boolean = false,
