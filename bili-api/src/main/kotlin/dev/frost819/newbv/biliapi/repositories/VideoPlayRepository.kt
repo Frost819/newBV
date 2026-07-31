@@ -57,8 +57,6 @@ class VideoPlayRepository(
                         qn = 127,
                         fnver = 0,
                         fourk = 1,
-                        sessData = authRepository.sessionData,
-                        dedeUserID = authRepository.mid,
                     ).getResponseData()
                 PlayData.fromPlayUrlData(playUrlData)
             }
@@ -139,7 +137,6 @@ class VideoPlayRepository(
                         qn = 127,
                         fnver = 0,
                         fourk = 1,
-                        sessData = authRepository.sessionData,
                     ).getResponseData()
 
                 PlayData.fromPlayUrlV2Data(playUrlData)
@@ -209,8 +206,6 @@ class VideoPlayRepository(
                     BiliHttpApi.getVideoMoreInfo(
                         avid = aid,
                         cid = cid,
-                        sessData = authRepository.sessionData ?: "",
-                        buvid3 = authRepository.buvid3 ?: "",
                     ).getResponseData()
                 response.subtitle?.subtitles
                     ?.map { Subtitle.fromSubtitleItem(it) }
@@ -257,11 +252,10 @@ class VideoPlayRepository(
                         epid = epid,
                         sid = seasonId,
                         csrf = authRepository.biliJct,
-                        sessData = authRepository.sessionData ?: "",
                     )
 
                 ApiType.App ->
-                    BiliHttpApi.sendHeartbeat(
+                    BiliHttpApi.sendHeartbeatApp(
                         avid = aid,
                         cid = cid,
                         playedTime = time,
@@ -287,8 +281,6 @@ class VideoPlayRepository(
                         BiliHttpApi.getVideoMoreInfo(
                             avid = aid,
                             cid = cid,
-                            sessData = authRepository.sessionData ?: "",
-                            buvid3 = authRepository.buvid3 ?: "",
                         ).getResponseData()
                     response.dmMask?.maskUrl
                 }

@@ -78,3 +78,55 @@ fun rememberFocusSaver(): FocusSaver {
     val savedIndex = rememberSaveable { mutableIntStateOf(-1) }
     return remember { FocusSaver(savedIndex) }
 }
+
+/**
+ * 基于字符串 key 的焦点恢复器。
+ *
+ * 与 [FocusSaver] 功能相同，但使用字符串 key 适用于非列表场景
+ * （如详情页的封面、按钮、简介等不同类型的可聚焦元素）。
+ *
+ * 用法：
+ * ```
+ * val focusSaver = rememberScreenFocusSaver()
+ * focusSaver.RestoreFocus()
+ * // 在可聚焦元素上：
+ * Card(
+ *     modifier = Modifier
+ *         .focusRequester(focusSaver.focusRequesterFor("cover"))
+ *         .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") },
+ * )
+ * ```
+ */
+class ScreenFocusSaver(
+    private val savedKey: androidx.compose.runtime.MutableState<String>,
+) {
+    private val requesters = mutableMapOf<String, FocusRequester>()
+
+    fun focusRequesterFor(key: String): FocusRequester =
+        requesters.getOrPut(key) { FocusRequester() }
+
+    fun saveFocusedKey(key: String) {
+        savedKey.value = key
+    }
+
+    fun savedKeyValue(): String = savedKey.value
+
+    @Composable
+    fun RestoreFocus() {
+        LaunchedEffect(savedKey.value) {
+            val key = savedKey.value
+            if (key.isNotEmpty()) {
+                requesters[key]?.let {
+                    kotlinx.coroutines.delay(50)
+                    runCatching { it.requestFocus() }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun rememberScreenFocusSaver(): ScreenFocusSaver {
+    val savedKey = rememberSaveable { mutableStateOf("") }
+    return remember { ScreenFocusSaver(savedKey) }
+}

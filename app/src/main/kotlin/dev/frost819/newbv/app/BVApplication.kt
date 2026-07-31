@@ -14,7 +14,6 @@ import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
 import dev.frost819.newbv.core.log.LogCategory
-import dev.frost819.newbv.data.datastore.BuvidGenerator
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,9 +55,42 @@ class BVApplication : Application() {
 
         Prefs.init(dataStore)
 
-        val buvid3 = BuvidGenerator.generateBuvid3()
+        val buvid3 = Prefs.buvid3
+        val deviceCookies = Prefs.deviceCookies
+        val sessData = Prefs.sessData
+        val biliJct = Prefs.biliJct
+        val mid = Prefs.uid.takeIf { it > 0 }
+        val accessToken = Prefs.accessToken
+
         authRepository.buvid3 = buvid3
-        BiliHttpApi.init(buvid3)
+        authRepository.deviceCookies = deviceCookies
+        authRepository.sessionData = sessData
+        authRepository.biliJct = biliJct
+        authRepository.mid = mid
+        authRepository.accessToken = accessToken
+        BiliHttpApi.init(
+            buvid3 = buvid3,
+            deviceCookies = deviceCookies,
+            sessData = sessData,
+            biliJct = biliJct,
+            mid = mid,
+            accessToken = accessToken,
+        )
+
+        if (!Prefs.buvid3FromSpi) {
+            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                val spiResult = BiliHttpApi.fetchBuvid3FromSpi()
+                if (spiResult != null) {
+                    Prefs.buvid3 = spiResult.buvid3
+                    Prefs.deviceCookies = spiResult.deviceCookies
+                    Prefs.buvid3FromSpi = true
+                    authRepository.buvid3 = spiResult.buvid3
+                    authRepository.deviceCookies = spiResult.deviceCookies
+                    BiliHttpApi.buvid3 = spiResult.buvid3
+                    BiliHttpApi.deviceCookies = spiResult.deviceCookies
+                }
+            }
+        }
 
         @Suppress("UNUSED_EXPRESSION")
         crashHandler

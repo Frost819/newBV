@@ -1,6 +1,8 @@
 package dev.frost819.newbv.biliapi.http
 
 import com.tfowl.ktor.client.plugins.JsoupPlugin
+import dev.frost819.newbv.biliapi.entity.SpiData
+import dev.frost819.newbv.biliapi.entity.SpiResult
 import dev.frost819.newbv.biliapi.entity.pgc.PgcType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi.getRegionDynamic
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
@@ -68,7 +70,7 @@ import dev.frost819.newbv.biliapi.http.entity.web.NavResponseData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.BiliAppConf
 import dev.frost819.newbv.biliapi.http.util.encApiSign
-import dev.frost819.newbv.biliapi.http.util.injectBuvid3Cookie
+import dev.frost819.newbv.biliapi.http.util.injectCookies
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -116,17 +118,86 @@ object BiliHttpApi {
     var wbiSubKey: String? = null
     private var wbiLastRefreshDate = 0L
 
-    // 用于获取 buvid3 的提供者，由应用层设置
     var buvid3: String = ""
-        private set
 
-    fun init(buvid3: String) {
+    /**
+     * 设备 cookie 字符串（buvid3 + b_nut 等），由 SPI 流程获取并持久化。
+     *
+     * 由 [fetchBuvid3FromSpi] 设置，由 [injectCookies] 注入到所有 Web 请求中。
+     * 只包含设备标识类 cookie（不含 SESSDATA/bili_jct 等登录凭证）。
+     */
+    var deviceCookies: String = ""
+
+    var sessData: String = ""
+    var biliJct: String = ""
+    var mid: Long? = null
+    var accessToken: String = ""
+
+    fun init(
+        buvid3: String,
+        deviceCookies: String = "",
+        sessData: String = "",
+        biliJct: String = "",
+        mid: Long? = null,
+        accessToken: String = "",
+    ) {
         this.buvid3 = buvid3
+        this.deviceCookies = deviceCookies
+        this.sessData = sessData
+        this.biliJct = biliJct
+        this.mid = mid
+        this.accessToken = accessToken
 
         createClient()
         CoroutineScope(Dispatchers.IO).launch {
             updateWbi()
         }
+    }
+
+    /**
+     * 通过 SPI 接口获取 B 站注册的 buvid3 和配套设备 cookie。
+     *
+     * 本地随机生成的 buvid3 未在 B 站注册，投币等敏感操作会返回 -401（非法访问）。
+     * 1. 调用 `/x/frontend/finger/spi` 获取 B 站颁发的 buvid3（响应体）
+     * 2. 携带 buvid3 请求 `https://www.bilibili.com/` 获取配套设备 cookie（Set-Cookie 头）
+     * 调用方负责持久化返回的 [SpiResult]，避免每次启动都重新获取。
+     *
+     * @return [SpiResult] 包含 buvid3 和设备 cookie 字符串，失败时返回 null。
+     */
+    suspend fun fetchBuvid3FromSpi(): SpiResult? =
+        runCatching {
+            // 1. 获取 SPI buvid3
+            val spiResponse = client.get("/x/frontend/finger/spi") {}
+            val spiData = spiResponse.body<BiliResponse<SpiData>>()
+            if (spiData.code != 0 || spiData.data?.b3.isNullOrBlank()) return@runCatching null
+            buvid3 = spiData.data!!.b3!!
+
+            // 2. 携带 buvid3 请求 www.bilibili.com 获取 b_nut 等设备 cookie
+            val biliResponse =
+                client.get("https://www.bilibili.com/") {}
+            deviceCookies = "buvid3=$buvid3" +
+                parseSetCookies(biliResponse.headers.getAll("Set-Cookie"))
+                    .let { if (it.isNotBlank()) "; $it" else "" }
+            SpiResult(buvid3 = buvid3, deviceCookies = deviceCookies)
+        }.onFailure {
+            // SPI 获取失败时保留本地生成的 buvid3（不影响非敏感接口）
+        }.getOrNull()
+
+    /**
+     * 将 Set-Cookie 头列表解析为 `name=value; name=value` 格式的字符串。
+     * 只保留 buvid3 和 b_nut（过滤 path/expires 等属性）。
+     */
+    private fun parseSetCookies(setCookies: List<String>?): String {
+        if (setCookies.isNullOrEmpty()) return ""
+        val cookies = mutableListOf<String>()
+        for (header in setCookies) {
+            val pair = header.substringBefore(";")
+            val name = pair.substringBefore("=", "").trim()
+            if (name in setOf("buvid3", "b_nut")) {
+                cookies.add(pair.trim())
+            }
+        }
+        return cookies.joinToString("; ")
     }
 
     private fun createClient() {
@@ -148,7 +219,7 @@ object BiliHttpApi {
                 }
             }.apply {
                 encApiSign() // 1. 先注册（LIFO → 后执行）：负责签名
-                injectBuvid3Cookie() // 2. 后注册（LIFO → 先执行）：cookie 注入在签名之前
+                injectCookies() // 2. 后注册（LIFO → 先执行）：cookie 注入在签名之前
             }
     }
 
@@ -158,12 +229,10 @@ object BiliHttpApi {
     suspend fun getPopularVideoData(
         pageNumber: Int = 1,
         pageSize: Int = 20,
-        sessData: String = "",
     ): BiliResponse<PopularVideoData> =
         client.get("/x/web-interface/popular") {
             parameter("pn", pageNumber)
             parameter("ps", pageSize)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -172,12 +241,10 @@ object BiliHttpApi {
     suspend fun getVideoInfo(
         av: Long? = null,
         bv: String? = null,
-        sessData: String? = null,
     ): BiliResponse<VideoInfo> =
         client.get("/x/web-interface/view") {
             parameter("aid", av)
             parameter("bvid", bv)
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
         }.body()
 
     /**
@@ -186,12 +253,10 @@ object BiliHttpApi {
     suspend fun getVideoDetail(
         av: Long? = null,
         bv: String? = null,
-        sessData: String? = null,
     ): BiliResponse<VideoDetail> =
         client.get("/x/web-interface/wbi/view/detail") {
             parameter("aid", av)
             parameter("bvid", bv)
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
         }.body()
 
     /**
@@ -209,8 +274,6 @@ object BiliHttpApi {
         otype: String = "json",
         type: String = "",
         platform: String = "oc",
-        sessData: String? = null,
-        dedeUserID: Long? = null,
     ): BiliResponse<PlayUrlData> =
         client.get("/x/player/playurl") {
             require(av != null || bv != null) { "av and bv cannot be null at the same time" }
@@ -225,14 +288,12 @@ object BiliHttpApi {
             parameter("otype", otype)
             parameter("type", type)
             parameter("platform", platform)
-            if (sessData.isNullOrEmpty()) {
-                // parameter("voice_balance", 1)
+            if (sessData.isEmpty()) {
                 parameter("web_location", "1315873")
                 parameter("gaia_source", "pre-load")
                 parameter("isGaiaAvoided", "true")
                 parameter("try_look", "1")
             }
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;DedeUserID=$dedeUserID") }
         }.body()
 
     /**
@@ -251,9 +312,6 @@ object BiliHttpApi {
         supportMultiAudio: Boolean? = null,
         drmTechType: Int? = null,
         fromClient: String? = null,
-        sessData: String? = null,
-        dedeUserID: Long? = null,
-        buvid3: String? = null,
     ): BiliResponse<PlayUrlData> =
         client.get("/pgc/player/web/playurl") {
             require(av != null || bv != null) { "av and bv cannot be null at the same time" }
@@ -270,12 +328,6 @@ object BiliHttpApi {
             supportMultiAudio?.let { parameter("support_multi_audio", it) }
             drmTechType?.let { parameter("drm_tech_type", it) }
             fromClient?.let { parameter("from_client", it) }
-            val cookieParts = mutableListOf<String>()
-            sessData?.let { cookieParts.add("SESSDATA=$it") }
-            dedeUserID?.let { cookieParts.add("DedeUserID=$it") }
-            buvid3?.let { cookieParts.add("buvid3=$it") }
-            if (cookieParts.isNotEmpty()) header("Cookie", cookieParts.joinToString(";"))
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
@@ -295,8 +347,6 @@ object BiliHttpApi {
         supportMultiAudio: Boolean? = null,
         drmTechType: Int? = null,
         fromClient: String? = null,
-        sessData: String? = null,
-        buvid3: String? = null,
     ): BiliResponse<PlayUrlV2Data> =
         client.get("/pgc/player/web/v2/playurl") {
             av?.let { parameter("avid", it) }
@@ -311,31 +361,16 @@ object BiliHttpApi {
             supportMultiAudio?.let { parameter("support_multi_audio", it) }
             drmTechType?.let { parameter("drm_tech_type", it) }
             fromClient?.let { parameter("from_client", it) }
-            val cookieParts = mutableListOf<String>()
-            sessData?.let { cookieParts.add("SESSDATA=$it") }
-            buvid3?.let { cookieParts.add("buvid3=$it") }
-            if (cookieParts.isNotEmpty()) {
-                val cookieString = cookieParts.joinToString(";")
-                println("PGC v2 Cookie: $cookieString")
-                header("Cookie", cookieString)
-            } else {
-                println("PGC v2 Cookie is empty! sessData=$sessData, buvid3=$buvid3")
-            }
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
     /**
      * 通过[cid]获取视频弹幕
      */
-    suspend fun getDanmakuXml(
-        cid: Long,
-        sessData: String = "",
-    ): DanmakuResponse {
+    suspend fun getDanmakuXml(cid: Long): DanmakuResponse {
         val xmlChannel =
             client.get("/x/v1/dm/list.so") {
                 parameter("oid", cid)
-                header("Cookie", "SESSDATA=$sessData;")
             }.bodyAsChannel()
 
         val dbFactory = DocumentBuilderFactory.newInstance()
@@ -380,26 +415,20 @@ object BiliHttpApi {
         type: String = "all",
         page: Int = 1,
         offset: String? = null,
-        sessData: String = "",
     ): BiliResponse<DynamicData> =
         client.get("/x/polymer/web-dynamic/v1/feed/all") {
             parameter("timezone_offset", timezoneOffset)
             parameter("type", type)
             parameter("page", page)
             offset?.let { parameter("offset", offset) }
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
      * 获取用户[uid]的详细信息
      */
-    suspend fun getUserInfo(
-        uid: Long,
-        sessData: String = "",
-    ): BiliResponse<UserInfoData> =
+    suspend fun getUserInfo(uid: Long): BiliResponse<UserInfoData> =
         client.get("/x/space/acc/info") {
             parameter("mid", uid)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -411,21 +440,16 @@ object BiliHttpApi {
     suspend fun getUserCardInfo(
         uid: Long,
         photo: Boolean = false,
-        sessData: String = "",
     ): BiliResponse<UserCardData> =
         client.get("/x/web-interface/card") {
             parameter("mid", uid)
             parameter("photo", photo)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
      * 通过[sessData]获取用户个人信息
      */
-    suspend fun getUserSelfInfo(sessData: String = ""): BiliResponse<MyInfoData> =
-        client.get("/x/space/myinfo") {
-            header("Cookie", "SESSDATA=$sessData;")
-        }.body()
+    suspend fun getUserSelfInfo(): BiliResponse<MyInfoData> = client.get("/x/space/myinfo").body()
 
     /**
      * 获取截止至目标id[max]和目标时间[viewAt]历史记录
@@ -438,36 +462,22 @@ object BiliHttpApi {
         business: String = "",
         viewAt: Long = 0,
         pageSize: Int = 20,
-        sessData: String = "",
     ): BiliResponse<HistoryData> =
         client.get("/x/web-interface/history/cursor") {
             parameter("max", max)
             parameter("business", business)
             parameter("view_at", viewAt)
             parameter("ps", pageSize)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
      * 获取稍后再看列表
      */
 
-    suspend fun getToView(
-        // max: Long = 0,
-        // business: String = "",
-        // viewAt: Long = 0,
-        // pageSize: Int = 20,
-        accessKey: String? = null,
-        sessData: String? = null,
-    ): BiliResponse<ToViewData> =
+    suspend fun getToView(accessKey: String? = null): BiliResponse<ToViewData> =
         client.get("/x/v2/history/toview") {
-            // parameter("max", max)
-            // parameter("business", business)
-            // parameter("view_at", viewAt)
-            // parameter("ps", pageSize)
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             accessKey?.let { parameter("access_key", it) }
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -477,7 +487,6 @@ object BiliHttpApi {
         avid: Long? = null,
         bvid: String? = null,
         csrf: String,
-        sessData: String = "",
     ): Pair<Boolean, String> {
         val response =
             client.post("/x/v2/history/toview/add") {
@@ -491,7 +500,6 @@ object BiliHttpApi {
                         },
                     ),
                 )
-                header("Cookie", "SESSDATA=$sessData;")
             }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
@@ -524,7 +532,6 @@ object BiliHttpApi {
         viewed: Boolean = false,
         avid: Long? = null,
         csrf: String,
-        sessData: String = "",
     ): Pair<Boolean, String> {
         val response =
             client.post("/x/v2/history/toview/del") {
@@ -537,7 +544,6 @@ object BiliHttpApi {
                         },
                     ),
                 )
-                header("Cookie", "SESSDATA=$sessData;")
             }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
@@ -581,13 +587,11 @@ object BiliHttpApi {
     suspend fun getFavoriteFolderInfo(
         mediaId: Long,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<FavoriteFolderInfo> =
         client.get("/x/v3/fav/folder/info") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("media_id", mediaId)
             accessKey?.let { parameter("access_key", it) }
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -601,15 +605,13 @@ object BiliHttpApi {
         type: Int = 0,
         rid: Long? = null,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<UserFavoriteFoldersData> =
         client.get("/x/v3/fav/folder/created/list-all") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("up_mid", mid)
             parameter("type", type)
             parameter("rid", rid)
             accessKey?.let { parameter("access_key", it) }
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -633,10 +635,9 @@ object BiliHttpApi {
         pageNumber: Int = 1,
         platform: String? = null,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<FavoriteFolderInfoListData> =
         client.get("/x/v3/fav/resource/list") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("media_id", mediaId)
             parameter("tid", tid)
             parameter("keyword", keyword)
@@ -646,7 +647,6 @@ object BiliHttpApi {
             parameter("pn", pageNumber)
             parameter("platform", platform)
             accessKey?.let { parameter("access_key", it) }
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -656,14 +656,12 @@ object BiliHttpApi {
         mediaId: Long,
         platform: String? = null,
         accessKey: String? = null,
-        sessData: String? = null,
     ): FavoriteItemIdListResponse =
         client.get("/x/v3/fav/resource/ids") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("media_id", mediaId)
             parameter("platform", platform)
             accessKey?.let { parameter("access_key", it) }
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -700,7 +698,6 @@ object BiliHttpApi {
         dt: Int? = null,
         playType: Int? = null,
         csrf: String? = null,
-        sessData: String,
     ): String =
         client.post("/x/click-interface/web/heartbeat") {
             require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
@@ -724,10 +721,9 @@ object BiliHttpApi {
                     },
                 ),
             )
-            header("Cookie", "SESSDATA=$sessData;")
         }.bodyAsText()
 
-    suspend fun sendHeartbeat(
+    suspend fun sendHeartbeatApp(
         avid: Long? = null,
         bvid: String? = null,
         cid: Long? = null,
@@ -773,13 +769,10 @@ object BiliHttpApi {
     suspend fun getVideoMoreInfo(
         avid: Long,
         cid: Long,
-        sessData: String,
-        buvid3: String,
     ): BiliResponse<VideoMoreInfo> =
         client.get("/x/player/wbi/v2") {
             parameter("aid", avid)
             parameter("cid", cid)
-            header("Cookie", "buvid3=$buvid3; SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -794,7 +787,6 @@ object BiliHttpApi {
         bvid: String? = null,
         like: Boolean = true,
         csrf: String,
-        sessData: String,
     ): Pair<Boolean, String> {
         val response =
             client.post("/x/web-interface/archive/like") {
@@ -809,7 +801,7 @@ object BiliHttpApi {
                         },
                     ),
                 )
-                header("Cookie", "SESSDATA=$sessData;")
+                header("referer", "https://www.bilibili.com")
             }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
@@ -820,14 +812,12 @@ object BiliHttpApi {
     suspend fun checkVideoLiked(
         avid: Long? = null,
         bvid: String? = null,
-        sessData: String,
     ): Boolean {
         val response =
             client.get("/x/web-interface/archive/has/like") {
                 require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
                 avid?.let { parameter("aid", it) }
                 bvid?.let { parameter("bvid", it) }
-                header("Cookie", "SESSDATA=$sessData;")
             }.body<BiliResponse<Int>>()
         return runCatching {
             response.getResponseData() == 1
@@ -848,8 +838,6 @@ object BiliHttpApi {
         multiply: Int = 1,
         like: Boolean = false,
         csrf: String,
-        sessData: String,
-        buvid3: String,
     ): Pair<Boolean, String> {
         require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
         val response =
@@ -861,11 +849,15 @@ object BiliHttpApi {
                             bvid?.let { append("bvid", it) }
                             append("multiply", "$multiply")
                             append("select_like", "${if (like) 1 else 0}")
+                            append("cross_domain", "true")
+                            append("source", "web_normal")
+                            append("ga", "1")
+                            append("spmid", "333.788.0.0")
                             append("csrf", csrf)
                         },
                     ),
                 )
-                header("Cookie", "SESSDATA=$sessData;buvid3=$buvid3")
+                header("Referer", "https://www.bilibili.com")
             }.body<BiliResponse<AddCoin>>()
         return Pair(response.code == 0, response.message)
     }
@@ -876,14 +868,12 @@ object BiliHttpApi {
     suspend fun checkVideoSentCoin(
         avid: Long? = null,
         bvid: String? = null,
-        sessData: String,
     ): Boolean {
         val response =
             client.get("/x/web-interface/archive/coins") {
                 require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
                 avid?.let { parameter("aid", it) }
                 bvid?.let { parameter("bvid", it) }
-                header("Cookie", "SESSDATA=$sessData;")
             }.body<BiliResponse<CheckSentCoin>>()
         return runCatching {
             response.getResponseData().multiply != 0
@@ -900,9 +890,8 @@ object BiliHttpApi {
         delMediaIds: List<Long> = listOf(),
         accessKey: String? = null,
         csrf: String? = null,
-        sessData: String? = null,
     ) {
-        checkToken(accessKey, sessData)
+        checkToken(accessKey)
         val response =
             client.post("/x/v3/fav/resource/deal") {
                 require(addMediaIds.isNotEmpty() || delMediaIds.isNotEmpty()) {
@@ -920,7 +909,7 @@ object BiliHttpApi {
                         },
                     ),
                 )
-                sessData?.let { header("Cookie", "SESSDATA=$it;") }
+                header("referer", "https://www.bilibili.com")
             }.body<BiliResponse<SetVideoFavorite>>()
         check(response.code == 0) { response.message }
     }
@@ -931,14 +920,12 @@ object BiliHttpApi {
     suspend fun checkVideoFavoured(
         avid: Long,
         accessKey: String? = null,
-        sessData: String? = null,
     ): Boolean {
-        checkToken(accessKey, sessData)
+        checkToken(accessKey)
         val response =
             client.get("/x/v2/fav/video/favoured") {
                 parameter("aid", avid)
                 accessKey?.let { parameter("access_key", it) }
-                sessData?.let { header("Cookie", "SESSDATA=$it;") }
             }.body<BiliResponse<CheckVideoFavoured>>()
         return runCatching {
             response.getResponseData().favoured
@@ -955,7 +942,6 @@ object BiliHttpApi {
         avid: Long? = null,
         bvid: String? = null,
         csrf: String,
-        sessData: String,
     ): Triple<Boolean, String, OneClickTripleAction?> {
         require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
         val response =
@@ -969,7 +955,7 @@ object BiliHttpApi {
                         },
                     ),
                 )
-                header("Cookie", "SESSDATA=$sessData;")
+                header("referer", "https://www.bilibili.com")
             }.body<BiliResponse<OneClickTripleAction>>()
         return Triple(response.code == 0, response.message, response.data)
     }
@@ -990,8 +976,6 @@ object BiliHttpApi {
         keyword: String? = null,
         pageNumber: Int = 1,
         pageSize: Int = 30,
-        sessData: String,
-        dedeUserID: Long? = null,
     ): BiliResponse<WebSpaceVideoData> =
         client.get("/x/space/wbi/arc/search") {
             parameter("mid", mid)
@@ -1000,7 +984,6 @@ object BiliHttpApi {
             keyword?.let { parameter("keyword", it) }
             parameter("pn", pageNumber)
             parameter("ps", pageSize)
-            // 风控
             parameter("dm_img_list", "[]")
             parameter("dm_img_str", "V2ViR0wgMS4wIChPcGVuR0wgRVMgMi4wIENocm9taXVtKQ")
             parameter(
@@ -1009,7 +992,6 @@ object BiliHttpApi {
                     "QzRDExIHZzXzVfMCBwc181XzAsIEQzRDExKUdvb2dsZSBJbmMuIChBTU",
             )
             parameter("dm_img_inter", "{\"ds\":[],\"wh\":[4769,2793,43],\"of\":[285,570,285]}")
-            header("Cookie", "SESSDATA=$sessData;DedeUserID=$dedeUserID;")
             header("referer", "https://space.bilibili.com")
         }.body()
 
@@ -1034,14 +1016,11 @@ object BiliHttpApi {
     suspend fun getWebSeasonInfo(
         seasonId: Int? = null,
         epId: Int? = null,
-        sessData: String = "",
     ): BiliResponse<WebSeasonData> =
         client.get("/pgc/view/web/season") {
             require(seasonId != null || epId != null) { "seasonId and epId cannot be null at the same time" }
             seasonId?.let { parameter("season_id", it) }
             epId?.let { parameter("ep_id", it) }
-            header("Cookie", "SESSDATA=$sessData;")
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
@@ -1100,7 +1079,6 @@ object BiliHttpApi {
     suspend fun addSeasonFollow(
         seasonId: Int,
         csrf: String,
-        sessData: String,
     ): BiliResponse<SeasonFollowData> =
         client.post("/pgc/web/follow/add") {
             setBody(
@@ -1111,15 +1089,13 @@ object BiliHttpApi {
                     },
                 ),
             )
-            header("Cookie", "SESSDATA=$sessData;")
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
     /**
-     * 添加番剧[seasonId]的追番
+     * 添加番剧[seasonId]的追番（App）
      */
-    suspend fun addSeasonFollow(
+    suspend fun addSeasonFollowApp(
         seasonId: Int,
         accessKey: String,
     ): BiliResponse<SeasonFollowData> =
@@ -1140,7 +1116,6 @@ object BiliHttpApi {
     suspend fun delSeasonFollow(
         seasonId: Int,
         csrf: String,
-        sessData: String,
     ): BiliResponse<SeasonFollowData> =
         client.post("/pgc/web/follow/del") {
             setBody(
@@ -1151,15 +1126,13 @@ object BiliHttpApi {
                     },
                 ),
             )
-            header("Cookie", "SESSDATA=$sessData;")
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
     /**
-     * 取消番剧[seasonId]的追番
+     * 取消番剧[seasonId]的追番（App）
      */
-    suspend fun delSeasonFollow(
+    suspend fun delSeasonFollowApp(
         seasonId: Int,
         accessKey: String,
     ): BiliResponse<SeasonFollowData> =
@@ -1177,14 +1150,9 @@ object BiliHttpApi {
     /**
      * 单独获取剧集[seasonId]的用户信息[WebSeasonData.UserStatus]
      */
-    suspend fun getSeasonUserStatus(
-        seasonId: Int,
-        sessData: String,
-    ): BiliResponse<WebSeasonData.UserStatus> =
+    suspend fun getSeasonUserStatus(seasonId: Int): BiliResponse<WebSeasonData.UserStatus> =
         client.get("/pgc/view/web/season/user/status") {
             parameter("season_id", seasonId)
-            header("Cookie", "SESSDATA=$sessData;")
-            // 必须得加上 referer 才能通过账号身份验证
             header("referer", "https://www.bilibili.com")
         }.body()
 
@@ -1194,13 +1162,11 @@ object BiliHttpApi {
     suspend fun getVideoTags(
         avid: Long? = null,
         bvid: String? = null,
-        sessData: String = "",
     ): BiliResponse<List<Tag>> =
         client.get("/x/tag/archive/tags") {
             require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
             avid?.let { parameter("aid", it) }
             bvid?.let { parameter("bvid", it) }
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -1269,15 +1235,13 @@ object BiliHttpApi {
         pageSize: Int = 50,
         pageNumber: Int = 1,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<UserFollowData> =
         client.get("/x/relation/followings") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("vmid", mid)
             orderType?.let { parameter("order_type", orderType) }
             parameter("ps", pageSize)
             parameter("pn", pageNumber)
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
             accessKey?.let { parameter("access_key", accessKey) }
         }.body()
 
@@ -1290,10 +1254,9 @@ object BiliHttpApi {
         actionSource: FollowActionSource,
         accessKey: String? = null,
         csrf: String? = null,
-        sessData: String? = null,
     ): BiliResponseWithoutData =
         client.post("/x/relation/modify") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             setBody(
                 FormDataContent(
                     Parameters.build {
@@ -1305,7 +1268,6 @@ object BiliHttpApi {
                     },
                 ),
             )
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
         }.body()
 
     /**
@@ -1318,13 +1280,11 @@ object BiliHttpApi {
     suspend fun getRelations(
         mid: Long,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<RelationData> =
         client.get("/x/space/wbi/acc/relation") {
-            checkToken(accessKey, sessData)
+            checkToken(accessKey)
             parameter("mid", mid)
             accessKey?.let { parameter("access_key", accessKey) }
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
         }.body()
 
     /**
@@ -1333,12 +1293,10 @@ object BiliHttpApi {
     suspend fun getRelationStat(
         mid: Long,
         accessKey: String? = null,
-        sessData: String? = null,
     ): BiliResponse<RelationStat> =
         client.get("x/relation/stat") {
             parameter("vmid", mid)
             accessKey?.let { parameter("access_key", accessKey) }
-            sessData?.let { header("Cookie", "SESSDATA=$sessData;") }
         }.body()
 
     /**
@@ -1428,7 +1386,6 @@ object BiliHttpApi {
         tid: Int? = null,
         order: String? = null,
         duration: Int? = null,
-        buvid3: String? = null,
     ): BiliResponse<SearchResultData> =
         client.get("/x/web-interface/wbi/search/all/v2") {
             parameter("keyword", keyword)
@@ -1436,7 +1393,6 @@ object BiliHttpApi {
             tid?.let { parameter("tids", it) }
             order?.let { parameter("order", it) }
             duration?.let { parameter("duration", it) }
-            header("Cookie", "buvid3=$buvid3;")
         }.body()
 
     /**
@@ -1449,7 +1405,6 @@ object BiliHttpApi {
         tid: Int? = null,
         order: String? = null,
         duration: Int? = null,
-        buvid3: String? = null,
     ): BiliResponse<SearchResultData> =
         client.get("/x/web-interface/wbi/search/type") {
             parameter("keyword", keyword)
@@ -1458,7 +1413,6 @@ object BiliHttpApi {
             tid?.let { parameter("tids", it) }
             order?.let { parameter("order", it) }
             duration?.let { parameter("duration", it) }
-            header("Cookie", "buvid3=$buvid3;")
             header("referer", "https://search.bilibili.com/")
         }.body()
 
@@ -1524,7 +1478,6 @@ object BiliHttpApi {
         pageNumber: Int = 1,
         pageSize: Int = 15,
         mid: Long,
-        sessData: String? = "",
     ): BiliResponse<FollowingSeasonWebData> =
         client.get("/x/space/bangumi/follow/list") {
             parameter("type", type)
@@ -1532,7 +1485,6 @@ object BiliHttpApi {
             parameter("pn", pageNumber)
             parameter("ps", pageSize)
             parameter("vmid", mid)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -1599,14 +1551,12 @@ object BiliHttpApi {
         freshType: Int = 4,
         pageSize: Int = 30,
         idx: Int = 1,
-        sessData: String? = null,
     ): BiliResponse<RcmdTopData> =
         client.get("/x/web-interface/wbi/index/top/feed/rcmd") {
             parameter("fresh_type", freshType)
             parameter("ps", pageSize)
             parameter("fresh_idx", idx)
             parameter("fresh_idx_1h", idx)
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -1843,13 +1793,9 @@ object BiliHttpApi {
             parameter("ts", 0)
         }.body()
 
-    suspend fun getUserEquippedGarb(
-        part: EquipPart,
-        sessData: String,
-    ): BiliResponse<Equip> =
+    suspend fun getUserEquippedGarb(part: EquipPart): BiliResponse<Equip> =
         client.get("/x/garb/user/equip") {
             parameter("part", part.value)
-            header("Cookie", "SESSDATA=$sessData;")
         }.body()
 
     /**
@@ -1904,13 +1850,9 @@ object BiliHttpApi {
      * 4999  运动  sports
      * 5003  动物圈 animal
      */
-    suspend fun getLocs(
-        ids: List<Int>,
-        sessData: String? = null,
-    ): RegionLocs =
+    suspend fun getLocs(ids: List<Int>): RegionLocs =
         client.get("/x/web-show/res/locs") {
             parameter("ids", ids.joinToString(","))
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 
     /**
@@ -1926,7 +1868,6 @@ object BiliHttpApi {
         fromRegion: Int,
         device: String = "web",
         plat: Int = 30,
-        sessData: String? = null,
     ): BiliResponse<RegionFeedRcmd> =
         client.get("/x/web-interface/region/feed/rcmd") {
             parameter("display_id", displayId)
@@ -1934,7 +1875,6 @@ object BiliHttpApi {
             parameter("from_region", fromRegion)
             parameter("device", device)
             parameter("plat", plat)
-            sessData?.let { header("Cookie", "SESSDATA=$it;") }
         }.body()
 }
 
@@ -1952,9 +1892,8 @@ enum class SeasonIndexType(val id: Int) {
     }
 }
 
-private fun checkToken(
-    accessKey: String?,
-    sessData: String?,
-) {
-    require(accessKey != null || sessData != null) { "accessKey and sessData cannot be null at the same time" }
+private fun checkToken(accessKey: String?) {
+    require(accessKey != null || BiliHttpApi.sessData.isNotBlank()) {
+        "accessKey and sessData cannot be null at the same time"
+    }
 }

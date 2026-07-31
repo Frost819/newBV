@@ -31,6 +31,8 @@ internal object PrefKeys {
     val refreshToken = stringPreferencesKey("refresh_token")
     val buvid = stringPreferencesKey("random_buvid")
     val buvid3 = stringPreferencesKey("random_buvid3")
+    val buvid3FromSpi = booleanPreferencesKey("buvid3_from_spi")
+    val deviceCookies = stringPreferencesKey("device_cookies")
     val incognitoMode = booleanPreferencesKey("im")
 
     // ===== 网络 & API =====

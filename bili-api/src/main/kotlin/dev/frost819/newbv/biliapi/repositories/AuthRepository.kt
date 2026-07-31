@@ -7,4 +7,5 @@ class AuthRepository {
     var mid: Long? = null
     var buvid3: String? = null
     var buvid: String? = null
+    var deviceCookies: String? = null
 }

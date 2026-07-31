@@ -41,7 +41,6 @@ class UgcRepository(
             BiliHttpApi.getRegionFeedRcmd(
                 displayId = page.nextPage,
                 fromRegion = ugcType.tid,
-                sessData = authRepository.sessionData,
             ).getResponseData()
         val ugcFeedData = UgcFeedData.fromRegionFeedRcmd(responseData)
         ugcFeedData.nextPage = UgcFeedPage(page.nextPage + 1)

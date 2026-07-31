@@ -17,7 +17,6 @@ class FavoriteRepository(
             ApiType.Web ->
                 BiliHttpApi.checkVideoFavoured(
                     avid = aid,
-                    sessData = authRepository.sessionData ?: "",
                 )
 
             ApiType.App ->
@@ -39,7 +38,6 @@ class FavoriteRepository(
                     avid = aid,
                     type = FavoriteItemType.Video.value,
                     addMediaIds = addMediaIds,
-                    sessData = authRepository.sessionData,
                     csrf = authRepository.biliJct,
                 )
 
@@ -64,7 +62,6 @@ class FavoriteRepository(
                     avid = aid,
                     type = FavoriteItemType.Video.value,
                     delMediaIds = delMediaIds,
-                    sessData = authRepository.sessionData,
                     csrf = authRepository.biliJct,
                 )
 
@@ -91,7 +88,6 @@ class FavoriteRepository(
                     type = FavoriteItemType.Video.value,
                     addMediaIds = addMediaIds,
                     delMediaIds = delMediaIds,
-                    sessData = authRepository.sessionData,
                     csrf = authRepository.biliJct,
                 )
 
@@ -119,7 +115,6 @@ class FavoriteRepository(
                         mid = mid,
                         type = type.value,
                         rid = rid,
-                        sessData = authRepository.sessionData ?: "",
                     )
 
                 ApiType.App ->
@@ -148,7 +143,6 @@ class FavoriteRepository(
                         mediaId = mediaId,
                         pageSize = pageSize,
                         pageNumber = pageNumber,
-                        sessData = authRepository.sessionData ?: "",
                     )
 
                 ApiType.App ->

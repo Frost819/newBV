@@ -30,7 +30,6 @@ class RecommendVideoRepository(
                     BiliHttpApi.getPopularVideoData(
                         pageSize = page.nextWebPageSize,
                         pageNumber = page.nextWebPageNumber,
-                        sessData = authRepository.sessionData ?: "",
                     ).getResponseData()
                 val list = response.list.map { UgcItem.fromVideoInfo(it) }
                 val nextPage =
@@ -79,7 +78,6 @@ class RecommendVideoRepository(
                 ApiType.Web ->
                     BiliHttpApi.getFeedRcmd(
                         idx = page.nextWebIdx,
-                        sessData = authRepository.sessionData,
                     )
                         .getResponseData().item
                         .map { UgcItem.fromRcmdItem(it) }

@@ -90,7 +90,7 @@ class AccountRepositoryImplTest {
             message = "ok",
             data = myInfoData,
         )
-        coEvery { BiliHttpApi.getUserSelfInfo(any()) } returns mockResponse
+        coEvery { BiliHttpApi.getUserSelfInfo() } returns mockResponse
 
         repository = AccountRepositoryImpl(userDao, authRepository)
     }

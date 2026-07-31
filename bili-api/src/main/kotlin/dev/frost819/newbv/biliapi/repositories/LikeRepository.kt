@@ -11,7 +11,6 @@ class LikeRepository(private val authRepository: AuthRepository) {
             BiliHttpApi.checkVideoLiked(
                 avid = aid,
                 bvid = bvid,
-                sessData = authRepository.sessionData!!,
             )
         return like
     }
@@ -27,10 +26,9 @@ class LikeRepository(private val authRepository: AuthRepository) {
                 bvid = bvid,
                 like = like,
                 csrf = authRepository.biliJct ?: "",
-                sessData = authRepository.sessionData!!,
             )
         if (!success) {
-            throw Exception("点赞失败: $message")
+            throw Exception(message)
         }
     }
 }

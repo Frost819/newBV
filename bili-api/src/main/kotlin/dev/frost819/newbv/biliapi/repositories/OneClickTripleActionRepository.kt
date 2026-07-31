@@ -13,9 +13,8 @@ class OneClickTripleActionRepository(private val authRepository: AuthRepository)
                 avid = aid,
                 bvid = bvid,
                 csrf = authRepository.biliJct ?: "",
-                sessData = authRepository.sessionData!!,
             )
-        if (!success) throw Exception("投币失败：$message")
+        if (!success) throw Exception(message)
         return data
     }
 }

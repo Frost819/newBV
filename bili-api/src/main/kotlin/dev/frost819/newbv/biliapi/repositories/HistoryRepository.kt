@@ -26,7 +26,6 @@ class HistoryRepository(
                 val data =
                     BiliHttpApi.getHistories(
                         viewAt = cursor,
-                        sessData = authRepository.sessionData!!,
                     ).getResponseData()
                 HistoryData.fromHistoryResponse(data)
             }

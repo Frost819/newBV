@@ -194,6 +194,10 @@ object Prefs {
     var buvid by pref(PrefKeys.buvid, "")
     /** buvid3（Web 端设备标识），首次启动自动生成。 */
     var buvid3 by pref(PrefKeys.buvid3, "")
+    /** buvid3 是否已通过 SPI 接口注册（已注册则不再重复获取）。 */
+    var buvid3FromSpi by pref(PrefKeys.buvid3FromSpi, false)
+    /** 设备 cookie 字符串（buvid3 + b_nut 等），由 SPI 流程获取并持久化。 */
+    var deviceCookies by pref(PrefKeys.deviceCookies, "")
     /** 无痕模式（不记录历史）。 */
     var incognitoMode by pref(PrefKeys.incognitoMode, false)
 

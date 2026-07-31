@@ -128,7 +128,6 @@ class SearchRepository(
                         tid = tid,
                         order = order.httpOrderParam,
                         duration = duration.httpDurationParam,
-                        buvid3 = authRepository.buvid3!!,
                     ).getResponseData()
                 SearchTypeResult.fromSearchTypeResult(response)
             }

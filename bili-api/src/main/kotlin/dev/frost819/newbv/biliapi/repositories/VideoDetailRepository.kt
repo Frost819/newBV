@@ -38,7 +38,6 @@ class VideoDetailRepository(
                             val httpVideoDetail =
                                 BiliHttpApi.getVideoDetail(
                                     av = aid,
-                                    sessData = authRepository.sessionData ?: "",
                                 ).getResponseData()
                             VideoDetail.fromVideoDetail(httpVideoDetail)
                         }
@@ -85,8 +84,6 @@ class VideoDetailRepository(
                                     BiliHttpApi.getVideoMoreInfo(
                                         avid = aid,
                                         cid = videoDetailWithoutUserActions.await().cid,
-                                        sessData = authRepository.sessionData ?: "",
-                                        buvid3 = authRepository.buvid3 ?: "",
                                     ).getResponseData()
                                 val history =
                                     VideoDetail.History(
@@ -139,7 +136,6 @@ class VideoDetailRepository(
                     val detail =
                         BiliHttpApi.getVideoInfo(
                             av = aid,
-                            sessData = authRepository.sessionData ?: "",
                         ).getResponseData()
                     detail.pages.map { VideoPage.fromVideoPage(it) }
                 }
@@ -177,7 +173,6 @@ class VideoDetailRepository(
                     BiliHttpApi.getWebSeasonInfo(
                         epId = epid,
                         seasonId = seasonId,
-                        sessData = authRepository.sessionData ?: "",
                     ).getResponseData()
                 val seasonDetail = SeasonDetail.fromSeasonData(webSeasonData)
                 val firstEp = webSeasonData.episodes.firstOrNull() ?: return seasonDetail
@@ -188,8 +183,6 @@ class VideoDetailRepository(
                             BiliHttpApi.getVideoMoreInfo(
                                 avid = firstEp.aid,
                                 cid = firstEp.cid,
-                                sessData = authRepository.sessionData ?: "",
-                                buvid3 = authRepository.buvid3 ?: "",
                             ).getResponseData()
                         val playerIcon = VideoDetail.PlayerIcon.fromPlayerIcon(videoModeInfo.playerIcon)
                         playerIcon

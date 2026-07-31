@@ -37,7 +37,6 @@ class SeasonRepository(
                     pageNumber = pageNumber,
                     pageSize = pageSize,
                     mid = authRepository.mid!!,
-                    sessData = authRepository.sessionData,
                 ).getResponseData()
                     .let { responseData ->
                         FollowingSeasonData(

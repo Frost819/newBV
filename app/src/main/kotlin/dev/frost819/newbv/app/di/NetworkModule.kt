@@ -10,12 +10,17 @@ import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
+import dev.frost819.newbv.biliapi.repositories.CoinRepository
+import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
+import dev.frost819.newbv.biliapi.repositories.LikeRepository
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
+import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
+import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
@@ -162,6 +167,69 @@ object NetworkModule {
     @Singleton
     fun provideSeasonRepository(authRepository: AuthRepository): SeasonRepository =
         SeasonRepository(authRepository)
+
+    /**
+     * 提供 [LikeRepository] 单例。
+     *
+     * 封装视频点赞状态查询与点赞/取消操作（Web HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideLikeRepository(authRepository: AuthRepository): LikeRepository =
+        LikeRepository(authRepository)
+
+    /**
+     * 提供 [CoinRepository] 单例。
+     *
+     * 封装视频投币状态查询与投币操作（Web HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideCoinRepository(authRepository: AuthRepository): CoinRepository =
+        CoinRepository(authRepository)
+
+    /**
+     * 提供 [FavoriteRepository] 单例。
+     *
+     * 封装视频收藏状态查询、收藏夹列表与收藏/取消操作（Web HTTP + App gRPC）。
+     */
+    @Provides
+    @Singleton
+    fun provideFavoriteRepository(authRepository: AuthRepository): FavoriteRepository =
+        FavoriteRepository(authRepository)
+
+    /**
+     * 提供 [OneClickTripleActionRepository] 单例。
+     *
+     * 封装一键三连操作（Web HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideOneClickTripleActionRepository(
+        authRepository: AuthRepository,
+    ): OneClickTripleActionRepository = OneClickTripleActionRepository(authRepository)
+
+    /**
+     * 提供 [VideoDetailRepository] 单例。
+     *
+     * 封装视频详情数据获取（Web HTTP + App gRPC），
+     * 聚合详情、用户操作状态（点赞/投币/收藏）、历史记录。
+     */
+    @Provides
+    @Singleton
+    fun provideVideoDetailRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+        favoriteRepository: FavoriteRepository,
+        likeRepository: LikeRepository,
+        coinRepository: CoinRepository,
+    ): VideoDetailRepository = VideoDetailRepository(
+        authRepository = authRepository,
+        channelRepository = channelRepository,
+        favoriteRepository = favoriteRepository,
+        likeRepository = likeRepository,
+        coinRepository = coinRepository,
+    )
 
     /**
      * 提供 [AccountRepository] 单例。

@@ -812,6 +812,53 @@ test(bili-api): 补全 VideoPlayRepository 单测
 - `focusedBorder` 根据 `InteractionTracker` 的 `InputMethod` 动态显示：触屏时隐藏，遥控器时显示
 - `KeyEventExt` 提供 D-Pad 方向键判断扩展（`isDpadUp` / `isDpadDown` / `isConfirm` 等）
 
+#### 8.2.1 路由跳转后的焦点恢复（强制）
+
+**所有涉及路由跳转的可聚焦元素（按钮、卡片、Chip 等）必须接入 `FocusSaver` / `ScreenFocusSaver`**，否则用户从目标页返回后焦点会落在错误的元素上。
+
+项目提供两个焦点恢复器（`app/ui/component/FocusSaver.kt`）：
+
+| 类 | 适用场景 | key 类型 | 示例 |
+|---|---|---|---|
+| `FocusSaver` | 列表 / 网格（同类型 item） | `Int` index | 首页推荐网格、分区视频网格 |
+| `ScreenFocusSaver` | 混合布局（不同类型可聚焦元素） | `String` key | 详情页（封面、UP 按钮、点赞、Tag 等） |
+
+**使用步骤（3 步）**：
+
+```kotlin
+// 1. 创建 FocusSaver
+val focusSaver = rememberScreenFocusSaver()
+
+// 2. 在屏幕顶层调用 RestoreFocus()，用于返回时恢复焦点
+focusSaver.RestoreFocus()
+
+// 3. 每个可聚焦元素接入：focusRequester + onFocusChanged
+Card(
+    modifier = Modifier
+        .focusRequester(focusSaver.focusRequesterFor("cover"))
+        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") },
+    onClick = { navController.navigate(...) },
+) { ... }
+
+// LazyRow 中的 item 同样需要接入（每个 item 用唯一 key）
+items(detail.tags) { tag ->
+    val tagKey = "tag_${tag.id}"
+    SuggestionChip(
+        onClick = { navController.navigate(...) },
+        modifier = Modifier
+            .focusRequester(focusSaver.focusRequesterFor(tagKey))
+            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) },
+    ) { Text(tag.name) }
+}
+```
+
+**关键注意事项**：
+
+1. **LazyRow / LazyColumn 中的 item**：`RestoreFocus()` 内置 50ms 延迟，确保 LazyRow 子项完成组合后再请求焦点。如果跳过这一步，`focusRequesterFor(key)` 返回的 `FocusRequester` 尚未与实际节点绑定，`requestFocus()` 会静默失败
+2. **首次进入页面**：`savedKeyValue()` 为空时，手动 `requestFocus()` 到默认元素（如封面卡片）
+3. **key 唯一性**：列表 item 的 key 必须包含唯一标识（如 `"tag_${tag.id}"`），不能用纯索引（滚动后索引变化导致恢复到错误 item）
+4. **`ScreenFocusSaver` 用 `rememberSaveable`**：跨配置变更（如旋转）和进程恢复保持焦点 key
+
 ### 8.3 DataStore Prefs
 
 参考原版 `bv/app/.../util/Prefs.kt` 的 `PrefDelegate` 模式，但迁移到 `data/datastore/` 模块。
@@ -966,6 +1013,19 @@ Card(
 #### 11.2.4 弹窗宽度限制
 
 弹窗组件内部不要用 `fillMaxWidth()`（撑满屏幕宽度太大），应由调用方通过 `Modifier.width(400.dp)` 控制宽度。
+
+#### 11.2.5 路由跳转返回后焦点丢失
+
+**问题**：详情页有多个可聚焦元素（封面、UP 按钮、点赞、投币、收藏、Tag Chip 等）。用户点击某个元素跳转到目标页，返回后焦点落在错误位置（如最后一个可聚焦元素）或丢失。
+
+**原因**：Compose Navigation 路由跳转时，源页面被移出 composition；返回时重新组合，焦点系统不知道之前哪个元素有焦点，默认聚焦到第一个或最后一个可聚焦节点。
+
+**解决方案**：所有涉及路由跳转的可聚焦元素必须接入 `FocusSaver` / `ScreenFocusSaver`（见 §8.2.1）。核心原理：
+- 元素获得焦点时，通过 `onFocusChanged` 保存 key 到 `rememberSaveable` 状态
+- 页面重新组合后，`RestoreFocus()` 读取保存的 key，通过对应的 `FocusRequester` 重新请求焦点
+- LazyRow 中的 item 需加 50ms 延迟等待子项组合完成（`RestoreFocus()` 已内置）
+
+**常见遗漏**：LazyRow / LazyColumn 中的可点击 item（如 Tag Chip、相关视频卡片）容易忘记接入焦点追踪，导致从这些 item 跳转返回后焦点恢复到其他元素。
 
 ### 11.3 StateFlow 与 Compose
 

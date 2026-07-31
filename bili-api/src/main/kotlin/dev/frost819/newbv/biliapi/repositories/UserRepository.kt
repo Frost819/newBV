@@ -43,7 +43,6 @@ class UserRepository(
                         action = action,
                         actionSource = FollowActionSource.Space,
                         csrf = authRepository.biliJct,
-                        sessData = authRepository.sessionData,
                     )
                 }
 
@@ -80,7 +79,6 @@ class UserRepository(
                     ApiType.Web -> {
                         BiliHttpApi.getRelations(
                             mid = mid,
-                            sessData = authRepository.sessionData,
                         )
                     }
 
@@ -88,7 +86,6 @@ class UserRepository(
                         BiliHttpApi.getRelations(
                             mid = mid,
                             // 移动端貌似并没有使用这个接口，目前该接口返回-663鉴权失败，直接改用sessdata获取
-                            sessData = authRepository.sessionData,
                             // accessKey = authRepository.accessToken
                         )
                     }
@@ -115,7 +112,6 @@ class UserRepository(
                     ApiType.Web -> {
                         BiliHttpApi.getRelationStat(
                             mid = mid,
-                            sessData = authRepository.sessionData,
                         )
                     }
 
@@ -141,11 +137,10 @@ class UserRepository(
                 BiliHttpApi.addSeasonFollow(
                     seasonId = seasonId,
                     csrf = authRepository.biliJct!!,
-                    sessData = authRepository.sessionData!!,
                 )
 
             ApiType.App ->
-                BiliHttpApi.addSeasonFollow(
+                BiliHttpApi.addSeasonFollowApp(
                     seasonId = seasonId,
                     accessKey = authRepository.accessToken!!,
                 )
@@ -161,11 +156,10 @@ class UserRepository(
                 BiliHttpApi.delSeasonFollow(
                     seasonId = seasonId,
                     csrf = authRepository.biliJct!!,
-                    sessData = authRepository.sessionData!!,
                 )
 
             ApiType.App ->
-                BiliHttpApi.delSeasonFollow(
+                BiliHttpApi.delSeasonFollowApp(
                     seasonId = seasonId,
                     accessKey = authRepository.accessToken!!,
                 )
@@ -186,8 +180,6 @@ class UserRepository(
                         order = order.value,
                         pageNumber = page.nextWebPageNumber,
                         pageSize = page.nextWebPageSize,
-                        sessData = authRepository.sessionData ?: "",
-                        dedeUserID = authRepository.mid,
                     ).getResponseData()
                 SpaceVideoData.fromWebSpaceVideoData(webSpaceVideoData)
             }
@@ -219,7 +211,6 @@ class UserRepository(
                         type = "video",
                         page = page,
                         offset = offset,
-                        sessData = authRepository.sessionData ?: "",
                     ).getResponseData()
                 DynamicVideoData.fromDynamicData(responseData)
             }
@@ -257,7 +248,6 @@ class UserRepository(
                 val firstResponse =
                     BiliHttpApi.getUserFollow(
                         mid = mid,
-                        sessData = authRepository.sessionData!!,
                     ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
@@ -268,7 +258,6 @@ class UserRepository(
                             BiliHttpApi.getUserFollow(
                                 mid = mid,
                                 pageNumber = pageNumber,
-                                sessData = authRepository.sessionData!!,
                             ).getResponseData()
                         }
                     }.awaitAll().forEach { userFollowData ->

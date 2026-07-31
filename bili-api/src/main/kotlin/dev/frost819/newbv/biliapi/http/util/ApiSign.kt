@@ -142,20 +142,37 @@ fun HttpClient.encApiSign() =
             execute(request)
         }
 
-fun HttpClient.injectBuvid3Cookie() =
+/**
+ * 统一 Cookie 注入拦截器。
+ *
+ * 像浏览器一样，为所有非 App 请求自动携带完整 Cookie（SESSDATA + DedeUserID + buvid3 + b_nut 等）。
+ * 各 API 函数不再需要手动拼接 Cookie header。
+ *
+ * - App 请求（含 access_key）不注入 Cookie，使用 access_key 鉴权
+ * - SPI/导航等无登录请求：buvid3 + b_nut 仍会被注入（设备标识）
+ */
+fun HttpClient.injectCookies() =
     plugin(HttpSend).intercept { request ->
-        val isPlayUrlRequest =
-            request.url.encodedPath.contains("/x/player/playurl") ||
-                request.url.encodedPath.contains("/x/player/wbi/playurl")
+        if (!request.isAppRequest) {
+            val cookieParts = mutableListOf<String>()
 
-        if (!request.isAppRequest && !isPlayUrlRequest) {
-            val buvid3 = BiliHttpApi.buvid3
-            if (buvid3.isNotBlank()) {
-                val existing = request.headers["Cookie"] ?: ""
-                if (!existing.contains("buvid3=")) {
-                    request.headers["Cookie"] =
-                        if (existing.isNotBlank()) "buvid3=$buvid3; $existing" else "buvid3=$buvid3"
-                }
+            // 登录凭证
+            if (BiliHttpApi.sessData.isNotBlank()) {
+                cookieParts.add("SESSDATA=${BiliHttpApi.sessData}")
+            }
+            if (BiliHttpApi.mid != null) {
+                cookieParts.add("DedeUserID=${BiliHttpApi.mid}")
+            }
+
+            // 设备标识 cookie（buvid3 + b_nut 等）
+            if (BiliHttpApi.deviceCookies.isNotBlank()) {
+                cookieParts.add(BiliHttpApi.deviceCookies)
+            } else if (BiliHttpApi.buvid3.isNotBlank()) {
+                cookieParts.add("buvid3=${BiliHttpApi.buvid3}")
+            }
+
+            if (cookieParts.isNotEmpty()) {
+                request.headers["Cookie"] = cookieParts.joinToString("; ")
             }
         }
         execute(request)

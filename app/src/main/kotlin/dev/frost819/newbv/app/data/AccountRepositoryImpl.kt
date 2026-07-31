@@ -89,6 +89,11 @@ class AccountRepositoryImpl @Inject constructor(
         authRepository.accessToken = accessToken
         authRepository.buvid3 = Prefs.buvid3
         authRepository.buvid = Prefs.buvid
+
+        BiliHttpApi.sessData = sessData
+        BiliHttpApi.biliJct = biliJct
+        BiliHttpApi.mid = uid
+        BiliHttpApi.accessToken = accessToken
     }
 
     override suspend fun getAllUsers(): List<UserEntity> = userDao.getAll()
@@ -187,9 +192,7 @@ class AccountRepositoryImpl @Inject constructor(
     suspend fun refreshUserInfo() {
         if (!Prefs.isLogin) return
         runCatching {
-            val response: MyInfoData = BiliHttpApi.getUserSelfInfo(
-                sessData = Prefs.sessData,
-            ).getResponseData()
+            val response: MyInfoData = BiliHttpApi.getUserSelfInfo().getResponseData()
             val user = userDao.findUserByUid(Prefs.uid) ?: return
             user.username = response.name
             user.avatar = response.face

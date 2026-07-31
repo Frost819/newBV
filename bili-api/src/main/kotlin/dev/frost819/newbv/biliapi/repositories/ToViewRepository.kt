@@ -36,7 +36,6 @@ class ToViewRepository(
                 val data =
                     BiliHttpApi.getToView(
                         // viewAt = cursor,
-                        sessData = requireSessData(),
                     ).getResponseData()
                 ToViewData.fromToViewResponse(data)
             }
@@ -64,7 +63,6 @@ class ToViewRepository(
                         avid = aid,
                         bvid = bvid,
                         csrf = requireCsrf(),
-                        sessData = requireSessData(),
                     )
 
                 ApiType.App ->
@@ -89,7 +87,6 @@ class ToViewRepository(
                         viewed = viewed,
                         avid = aid,
                         csrf = requireCsrf(),
-                        sessData = requireSessData(),
                     )
 
                 ApiType.App ->
