@@ -1,15 +1,645 @@
 package dev.frost819.newbv.app.ui.screen.pgc
 
+import android.widget.Toast
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import dev.frost819.newbv.app.ui.component.PlaceholderScreen
+import androidx.tv.material3.Border
+import androidx.tv.material3.Card
+import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.ClickableSurfaceDefaults
+import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Icon
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Surface
+import androidx.tv.material3.SurfaceDefaults
+import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.LoadingTip
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
+import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiEffect
+import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
+import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiState
+import dev.frost819.newbv.biliapi.entity.video.season.Episode
+import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 
+/**
+ * 番剧详情页路由注册。
+ *
+ * 从 [PgcFeatureRoute] 读取 seasonId，通过 Hilt 注入 [SeasonDetailViewModel]。
+ */
 fun NavGraphBuilder.pgcFeatureScreen(navController: NavController) {
     composable<PgcFeatureRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<PgcFeatureRoute>()
-        PlaceholderScreen(title = "PGC Feature (seasonId=${route.seasonId})")
+        SeasonDetailScreen(
+            navController = navController,
+            seasonId = route.seasonId,
+        )
+    }
+}
+
+/**
+ * 番剧详情页。
+ *
+ * 布局自上而下：
+ * 1. 封面 + 标题/简介/播放按钮/追番按钮
+ * 2. 正片列表
+ * 3. 附加分集（PV/SP 等）
+ */
+@Composable
+private fun SeasonDetailScreen(
+    navController: NavController,
+    seasonId: Long,
+) {
+    val viewModel: SeasonDetailViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is SeasonDetailUiEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+                is SeasonDetailUiEffect.NavigateToPlayer -> {
+                    navController.navigate(
+                        VideoPlayerRoute(
+                            aid = effect.aid,
+                            cid = effect.cid,
+                            epid = effect.epid?.toLong(),
+                            title = effect.title,
+                            cover = effect.cover,
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    when {
+        state.loading && state.seasonDetail == null -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                LoadingTip()
+            }
+        }
+        state.error && state.seasonDetail == null -> {
+            SeasonErrorScreen(
+                message = state.errorTip,
+                onRetry = { viewModel.loadSeasonDetail() },
+            )
+        }
+        state.seasonDetail != null -> {
+            SeasonDetailContent(
+                detail = state.seasonDetail!!,
+                state = state,
+                viewModel = viewModel,
+                navController = navController,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SeasonDetailContent(
+    detail: SeasonDetail,
+    state: SeasonDetailUiState,
+    viewModel: SeasonDetailViewModel,
+    navController: NavController,
+) {
+    val focusSaver = rememberScreenFocusSaver()
+    focusSaver.RestoreFocus()
+    val scrollState = rememberScrollState()
+
+    // 切换季时用 key 强制重组，重置所有 LazyRow 滚动位置
+    key(detail.seasonId) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(bottom = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SeasonInfoHeader(
+            detail = detail,
+            isFollowing = state.isFollowing,
+            onPlay = { viewModel.onPlay() },
+            onToggleFollow = { viewModel.toggleFollow() },
+            focusSaver = focusSaver,
+        )
+
+        if (detail.episodes.isNotEmpty()) {
+            SeasonEpisodeRow(
+                title = "正片",
+                episodes = detail.episodes,
+                progress = detail.userStatus.progress,
+                onClick = { episode -> viewModel.onPlayEpisode(episode) },
+                focusSaver = focusSaver,
+                rowKey = "episodes",
+            )
+        }
+
+        detail.sections.forEach { section ->
+            SeasonEpisodeRow(
+                title = section.title,
+                episodes = section.episodes,
+                progress = detail.userStatus.progress,
+                onClick = { episode -> viewModel.onPlayEpisode(episode) },
+                focusSaver = focusSaver,
+                rowKey = "section_${section.id}",
+            )
+        }
+
+        if (detail.seasons.size > 1) {
+            SeasonSwitcherRow(
+                seasons = detail.seasons,
+                currentSeasonId = detail.seasonId,
+                onClick = { seasonId -> viewModel.onSwitchSeason(seasonId) },
+                focusSaver = focusSaver,
+            )
+        }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SeasonInfoHeader(
+    detail: SeasonDetail,
+    isFollowing: Boolean,
+    onPlay: () -> Unit,
+    onToggleFollow: () -> Unit,
+    focusSaver: ScreenFocusSaver,
+) {
+    val coverFocusRequester = focusSaver.focusRequesterFor("cover")
+    val playFocusRequester = focusSaver.focusRequesterFor("play")
+    val followFocusRequester = focusSaver.focusRequesterFor("follow")
+
+    LaunchedEffect(Unit) {
+        if (focusSaver.savedKeyValue().isEmpty()) {
+            runCatching { coverFocusRequester.requestFocus() }
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 50.dp, vertical = 16.dp),
+    ) {
+        Card(
+            modifier = Modifier
+                .focusRequester(coverFocusRequester)
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
+                .width(240.dp)
+                .fillMaxHeight()
+                .aspectRatio(0.7f),
+            onClick = onPlay,
+            shape = CardDefaults.shape(MaterialTheme.shapes.large),
+            border = CardDefaults.border(
+                focusedBorder = Border(
+                    border = androidx.compose.foundation.BorderStroke(
+                        3.dp,
+                        MaterialTheme.colorScheme.border,
+                    ),
+                    shape = MaterialTheme.shapes.large,
+                ),
+            ),
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = detail.cover,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+            )
+        }
+
+        Spacer(modifier = Modifier.width(24.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = detail.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color.White,
+                )
+                if (detail.styles.isNotEmpty()) {
+                    Text(
+                        text = detail.styles.joinToString(" / "),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.6f),
+                    )
+                }
+                if (detail.newEpDesc.isNotEmpty()) {
+                    Text(
+                        text = detail.newEpDesc,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.7f),
+                    )
+                }
+                Text(
+                    text = detail.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.6f),
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SeasonActionButton(
+                    text = "播放",
+                    icon = Icons.Rounded.PlayArrow,
+                    highlighted = true,
+                    onClick = onPlay,
+                    modifier = Modifier
+                        .focusRequester(playFocusRequester)
+                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("play") },
+                )
+                SeasonActionButton(
+                    text = if (isFollowing) "已追番" else "追番",
+                    icon = if (isFollowing) Icons.Rounded.Star else Icons.Outlined.StarBorder,
+                    highlighted = isFollowing,
+                    onClick = onToggleFollow,
+                    modifier = Modifier
+                        .focusRequester(followFocusRequester)
+                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SeasonActionButton(
+    text: String,
+    icon: ImageVector,
+    highlighted: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.small)
+            .then(
+                if (highlighted) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.border,
+                        MaterialTheme.shapes.small,
+                    )
+                } else {
+                    Modifier
+                },
+            ),
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = if (highlighted) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            } else {
+                Color.White.copy(alpha = 0.08f)
+            },
+            contentColor = Color.White,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = text,
+                modifier = Modifier.size(20.dp),
+                tint = if (highlighted) MaterialTheme.colorScheme.border else Color.White,
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeasonEpisodeRow(
+    title: String,
+    episodes: List<Episode>,
+    progress: SeasonDetail.UserStatus.Progress?,
+    onClick: (Episode) -> Unit,
+    focusSaver: ScreenFocusSaver,
+    rowKey: String,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 50.dp),
+        )
+        val focusRequester = focusSaver.focusRequesterFor(rowKey)
+        LazyRow(
+            modifier = Modifier
+                .focusRestorer(focusRequester)
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(rowKey) }
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 50.dp),
+        ) {
+            items(episodes) { episode ->
+                val epKey = "${rowKey}_${episode.id}"
+                EpisodeCard(
+                    episode = episode,
+                    isLastWatched = progress?.lastEpId == episode.epid,
+                    onClick = { onClick(episode) },
+                    modifier = if (episode == episodes.first()) {
+                        Modifier.focusRequester(focusRequester)
+                    } else {
+                        Modifier
+                    },
+                    focusSaver = focusSaver,
+                    epKey = epKey,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun EpisodeCard(
+    episode: Episode,
+    isLastWatched: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusSaver: ScreenFocusSaver,
+    epKey: String,
+) {
+    Column(
+        modifier = modifier
+            .width(200.dp)
+            .focusRequester(focusSaver.focusRequesterFor(epKey))
+            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(epKey) },
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.6f),
+            onClick = onClick,
+            shape = CardDefaults.shape(MaterialTheme.shapes.large),
+            border = CardDefaults.border(
+                focusedBorder = Border(
+                    border = androidx.compose.foundation.BorderStroke(
+                        3.dp,
+                        if (isLastWatched) MaterialTheme.colorScheme.border else MaterialTheme.colorScheme.border,
+                    ),
+                    shape = MaterialTheme.shapes.large,
+                ),
+            ),
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AsyncImage(
+                    modifier = Modifier.fillMaxSize(),
+                    model = episode.cover,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                )
+                if (isLastWatched) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        colors = SurfaceDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            text = "上次看到",
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = episode.title,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun SeasonSwitcherRow(
+    seasons: List<dev.frost819.newbv.biliapi.entity.video.season.PgcSeason>,
+    currentSeasonId: Int,
+    onClick: (Int) -> Unit,
+    focusSaver: ScreenFocusSaver,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "系列",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 50.dp),
+        )
+        val focusRequester = focusSaver.focusRequesterFor("seasons")
+        LazyRow(
+            modifier = Modifier
+                .focusRestorer(focusRequester)
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 50.dp),
+        ) {
+            items(seasons) { season ->
+                val seasonKey = "season_${season.seasonId}"
+                SeasonChip(
+                    title = season.shortTitle,
+                    isCurrent = season.seasonId == currentSeasonId,
+                    onClick = { onClick(season.seasonId) },
+                    modifier = if (season == seasons.first()) {
+                        Modifier.focusRequester(focusRequester)
+                    } else {
+                        Modifier
+                    },
+                    focusSaver = focusSaver,
+                    chipKey = seasonKey,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SeasonChip(
+    title: String,
+    isCurrent: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusSaver: ScreenFocusSaver,
+    chipKey: String,
+) {
+    Surface(
+        modifier = modifier
+            .focusRequester(focusSaver.focusRequesterFor(chipKey))
+            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(chipKey) }
+            .clip(MaterialTheme.shapes.small)
+            .then(
+                if (isCurrent) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.border,
+                        MaterialTheme.shapes.small,
+                    )
+                } else {
+                    Modifier
+                },
+            ),
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = if (isCurrent) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            } else {
+                Color.White.copy(alpha = 0.08f)
+            },
+            contentColor = Color.White,
+        ),
+    ) {
+        Text(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White,
+        )
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SeasonErrorScreen(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        runCatching { focusRequester.requestFocus() }
+    }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = message.ifBlank { "加载失败" },
+                color = Color.White,
+            )
+            Surface(
+                modifier = Modifier.focusRequester(focusRequester),
+                onClick = onRetry,
+                shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
+                border = ClickableSurfaceDefaults.border(
+                    focusedBorder = Border(
+                        border = androidx.compose.foundation.BorderStroke(
+                            2.dp,
+                            MaterialTheme.colorScheme.border,
+                        ),
+                        shape = MaterialTheme.shapes.medium,
+                    ),
+                ),
+                colors = ClickableSurfaceDefaults.colors(
+                    containerColor = Color.White.copy(alpha = 0.08f),
+                    contentColor = Color.White,
+                ),
+            ) {
+                Text(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    text = "重试",
+                    color = Color.White,
+                )
+            }
+        }
     }
 }
