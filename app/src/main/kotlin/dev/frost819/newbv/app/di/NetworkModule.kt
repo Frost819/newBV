@@ -18,6 +18,7 @@ import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.SeasonRepository
+import dev.frost819.newbv.biliapi.repositories.SearchRepository
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
@@ -28,6 +29,8 @@ import dev.frost819.newbv.core.log.InteractionLogger
 import dev.frost819.newbv.data.datastore.BuvidGenerator
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.repository.AccountRepository
+import dev.frost819.newbv.data.repository.SearchHistoryRepository
+import dev.frost819.newbv.data.repository.SearchHistoryRepositoryImpl
 import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -261,6 +264,29 @@ object NetworkModule {
         userDao: UserDao,
         authRepository: AuthRepository,
     ): AccountRepository = AccountRepositoryImpl(userDao, authRepository)
+
+    /**
+     * 提供 [SearchRepository] 单例。
+     *
+     * 封装 B 站搜索接口（热词/建议/搜索+筛选）。
+     */
+    @Provides
+    @Singleton
+    fun provideSearchRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): SearchRepository = SearchRepository(authRepository, channelRepository)
+
+    /**
+     * 提供 [SearchHistoryRepository] 单例。
+     *
+     * 绑定 [SearchHistoryRepositoryImpl]，持久化搜索历史到 Room。
+     */
+    @Provides
+    @Singleton
+    fun provideSearchHistoryRepository(
+        searchHistoryDao: dev.frost819.newbv.data.db.dao.SearchHistoryDao,
+    ): SearchHistoryRepository = SearchHistoryRepositoryImpl(searchHistoryDao)
 
     /**
      * 提供共享的 [HttpClient] 单例。

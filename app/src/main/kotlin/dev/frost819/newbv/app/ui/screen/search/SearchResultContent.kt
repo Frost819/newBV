@@ -1,0 +1,291 @@
+package dev.frost819.newbv.app.ui.screen.search
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.ListFooterTip
+import dev.frost819.newbv.app.ui.component.TopNav
+import dev.frost819.newbv.app.ui.component.search.SearchResultFilter
+import dev.frost819.newbv.app.ui.component.search.UpCard
+import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
+import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
+import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
+import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
+import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
+import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
+import dev.frost819.newbv.app.ui.state.search.SearchResultItem
+import dev.frost819.newbv.app.ui.state.search.TypedSearchResult
+import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.app.util.removeHtmlTags
+import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.search.SearchResultViewModel
+import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
+import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
+import dev.frost819.newbv.biliapi.repositories.SearchType
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+
+private val searchTypeLabels = mapOf(
+    SearchType.Video to "视频",
+    SearchType.MediaBangumi to "番剧",
+    SearchType.MediaFt to "影视",
+    SearchType.BiliUser to "用户",
+)
+
+private val searchTypeColumns = mapOf(
+    SearchType.Video to 4,
+    SearchType.MediaBangumi to 6,
+    SearchType.MediaFt to 6,
+    SearchType.BiliUser to 3,
+)
+
+/**
+ * 搜索结果页内容。
+ *
+ * TopNav 切换 4 类结果，网格无限滚动加载，菜单键打开筛选弹窗。
+ */
+@Composable
+fun SearchResultContent(
+    modifier: Modifier = Modifier,
+    viewModel: SearchResultViewModel,
+    keyword: String,
+    navController: NavController,
+    onBack: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val gridState = rememberLazyGridState()
+    val tabRowFocusRequester = remember { FocusRequester() }
+    var focusOnContent by remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    val activeResult = uiState.results[uiState.activeType] ?: TypedSearchResult(uiState.activeType)
+    val columnCount = searchTypeColumns[uiState.activeType] ?: 4
+
+    val isVideoSearchViaWebApi = remember {
+        derivedStateOf {
+            uiState.activeType == SearchType.Video &&
+                    dev.frost819.newbv.data.datastore.Prefs.apiType ==
+                    dev.frost819.newbv.data.datastore.ApiType.Web
+        }
+    }
+
+    BackHandler(focusOnContent) {
+        runCatching { tabRowFocusRequester.requestFocus() }
+    }
+
+    LaunchedEffect(gridState, activeResult) {
+        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .filter { index ->
+                index != null && index >= activeResult.count - 20
+            }
+            .collect {
+                viewModel.loadMore(uiState.activeType)
+            }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onKeyEvent {
+                if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
+                    if (isVideoSearchViaWebApi.value) {
+                        viewModel.toggleFilter(true)
+                        true
+                    } else false
+                } else false
+            },
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // 标题栏
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 48.dp, top = 24.dp, bottom = 8.dp, end = 48.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Text(
+                    text = keyword,
+                    fontSize = 24.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = (if (isVideoSearchViaWebApi.value) "菜单键打开筛选 | " else "") +
+                            "共 ${activeResult.count} 条",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                )
+            }
+
+            // 4 类 Tab 导航
+            TopNav(
+                modifier = Modifier.focusRequester(tabRowFocusRequester),
+                items = SearchType.entries.map { SearchTypeNavItem(it) },
+                isLargePadding = !focusOnContent,
+                onSelectedChanged = { item ->
+                    viewModel.switchType((item as SearchTypeNavItem).type)
+                },
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // 结果网格
+            LazyVerticalGrid(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusGroup()
+                    .onKeyEvent {
+                        if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
+                            if (isVideoSearchViaWebApi.value) {
+                                viewModel.toggleFilter(true)
+                                true
+                            } else false
+                        } else false
+                    }
+                    .onFocusChanged {
+                        focusOnContent = it.hasFocus
+                    },
+                state = gridState,
+                columns = GridCells.Fixed(columnCount),
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                items(activeResult.items, key = { item ->
+                    when (item) {
+                        is SearchResultItem.VideoItem -> "v_${item.video.aid}"
+                        is SearchResultItem.PgcItem -> "p_${item.pgc.seasonId}"
+                        is SearchResultItem.UserItem -> "u_${item.user.mid}"
+                    }
+                }) { item ->
+                    when (item) {
+                        is SearchResultItem.VideoItem -> {
+                            val v = item.video
+                            SmallVideoCard(
+                                data = VideoCardData(
+                                    avid = v.aid,
+                                    title = v.title.removeHtmlTags(),
+                                    cover = v.cover,
+                                    playString = v.play.toWanString(),
+                                    danmakuString = v.danmaku.toWanString(),
+                                    timeString = v.duration.formatHourMinSec(),
+                                    upName = v.author,
+                                    upMid = v.mid,
+                                    pubTime = v.pubTime,
+                                ),
+                                onClick = {
+                                    navController.navigate(VideoDetailRoute(aid = v.aid))
+                                },
+                            )
+                        }
+                        is SearchResultItem.PgcItem -> {
+                            val p = item.pgc
+                            SeasonCard(
+                                data = SeasonCardData(
+                                    seasonId = p.seasonId,
+                                    title = p.title.removeHtmlTags(),
+                                    cover = p.cover,
+                                    rating = if (p.star > 0) String.format("%.1f", p.star) else null,
+                                ),
+                                onClick = {
+                                    navController.navigate(
+                                        dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute(
+                                            seasonId = p.seasonId.toLong(),
+                                        ),
+                                    )
+                                },
+                            )
+                        }
+                        is SearchResultItem.UserItem -> {
+                            val u = item.user
+                            UpCard(
+                                avatar = u.avatar,
+                                username = u.name,
+                                sign = u.sign,
+                                onClick = {
+                                    navController.navigate(UserSpaceRoute(mid = u.mid))
+                                },
+                            )
+                        }
+                    }
+                }
+
+                // 底部加载/错误/没有更多
+                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(columnCount) }) {
+                    ListFooterTip(
+                        isLoading = activeResult.isLoading,
+                        isError = activeResult.error,
+                        hasMore = activeResult.hasMore,
+                        itemsIsEmpty = activeResult.items.isEmpty(),
+                    )
+                }
+            }
+        }
+
+        // 筛选弹窗
+        if (uiState.showFilter) {
+            SearchResultFilter(
+                selectedOrder = uiState.selectedOrder,
+                selectedDuration = uiState.selectedDuration,
+                onConfirm = { order, duration ->
+                    viewModel.updateFilter(order, duration)
+                },
+                onDismiss = { viewModel.toggleFilter(false) },
+            )
+        }
+    }
+}
+
+private data class SearchTypeNavItem(
+    val type: SearchType,
+) : dev.frost819.newbv.app.ui.component.TopNavItem {
+    override val displayName: String = searchTypeLabels[type] ?: type.name
+}

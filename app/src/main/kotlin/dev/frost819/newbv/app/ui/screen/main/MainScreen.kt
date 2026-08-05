@@ -82,7 +82,7 @@ fun MainScreen(
 
     val onFocusToContent: () -> Unit = {
         when (selectedDrawerItem) {
-            LeftNaviItem.Home, LeftNaviItem.UGC, LeftNaviItem.PGC ->
+            LeftNaviItem.Home, LeftNaviItem.UGC, LeftNaviItem.PGC, LeftNaviItem.Search ->
                 runCatching { homeFocusRequester.requestFocus() }
             else -> {}
         }
@@ -141,12 +141,10 @@ fun MainScreen(
                         navFocusRequester = homeFocusRequester,
                         navController = navController,
                     )
-                    LeftNaviItem.Search -> {
-                        navController.navigate(dev.frost819.newbv.app.ui.navigation.SearchRoute) {
-                            launchSingleTop = true
-                        }
-                        selectedDrawerItem = LeftNaviItem.Home
-                    }
+                    LeftNaviItem.Search -> dev.frost819.newbv.app.ui.screen.search.SearchContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                    )
                     LeftNaviItem.Personal -> PlaceholderContent("个人")
                     LeftNaviItem.UGC -> dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
                         navFocusRequester = homeFocusRequester,
