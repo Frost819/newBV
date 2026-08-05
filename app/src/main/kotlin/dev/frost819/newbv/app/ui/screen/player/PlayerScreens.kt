@@ -56,9 +56,12 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             // 4. 初始化弹幕播放器并加载弹幕
             danmakuViewModel.init()
             danmakuViewModel.loadDanmaku(route.cid)
+            danmakuViewModel.loadDanmakuMask(route.aid, route.cid)
             // 5. 加载字幕列表
             subtitleViewModel.loadSubtitleList(route.aid, route.cid)
             // 6. 加载视频详情（相关视频、历史进度）— 视频列表已由详情页填充
+            //    loadVideoDetail 是 suspend，会等待详情加载完成后再继续
+            //    仅当历史 cid 与当前 cid 一致时才应用断点续播
             playerViewModel.loadVideoDetail(route.aid)
             // 7. 获取播放地址并开始播放
             playerViewModel.loadVideoWithResources()

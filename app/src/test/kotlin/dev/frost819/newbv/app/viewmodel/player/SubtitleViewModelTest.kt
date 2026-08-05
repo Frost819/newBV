@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.Prefs
+import io.ktor.client.HttpClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -27,6 +28,7 @@ class SubtitleViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var videoPlayRepository: VideoPlayRepository
+    private lateinit var httpClient: HttpClient
     private lateinit var viewModel: SubtitleViewModel
 
     @BeforeEach
@@ -41,7 +43,8 @@ class SubtitleViewModelTest {
         every { Prefs.defaultSubtitleBottomPadding = any() } answers {}
 
         videoPlayRepository = mockk()
-        viewModel = SubtitleViewModel(videoPlayRepository)
+        httpClient = mockk()
+        viewModel = SubtitleViewModel(videoPlayRepository, httpClient)
     }
 
     @AfterEach

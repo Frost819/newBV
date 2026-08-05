@@ -93,6 +93,15 @@ class PlayerViewModel @Inject constructor(
     private val _uiEffect = MutableSharedFlow<PlayerUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
 
+    /**
+     * 切换视频时发出的事件流。
+     *
+     * UI 层（[VideoPlayerScreen]）收集此流，在切换视频时协调
+     * [DanmakuViewModel] 和 [SubtitleViewModel] 的重载。
+     */
+    private val _videoSwitchEvent = MutableSharedFlow<VideoSwitchEvent>(extraBufferCapacity = 1)
+    val videoSwitchEvent = _videoSwitchEvent.asSharedFlow()
+
     private var seekerUpdateJob: Job? = null
     private var clockUpdateJob: Job? = null
     private var heartbeatJob: Job? = null
@@ -101,11 +110,22 @@ class PlayerViewModel @Inject constructor(
     private var playNextCountdownJob: Job? = null
     private var previewTipCountdownJob: Job? = null
 
+    /**
+     * 切换视频事件。
+     *
+     * @param aid 新视频 AV 号
+     * @param cid 新视频 CID
+     */
+    data class VideoSwitchEvent(val aid: Long, val cid: Long)
+
     private val videoPlayerListener = object : VideoPlayerListener {
         override fun onError(error: Exception) {
             logger.info { "onError: $error" }
             _uiState.update {
-                it.copy(playerState = PlayerState.Error(error.message ?: "Unknown error"))
+                it.copy(
+                    playerState = PlayerState.Error(error.message ?: "Unknown error"),
+                    isBuffering = false,
+                )
             }
         }
 
@@ -196,11 +216,17 @@ class PlayerViewModel @Inject constructor(
      * 视频列表由详情页在导航前通过 [VideoInfoRepository] 填充。
      * 若播放器直接打开（无详情页上下文），列表为空，仅加载详情用于相关视频和历史。
      *
+     * 加载完成后，仅当历史 cid 与当前播放 cid 一致时才应用断点续播，
+     * 避免多 P 视频中把 P2 的进度应用到 P1。
+     *
      * @param aid 视频 AV 号
      */
-    fun loadVideoDetail(aid: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            videoInfoRepository.loadVideoDetail(aid, getApiType())
+    suspend fun loadVideoDetail(aid: Long) {
+        videoInfoRepository.loadVideoDetail(aid, getApiType())
+        val historyCid = videoInfoRepository.lastPlayedCid.value
+        val historyTime = videoInfoRepository.lastPlayedTime.value
+        if (historyCid == _uiState.value.cid && historyTime > 0) {
+            _uiState.update { it.copy(lastPlayed = historyTime) }
         }
     }
 
@@ -320,6 +346,7 @@ class PlayerViewModel @Inject constructor(
      * 切换播放视频。
      *
      * 同步旧视频进度，更新 UI 状态，重新加载资源。
+     * 通过 [videoSwitchEvent] 通知 UI 层协调弹幕/字幕重载。
      */
     fun playNewVideo(newVideo: VideoListItem) {
         videoPlayer?.pause()
@@ -328,16 +355,11 @@ class PlayerViewModel @Inject constructor(
         val shouldUpdateDetail = state.aid != newVideo.aid
         val shouldUpdateList = videoInfoRepository.videoList.value.none { it.aid == newVideo.aid }
 
-        if (shouldUpdateDetail) {
-            viewModelScope.launch(Dispatchers.IO) {
-                videoInfoRepository.loadVideoDetail(newVideo.aid, getApiType())
-            }
-        }
-        if (shouldUpdateList) {
-            videoInfoRepository.updateVideoList(listOf(newVideo))
-        }
-
         syncProgress(viewModelScope)
+
+        // 清空旧视频状态，防止新视频加载失败时残留旧数据
+        playData = null
+        stopSeekerUpdater()
 
         _uiState.update {
             it.copy(
@@ -346,12 +368,40 @@ class PlayerViewModel @Inject constructor(
                 epid = newVideo.epid,
                 seasonId = newVideo.seasonId ?: 0,
                 title = newVideo.title,
+                lastPlayed = 0,
                 isBuffering = true,
+                playerState = PlayerState.Ready,
                 videoShot = null,
                 danmakuMask = null,
                 subtitleList = emptyList(),
                 subtitleData = emptyList(),
+                subtitleId = -1L,
+                availableQuality = emptyMap(),
+                availableVideoCodec = emptyList(),
+                availableAudio = emptyList(),
+                showPreviewTip = false,
+                showSkipToNextEp = false,
+                showBackToStart = false,
             )
+        }
+
+        // 通知 UI 层重载弹幕/字幕（非阻塞，避免卡住 playNewVideo）
+        viewModelScope.launch { _videoSwitchEvent.emit(VideoSwitchEvent(newVideo.aid, newVideo.cid)) }
+
+        // 异步加载详情 + 历史进度（不阻塞 playVideoWithResources）
+        if (shouldUpdateDetail) {
+            viewModelScope.launch(Dispatchers.IO) {
+                videoInfoRepository.loadVideoDetail(newVideo.aid, getApiType())
+                // 仅当历史 cid 与当前播放 cid 一致时才应用断点续播
+                val historyCid = videoInfoRepository.lastPlayedCid.value
+                val historyTime = videoInfoRepository.lastPlayedTime.value
+                if (historyCid == newVideo.cid && historyTime > 0) {
+                    _uiState.update { it.copy(lastPlayed = historyTime) }
+                }
+            }
+        }
+        if (shouldUpdateList) {
+            videoInfoRepository.updateVideoList(listOf(newVideo))
         }
 
         loadVideoWithResources()
@@ -383,7 +433,12 @@ class PlayerViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 logger.error(e) { "Loading video data error: $e" }
-                _uiState.update { it.copy(playerState = PlayerState.Error(e.message ?: "未知错误")) }
+                _uiState.update {
+                    it.copy(
+                        playerState = PlayerState.Error(e.message ?: "未知错误"),
+                        isBuffering = false,
+                    )
+                }
             }
         }
     }

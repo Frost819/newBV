@@ -15,6 +15,7 @@ import com.kuaishou.akdanmaku.ui.DanmakuPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.biliapi.entity.ApiType
+import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMask
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.danmaku.config.DanmakuState
@@ -68,6 +69,10 @@ class DanmakuViewModel @Inject constructor(
     )
     val danmakuState = _danmakuState.asStateFlow()
 
+    /** 弹幕防遮挡蒙版数据，由 [loadDanmakuMask] 加载后存储。 */
+    private val _danmakuMask = MutableStateFlow<DanmakuMask?>(null)
+    val danmakuMask = _danmakuMask.asStateFlow()
+
     /** 初始化弹幕播放器。 */
     fun init() {
         danmakuPlayer = DanmakuPlayer(SimpleRenderer())
@@ -78,6 +83,18 @@ class DanmakuViewModel @Inject constructor(
     fun release() {
         danmakuPlayer?.release()
         danmakuPlayer = null
+        _danmakuMask.update { null }
+    }
+
+    /**
+     * 切换视频时清空弹幕数据。
+     *
+     * 保留 [danmakuPlayer] 实例和配置，仅清空弹幕内容和蒙版。
+     * 调用后应接着 [loadDanmaku] 加载新视频的弹幕。
+     */
+    fun clearDanmaku() {
+        danmakuPlayer?.updateData(emptyList())
+        _danmakuMask.update { null }
     }
 
     /**
@@ -129,6 +146,7 @@ class DanmakuViewModel @Inject constructor(
                     preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
                 )
             }.onSuccess { mask ->
+                _danmakuMask.update { mask }
                 logger.info { "Load danmaku mask segments: ${mask?.segmentCount ?: 0}" }
             }.onFailure { e ->
                 logger.warn { "Load danmaku mask failed: $e" }

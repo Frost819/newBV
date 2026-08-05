@@ -29,8 +29,13 @@ import dev.frost819.newbv.data.datastore.BuvidGenerator
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.repository.AccountRepository
 import dev.frost819.newbv.app.data.AccountRepositoryImpl
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.timeout
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 /**
@@ -256,6 +261,26 @@ object NetworkModule {
         userDao: UserDao,
         authRepository: AuthRepository,
     ): AccountRepository = AccountRepositoryImpl(userDao, authRepository)
+
+    /**
+     * 提供共享的 [HttpClient] 单例。
+     *
+     * 使用 OkHttp 引擎，配置了连接/读取/写入超时。
+     * 供需要直接 HTTP 请求的组件使用（如字幕下载），
+     * 避免各组件各自创建 HttpClient 造成资源浪费。
+     */
+    @Provides
+    @Singleton
+    fun provideHttpClient(): HttpClient = HttpClient(OkHttp) {
+        engine {
+            config {
+                connectTimeout(10, TimeUnit.SECONDS)
+                readTimeout(15, TimeUnit.SECONDS)
+                writeTimeout(15, TimeUnit.SECONDS)
+            }
+        }
+        install(HttpTimeout)
+    }
 
     /**
      * 提供 [HttpServer] 单例。

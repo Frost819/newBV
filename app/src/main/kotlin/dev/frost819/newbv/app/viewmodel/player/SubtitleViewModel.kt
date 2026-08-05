@@ -12,7 +12,6 @@ import dev.frost819.newbv.bilisubtitle.SubtitleParser
 import dev.frost819.newbv.data.datastore.Prefs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +28,12 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
  * 管理字幕列表加载、字幕轨道选择、字幕显示配置（字号/透明度/间距）。
  *
  * @param videoPlayRepository 字幕数据仓库
+ * @param httpClient 共享 HTTP 客户端（用于下载字幕文件）
  */
 @HiltViewModel
 class SubtitleViewModel @Inject constructor(
     private val videoPlayRepository: VideoPlayRepository,
+    private val httpClient: HttpClient,
 ) : ViewModel() {
 
     private val logger = KotlinLogging.logger { }
@@ -76,6 +77,17 @@ class SubtitleViewModel @Inject constructor(
     }
 
     /**
+     * 切换视频时清空字幕数据。
+     *
+     * 调用后应接着 [loadSubtitleList] 加载新视频的字幕。
+     */
+    fun clearSubtitle() {
+        _subtitleList.update { emptyList() }
+        _subtitleId.update { -1L }
+        _subtitleData.update { emptyList() }
+    }
+
+    /**
      * 选择并加载字幕轨道。
      *
      * @param id 字幕 ID，-1 表示关闭字幕
@@ -91,8 +103,7 @@ class SubtitleViewModel @Inject constructor(
             runCatching {
                 val subtitle = _subtitleList.value.find { it.id == id } ?: return@runCatching
                 logger.info { "Subtitle url: ${subtitle.url}" }
-                val client = HttpClient(OkHttp)
-                val responseText = client.get(subtitle.url).bodyAsText()
+                val responseText = httpClient.get(subtitle.url).bodyAsText()
                 val data = SubtitleParser.fromBccString(responseText)
                 _subtitleId.update { id }
                 _subtitleData.update { data }

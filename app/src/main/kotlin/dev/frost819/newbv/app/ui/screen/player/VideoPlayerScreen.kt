@@ -75,6 +75,7 @@ fun VideoPlayerScreen(
     val uiState by playerViewModel.uiState.collectAsState()
     val seekerState = playerViewModel.seekerState.collectAsState()
     val danmakuState by danmakuViewModel.danmakuState.collectAsState()
+    val danmakuMask by danmakuViewModel.danmakuMask.collectAsState()
     val videoListState by videoListViewModel.videoListState.collectAsState()
     val subtitleState by subtitleViewModel.subtitleState.collectAsState()
     val subtitleId by subtitleViewModel.subtitleId.collectAsState()
@@ -89,11 +90,12 @@ fun VideoPlayerScreen(
 
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
     val mergedUiState = remember(
-        uiState, danmakuState, subtitleState, subtitleId, subtitleData, subtitleList,
+        uiState, danmakuState, danmakuMask, subtitleState, subtitleId, subtitleData, subtitleList,
         videoListState.videoList, videoListState.relatedVideos,
     ) {
         uiState.copy(
             danmakuState = danmakuState,
+            danmakuMask = danmakuMask,
             subtitleState = subtitleState,
             subtitleId = subtitleId,
             subtitleData = subtitleData,
@@ -133,6 +135,17 @@ fun VideoPlayerScreen(
         }
     }
 
+    // 切换视频事件：协调弹幕/字幕/蒙版重载
+    LaunchedEffect(Unit) {
+        playerViewModel.videoSwitchEvent.collect { event ->
+            danmakuViewModel.clearDanmaku()
+            danmakuViewModel.loadDanmaku(event.cid)
+            danmakuViewModel.loadDanmakuMask(event.aid, event.cid)
+            subtitleViewModel.clearSubtitle()
+            subtitleViewModel.loadSubtitleList(event.aid, event.cid)
+        }
+    }
+
     // 心跳循环（5s 延迟后，每 15s 发送）
     LaunchedEffect(Unit) {
         delay(5000)
@@ -145,13 +158,13 @@ fun VideoPlayerScreen(
     }
 
     // 弹幕蒙版更新循环
-    LaunchedEffect(danmakuState.maskEnabled, uiState.danmakuMask) {
-        if (!danmakuState.maskEnabled || uiState.danmakuMask == null) {
+    LaunchedEffect(danmakuState.maskEnabled, danmakuMask) {
+        if (!danmakuState.maskEnabled || danmakuMask == null) {
             currentDanmakuMaskFrame = null
             return@LaunchedEffect
         }
         maskFinder.reset()
-        val mask = uiState.danmakuMask ?: return@LaunchedEffect
+        val mask = danmakuMask ?: return@LaunchedEffect
         var lastCheckTime = -1L
         while (isActive) {
             val currentTime = seekerState.value.currentTime
