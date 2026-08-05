@@ -1331,3 +1331,69 @@ companion object {
     }
 }
 ```
+
+### 11.10 播放器多 ViewModel 协调与切集时序
+
+#### 11.10.1 切集时弹幕/字幕不重载
+
+**问题**：`playNewVideo` 只更新了 `PlayerViewModel` 的 uiState 和播放地址，但 `DanmakuViewModel` 和 `SubtitleViewModel` 完全不知道视频切换了，旧弹幕/字幕残留屏幕。
+
+**原因**：5-way ViewModel 拆分后，各 ViewModel 独立，`PlayerViewModel` 无法直接调用 `DanmakuViewModel.loadDanmaku()`。UI 层（`VideoPlayerScreen`）需要充当协调者。
+
+**解决方案**：`PlayerViewModel` 暴露 `videoSwitchEvent: SharedFlow<VideoSwitchEvent>`，UI 层收集后协调重载：
+
+```kotlin
+// PlayerViewModel
+private val _videoSwitchEvent = MutableSharedFlow<VideoSwitchEvent>(extraBufferCapacity = 1)
+val videoSwitchEvent = _videoSwitchEvent.asSharedFlow()
+
+data class VideoSwitchEvent(val aid: Long, val cid: Long)
+
+fun playNewVideo(newVideo: VideoListItem) {
+    // ... 更新状态 ...
+    viewModelScope.launch { _videoSwitchEvent.emit(VideoSwitchEvent(newVideo.aid, newVideo.cid)) }
+}
+
+// VideoPlayerScreen
+LaunchedEffect(Unit) {
+    playerViewModel.videoSwitchEvent.collect { event ->
+        danmakuViewModel.clearDanmaku()
+        danmakuViewModel.loadDanmaku(event.cid)
+        danmakuViewModel.loadDanmakuMask(event.aid, event.cid)
+        subtitleViewModel.clearSubtitle()
+        subtitleViewModel.loadSubtitleList(event.aid, event.cid)
+    }
+}
+```
+
+#### 11.10.2 lastPlayedCid 不匹配导致断点续播错误
+
+**问题**：多 P 视频中，B 站返回的 `history.lastPlayedCid` 是上次观看的 CID（可能是 P2），`history.progress` 是 P2 的进度。如果当前播放的是 P1，直接应用 `progress` 会把 P2 的进度 seek 到 P1 上。
+
+**解决方案**：仅在 `historyCid == currentCid` 时才应用断点续播：
+
+```kotlin
+val historyCid = videoInfoRepository.lastPlayedCid.value
+val historyTime = videoInfoRepository.lastPlayedTime.value
+if (historyCid == _uiState.value.cid && historyTime > 0) {
+    _uiState.update { it.copy(lastPlayed = historyTime) }
+}
+```
+
+#### 11.10.3 切视频时旧 playData 泄漏
+
+**问题**：`playNewVideo` 未清空 `playData`，新视频加载失败时 `resolveMediaUrls` 会使用旧 `playData` 返回错误 URL，导致播放旧视频流。
+
+**解决方案**：`playNewVideo` 开头清空 `playData = null` 并重置全部 UI 状态（画质/编码/音频列表等）。
+
+#### 11.10.4 isBuffering 错误时未清除
+
+**问题**：`loadVideoWithResources` 的 catch 块和 `onError` 回调都未清除 `isBuffering`，加载失败后 UI 永远显示 loading 转圈。
+
+**解决方案**：所有设置 `PlayerState.Error` 的地方同时 `isBuffering = false`。
+
+#### 11.10.5 SubtitleViewModel 内联 HttpClient
+
+**问题**：`SubtitleViewModel` 直接 `HttpClient(OkHttp)` 创建新实例，绕过了 Hilt DI，每次选择字幕都创建新 client，连接池无法复用。
+
+**解决方案**：在 `NetworkModule` 中 `@Provides` 共享 `HttpClient` 单例，构造注入到 `SubtitleViewModel`。
