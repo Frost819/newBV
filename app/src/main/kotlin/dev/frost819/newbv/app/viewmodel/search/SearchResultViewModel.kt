@@ -108,10 +108,26 @@ class SearchResultViewModel @Inject constructor(
                     SearchType.MediaBangumi, SearchType.MediaFt -> searchResult.pgcs.map { SearchResultItem.PgcItem(it) }
                     SearchType.BiliUser -> searchResult.users.map { SearchResultItem.UserItem(it) }
                 }
-                val hasMore = newItems.isNotEmpty()
                 updateResult(type) {
+                    val existingIds = it.items.mapNotNull { item ->
+                        when (item) {
+                            is SearchResultItem.VideoItem -> "v_${item.video.aid}"
+                            is SearchResultItem.PgcItem -> "p_${item.pgc.seasonId}"
+                            is SearchResultItem.UserItem -> "u_${item.user.mid}"
+                        }
+                    }.toSet()
+                    val dedupedNewItems = newItems.filter { item ->
+                        val key = when (item) {
+                            is SearchResultItem.VideoItem -> "v_${item.video.aid}"
+                            is SearchResultItem.PgcItem -> "p_${item.pgc.seasonId}"
+                            is SearchResultItem.UserItem -> "u_${item.user.mid}"
+                        }
+                        key !in existingIds
+                    }
+                    // API 返回了数据但全是重复项 → 没有更多了，避免无限加载
+                    val hasMore = dedupedNewItems.isNotEmpty()
                     it.copy(
-                        items = it.items + newItems,
+                        items = it.items + dedupedNewItems,
                         page = searchResult.page,
                         isLoading = false,
                         hasMore = hasMore,

@@ -79,7 +79,7 @@ private val searchTypeColumns = mapOf(
     SearchType.Video to 4,
     SearchType.MediaBangumi to 6,
     SearchType.MediaFt to 6,
-    SearchType.BiliUser to 3,
+    SearchType.BiliUser to 5,
 )
 
 /**
@@ -122,14 +122,17 @@ fun SearchResultContent(
         }
     }
 
-    LaunchedEffect(gridState, activeResult) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            val lastIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            val current = viewModel.uiState.value
+            val count = current.results[current.activeType]?.count ?: 0
+            lastIndex to count
+        }
             .distinctUntilChanged()
-            .filter { index ->
-                index != null && index >= activeResult.count - 20
-            }
+            .filter { (index, count) -> index >= 0 && index >= count - 20 }
             .collect {
-                viewModel.loadMore(uiState.activeType)
+                viewModel.loadMore(viewModel.uiState.value.activeType)
             }
     }
 
