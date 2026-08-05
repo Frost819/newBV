@@ -70,6 +70,7 @@ internal object PrefKeys {
     val defaultPlaySpeed = intPreferencesKey("dps")
     val showVideoInfo = booleanPreferencesKey("show_video_info")
     val showPersistentSeek = booleanPreferencesKey("show_persistent_seek")
+    val showPlayerDebugInfo = booleanPreferencesKey("show_player_debug_info")
 
     // ===== 应用界面 =====
     val density = floatPreferencesKey("density")

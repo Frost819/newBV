@@ -196,8 +196,9 @@ class ExoMediaPlayer(
             return """
                 player: ${androidx.media3.common.MediaLibraryInfo.VERSION_SLASHY}
                 time: ${currentPosition.formatMinSec()} / ${duration.formatMinSec()}
+                speed: ${speed}x
                 buffered: $bufferedPercentage%
-                resolution: ${mPlayer?.videoSize?.width} x ${mPlayer?.videoSize?.height}
+                resolution: ${mPlayer?.videoSize?.width} x ${mPlayer?.videoSize?.height} @ ${mPlayer?.videoFormat?.frameRate?.toInt() ?: 0}fps
                 audio: ${mPlayer?.audioFormat?.bitrate ?: 0} kbps
                 video codec: ${mPlayer?.videoFormat?.sampleMimeType ?: "null"}
                 audio codec: ${mPlayer?.audioFormat?.sampleMimeType ?: "null"} (${getAudioRendererName()})

@@ -244,14 +244,18 @@ private fun VideoDetailContent(
                 navController.navigate(SearchRoute)
             },
             onPlayVideo = {
+                viewModel.updateVideoList(detail.aid, detail.cid, detail.title)
                 navController.navigate(
                     VideoPlayerRoute(
                         aid = detail.aid,
                         cid = detail.cid,
                         title = detail.title,
                         cover = detail.cover,
-                    )
-                )
+                    ),
+                ) {
+                    popUpTo<VideoPlayerRoute> { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             onClickUp = {
                 navController.navigate(UserSpaceRoute(mid = detail.author.mid))
@@ -271,33 +275,41 @@ private fun VideoDetailContent(
                 pages = detail.pages,
                 currentCid = detail.cid,
                 onClick = { page ->
+                    viewModel.updateVideoList(detail.aid, page.cid, detail.title)
                     navController.navigate(
                         VideoPlayerRoute(
                             aid = detail.aid,
                             cid = page.cid,
                             title = detail.title,
                             cover = detail.cover,
-                        )
-                    )
+                        ),
+                    ) {
+                        popUpTo<VideoPlayerRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 focusSaver = focusSaver,
             )
         }
 
         detail.ugcSeason?.let { season ->
-            season.sections.forEach { section ->
+            season.sections.forEachIndexed { sectionIndex, section ->
                 VideoUgcSeasonRow(
                     title = if (season.sections.size == 1) season.title else section.title,
                     episodes = section.episodes,
                     onClick = { episode ->
+                        viewModel.updateVideoList(sectionIndex)
                         navController.navigate(
                             VideoPlayerRoute(
                                 aid = episode.aid,
                                 cid = episode.cid,
                                 title = episode.title,
                                 cover = episode.cover,
-                            )
-                        )
+                            ),
+                        ) {
+                            popUpTo<VideoPlayerRoute> { inclusive = true }
+                            launchSingleTop = true
+                        }
                     },
                     focusSaver = focusSaver,
                 )

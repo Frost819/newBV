@@ -120,8 +120,11 @@ private fun SeasonDetailScreen(
                             epid = effect.epid?.toLong(),
                             title = effect.title,
                             cover = effect.cover,
-                        )
-                    )
+                        ),
+                    ) {
+                        popUpTo<VideoPlayerRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             }
         }

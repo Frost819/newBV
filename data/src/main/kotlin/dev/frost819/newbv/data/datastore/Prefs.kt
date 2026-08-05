@@ -305,6 +305,8 @@ object Prefs {
     var showVideoInfo by pref(PrefKeys.showVideoInfo, true)
     /** 显示常显进度条。 */
     var showPersistentSeek by pref(PrefKeys.showPersistentSeek, false)
+    /** 显示播放器调试信息。 */
+    var showPlayerDebugInfo by pref(PrefKeys.showPlayerDebugInfo, false)
 
     // --- 应用界面（PRD 7.2） ---
 

@@ -21,6 +21,7 @@ import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
+import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
@@ -230,6 +231,19 @@ object NetworkModule {
         likeRepository = likeRepository,
         coinRepository = coinRepository,
     )
+
+    /**
+     * 提供 [VideoPlayRepository] 单例。
+     *
+     * 封装播放地址获取、弹幕、字幕、蒙版、心跳、缩略图等播放器相关接口。
+     * 依赖 [AuthRepository]（会话凭证）和 [ChannelRepository]（gRPC channel）。
+     */
+    @Provides
+    @Singleton
+    fun provideVideoPlayRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): VideoPlayRepository = VideoPlayRepository(authRepository, channelRepository)
 
     /**
      * 提供 [AccountRepository] 单例。

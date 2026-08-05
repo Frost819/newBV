@@ -2,6 +2,7 @@ package dev.frost819.newbv.app.viewmodel.detail
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.biliapi.entity.user.Author
 import dev.frost819.newbv.biliapi.entity.video.UserActions
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -46,6 +47,7 @@ class VideoDetailViewModelTest {
     private lateinit var favoriteRepository: FavoriteRepository
     private lateinit var oneClickTripleActionRepository: OneClickTripleActionRepository
     private lateinit var userRepository: UserRepository
+    private lateinit var videoInfoRepository: VideoInfoRepository
     private lateinit var viewModel: VideoDetailViewModel
 
     @BeforeEach
@@ -57,6 +59,7 @@ class VideoDetailViewModelTest {
         favoriteRepository = mockk()
         oneClickTripleActionRepository = mockk()
         userRepository = mockk()
+        videoInfoRepository = mockk(relaxed = true)
 
         mockkObject(Prefs)
         coEvery { Prefs.isLogin } returns false
@@ -76,6 +79,7 @@ class VideoDetailViewModelTest {
             favoriteRepository = favoriteRepository,
             oneClickTripleActionRepository = oneClickTripleActionRepository,
             userRepository = userRepository,
+            videoInfoRepository = videoInfoRepository,
             savedStateHandle = savedStateHandle,
         )
     }

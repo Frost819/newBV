@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.data.VideoInfoRepository
+import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.FavoriteFolderMetadata
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -90,6 +92,7 @@ class VideoDetailViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
     private val oneClickTripleActionRepository: OneClickTripleActionRepository,
     private val userRepository: UserRepository,
+    private val videoInfoRepository: VideoInfoRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -106,6 +109,36 @@ class VideoDetailViewModel @Inject constructor(
 
     init {
         loadVideoDetail()
+    }
+
+    /**
+     * 更新播放列表（单视频）。
+     *
+     * 从详情页跳转播放器前调用，将当前视频作为播放列表。
+     *
+     * @param aid 视频 AV 号
+     * @param cid 视频 CID
+     * @param title 视频标题
+     */
+    fun updateVideoList(aid: Long, cid: Long, title: String) {
+        videoInfoRepository.updateVideoList(
+            listOf(VideoListItem(aid = aid, cid = cid, title = title)),
+        )
+    }
+
+    /**
+     * 更新播放列表（UGC 合集分集）。
+     *
+     * 从详情页 UGC 合集跳转播放器前调用，将合集内所有视频作为播放列表。
+     *
+     * @param sectionIndex 合集分集索引
+     */
+    fun updateVideoList(sectionIndex: Int) {
+        val detail = _uiState.value.detail ?: return
+        val partVideoList = detail.ugcSeason?.sections?.getOrNull(sectionIndex)?.episodes?.map {
+            VideoListItem(aid = it.aid, cid = it.cid, title = it.title)
+        } ?: return
+        videoInfoRepository.updateVideoList(partVideoList)
     }
 
     /**
@@ -134,6 +167,9 @@ class VideoDetailViewModel @Inject constructor(
                             isFavorite = detail.userActions.favorite,
                         )
                     }
+
+                    // 同步到 VideoInfoRepository（相关视频、历史进度）
+                    videoInfoRepository.updateVideoDetail(detail)
 
                     if (Prefs.isLogin) {
                         fetchFavoriteFolders()
