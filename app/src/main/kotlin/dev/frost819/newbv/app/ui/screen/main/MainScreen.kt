@@ -141,10 +141,20 @@ fun MainScreen(
                         navFocusRequester = homeFocusRequester,
                         navController = navController,
                     )
-                    LeftNaviItem.Search -> dev.frost819.newbv.app.ui.screen.search.SearchContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
+                    LeftNaviItem.Search -> {
+                        val searchInputViewModel: dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel =
+                            androidx.hilt.navigation.compose.hiltViewModel()
+                        dev.frost819.newbv.app.ui.screen.search.SearchInputContent(
+                            viewModel = searchInputViewModel,
+                            focusRequester = homeFocusRequester,
+                            onSearch = { keyword ->
+                                searchInputViewModel.commitSearch(keyword)
+                                navController.navigate(
+                                    dev.frost819.newbv.app.ui.navigation.SearchResultRoute(keyword = keyword),
+                                )
+                            },
+                        )
+                    }
                     LeftNaviItem.Personal -> PlaceholderContent("个人")
                     LeftNaviItem.UGC -> dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
                         navFocusRequester = homeFocusRequester,

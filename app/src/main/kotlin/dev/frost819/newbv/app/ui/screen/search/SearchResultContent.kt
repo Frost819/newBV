@@ -23,7 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -37,23 +37,23 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TopNav
+import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.search.SearchResultFilter
 import dev.frost819.newbv.app.ui.component.search.UpCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
+import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.state.search.SearchResultItem
@@ -86,6 +86,7 @@ private val searchTypeColumns = mapOf(
  * 搜索结果页内容。
  *
  * TopNav 切换 4 类结果，网格无限滚动加载，菜单键打开筛选弹窗。
+ * 进入页面时自动根据 keyword 触发搜索。
  */
 @Composable
 fun SearchResultContent(
@@ -93,14 +94,12 @@ fun SearchResultContent(
     viewModel: SearchResultViewModel,
     keyword: String,
     navController: NavController,
-    onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     val gridState = rememberLazyGridState()
     val tabRowFocusRequester = remember { FocusRequester() }
-    var focusOnContent by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var focusOnContent by remember { mutableStateOf(false) }
 
     val activeResult = uiState.results[uiState.activeType] ?: TypedSearchResult(uiState.activeType)
     val columnCount = searchTypeColumns[uiState.activeType] ?: 4
@@ -115,6 +114,12 @@ fun SearchResultContent(
 
     BackHandler(focusOnContent) {
         runCatching { tabRowFocusRequester.requestFocus() }
+    }
+
+    LaunchedEffect(keyword) {
+        if (keyword.isNotBlank()) {
+            viewModel.search(keyword)
+        }
     }
 
     LaunchedEffect(gridState, activeResult) {
@@ -237,7 +242,7 @@ fun SearchResultContent(
                                 ),
                                 onClick = {
                                     navController.navigate(
-                                        dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute(
+                                        PgcFeatureRoute(
                                             seasonId = p.seasonId.toLong(),
                                         ),
                                     )
@@ -286,6 +291,6 @@ fun SearchResultContent(
 
 private data class SearchTypeNavItem(
     val type: SearchType,
-) : dev.frost819.newbv.app.ui.component.TopNavItem {
+) : TopNavItem {
     override val displayName: String = searchTypeLabels[type] ?: type.name
 }

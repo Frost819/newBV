@@ -47,9 +47,15 @@ data class SeasonPlayerRoute(
 
 // ── 搜索 ──────────────────────────────────────────────────────────────
 
-/** 搜索页面。 */
+/** 搜索输入页（全屏入口，从详情页 Tag 点击进入）。 */
 @Serializable
 object SearchRoute
+
+/** 搜索结果页。 */
+@Serializable
+data class SearchResultRoute(
+    val keyword: String,
+)
 
 // ── 直播 ──────────────────────────────────────────────────────────────
 

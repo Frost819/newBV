@@ -70,7 +70,7 @@ import dev.frost819.newbv.app.ui.component.LoadingTip
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
-import dev.frost819.newbv.app.ui.navigation.SearchRoute
+import dev.frost819.newbv.app.ui.navigation.SearchResultRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
@@ -241,7 +241,7 @@ private fun VideoDetailContent(
             onToggleFavorite = { viewModel.toggleFavorite() },
             onToggleFollow = { viewModel.toggleFollow() },
             onClickTag = { tag ->
-                navController.navigate(SearchRoute)
+                navController.navigate(SearchResultRoute(keyword = tag.name))
             },
             onPlayVideo = {
                 viewModel.updateVideoList(detail.aid, detail.cid, detail.title)
