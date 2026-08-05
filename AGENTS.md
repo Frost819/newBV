@@ -1193,3 +1193,141 @@ val progress = if (nextExp > currentMin) {
 ```
 
 `setCurrentUser()` 切换账号时必须先重置 level/exp/currentMin/nextExp 为 0，再调 `refreshUserInfo()` 从网络拉取新数据，否则 UI 会短暂显示旧用户等级。
+
+### 11.8 B 站接口与风控
+
+#### 11.8.1 playurl 端点选择与 WBI 签名
+
+**问题**：使用 `/x/player/wbi/playurl`（WBI 签名端点）比 `/x/player/playurl`（旧端点）更容易触发 B 站风控（返回 `v_voucher` 验证挑战），连续播放 2-3 次即被拦截。
+
+**原因**：WBI 端点风控策略更严格。原版 BV 一直使用旧的 `/x/player/playurl` 端点（不带 WBI 签名），风控阈值更高。
+
+**解决方案**：与原版 BV 保持一致：
+- 使用 `/x/player/playurl`（非 WBI 端点）
+- `encApiSign()` 中的 WBI 签名触发条件不含此路径，不会添加 `w_rid`/`wts`
+- 不需要 WBI 签名也能正常返回视频流
+
+#### 11.8.2 playurl Cookie 排除 buvid3
+
+**问题**：`injectCookies()` 拦截器为所有非 App 请求注入完整 Cookie（SESSDATA + DedeUserID + buvid3 + b_nut）。但 playurl 请求带 buvid3 会增加风控触发概率。
+
+**原因**：原版 BV 的 `injectBuvid3Cookie()` 显式排除了 playurl 请求（检测路径含 `/x/player/playurl` 或 `/x/player/wbi/playurl`），只注入 `SESSDATA` + `DedeUserID`。
+
+**解决方案**：在 `injectCookies()` 中添加 playurl 排除逻辑，与原版 BV 对齐：
+
+```kotlin
+val isPlayUrlRequest =
+    request.url.encodedPath.contains("/x/player/playurl") ||
+        request.url.encodedPath.contains("/x/player/wbi/playurl")
+
+if (!request.isAppRequest && !isPlayUrlRequest) {
+    // 注入 SESSDATA + buvid3 + b_nut 等
+}
+```
+
+#### 11.8.3 v_voucher 风控响应处理
+
+**问题**：B 站风控触发时返回 `{"code":0,"data":{"v_voucher":"xxx"}}`，`data` 中只有 `v_voucher` 字段，缺少 `PlayUrlData` 的必填字段（`from`/`result`/`quality` 等），导致 kotlinx.serialization 反序列化失败抛出 `SerializationException`，UI 显示原始序列化错误信息。
+
+**解决方案**：在 `getVideoPlayUrl()` 中先解析原始 JSON，检测到 `data` 含 `v_voucher` 时直接抛出 `RiskControlException`，避免反序列化失败：
+
+```kotlin
+val rawText = response.bodyAsText()
+val parsed = json.decodeFromString<JsonObject>(rawText)
+val data = parsed["data"]
+if (data is JsonObject && "v_voucher" in data) {
+    throw RiskControlException("触发风控，请稍后再试或更换接口类型")
+}
+return json.decodeFromString(rawText)
+```
+
+#### 11.8.4 未登录 try_look 参数
+
+**问题**：未登录时缺少 `try_look=1` 等参数会导致请求被拒。
+
+**原因**：这些参数向 B 站表明"匿名预览"模式，允许未登录用户获取预览流。原版 BV 在 `sessData` 为空时添加这些参数。
+
+**解决方案**：保留原版的条件逻辑：
+
+```kotlin
+if (sessData.isEmpty()) {
+    parameter("web_location", "1315873")
+    parameter("gaia_source", "pre-load")
+    parameter("isGaiaAvoided", "true")
+    parameter("try_look", "1")
+}
+```
+
+### 11.9 bili-api 集成测试与单元测试分离
+
+#### 11.9.1 @Tag("integration") 机制
+
+**问题**：bili-api 模块有需要真实网络和 B 站凭证的集成测试，也有纯单元测试。最初用 Gradle `filter { excludeTestsMatching("*RepositoryTest") }` 分离，但 Gradle filter 匹配方法全限定名，与 JUnit 5 反引号测试名（含空格）不兼容，导致集成测试无法被发现。
+
+**解决方案**：改用 JUnit 5 `@Tag` 机制：
+
+```kotlin
+// bili-api/build.gradle.kts
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeTags("integration")
+    }
+}
+
+val integrationTest = tasks.register<Test>("integrationTest") {
+    useJUnitPlatform {
+        includeTags("integration")
+    }
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+}
+```
+
+所有集成测试类必须标注 `@org.junit.jupiter.api.Tag("integration")`：
+
+```kotlin
+@org.junit.jupiter.api.Tag("integration")
+class VideoPlayRepositoryTest {
+    // ...
+}
+```
+
+**运行命令**：
+- `./gradlew :bili-api:test` — 只跑单元测试（DanmakuMaskTest 等）
+- `./gradlew :bili-api:integrationTest` — 只跑集成测试（需要凭证 + 网络）
+
+#### 11.9.2 integrationTest task 配置要点
+
+**问题**：`tasks.withType<Test>` 会匹配所有 Test 类型 task（包括自定义的 `integrationTest`），导致 `excludeTags` 和 `includeTags` 同时生效。
+
+**解决方案**：用 `tasks.named<Test>("test")` 只配置默认 `test` task，不用 `tasks.withType<Test>`：
+
+```kotlin
+// ✅ 正确：只配置 test task
+tasks.named<Test>("test") {
+    useJUnitPlatform { excludeTags("integration") }
+}
+
+// ❌ 错误：withType<Test> 会匹配 integrationTest，导致 tag 同时被 include 和 exclude
+tasks.withType<Test> {
+    useJUnitPlatform { excludeTags("integration") }
+}
+```
+
+#### 11.9.3 BiliHttpApiTest 参数迁移
+
+**问题**：`BiliHttpApi` 的接口函数（如 `getVideoPlayUrl`）迁移后移除了 `sessData`/`dedeUserID` 参数（改用 `injectCookies` 拦截器统一注入），但测试代码仍在传这些参数，导致编译错误。
+
+**解决方案**：在 `@BeforeAll` 中设置 `BiliHttpApi` 的字段，移除调用处的参数：
+
+```kotlin
+companion object {
+    @JvmStatic
+    @BeforeAll
+    fun setup() {
+        BiliHttpApi.init(BUVID)
+        BiliHttpApi.sessData = SESSDATA
+        BiliHttpApi.mid = UID
+    }
+}
+```

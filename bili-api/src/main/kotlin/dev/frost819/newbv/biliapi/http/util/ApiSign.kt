@@ -153,7 +153,11 @@ fun HttpClient.encApiSign() =
  */
 fun HttpClient.injectCookies() =
     plugin(HttpSend).intercept { request ->
-        if (!request.isAppRequest) {
+        val isPlayUrlRequest =
+            request.url.encodedPath.contains("/x/player/playurl") ||
+                request.url.encodedPath.contains("/x/player/wbi/playurl")
+
+        if (!request.isAppRequest && !isPlayUrlRequest) {
             val cookieParts = mutableListOf<String>()
 
             // 登录凭证

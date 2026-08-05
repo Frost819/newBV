@@ -95,6 +95,7 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -274,27 +275,38 @@ object BiliHttpApi {
         otype: String = "json",
         type: String = "",
         platform: String = "oc",
-    ): BiliResponse<PlayUrlData> =
-        client.get("/x/player/playurl") {
-            require(av != null || bv != null) { "av and bv cannot be null at the same time" }
-            parameter("avid", av)
-            parameter("bvid", bv)
-            parameter("cid", cid)
-            parameter("qn", qn)
-            parameter("fnval", fnval)
-            parameter("fnver", fnver)
-            parameter("fourk", fourk)
-            parameter("session", session)
-            parameter("otype", otype)
-            parameter("type", type)
-            parameter("platform", platform)
-            if (sessData.isEmpty()) {
-                parameter("web_location", "1315873")
-                parameter("gaia_source", "pre-load")
-                parameter("isGaiaAvoided", "true")
-                parameter("try_look", "1")
+    ): BiliResponse<PlayUrlData> {
+        val response =
+            client.get("/x/player/playurl") {
+                require(av != null || bv != null) { "av and bv cannot be null at the same time" }
+                parameter("avid", av)
+                parameter("bvid", bv)
+                parameter("cid", cid)
+                parameter("qn", qn)
+                parameter("fnval", fnval)
+                parameter("fnver", fnver)
+                parameter("fourk", fourk)
+                parameter("session", session)
+                parameter("otype", otype)
+                parameter("type", type)
+                parameter("platform", platform)
+                if (sessData.isEmpty()) {
+                    parameter("web_location", "1315873")
+                    parameter("gaia_source", "pre-load")
+                    parameter("isGaiaAvoided", "true")
+                    parameter("try_look", "1")
+                }
             }
-        }.body()
+        val rawText = response.bodyAsText()
+        val parsed = json.decodeFromString<JsonObject>(rawText)
+        val data = parsed["data"]
+        if (data is JsonObject && "v_voucher" in data) {
+            throw dev.frost819.newbv.biliapi.http.entity.RiskControlException(
+                "触发风控，请稍后再试或更换接口类型",
+            )
+        }
+        return json.decodeFromString(rawText)
+    }
 
     /**
      * 获取剧集视频流

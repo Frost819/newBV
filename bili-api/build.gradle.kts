@@ -27,21 +27,17 @@ dependencies {
     testImplementation(libs.turbine)
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-    filter {
-        excludeTestsMatching("*HttpApiTest")
-        excludeTestsMatching("*RepositoryTest")
-        excludeTestsMatching("*WebSocketTest")
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeTags("integration")
     }
 }
 
 val integrationTest =
     tasks.register<Test>("integrationTest") {
-        useJUnitPlatform()
-        filter {
-            includeTestsMatching("*HttpApiTest")
-            includeTestsMatching("*RepositoryTest")
-            includeTestsMatching("*WebSocketTest")
+        useJUnitPlatform {
+            includeTags("integration")
         }
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
     }

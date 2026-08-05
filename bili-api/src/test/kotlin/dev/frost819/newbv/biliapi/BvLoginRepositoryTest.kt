@@ -8,6 +8,7 @@ import dev.frost819.newbv.biliapi.repositories.SendSmsState
 import kotlinx.coroutines.runBlocking
 import java.net.URL
 
+@org.junit.jupiter.api.Tag("integration")
 class BvLoginRepositoryTest {
     private val loginRepository = LoginRepository()
     private val phone = 16215705468L

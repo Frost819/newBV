@@ -8,6 +8,7 @@ import java.nio.file.Paths
 import java.util.Properties
 import kotlin.test.Test
 
+@org.junit.jupiter.api.Tag("integration")
 class UgcRepositoryTest {
     companion object {
         private val localProperties =

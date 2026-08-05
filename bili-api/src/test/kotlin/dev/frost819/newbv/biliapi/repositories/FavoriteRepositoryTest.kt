@@ -8,6 +8,7 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
+@org.junit.jupiter.api.Tag("integration")
 class FavoriteRepositoryTest {
     companion object {
         private val localProperties =

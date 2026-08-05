@@ -4,6 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
+@org.junit.jupiter.api.Tag("integration")
 internal class LiveDataWebSocketTest {
     @Test
     fun connectLiveEvent() {

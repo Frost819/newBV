@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+@org.junit.jupiter.api.Tag("integration")
 class BiliPassportHttpApiTest {
     @Test
     fun `get web qr login url`() {

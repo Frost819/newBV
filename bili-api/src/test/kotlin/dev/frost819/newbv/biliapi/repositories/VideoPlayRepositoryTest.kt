@@ -14,6 +14,7 @@ import java.util.Properties
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+@org.junit.jupiter.api.Tag("integration")
 class VideoPlayRepositoryTest {
     companion object {
         private val localProperties =
@@ -327,6 +328,25 @@ class VideoPlayRepositoryTest {
                     )
                 println("api type: $apiType")
                 println(result)
+            }
+        }
+
+    @Test
+    fun `play video three times without risk control`() =
+        runBlocking {
+            val bvid = "BV1fuuc6tEhW"
+            val info = BiliHttpApi.getVideoInfo(bv = bvid).getResponseData()
+            println("aid=${info.aid}, cid=${info.cid}, title=${info.title}")
+            repeat(3) { i ->
+                println("=== Attempt ${i + 1} ===")
+                val result =
+                    videoPlayRepository.getPlayData(
+                        aid = info.aid,
+                        cid = info.cid,
+                        preferApiType = ApiType.Web,
+                    )
+                println("  success: ${result.dashVideos.size} video streams")
+                assert(result.dashVideos.isNotEmpty()) { "Attempt ${i + 1}: no video streams returned" }
             }
         }
 }

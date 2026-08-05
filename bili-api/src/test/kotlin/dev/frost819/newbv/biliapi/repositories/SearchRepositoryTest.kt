@@ -9,6 +9,7 @@ import java.nio.file.Paths
 import java.util.Properties
 import java.util.UUID
 
+@org.junit.jupiter.api.Tag("integration")
 class SearchRepositoryTest {
     companion object {
         private val localProperties =

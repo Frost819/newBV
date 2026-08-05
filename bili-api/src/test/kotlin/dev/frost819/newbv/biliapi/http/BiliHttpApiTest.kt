@@ -15,6 +15,7 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
+@org.junit.jupiter.api.Tag("integration")
 internal class BiliHttpApiTest {
     companion object {
         private val localProperties =
@@ -38,6 +39,8 @@ internal class BiliHttpApiTest {
         fun setup() {
             // 在这里执行初始化
             BiliHttpApi.init(BUVID)
+            BiliHttpApi.sessData = SESSDATA
+            BiliHttpApi.mid = UID
             println("BiliHttpApi initialized with BUVID: $BUVID")
         }
     }
@@ -88,8 +91,6 @@ internal class BiliHttpApiTest {
                         cid = 903675075,
                         fnval = 4048,
                         qn = 127,
-                        sessData = SESSDATA,
-                        dedeUserID = UID,
                     )
                 println(response)
             }
@@ -105,8 +106,6 @@ internal class BiliHttpApiTest {
                     cid = 331748015,
                     fnval = 4048,
                     qn = 127,
-                    sessData = SESSDATA,
-                    dedeUserID = UID,
                 ),
             )
         }
@@ -121,7 +120,6 @@ internal class BiliHttpApiTest {
                     cid = 331748015,
                     fnval = 4048,
                     qn = 127,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -144,7 +142,6 @@ internal class BiliHttpApiTest {
                 val response =
                     BiliHttpApi.getDynamicList(
                         type = "article",
-                        sessData = SESSDATA,
                     )
                 println(response)
             }
@@ -158,7 +155,6 @@ internal class BiliHttpApiTest {
                 val response =
                     BiliHttpApi.getUserInfo(
                         uid = 163637592,
-                        sessData = SESSDATA,
                     )
                 println(response)
             }
@@ -173,7 +169,6 @@ internal class BiliHttpApiTest {
                     BiliHttpApi.getUserCardInfo(
                         uid = 163637592,
                         photo = true,
-                        sessData = SESSDATA,
                     )
                 println(response)
             }
@@ -186,7 +181,6 @@ internal class BiliHttpApiTest {
             runBlocking {
                 val response =
                     BiliHttpApi.getUserSelfInfo(
-                        sessData = SESSDATA,
                     )
                 println(response)
             }
@@ -200,7 +194,6 @@ internal class BiliHttpApiTest {
                 val response =
                     BiliHttpApi.getHistories(
                         viewAt = 0,
-                        sessData = SESSDATA,
                     )
                 println(response)
             }
@@ -237,7 +230,6 @@ internal class BiliHttpApiTest {
             val response =
                 BiliHttpApi.getAllFavoriteFoldersInfo(
                     mid = 2333,
-                    sessData = SESSDATA,
                 )
             println(response)
         }
@@ -249,7 +241,6 @@ internal class BiliHttpApiTest {
             val response =
                 BiliHttpApi.getFavoriteIdList(
                     mediaId = 2333,
-                    sessData = SESSDATA,
                 )
             println(response)
         }
@@ -261,7 +252,6 @@ internal class BiliHttpApiTest {
             val response =
                 BiliHttpApi.getFavoriteList(
                     mediaId = 2333,
-                    sessData = SESSDATA,
                 )
             println(response)
         }
@@ -275,7 +265,6 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     cid = 280468,
                     playedTime = 23,
-                    sessData = SESSDATA,
                 )
             println(response)
         }
@@ -288,8 +277,6 @@ internal class BiliHttpApiTest {
                 BiliHttpApi.getVideoMoreInfo(
                     avid = 170001,
                     cid = 279786,
-                    sessData = SESSDATA,
-                    buvid3 = generateBuvid(),
                 ).getResponseData()
             println("lastPlayTime: ${response.lastPlayTime}")
             println("lastPlayCid: ${response.lastPlayCid}")
@@ -304,7 +291,6 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     like = true,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -316,7 +302,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoLiked(
                     avid = 170001,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -329,8 +314,6 @@ internal class BiliHttpApiTest {
                 BiliHttpApi.sendVideoCoin(
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
-                    buvid3 = BUVID,
                 ),
             )
         }
@@ -342,7 +325,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoSentCoin(
                     avid = 170001,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -356,7 +338,6 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     addMediaIds = listOf(46912037),
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -370,7 +351,6 @@ internal class BiliHttpApiTest {
                     avid = 170001,
                     delMediaIds = listOf(46912037),
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -382,7 +362,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.checkVideoFavoured(
                     avid = 170001,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -395,7 +374,6 @@ internal class BiliHttpApiTest {
                 BiliHttpApi.sendVideoOneClickTripleAction(
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -407,7 +385,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getWebUserSpaceVideos(
                     mid = 1,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -442,7 +419,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getSeasonUserStatus(
                     seasonId = 44152,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -510,7 +486,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getUserFollow(
                     mid = 3066511,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -525,7 +500,6 @@ internal class BiliHttpApiTest {
                     action = FollowAction.AddFollow,
                     actionSource = FollowActionSource.Space,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -540,7 +514,6 @@ internal class BiliHttpApiTest {
                     action = FollowAction.DelFollow,
                     actionSource = FollowActionSource.Space,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -552,7 +525,6 @@ internal class BiliHttpApiTest {
             println(
                 BiliHttpApi.getRelations(
                     mid = 11336264,
-                    sessData = SESSDATA,
                 ),
             )
         }
@@ -675,7 +647,6 @@ internal class BiliHttpApiTest {
                             pageNumber = 1,
                             pageSize = 1,
                             mid = UID,
-                            sessData = SESSDATA,
                         ),
                     )
                 }
@@ -845,7 +816,6 @@ internal class BiliHttpApiTest {
                 BiliHttpApi.addToView(
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 )
             println(result)
             assert(result.first)
@@ -858,7 +828,6 @@ internal class BiliHttpApiTest {
                 BiliHttpApi.addToView(
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 )
             println(addRes)
             assert(addRes.first)
@@ -867,7 +836,6 @@ internal class BiliHttpApiTest {
                     viewed = false,
                     avid = 170001,
                     csrf = BILI_JCT,
-                    sessData = SESSDATA,
                 )
             println(result)
             assert(result.first)
