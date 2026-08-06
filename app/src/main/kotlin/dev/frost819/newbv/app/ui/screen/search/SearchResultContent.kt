@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -61,6 +62,7 @@ import dev.frost819.newbv.app.ui.state.search.TypedSearchResult
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.removeHtmlTags
 import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.search.SearchResultViewModel
 import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
 import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
@@ -96,6 +98,7 @@ fun SearchResultContent(
     navController: NavController,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
 
     val gridState = rememberLazyGridState()
     val tabRowFocusRequester = remember { FocusRequester() }
@@ -233,6 +236,13 @@ fun SearchResultContent(
                                 onClick = {
                                     navController.navigate(VideoDetailRoute(aid = v.aid))
                                 },
+                                onGoToDetailPage = {
+                                    navController.navigate(VideoDetailRoute(aid = v.aid))
+                                },
+                                onGoToUpPage = {
+                                    navController.navigate(UserSpaceRoute(mid = v.mid))
+                                },
+                                onAddWatchLater = { watchLaterViewModel.addToView(aid = v.aid) },
                             )
                         }
                         is SearchResultItem.PgcItem -> {

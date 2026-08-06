@@ -17,6 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
@@ -24,9 +25,11 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
+import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -49,6 +52,7 @@ fun HistoryScreen(
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
     val focusSaver = rememberFocusSaver()
+    val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
 
     focusSaver.RestoreFocus()
 
@@ -117,6 +121,10 @@ fun HistoryScreen(
                 onGoToDetailPage = {
                     navController.navigate(VideoDetailRoute(aid = item.oid))
                 },
+                onGoToUpPage = item.mid?.let { mid ->
+                    { navController.navigate(UserSpaceRoute(mid = mid)) }
+                },
+                onAddWatchLater = { watchLaterViewModel.addToView(aid = item.oid) },
             )
         }
 

@@ -14,6 +14,7 @@ import dev.frost819.newbv.app.ui.screen.player.videoPlayerScreen
 import dev.frost819.newbv.app.ui.screen.search.searchResultScreen
 import dev.frost819.newbv.app.ui.screen.search.searchScreen
 import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
+import dev.frost819.newbv.app.ui.screen.user.followScreen
 import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
 
@@ -50,6 +51,7 @@ fun AppNavHost(
 
         // ── 用户 ─────────────────────────────────────────────────────
         userSpaceScreen(navController)
+        followScreen(navController)
 
         // ── PGC ──────────────────────────────────────────────────────
         pgcFeatureScreen(navController)

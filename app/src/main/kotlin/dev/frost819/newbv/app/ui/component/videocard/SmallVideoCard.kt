@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
@@ -64,6 +65,7 @@ import dev.frost819.newbv.R
  * @param onAddWatchLater 稍后再看回调（null 时不显示按钮）。
  * @param onGoToDetailPage 详情页回调（null 时不显示按钮）。
  * @param onGoToUpPage UP 主页回调（null 时不显示按钮）。
+ * @param onRemoveWatchLater 移除稍后再看回调（null 时不显示按钮）。
  */
 @Composable
 fun SmallVideoCard(
@@ -73,12 +75,14 @@ fun SmallVideoCard(
     onAddWatchLater: (() -> Unit)? = null,
     onGoToDetailPage: (() -> Unit)? = null,
     onGoToUpPage: (() -> Unit)? = null,
+    onRemoveWatchLater: (() -> Unit)? = null,
 ) {
     var showActions by remember { mutableStateOf(false) }
     var releaseLongPress by remember { mutableStateOf(false) }
     val firstButtonRequester = remember { FocusRequester() }
 
-    val hasAnyAction = onAddWatchLater != null || onGoToDetailPage != null || onGoToUpPage != null
+    val hasAnyAction = onAddWatchLater != null || onGoToDetailPage != null ||
+        onGoToUpPage != null || onRemoveWatchLater != null
 
     BackHandler(enabled = showActions) {
         showActions = false
@@ -181,6 +185,30 @@ fun SmallVideoCard(
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "UP主主页",
+                            )
+                        }
+                    }
+
+                    onRemoveWatchLater?.let { action ->
+                        val removeIsFirst = !isFirst && onAddWatchLater == null &&
+                            onGoToDetailPage == null && onGoToUpPage == null
+                        IconButton(
+                            onClick = {
+                                if (removeIsFirst && !releaseLongPress) {
+                                    releaseLongPress = true
+                                    return@IconButton
+                                }
+                                action()
+                            },
+                            modifier = if (removeIsFirst) {
+                                Modifier.focusRequester(firstButtonRequester)
+                            } else {
+                                Modifier
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "移除稍后再看",
                             )
                         }
                     }

@@ -196,6 +196,15 @@ fun MainScreen(
                                 showUserPanel = false
                                 navController.navigate(dev.frost819.newbv.app.ui.navigation.UserSwitchRoute)
                             },
+                            onGoFollowList = {
+                                showUserPanel = false
+                                val uid = userUiState.uid
+                                if (uid != 0L) {
+                                    navController.navigate(
+                                        dev.frost819.newbv.app.ui.navigation.FollowRoute(mid = uid)
+                                    )
+                                }
+                            },
                         )
                     }
                 }

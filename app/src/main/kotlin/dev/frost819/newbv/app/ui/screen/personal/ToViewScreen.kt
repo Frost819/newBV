@@ -23,6 +23,7 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
+import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
@@ -108,6 +109,12 @@ fun ToViewScreen(
                     onGoToDetailPage = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))
                     },
+                    onRemoveWatchLater = {
+                        viewModel.delToView(aid = item.oid, viewed = (item.progress == -1))
+                    },
+                    onGoToUpPage = item.mid?.let { mid ->
+                        { navController.navigate(UserSpaceRoute(mid = mid)) }
+                    },
                 )
             }
         }
@@ -143,6 +150,12 @@ fun ToViewScreen(
                     },
                     onGoToDetailPage = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))
+                    },
+                    onRemoveWatchLater = {
+                        viewModel.delToView(aid = item.oid, viewed = (item.progress == -1))
+                    },
+                    onGoToUpPage = item.mid?.let { mid ->
+                        { navController.navigate(UserSpaceRoute(mid = mid)) }
                     },
                 )
             }

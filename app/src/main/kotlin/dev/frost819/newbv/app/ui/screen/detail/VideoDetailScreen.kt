@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
@@ -57,6 +60,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -91,9 +95,11 @@ import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiState
+import dev.frost819.newbv.biliapi.entity.FavoriteFolderMetadata
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.Tag
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -249,6 +255,7 @@ private fun VideoDetailContent(
 
     var showPartListDialog by remember { mutableStateOf(false) }
     var showSeasonListDialog by remember { mutableStateOf(false) }
+    var showFavoriteDialog by remember { mutableStateOf(false) }
     var seasonDialogSectionIndex by remember { mutableStateOf(0) }
     var seasonDialogEpisodes by remember { mutableStateOf<List<Episode>>(emptyList()) }
     var seasonDialogTitle by remember { mutableStateOf("") }
@@ -269,7 +276,13 @@ private fun VideoDetailContent(
             onToggleLike = { viewModel.toggleLike(!state.isLiked) },
             onSendCoin = { viewModel.sendCoin() },
             onOneClickTriple = { viewModel.oneClickTripleAction() },
-            onToggleFavorite = { viewModel.toggleFavorite() },
+            onToggleFavorite = {
+                if (state.isFavorite) {
+                    showFavoriteDialog = true
+                } else {
+                    viewModel.toggleFavorite()
+                }
+            },
             onToggleFollow = { viewModel.toggleFollow() },
             onClickTag = { tag ->
                 navController.navigate(SearchResultRoute(keyword = tag.name))
@@ -372,6 +385,7 @@ private fun VideoDetailContent(
                         )
                     }
                 },
+                navController = navController,
                 focusSaver = focusSaver,
             )
         }
@@ -425,6 +439,88 @@ private fun VideoDetailContent(
                 }
             },
         )
+    }
+
+    if (showFavoriteDialog) {
+        FavoriteFolderDialog(
+            folders = state.favoriteFolders,
+            selectedFolderIds = state.videoFavoriteFolderIds,
+            onDismiss = { showFavoriteDialog = false },
+            onUpdate = { folderIds ->
+                viewModel.updateFavorite(folderIds)
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun FavoriteFolderDialog(
+    folders: List<FavoriteFolderMetadata>,
+    selectedFolderIds: Set<Long>,
+    onDismiss: () -> Unit,
+    onUpdate: (List<Long>) -> Unit,
+) {
+    val selectedIds = remember { androidx.compose.runtime.mutableStateListOf<Long>() }
+    val defaultFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(selectedFolderIds) {
+        selectedIds.clear()
+        selectedIds.addAll(selectedFolderIds)
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .focusRequester(defaultFocusRequester)
+                .onGloballyPositioned {
+                    runCatching { defaultFocusRequester.requestFocus() }
+                }
+                .width(500.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(Color.Black.copy(alpha = 0.95f))
+                .padding(20.dp),
+        ) {
+            Column {
+                Text(
+                    text = "选择收藏夹",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = Modifier
+                        .heightIn(max = 300.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    folders.forEachIndexed { index, folder ->
+                        val selected = selectedIds.contains(folder.id)
+                        androidx.tv.material3.FilterChip(
+                            selected = selected,
+                            onClick = {
+                                if (selectedIds.contains(folder.id)) {
+                                    selectedIds.remove(folder.id)
+                                } else {
+                                    selectedIds.add(folder.id)
+                                }
+                                onUpdate(selectedIds.toList())
+                            },
+                        ) {
+                            Text(
+                                text = folder.title,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1055,8 +1151,10 @@ private fun VideoUgcSeasonRow(
 private fun RelatedVideoRow(
     videos: List<RelatedVideo>,
     onClick: (RelatedVideo) -> Unit,
+    navController: NavController,
     focusSaver: ScreenFocusSaver,
 ) {
+    val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1098,6 +1196,10 @@ private fun RelatedVideoRow(
                     data = cardData,
                     onClick = { onClick(video) },
                     onGoToDetailPage = { onClick(video) },
+                    onGoToUpPage = video.author?.mid?.let { mid ->
+                        { navController.navigate(UserSpaceRoute(mid = mid)) }
+                    },
+                    onAddWatchLater = { watchLaterViewModel.addToView(aid = video.aid) },
                 )
             }
         }

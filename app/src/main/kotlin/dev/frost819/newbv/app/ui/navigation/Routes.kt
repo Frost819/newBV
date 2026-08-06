@@ -75,6 +75,12 @@ data class UserSpaceRoute(
     val mid: Long
 )
 
+/** 关注列表页。 */
+@Serializable
+data class FollowRoute(
+    val mid: Long
+)
+
 // ── 番剧/PGC ──────────────────────────────────────────────────────────
 
 /** 番剧详情页。 */

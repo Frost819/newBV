@@ -53,6 +53,7 @@ fun UserPanel(
     viewModel: UserViewModel = hiltViewModel(),
     onHide: () -> Unit = {},
     onGoUserSwitch: () -> Unit = {},
+    onGoFollowList: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,6 +63,7 @@ fun UserPanel(
         uiState = uiState,
         onToggleIncognito = { viewModel.toggleIncognitoMode() },
         onGoUserSwitch = onGoUserSwitch,
+        onGoFollowList = onGoFollowList,
     )
 }
 
@@ -75,6 +77,7 @@ private fun UserPanelContent(
     uiState: AccountUiState,
     onToggleIncognito: () -> Unit = {},
     onGoUserSwitch: () -> Unit = {},
+    onGoFollowList: () -> Unit = {},
 ) {
     Surface(
         modifier = modifier
@@ -143,6 +146,11 @@ private fun UserPanelContent(
                 Button(onClick = onGoUserSwitch) {
                     Text(text = stringResource(R.string.user_panel_account))
                 }
+                if (uiState.isLogin) {
+                    Button(onClick = onGoFollowList) {
+                        Text(text = "关注列表")
+                    }
+                }
             }
         }
     }
@@ -163,6 +171,7 @@ private fun UserPanelContentPreview() {
                 nextExp = 8000,
                 incognitoMode = false,
             ),
+            onGoFollowList = {},
         )
     }
 }
