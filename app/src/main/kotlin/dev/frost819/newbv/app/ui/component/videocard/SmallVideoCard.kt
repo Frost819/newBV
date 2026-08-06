@@ -191,6 +191,7 @@ fun SmallVideoCard(
                     play = data.playString,
                     danmaku = data.danmakuString,
                     time = data.timeString,
+                    progress = data.progress,
                 )
             }
         }
@@ -216,6 +217,7 @@ private fun CardCover(
     play: String,
     danmaku: String,
     time: String,
+    progress: Float? = null,
 ) {
     Box(
         modifier = modifier
@@ -290,6 +292,22 @@ private fun CardCover(
                 color = Color.White,
                 maxLines = 1,
             )
+        }
+
+        if (progress != null && progress > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(Color.White.copy(alpha = 0.3f)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .height(3.dp)
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+            }
         }
     }
 }
@@ -380,6 +398,7 @@ private fun CardCoverPreview() {
                     play = "12.3万",
                     danmaku = "9999",
                     time = "10:42",
+                    progress = 0.6f,
                 )
             }
         }

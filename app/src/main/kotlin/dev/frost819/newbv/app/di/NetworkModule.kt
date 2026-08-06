@@ -12,6 +12,7 @@ import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
+import dev.frost819.newbv.biliapi.repositories.HistoryRepository
 import dev.frost819.newbv.biliapi.repositories.LikeRepository
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
 import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
@@ -19,6 +20,7 @@ import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.SearchRepository
+import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
@@ -217,6 +219,30 @@ object NetworkModule {
     fun provideOneClickTripleActionRepository(
         authRepository: AuthRepository,
     ): OneClickTripleActionRepository = OneClickTripleActionRepository(authRepository)
+
+    /**
+     * 提供 [ToViewRepository] 单例。
+     *
+     * 封装稍后再看列表查询、添加、删除（Web HTTP + App gRPC）。
+     */
+    @Provides
+    @Singleton
+    fun provideToViewRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): ToViewRepository = ToViewRepository(authRepository, channelRepository)
+
+    /**
+     * 提供 [HistoryRepository] 单例。
+     *
+     * 封装观看历史列表查询（Web HTTP + App gRPC，cursor 分页）。
+     */
+    @Provides
+    @Singleton
+    fun provideHistoryRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): HistoryRepository = HistoryRepository(authRepository, channelRepository)
 
     /**
      * 提供 [VideoDetailRepository] 单例。

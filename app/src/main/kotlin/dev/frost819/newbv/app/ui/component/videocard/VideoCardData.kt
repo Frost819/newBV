@@ -17,6 +17,7 @@ package dev.frost819.newbv.app.ui.component.videocard
  * @property danmakuString 弹幕数显示字符串（已格式化）。
  * @property timeString 时长显示字符串（已格式化）。
  * @property pubTime 发布时间显示字符串。
+ * @property progress 播放进度比例（0.0–1.0），null 表示不显示进度条。
  */
 data class VideoCardData(
     val avid: Long,
@@ -30,4 +31,5 @@ data class VideoCardData(
     val danmakuString: String = "",
     val timeString: String = "",
     val pubTime: String? = null,
+    val progress: Float? = null,
 )

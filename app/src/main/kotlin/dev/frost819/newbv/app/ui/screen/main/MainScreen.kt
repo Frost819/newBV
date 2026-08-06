@@ -155,7 +155,10 @@ fun MainScreen(
                             },
                         )
                     }
-                    LeftNaviItem.Personal -> PlaceholderContent("个人")
+                    LeftNaviItem.Personal -> dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                    )
                     LeftNaviItem.UGC -> dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
                         navFocusRequester = homeFocusRequester,
                         navController = navController,
