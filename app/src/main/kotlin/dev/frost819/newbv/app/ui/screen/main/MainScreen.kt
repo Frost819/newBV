@@ -81,11 +81,7 @@ fun MainScreen(
     }
 
     val onFocusToContent: () -> Unit = {
-        when (selectedDrawerItem) {
-            LeftNaviItem.Home, LeftNaviItem.UGC, LeftNaviItem.PGC, LeftNaviItem.Search, LeftNaviItem.Personal ->
-                runCatching { homeFocusRequester.requestFocus() }
-            else -> {}
-        }
+        runCatching { homeFocusRequester.requestFocus() }
     }
 
     LaunchedEffect(Unit) {
