@@ -103,6 +103,7 @@ fun UgcContent(
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = UgcTabItem.entries.toList(),
+                selectedIndex = UgcTabItem.entries.indexOf(selectedTab),
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = nav as UgcTabItem

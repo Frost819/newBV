@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.tv.material3.Text
  * Tab 切换时触发 [onSelectedChanged]，点击同一 Tab 触发 [onClick]（用于刷新）。
  *
  * @param items Tab 项列表（已按首选项排序）。
+ * @param selectedIndex 当前选中的 Tab 索引（由外部控制，用于导航返回后恢复）。
  * @param isLargePadding 内容区未获焦点时使用较大内边距。
  * @param onSelectedChanged Tab 焦点切换回调。
  * @param onClick Tab 点击回调。
@@ -42,13 +44,18 @@ import androidx.tv.material3.Text
 fun TopNav(
     modifier: Modifier = Modifier,
     items: List<TopNavItem>,
+    selectedIndex: Int = 0,
     isLargePadding: Boolean,
     onSelectedChanged: (TopNavItem) -> Unit = {},
     onClick: (TopNavItem) -> Unit = {},
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(selectedIndex) }
+
+    LaunchedEffect(selectedIndex) {
+        selectedTabIndex = selectedIndex
+    }
     val verticalPadding by animateDpAsState(
         targetValue = if (isLargePadding) 12.dp else 6.dp,
         label = "top-nav-padding",

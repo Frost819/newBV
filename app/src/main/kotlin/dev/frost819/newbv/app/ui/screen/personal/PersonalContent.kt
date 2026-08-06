@@ -67,6 +67,7 @@ fun PersonalContent(
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = reorderedItems,
+                selectedIndex = reorderedItems.indexOf(PersonalTabItem(selectedTab)),
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     selectedTab = (nav as PersonalTabItem).item

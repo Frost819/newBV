@@ -71,6 +71,7 @@ fun HomeContent(
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = reorderedItems,
+                selectedIndex = reorderedItems.indexOf(HomeTabItem(selectedTab)),
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = (nav as HomeTabItem).item

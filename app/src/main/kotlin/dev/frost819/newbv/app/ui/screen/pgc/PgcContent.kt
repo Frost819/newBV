@@ -90,6 +90,7 @@ fun PgcContent(
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = PgcTabItem.entries.toList(),
+                selectedIndex = PgcTabItem.entries.indexOf(selectedTab),
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = nav as PgcTabItem
