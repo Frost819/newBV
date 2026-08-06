@@ -96,6 +96,9 @@ class SearchResultViewModelTest {
         sign = "签名",
     )
 
+    private fun fakeVideoList(count: Int): List<SearchTypeResult.Video> =
+        (1..count).map { fakeVideoResult(it.toLong()) }
+
     private fun fakeVideoSearchResult(videos: List<SearchTypeResult.Video>) = SearchTypeResult(
         videos = videos,
         page = SearchTypePage(nextPageForWeb = 2),
@@ -128,7 +131,7 @@ class SearchResultViewModelTest {
                 page = any(),
                 preferApiType = any(),
             )
-        } returns fakeVideoSearchResult(listOf(fakeVideoResult(1), fakeVideoResult(2)))
+        } returns fakeVideoSearchResult(fakeVideoList(20))
 
         coEvery {
             searchRepo.searchType(
@@ -183,7 +186,7 @@ class SearchResultViewModelTest {
         assertThat(state.keyword).isEqualTo("测试")
 
         val videoResult = state.results[SearchType.Video]!!
-        assertThat(videoResult.items).hasSize(2)
+        assertThat(videoResult.items).hasSize(20)
         assertThat(videoResult.isLoading).isFalse()
         assertThat(videoResult.error).isFalse()
 
@@ -201,7 +204,7 @@ class SearchResultViewModelTest {
     fun `search resets all previous results`() = runTest(testDispatcher) {
         viewModel.search("第一次")
         advanceUntilIdle()
-        assertThat(viewModel.uiState.value.results[SearchType.Video]!!.items).hasSize(2)
+        assertThat(viewModel.uiState.value.results[SearchType.Video]!!.items).hasSize(20)
 
         viewModel.search("第二次")
         advanceUntilIdle()
@@ -210,7 +213,7 @@ class SearchResultViewModelTest {
         assertThat(state.keyword).isEqualTo("第二次")
         // Results should have been reset then reloaded
         val videoResult = state.results[SearchType.Video]!!
-        assertThat(videoResult.items).hasSize(2)
+        assertThat(videoResult.items).hasSize(20)
         val first = videoResult.items[0] as dev.frost819.newbv.app.ui.state.search.SearchResultItem.VideoItem
         assertThat(first.video.aid).isEqualTo(1)
     }
@@ -231,7 +234,7 @@ class SearchResultViewModelTest {
 
         val firstPageCount = viewModel.uiState.value.results[SearchType.Video]!!.items.size
 
-        // Return more items for second page
+        // Return more items for second page (aid 21-40, no duplicates with page 1)
         coEvery {
             searchRepo.searchType(
                 keyword = any(),
@@ -242,13 +245,13 @@ class SearchResultViewModelTest {
                 page = any(),
                 preferApiType = any(),
             )
-        } returns fakeVideoSearchResult(listOf(fakeVideoResult(3), fakeVideoResult(4), fakeVideoResult(5)))
+        } returns fakeVideoSearchResult((21..40).map { fakeVideoResult(it.toLong()) })
 
         viewModel.loadMore(SearchType.Video)
         advanceUntilIdle()
 
         val result = viewModel.uiState.value.results[SearchType.Video]!!
-        assertThat(result.items).hasSize(firstPageCount + 3)
+        assertThat(result.items).hasSize(firstPageCount + 20)
     }
 
     @Test
@@ -398,7 +401,7 @@ class SearchResultViewModelTest {
         advanceUntilIdle()
 
         val items = viewModel.uiState.value.results[SearchType.Video]!!.items
-        assertThat(items).hasSize(2)
+        assertThat(items).hasSize(20)
         val first = items[0] as dev.frost819.newbv.app.ui.state.search.SearchResultItem.VideoItem
         assertThat(first.video.aid).isEqualTo(1)
         assertThat(first.video.title).isEqualTo("video 1")

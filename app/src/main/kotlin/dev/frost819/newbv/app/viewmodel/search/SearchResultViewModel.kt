@@ -41,6 +41,7 @@ class SearchResultViewModel @Inject constructor(
 
     companion object {
         private const val LOAD_TIMEOUT_MS = 10_000L
+        private const val MIN_PAGE_SIZE = 20
     }
 
     private val _uiState = MutableStateFlow(SearchResultUiState())
@@ -124,8 +125,8 @@ class SearchResultViewModel @Inject constructor(
                         }
                         key !in existingIds
                     }
-                    // API 返回了数据但全是重复项 → 没有更多了，避免无限加载
-                    val hasMore = dedupedNewItems.isNotEmpty()
+                    // 返回结果不足一页（20条）或全是重复项 → 没有更多了
+                    val hasMore = dedupedNewItems.size >= MIN_PAGE_SIZE
                     it.copy(
                         items = it.items + dedupedNewItems,
                         page = searchResult.page,
