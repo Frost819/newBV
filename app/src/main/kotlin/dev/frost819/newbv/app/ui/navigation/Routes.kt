@@ -101,6 +101,10 @@ object MediaCodecRoute
 @Serializable
 object SpeedTestRoute
 
+/** 日志查看页。 */
+@Serializable
+object LogViewerRoute
+
 // ── 登录 ──────────────────────────────────────────────────────────────
 
 /** 登录页面。 */

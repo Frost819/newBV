@@ -5,7 +5,6 @@ import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonStatus
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonType
 import dev.frost819.newbv.biliapi.http.entity.user.FollowAction
 import dev.frost819.newbv.biliapi.http.entity.user.FollowActionSource
-import dev.frost819.newbv.biliapi.http.util.generateBuvid
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -180,8 +179,7 @@ internal class BiliHttpApiTest {
         assertDoesNotThrow {
             runBlocking {
                 val response =
-                    BiliHttpApi.getUserSelfInfo(
-                    )
+                    BiliHttpApi.getUserSelfInfo()
                 println(response)
             }
         }

@@ -245,7 +245,7 @@ data class PlayData(
                             quality = it.id,
                             baseUrl = it.baseUrl,
                             bandwidth = it.bandwidth,
-                            codecId = it.id,
+                            codecId = it.codecId,
                             width = it.width,
                             height = it.height,
                             frameRate = it.frameRate,

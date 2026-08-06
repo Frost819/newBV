@@ -65,23 +65,23 @@ enum class Resolution(val code: Int) {
  *
  * 通过 ordinal 持久化，反序列化时越界回退到 [AVC]。
  *
- * @property prefix 编码前缀，用于从 codec string 匹配（如 `avc1`、`hev1`）。
+ * @property prefix 主要编码前缀，用于显示和 API 参数。
  * @property codecId B 站编码 ID。
+ * @property prefixes 所有匹配前缀，用于从 codec string 匹配（如 HEVC 匹配 `hev1.*` 和 `hvc1.*`）。
  */
-enum class VideoCodec(val prefix: String, val codecId: Int) {
+enum class VideoCodec(val prefix: String, val codecId: Int, val prefixes: List<String> = listOf(prefix)) {
     AVC("avc1", 7),
-    HEVC("hev1", 12),
+    HEVC("hev1", 12, listOf("hev1", "hvc1")),
     AV1("av01", 13),
-    DVH1("dvh1", 0),
-    HVC1("hvc", 0);
+    DVH1("dvh1", 0);
 
     companion object {
         /** 从 ordinal 安全解析，越界返回 [AVC]。 */
         fun fromCode(ordinal: Int): VideoCodec = entries.find { it.ordinal == ordinal } ?: AVC
 
-        /** 从 codec string（如 `avc1.640028`）匹配编码，无匹配返回 null。 */
+        /** 从 codec string（如 `avc1.640028`、`hvc1.1.6.L153.90`）匹配编码，无匹配返回 null。 */
         fun fromCodecString(codec: String): VideoCodec? = runCatching {
-            entries.forEach { if (codec.startsWith(it.prefix)) return it }
+            entries.forEach { if (it.prefixes.any { p -> codec.startsWith(p) }) return it }
             null
         }.getOrNull()
 

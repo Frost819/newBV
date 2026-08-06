@@ -252,6 +252,10 @@ class PlayerViewModel @Inject constructor(
         val newPlayer = exoPlayerFactory.create(context.applicationContext, options)
         newPlayer.setPlayerEventListener(videoPlayerListener)
         videoPlayer = newPlayer
+
+        val initialSpeed = Prefs.defaultPlaySpeed.speed
+        _uiState.update { it.copy(playSpeed = initialSpeed) }
+        newPlayer.speed = initialSpeed
     }
 
     /** 释放播放器资源，同步进度到 B 站。 */
@@ -639,10 +643,11 @@ class PlayerViewModel @Inject constructor(
         val apiType = getApiType()
 
         val foundVideo = data.dashVideos.find {
+            val codecStr = it.codecs
             when (apiType) {
-                ApiType.Web -> it.quality == targetQn && it.codecs?.startsWith(targetCodec.prefix) == true
+                ApiType.Web -> it.quality == targetQn && codecStr != null && targetCodec.prefixes.any { p -> codecStr.startsWith(p) }
                 ApiType.App -> if (data.codec.isEmpty()) it.quality == targetQn
-                    else it.quality == targetQn && it.codecs?.startsWith(targetCodec.prefix) == true
+                    else it.quality == targetQn && codecStr != null && targetCodec.prefixes.any { p -> codecStr.startsWith(p) }
             }
         } ?: data.dashVideos.firstOrNull() ?: return null
 

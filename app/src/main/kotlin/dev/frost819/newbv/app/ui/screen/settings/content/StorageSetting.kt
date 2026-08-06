@@ -60,7 +60,7 @@ fun StorageSetting(
         val imageCacheDir = File(context.cacheDir, "image_cache")
         val updateCacheDir = File(context.cacheDir, "update_downloader")
         val crashLogsDir = File(context.filesDir, CrashHandler.LOG_DIR)
-        val interactionLogsDir = File(context.filesDir, "interaction_logs")
+        val interactionLogsDir = File(context.filesDir, InteractionLogger.FILE_PREFIX)
 
         imageCacheSize = getFolderSize(imageCacheDir)
         updateCacheSize = getFolderSize(updateCacheDir)
@@ -140,7 +140,7 @@ fun StorageSetting(
                         supportText = if (loading) "计算中..." else "${interactionLogsSize / 1024 / 1024} MB",
                         onClick = {
                             clearFun = {
-                                File(context.filesDir, "interaction_logs").deleteRecursively()
+                                File(context.filesDir, InteractionLogger.FILE_PREFIX).deleteRecursively()
                             }
                             dialogContent = "交互日志"
                             dialogSize = interactionLogsSize

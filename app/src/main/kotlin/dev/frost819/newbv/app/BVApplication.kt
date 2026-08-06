@@ -55,6 +55,14 @@ class BVApplication : Application() {
 
         Prefs.init(dataStore)
 
+        interactionLogger.setEnabled(Prefs.interactionLog)
+
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            Prefs.interactionLogFlow.collect { enabled ->
+                interactionLogger.setEnabled(enabled)
+            }
+        }
+
         val buvid3 = Prefs.buvid3
         val deviceCookies = Prefs.deviceCookies
         val sessData = Prefs.sessData

@@ -9,7 +9,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -311,7 +315,7 @@ object Prefs {
     // --- 应用界面（PRD 7.2） ---
 
     /** 界面缩放密度（默认 1f，app 层 init 时按屏幕宽度重新计算）。 */
-    var density by pref(PrefKeys.density, 1f)
+    var density by pref(PrefKeys.density, 2f)
     /** 启动页（左侧导航项）。 */
     var homeLeftNavItem by pref(
         PrefKeys.homeLeftNavItem,
@@ -349,6 +353,29 @@ object Prefs {
     var imageCacheThreshold by pref(PrefKeys.imageCacheThreshold, 500)
     /** 其他缓存阈值（MB）。 */
     var otherCacheThreshold by pref(PrefKeys.otherCacheThreshold, 200)
+
+    // ===== Flow 属性（用于 Compose collectAsState 实时观察） =====
+
+    /** 主题模式 Flow（实时响应设置变更）。 */
+    val themeModeFlow: StateFlow<ThemeMode>
+        get() = (delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>)
+            ?.flow?.map { ThemeMode.fromOrdinal(it as? Int ?: 0) }
+            ?.stateIn(scope, SharingStarted.Eagerly, ThemeMode.FollowSystem)
+            ?: MutableStateFlow(ThemeMode.FollowSystem)
+
+    /** Density Flow（实时响应设置变更）。 */
+    val densityFlow: StateFlow<Float>
+        get() = (delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>)
+            ?.flow?.map { it as? Float ?: 2f }
+            ?.stateIn(scope, SharingStarted.Eagerly, 2f)
+            ?: MutableStateFlow(2f)
+
+    /** 交互日志开关 Flow（实时响应设置变更）。 */
+    val interactionLogFlow: StateFlow<Boolean>
+        get() = (delegateMap[PrefKeys.interactionLog] as? PrefDelegate<Boolean, Boolean>)
+            ?.flow?.map { it as? Boolean ?: true }
+            ?.stateIn(scope, SharingStarted.Eagerly, true)
+            ?: MutableStateFlow(true)
 
     // ===== 初始化 =====
 

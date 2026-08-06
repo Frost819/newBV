@@ -29,14 +29,16 @@ import dev.frost819.newbv.data.datastore.Prefs
 /**
  * 其他设置页。
  *
- * 接口选择/交互日志开关/崩溃上报端点/CDN 测速。
+ * 接口选择/交互日志开关/崩溃上报端点/查看日志/CDN 测速。
  *
  * @param onNavigateToSpeedTest 跳转 CDN 测速页回调。
+ * @param onNavigateToLogViewer 跳转日志查看页回调。
  */
 @Composable
 fun OtherSetting(
     modifier: Modifier = Modifier,
     onNavigateToSpeedTest: () -> Unit = {},
+    onNavigateToLogViewer: () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
@@ -86,6 +88,12 @@ fun OtherSetting(
                 }
                 Prefs.crashReportEndpoint = crashReportEndpoint
             },
+        )
+
+        SettingListItem(
+            title = "查看日志",
+            supportText = "查看崩溃日志和交互日志，支持扫码下载",
+            onClick = onNavigateToLogViewer,
         )
 
         SettingListItem(

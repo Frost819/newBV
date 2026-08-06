@@ -24,6 +24,7 @@ import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 
@@ -102,7 +103,7 @@ fun ToViewScreen(
                     modifier = Modifier.focusSaverItem(focusSaver, itemKey),
                     data = cardData,
                     onClick = {
-                        navController.navigate(VideoDetailRoute(aid = item.oid))
+                        navController.navigateFromVideoCard(cardData)
                     },
                     onGoToDetailPage = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))
@@ -138,7 +139,7 @@ fun ToViewScreen(
                     modifier = Modifier.focusSaverItem(focusSaver, itemKey),
                     data = cardData,
                     onClick = {
-                        navController.navigate(VideoDetailRoute(aid = item.oid))
+                        navController.navigateFromVideoCard(cardData)
                     },
                     onGoToDetailPage = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))

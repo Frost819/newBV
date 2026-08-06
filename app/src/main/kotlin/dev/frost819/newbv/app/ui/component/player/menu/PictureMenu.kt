@@ -200,7 +200,6 @@ private val VideoCodec.displayName: String
         VideoCodec.HEVC -> "HEVC/H.265"
         VideoCodec.AV1 -> "AV1"
         VideoCodec.DVH1 -> "DV H.1"
-        VideoCodec.HVC1 -> "HVC1"
     }
 
 /** 音轨显示名称。 */

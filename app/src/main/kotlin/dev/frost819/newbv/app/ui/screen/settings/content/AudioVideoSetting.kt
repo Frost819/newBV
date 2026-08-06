@@ -58,6 +58,7 @@ fun AudioVideoSetting(
 
     var enableFfmpegAudioRenderer by remember { mutableStateOf(Prefs.enableFfmpegAudioRenderer) }
     var enableSoftwareVideoDecoder by remember { mutableStateOf(Prefs.enableSoftwareVideoDecoder) }
+    var showPlayerDebugInfo by remember { mutableStateOf(Prefs.showPlayerDebugInfo) }
 
     Column(
         modifier = modifier
@@ -118,6 +119,15 @@ fun AudioVideoSetting(
             onCheckedChange = {
                 enableFfmpegAudioRenderer = it
                 Prefs.enableFfmpegAudioRenderer = it
+            },
+        )
+        SettingSwitchListItem(
+            title = "播放器调试信息",
+            supportText = "在播放画面上显示分辨率、编码、码率等信息",
+            checked = showPlayerDebugInfo,
+            onCheckedChange = {
+                showPlayerDebugInfo = it
+                Prefs.showPlayerDebugInfo = it
             },
         )
     }

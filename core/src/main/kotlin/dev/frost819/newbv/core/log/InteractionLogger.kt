@@ -52,7 +52,20 @@ class InteractionLogger(
     }
 
     /**
+     * 是否启用日志记录（由 app 层设置，绑定 Prefs.interactionLog）。
+     */
+    @Volatile
+    private var enabled: Boolean = true
+
+    /** 设置日志记录开关。 */
+    fun setEnabled(enabled: Boolean) {
+        this.enabled = enabled
+    }
+
+    /**
      * 记录一条交互日志。
+     *
+     * 当 [enabled] 为 false 时静默跳过。
      *
      * @param level 日志级别。
      * @param category 日志类别。
@@ -65,6 +78,7 @@ class InteractionLogger(
         action: String,
         detail: Map<String, String> = emptyMap()
     ) {
+        if (!enabled) return
         val entry = LogFormat.interactionEntry(clock(), level, category.name, action, detail)
         addToRingBuffer(entry)
         writeToEntry(entry)

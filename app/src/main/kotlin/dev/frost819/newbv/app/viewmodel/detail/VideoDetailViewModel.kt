@@ -104,6 +104,19 @@ class VideoDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(VideoDetailUiState())
     val uiState: StateFlow<VideoDetailUiState> = _uiState.asStateFlow()
 
+    /**
+     * 播放器返回后的历史进度 CID。
+     *
+     * 单独暴露而非合并到 [uiState] 的 [VideoDetailUiState.detail] 中，
+     * 避免播放器更新历史时触发详情页整体重组（导致 LazyRow focusRestorer 崩溃）。
+     */
+    val historyLastPlayedCid: StateFlow<Long> = videoInfoRepository.lastPlayedCid
+
+    /**
+     * 播放器返回后的历史进度时间（秒）。
+     */
+    val historyLastPlayedTime: StateFlow<Int> = videoInfoRepository.lastPlayedTime
+
     private val _uiEffect = MutableSharedFlow<VideoDetailUiEffect>()
     val uiEffect: SharedFlow<VideoDetailUiEffect> = _uiEffect.asSharedFlow()
 

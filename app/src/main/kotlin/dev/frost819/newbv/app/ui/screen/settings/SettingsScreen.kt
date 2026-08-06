@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -53,10 +54,13 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onNavigateToMediaCodec: () -> Unit = {},
     onNavigateToSpeedTest: () -> Unit = {},
+    onNavigateToLogViewer: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
     var currentMenu by remember { mutableStateOf(SettingsMenuNavItem.AudioVideo) }
     var focusInNav by remember { mutableStateOf(false) }
+
+    BackHandler(onBack = onBack)
 
     Scaffold(
         modifier = modifier,
@@ -96,6 +100,7 @@ fun SettingsScreen(
                 currentMenu = currentMenu,
                 onNavigateToMediaCodec = onNavigateToMediaCodec,
                 onNavigateToSpeedTest = onNavigateToSpeedTest,
+                onNavigateToLogViewer = onNavigateToLogViewer,
             )
         }
     }
@@ -160,6 +165,7 @@ private fun SettingContent(
     currentMenu: SettingsMenuNavItem,
     onNavigateToMediaCodec: () -> Unit = {},
     onNavigateToSpeedTest: () -> Unit = {},
+    onNavigateToLogViewer: () -> Unit = {},
 ) {
     Box(
         modifier = modifier.padding(24.dp),
@@ -173,6 +179,7 @@ private fun SettingContent(
                 SettingsMenuNavItem.UI -> UISetting()
                 SettingsMenuNavItem.Other -> OtherSetting(
                     onNavigateToSpeedTest = onNavigateToSpeedTest,
+                    onNavigateToLogViewer = onNavigateToLogViewer,
                 )
                 SettingsMenuNavItem.Storage -> StorageSetting()
                 SettingsMenuNavItem.Info -> InfoSetting(

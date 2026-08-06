@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import dev.frost819.newbv.app.ui.navigation.MediaCodecRoute
 import dev.frost819.newbv.app.ui.navigation.SettingsRoute
 import dev.frost819.newbv.app.ui.navigation.SpeedTestRoute
+import dev.frost819.newbv.app.ui.navigation.LogViewerRoute
 
 /** 设置页路由注册。 */
 fun NavGraphBuilder.settingsScreen(navController: NavController) {
@@ -13,6 +14,7 @@ fun NavGraphBuilder.settingsScreen(navController: NavController) {
         SettingsScreen(
             onNavigateToMediaCodec = { navController.navigate(MediaCodecRoute) },
             onNavigateToSpeedTest = { navController.navigate(SpeedTestRoute) },
+            onNavigateToLogViewer = { navController.navigate(LogViewerRoute) },
             onBack = { navController.popBackStack() },
         )
     }
@@ -23,6 +25,11 @@ fun NavGraphBuilder.settingsScreen(navController: NavController) {
     }
     composable<SpeedTestRoute> {
         SpeedTestScreen(
+            onBack = { navController.popBackStack() },
+        )
+    }
+    composable<LogViewerRoute> {
+        LogViewerScreen(
             onBack = { navController.popBackStack() },
         )
     }

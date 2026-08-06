@@ -157,10 +157,10 @@ fun HttpClient.injectCookies() =
             request.url.encodedPath.contains("/x/player/playurl") ||
                 request.url.encodedPath.contains("/x/player/wbi/playurl")
 
-        if (!request.isAppRequest && !isPlayUrlRequest) {
+        if (!request.isAppRequest) {
             val cookieParts = mutableListOf<String>()
 
-            // 登录凭证
+            // 登录凭证（playurl 也需要 SESSDATA 才能返回高画质）
             if (BiliHttpApi.sessData.isNotBlank()) {
                 cookieParts.add("SESSDATA=${BiliHttpApi.sessData}")
             }
@@ -169,10 +169,13 @@ fun HttpClient.injectCookies() =
             }
 
             // 设备标识 cookie（buvid3 + b_nut 等）
-            if (BiliHttpApi.deviceCookies.isNotBlank()) {
-                cookieParts.add(BiliHttpApi.deviceCookies)
-            } else if (BiliHttpApi.buvid3.isNotBlank()) {
-                cookieParts.add("buvid3=${BiliHttpApi.buvid3}")
+            // playurl 请求不携带 buvid3 以降低风控触发概率
+            if (!isPlayUrlRequest) {
+                if (BiliHttpApi.deviceCookies.isNotBlank()) {
+                    cookieParts.add(BiliHttpApi.deviceCookies)
+                } else if (BiliHttpApi.buvid3.isNotBlank()) {
+                    cookieParts.add("buvid3=${BiliHttpApi.buvid3}")
+                }
             }
 
             if (cookieParts.isNotEmpty()) {

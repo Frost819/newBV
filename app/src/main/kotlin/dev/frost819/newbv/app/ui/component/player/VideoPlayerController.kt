@@ -307,17 +307,19 @@ fun VideoPlayerController(
         if (!showClickableControllers) {
             when (event.key) {
                 in confirmKeys -> {
-                    if (event.type == KeyEventType.KeyUp) return true
-                    if (event.nativeKeyEvent.isLongPress) {
-                        showMenuController = true
+                    if (event.type == KeyEventType.KeyDown) {
+                        if (event.nativeKeyEvent.isLongPress) {
+                            showMenuController = true
+                        }
+                        return true
+                    } else {
+                        if (uiState.showBackToStart) {
+                            onBackToStart()
+                        } else {
+                            onPlay()
+                        }
                         return true
                     }
-                    if (uiState.showBackToStart) {
-                        onBackToStart()
-                    } else {
-                        onPlay()
-                    }
-                    return true
                 }
 
                 Key.DirectionUp -> {

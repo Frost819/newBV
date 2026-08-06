@@ -28,6 +28,7 @@ import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.home.HomeViewModel
@@ -109,7 +110,7 @@ fun DynamicsScreen(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,
                 onClick = {
-                    navController.navigate(VideoDetailRoute(aid = item.aid))
+                    navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
                     navController.navigate(VideoDetailRoute(aid = item.aid))

@@ -2,6 +2,7 @@ package dev.frost819.newbv.app.ui.screen.detail
 
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,12 +19,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
+import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material.icons.outlined.PersonAdd
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.rounded.Paid
@@ -44,17 +51,21 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -64,20 +75,25 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.SuggestionChip
 import androidx.tv.material3.Surface
+import androidx.tv.material3.Tab
+import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.LoadingTip
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
+import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.SearchResultRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiState
-import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.Tag
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -85,6 +101,9 @@ import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+private const val PART_LIST_DIALOG_THRESHOLD = 5
+private const val PART_LIST_DIALOG_PAGE_SIZE = 20
 
 /**
  * 视频详情页路由注册。
@@ -107,9 +126,9 @@ fun NavGraphBuilder.videoDetailScreen(navController: NavController) {
  * 布局自上而下：
  * 1. 封面 + 标题/统计/UP/操作按钮
  * 2. 视频简介
- * 3. 分 P 列表
- * 4. 合集列表
- * 5. 相关视频
+ * 3. 分 P 列表（始终显示，含历史进度条）
+ * 4. 合集列表（文字按钮 + 进度条）
+ * 5. 相关视频（封面 + 标题 + UP + 播放量/弹幕/时长）
  */
 @Composable
 private fun VideoDetailScreen(
@@ -118,6 +137,8 @@ private fun VideoDetailScreen(
 ) {
     val viewModel: VideoDetailViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val historyLastPlayedCid by viewModel.historyLastPlayedCid.collectAsState()
+    val historyLastPlayedTime by viewModel.historyLastPlayedTime.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -147,6 +168,8 @@ private fun VideoDetailScreen(
                 state = state,
                 viewModel = viewModel,
                 navController = navController,
+                lastPlayedCid = historyLastPlayedCid,
+                lastPlayedTime = historyLastPlayedTime,
             )
         }
     }
@@ -217,10 +240,18 @@ private fun VideoDetailContent(
     state: VideoDetailUiState,
     viewModel: VideoDetailViewModel,
     navController: NavController,
+    lastPlayedCid: Long,
+    lastPlayedTime: Int,
 ) {
     val scrollState = rememberScrollState()
     val focusSaver = rememberScreenFocusSaver()
     focusSaver.RestoreFocus()
+
+    var showPartListDialog by remember { mutableStateOf(false) }
+    var showSeasonListDialog by remember { mutableStateOf(false) }
+    var seasonDialogSectionIndex by remember { mutableStateOf(0) }
+    var seasonDialogEpisodes by remember { mutableStateOf<List<Episode>>(emptyList()) }
+    var seasonDialogTitle by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -244,11 +275,12 @@ private fun VideoDetailContent(
                 navController.navigate(SearchResultRoute(keyword = tag.name))
             },
             onPlayVideo = {
-                viewModel.updateVideoList(detail.aid, detail.cid, detail.title)
+                val playCid = lastPlayedCid.takeIf { it != 0L } ?: detail.cid
+                viewModel.updateVideoList(detail.aid, playCid, detail.title)
                 navController.navigate(
                     VideoPlayerRoute(
                         aid = detail.aid,
-                        cid = detail.cid,
+                        cid = playCid,
                         title = detail.title,
                         cover = detail.cover,
                     ),
@@ -270,33 +302,36 @@ private fun VideoDetailContent(
             )
         }
 
-        if (detail.pages.size > 1) {
-            VideoPartRow(
-                pages = detail.pages,
-                currentCid = detail.cid,
-                onClick = { page ->
-                    viewModel.updateVideoList(detail.aid, page.cid, detail.title)
-                    navController.navigate(
-                        VideoPlayerRoute(
-                            aid = detail.aid,
-                            cid = page.cid,
-                            title = detail.title,
-                            cover = detail.cover,
-                        ),
-                    ) {
-                        popUpTo<VideoPlayerRoute> { inclusive = true }
-                        launchSingleTop = true
-                    }
-                },
-                focusSaver = focusSaver,
-            )
-        }
+        VideoPartRow(
+            pages = detail.pages,
+            currentCid = detail.cid,
+            lastPlayedCid = lastPlayedCid,
+            lastPlayedTime = lastPlayedTime,
+            onClick = { page ->
+                viewModel.updateVideoList(detail.aid, page.cid, detail.title)
+                navController.navigate(
+                    VideoPlayerRoute(
+                        aid = detail.aid,
+                        cid = page.cid,
+                        title = detail.title,
+                        cover = detail.cover,
+                    ),
+                ) {
+                    popUpTo<VideoPlayerRoute> { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            onShowPartListDialog = { showPartListDialog = true },
+            focusSaver = focusSaver,
+        )
 
         detail.ugcSeason?.let { season ->
             season.sections.forEachIndexed { sectionIndex, section ->
                 VideoUgcSeasonRow(
                     title = if (season.sections.size == 1) season.title else section.title,
                     episodes = section.episodes,
+                    lastPlayedCid = lastPlayedCid,
+                    lastPlayedTime = lastPlayedTime,
                     onClick = { episode ->
                         viewModel.updateVideoList(sectionIndex)
                         navController.navigate(
@@ -310,6 +345,12 @@ private fun VideoDetailContent(
                             popUpTo<VideoPlayerRoute> { inclusive = true }
                             launchSingleTop = true
                         }
+                    },
+                    onShowListDialog = {
+                        seasonDialogSectionIndex = sectionIndex
+                        seasonDialogEpisodes = section.episodes
+                        seasonDialogTitle = if (season.sections.size == 1) season.title else section.title
+                        showSeasonListDialog = true
                     },
                     focusSaver = focusSaver,
                 )
@@ -334,6 +375,56 @@ private fun VideoDetailContent(
                 focusSaver = focusSaver,
             )
         }
+    }
+
+    if (showPartListDialog) {
+        VideoPartListDialog(
+            pages = detail.pages,
+            currentCid = detail.cid,
+            lastPlayedCid = lastPlayedCid,
+            lastPlayedTime = lastPlayedTime,
+            onDismiss = { showPartListDialog = false },
+            onSelect = { page ->
+                showPartListDialog = false
+                viewModel.updateVideoList(detail.aid, page.cid, detail.title)
+                navController.navigate(
+                    VideoPlayerRoute(
+                        aid = detail.aid,
+                        cid = page.cid,
+                        title = detail.title,
+                        cover = detail.cover,
+                    ),
+                ) {
+                    popUpTo<VideoPlayerRoute> { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+        )
+    }
+
+    if (showSeasonListDialog) {
+        VideoEpisodeListDialog(
+            title = seasonDialogTitle,
+            episodes = seasonDialogEpisodes,
+            lastPlayedCid = lastPlayedCid,
+            lastPlayedTime = lastPlayedTime,
+            onDismiss = { showSeasonListDialog = false },
+            onSelect = { episode ->
+                showSeasonListDialog = false
+                viewModel.updateVideoList(seasonDialogSectionIndex)
+                navController.navigate(
+                    VideoPlayerRoute(
+                        aid = episode.aid,
+                        cid = episode.cid,
+                        title = episode.title,
+                        cover = episode.cover,
+                    ),
+                ) {
+                    popUpTo<VideoPlayerRoute> { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+        )
     }
 }
 
@@ -665,35 +756,109 @@ private fun VideoDescription(
     }
 }
 
+/**
+ * 分 P 列表行。
+ *
+ * 始终显示（即使只有 1 个分 P），让用户看到历史进度。
+ * 超过 [PART_LIST_DIALOG_THRESHOLD] 个分 P 时显示网格按钮，点击弹出分页弹窗。
+ * 有历史记录且分 P 数 > 1 时显示历史跳转按钮。
+ *
+ * @param pages 分 P 列表。
+ * @param currentCid 当前播放的 CID。
+ * @param lastPlayedCid 上次播放的 CID。
+ * @param lastPlayedTime 上次播放进度（秒）。
+ * @param onClick 点击分 P 回调。
+ * @param onShowPartListDialog 点击网格按钮回调。
+ */
 @Composable
 private fun VideoPartRow(
     pages: List<VideoPage>,
     currentCid: Long,
+    lastPlayedCid: Long,
+    lastPlayedTime: Int,
     onClick: (VideoPage) -> Unit,
+    onShowPartListDialog: () -> Unit,
     focusSaver: ScreenFocusSaver,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = "分P",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 50.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "分P",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+            )
+            if (pages.size > PART_LIST_DIALOG_THRESHOLD) {
+                Surface(
+                    onClick = onShowPartListDialog,
+                    shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                    colors = ClickableSurfaceDefaults.colors(
+                        containerColor = Color.White.copy(alpha = 0.08f),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Apps,
+                        contentDescription = "网格列表",
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(20.dp),
+                    )
+                }
+            }
+            if (pages.size > 1 && lastPlayedCid != 0L) {
+                val lastPage = pages.find { it.cid == lastPlayedCid }
+                if (lastPage != null) {
+                    Surface(
+                        onClick = { onClick(lastPage) },
+                        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                        colors = ClickableSurfaceDefaults.colors(
+                            containerColor = Color.White.copy(alpha = 0.08f),
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.History,
+                                contentDescription = "历史",
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = "上次看到 P${lastPage.index}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                            )
+                        }
+                    }
+                }
+            }
+        }
         val focusRequester = focusSaver.focusRequesterFor("parts")
         LazyRow(
             modifier = Modifier
-                .focusRestorer(focusRequester)
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("parts") }
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
         ) {
             items(pages) { page ->
-                PartChip(
-                    page = page,
+                val played = if (page.cid == lastPlayedCid) lastPlayedTime else 0
+                PartButton(
+                    title = page.title,
+                    duration = page.duration,
+                    played = played,
                     isCurrent = page.cid == currentCid,
                     onClick = { onClick(page) },
                     modifier = if (page == pages.first()) Modifier.focusRequester(focusRequester) else Modifier,
@@ -703,15 +868,30 @@ private fun VideoPartRow(
     }
 }
 
+/**
+ * 分 P / 合集分集通用按钮。
+ *
+ * 文字按钮样式，无封面。底部显示播放进度条。
+ *
+ * @param title 标题。
+ * @param duration 总时长（秒）。
+ * @param played 已播放时长（秒），0 表示无进度。
+ * @param isCurrent 是否为当前选中。
+ * @param onClick 点击回调。
+ */
 @Composable
-private fun PartChip(
-    page: VideoPage,
+private fun PartButton(
+    title: String,
+    duration: Int,
+    played: Int,
     isCurrent: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier
+            .width(200.dp)
+            .height(64.dp)
             .clip(MaterialTheme.shapes.small)
             .then(
                 if (isCurrent) {
@@ -735,106 +915,139 @@ private fun PartChip(
             contentColor = Color.White,
         ),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (played > 0 && duration > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxHeight()
+                        .fillMaxWidth((played.toFloat() / duration.toFloat()).coerceIn(0f, 1f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+                )
+            }
             Text(
-                text = "P${page.index}",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (isCurrent) {
-                    MaterialTheme.colorScheme.border
-                } else {
-                    Color.White.copy(alpha = 0.6f)
-                },
-            )
-            Text(
-                text = page.title,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                text = title,
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.White,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
+/**
+ * UGC 合集分集列表行。
+ *
+ * 文字按钮样式（无封面），带历史进度条。
+ * 超过 [PART_LIST_DIALOG_THRESHOLD] 个分集时显示网格按钮，点击弹出分页弹窗。
+ * 有历史记录且分集数 > 1 时显示历史跳转按钮。
+ *
+ * @param title 行标题。
+ * @param episodes 分集列表。
+ * @param lastPlayedCid 上次播放的 CID。
+ * @param lastPlayedTime 上次播放进度（秒）。
+ * @param onClick 点击分集回调。
+ * @param onShowListDialog 点击网格按钮回调。
+ */
 @Composable
 private fun VideoUgcSeasonRow(
     title: String,
     episodes: List<Episode>,
+    lastPlayedCid: Long,
+    lastPlayedTime: Int,
     onClick: (Episode) -> Unit,
+    onShowListDialog: () -> Unit,
     focusSaver: ScreenFocusSaver,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 50.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+            )
+            if (episodes.size > PART_LIST_DIALOG_THRESHOLD) {
+                Surface(
+                    onClick = onShowListDialog,
+                    shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                    colors = ClickableSurfaceDefaults.colors(
+                        containerColor = Color.White.copy(alpha = 0.08f),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Apps,
+                        contentDescription = "网格列表",
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(20.dp),
+                    )
+                }
+            }
+            if (episodes.size > 1 && lastPlayedCid != 0L) {
+                val lastEpisode = episodes.find { it.cid == lastPlayedCid }
+                if (lastEpisode != null) {
+                    Surface(
+                        onClick = { onClick(lastEpisode) },
+                        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                        colors = ClickableSurfaceDefaults.colors(
+                            containerColor = Color.White.copy(alpha = 0.08f),
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.History,
+                                contentDescription = "历史",
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = "上次看到 ${lastEpisode.title}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                            )
+                        }
+                    }
+                }
+            }
+        }
         val focusRequester = focusSaver.focusRequesterFor("seasons")
         LazyRow(
             modifier = Modifier
-                .focusRestorer(focusRequester)
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
         ) {
             items(episodes) { episode ->
-                EpisodeCard(
-                    episode = episode,
+                val played = if (episode.cid == lastPlayedCid) lastPlayedTime else 0
+                PartButton(
+                    title = episode.title,
+                    duration = episode.duration,
+                    played = played,
+                    isCurrent = false,
                     onClick = { onClick(episode) },
                     modifier = if (episode == episodes.first()) Modifier.focusRequester(focusRequester) else Modifier,
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun EpisodeCard(
-    episode: Episode,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.width(200.dp)) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.6f),
-            onClick = onClick,
-            shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        3.dp,
-                        MaterialTheme.colorScheme.border,
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                ),
-            ),
-        ) {
-            AsyncImage(
-                modifier = Modifier.fillMaxSize(),
-                model = episode.cover,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = episode.title,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 
@@ -857,60 +1070,264 @@ private fun RelatedVideoRow(
         val focusRequester = focusSaver.focusRequesterFor("related")
         LazyRow(
             modifier = Modifier
-                .focusRestorer(focusRequester)
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("related") }
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
         ) {
             items(videos) { video ->
-                RelatedVideoCard(
-                    video = video,
+                val cardData = VideoCardData(
+                    avid = video.aid,
+                    cid = video.cid,
+                    title = video.title,
+                    cover = video.cover,
+                    upName = video.author?.name ?: "",
+                    upMid = video.author?.mid,
+                    playString = video.view.toWanString(),
+                    danmakuString = video.danmaku.toWanString(),
+                    timeString = video.duration.formatHourMinSec(),
+                )
+                SmallVideoCard(
+                    modifier = if (video == videos.first()) {
+                        Modifier
+                            .width(200.dp)
+                            .focusRequester(focusRequester)
+                    } else {
+                        Modifier.width(200.dp)
+                    },
+                    data = cardData,
                     onClick = { onClick(video) },
-                    modifier = if (video == videos.first()) Modifier.focusRequester(focusRequester) else Modifier,
+                    onGoToDetailPage = { onClick(video) },
                 )
             }
         }
     }
 }
 
+/**
+ * 分 P 列表弹窗。
+ *
+ * 当分 P 数量超过 [PART_LIST_DIALOG_THRESHOLD] 时显示。
+ * 使用 TabRow 分页，每页 [PART_LIST_DIALOG_PAGE_SIZE] 个，2 列网格。
+ *
+ * @param pages 全部分 P 列表。
+ * @param currentCid 当前 CID。
+ * @param lastPlayedCid 上次播放 CID。
+ * @param lastPlayedTime 上次播放进度（秒）。
+ * @param onDismiss 关闭弹窗回调。
+ * @param onSelect 选择分 P 回调。
+ */
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun RelatedVideoCard(
-    video: RelatedVideo,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun VideoPartListDialog(
+    pages: List<VideoPage>,
+    currentCid: Long,
+    lastPlayedCid: Long,
+    lastPlayedTime: Int,
+    onDismiss: () -> Unit,
+    onSelect: (VideoPage) -> Unit,
 ) {
-    Column(modifier = modifier.width(200.dp)) {
-        Card(
+    val pageCount = (pages.size + PART_LIST_DIALOG_PAGE_SIZE - 1) / PART_LIST_DIALOG_PAGE_SIZE
+    var selectedTab by remember { mutableStateOf(0) }
+    val dialogFocusRequester = remember { FocusRequester() }
+    val tabFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        runCatching { dialogFocusRequester.requestFocus() }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.6f),
-            onClick = onClick,
-            shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        3.dp,
-                        MaterialTheme.colorScheme.border,
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                ),
-            ),
+                .focusRequester(dialogFocusRequester)
+                .size(width = 600.dp, height = 330.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(Color.Black.copy(alpha = 0.9f)),
         ) {
-            AsyncImage(
-                modifier = Modifier.fillMaxSize(),
-                model = video.cover,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (pageCount > 1) {
+                    TabRow(
+                        modifier = Modifier
+                            .focusRestorer(tabFocusRequester)
+                            .fillMaxWidth(),
+                        selectedTabIndex = selectedTab,
+                    ) {
+                        repeat(pageCount) { index ->
+                            val start = index * PART_LIST_DIALOG_PAGE_SIZE + 1
+                            val end = minOf(
+                                (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
+                                pages.size,
+                            )
+                            Tab(
+                                selected = selectedTab == index,
+                                onFocus = { selectedTab = index },
+                                onClick = { selectedTab = index },
+                                modifier = if (index == selectedTab) {
+                                    Modifier.focusRequester(tabFocusRequester)
+                                } else {
+                                    Modifier
+                                },
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    text = "P$start-$end",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (selectedTab == index) {
+                                        MaterialTheme.colorScheme.border
+                                    } else {
+                                        Color.White
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+                val start = selectedTab * PART_LIST_DIALOG_PAGE_SIZE
+                val end = minOf(start + PART_LIST_DIALOG_PAGE_SIZE, pages.size)
+                val pageSlice = pages.subList(start, end)
+                TvLazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    items(pageSlice) { page ->
+                        val played = if (page.cid == lastPlayedCid) lastPlayedTime else 0
+                        PartButton(
+                            title = page.title,
+                            duration = page.duration,
+                            played = played,
+                            isCurrent = page.cid == currentCid,
+                            onClick = { onSelect(page) },
+                        )
+                    }
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = video.title,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+    }
+}
+
+/**
+ * UGC 合集分集列表弹窗。
+ *
+ * 当分集数量超过 [PART_LIST_DIALOG_THRESHOLD] 时显示。
+ * 使用 TabRow 分页，每页 [PART_LIST_DIALOG_PAGE_SIZE] 个，2 列网格。
+ *
+ * @param title 弹窗标题。
+ * @param episodes 全部分集列表。
+ * @param lastPlayedCid 上次播放 CID。
+ * @param lastPlayedTime 上次播放进度（秒）。
+ * @param onDismiss 关闭弹窗回调。
+ * @param onSelect 选择分集回调。
+ */
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun VideoEpisodeListDialog(
+    title: String,
+    episodes: List<Episode>,
+    lastPlayedCid: Long,
+    lastPlayedTime: Int,
+    onDismiss: () -> Unit,
+    onSelect: (Episode) -> Unit,
+) {
+    val pageCount = (episodes.size + PART_LIST_DIALOG_PAGE_SIZE - 1) / PART_LIST_DIALOG_PAGE_SIZE
+    var selectedTab by remember { mutableStateOf(0) }
+    val dialogFocusRequester = remember { FocusRequester() }
+    val tabFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        runCatching { dialogFocusRequester.requestFocus() }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .focusRequester(dialogFocusRequester)
+                .size(width = 600.dp, height = 330.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(Color.Black.copy(alpha = 0.9f)),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                )
+                if (pageCount > 1) {
+                    TabRow(
+                        modifier = Modifier
+                            .focusRestorer(tabFocusRequester)
+                            .fillMaxWidth(),
+                        selectedTabIndex = selectedTab,
+                    ) {
+                        repeat(pageCount) { index ->
+                            val start = index * PART_LIST_DIALOG_PAGE_SIZE + 1
+                            val end = minOf(
+                                (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
+                                episodes.size,
+                            )
+                            Tab(
+                                selected = selectedTab == index,
+                                onFocus = { selectedTab = index },
+                                onClick = { selectedTab = index },
+                                modifier = if (index == selectedTab) {
+                                    Modifier.focusRequester(tabFocusRequester)
+                                } else {
+                                    Modifier
+                                },
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    text = "$start-$end",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (selectedTab == index) {
+                                        MaterialTheme.colorScheme.border
+                                    } else {
+                                        Color.White
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+                val start = selectedTab * PART_LIST_DIALOG_PAGE_SIZE
+                val end = minOf(start + PART_LIST_DIALOG_PAGE_SIZE, episodes.size)
+                val episodeSlice = episodes.subList(start, end)
+                TvLazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    items(episodeSlice) { episode ->
+                        val played = if (episode.cid == lastPlayedCid) lastPlayedTime else 0
+                        PartButton(
+                            title = episode.title,
+                            duration = episode.duration,
+                            played = played,
+                            isCurrent = false,
+                            onClick = { onSelect(episode) },
+                        )
+                    }
+                }
+            }
+        }
     }
 }
