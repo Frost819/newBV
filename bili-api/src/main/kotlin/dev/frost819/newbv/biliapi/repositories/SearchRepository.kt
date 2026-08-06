@@ -231,11 +231,13 @@ data class SearchTypeResult(
     val pgcs: List<Pgc> = emptyList(),
     val users: List<User> = emptyList(),
     val page: SearchTypePage,
+    val hasMore: Boolean = true,
 ) {
     companion object {
         fun fromSearchTypeResult(
             result: dev.frost819.newbv.biliapi.http.entity.search.SearchResultData,
         ): SearchTypeResult {
+            val hasMore = result.page < result.numPages
             return when (result.searchTypeResults.first()) {
                 is dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult -> {
                     SearchTypeResult(
@@ -246,6 +248,7 @@ data class SearchTypeResult(
                                 )
                             },
                         page = SearchTypePage(nextPageForWeb = result.page + 1),
+                        hasMore = hasMore,
                     )
                 }
 
@@ -258,6 +261,7 @@ data class SearchTypeResult(
                                 )
                             },
                         page = SearchTypePage(nextPageForWeb = result.page + 1),
+                        hasMore = hasMore,
                     )
                 }
 
@@ -270,11 +274,15 @@ data class SearchTypeResult(
                                 )
                             },
                         page = SearchTypePage(nextPageForWeb = result.page + 1),
+                        hasMore = hasMore,
                     )
                 }
 
                 else -> {
-                    SearchTypeResult(page = SearchTypePage(nextPageForWeb = result.page + 1))
+                    SearchTypeResult(
+                        page = SearchTypePage(nextPageForWeb = result.page + 1),
+                        hasMore = hasMore,
+                    )
                 }
             }
         }

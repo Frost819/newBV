@@ -99,19 +99,22 @@ class SearchResultViewModelTest {
     private fun fakeVideoList(count: Int): List<SearchTypeResult.Video> =
         (1..count).map { fakeVideoResult(it.toLong()) }
 
-    private fun fakeVideoSearchResult(videos: List<SearchTypeResult.Video>) = SearchTypeResult(
+    private fun fakeVideoSearchResult(videos: List<SearchTypeResult.Video>, hasMore: Boolean = true) = SearchTypeResult(
         videos = videos,
         page = SearchTypePage(nextPageForWeb = 2),
+        hasMore = hasMore,
     )
 
-    private fun fakePgcSearchResult(pgcs: List<SearchTypeResult.Pgc>) = SearchTypeResult(
+    private fun fakePgcSearchResult(pgcs: List<SearchTypeResult.Pgc>, hasMore: Boolean = true) = SearchTypeResult(
         pgcs = pgcs,
         page = SearchTypePage(nextPageForWeb = 2),
+        hasMore = hasMore,
     )
 
-    private fun fakeUserSearchResult(users: List<SearchTypeResult.User>) = SearchTypeResult(
+    private fun fakeUserSearchResult(users: List<SearchTypeResult.User>, hasMore: Boolean = true) = SearchTypeResult(
         users = users,
         page = SearchTypePage(nextPageForWeb = 2),
+        hasMore = hasMore,
     )
 
     @BeforeEach
@@ -295,6 +298,7 @@ class SearchResultViewModelTest {
         } returns SearchTypeResult(
             videos = emptyList(),
             page = SearchTypePage(),
+            hasMore = false,
         )
 
         viewModel.search("测试")
