@@ -93,6 +93,14 @@ object SettingsRoute
 @Serializable
 object UserSwitchRoute
 
+/** 编解码信息页。 */
+@Serializable
+object MediaCodecRoute
+
+/** CDN 测速页。 */
+@Serializable
+object SpeedTestRoute
+
 // ── 登录 ──────────────────────────────────────────────────────────────
 
 /** 登录页面。 */
