@@ -165,12 +165,13 @@ fun SearchResultContent(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                Text(
-                    text = (if (isVideoSearchViaWebApi.value) "菜单键打开筛选 | " else "") +
-                            "共 ${activeResult.count} 条",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
-                )
+                if (isVideoSearchViaWebApi.value) {
+                    Text(
+                        text = "菜单键打开筛选",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                    )
+                }
             }
 
             // 4 类 Tab 导航
