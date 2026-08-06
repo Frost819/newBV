@@ -273,7 +273,6 @@ MainActivity (@HiltAndroidApp)
    │  ├─ videoDetail (视频详情)
    │  ├─ seasonDetail (番剧详情)
    │  ├─ comments (评论列表) [新增]
-   │  └─ tag (标签页)
    ├─ playerGraph (播放器区)
    │  ├─ videoPlayer (视频播放)
    │  └─ livePlayer (直播播放) [新增]
@@ -865,7 +864,7 @@ LazyColumn
 │       ├─ LikeButton (点赞，长按一键三连)
 │       ├─ CoinButton (投币)
 │       ├─ FavoriteButton (收藏)
-│       └─ TagChips (标签，可点击进入标签页)
+│       └─ TagChips (标签，可点击进入搜索结果页)
 ├─ VideoDescription (简介，可展开)
 ├─ VideoPartRow (分 P 列表，>5 显示网格弹窗)
 ├─ VideoUgcSeasonRow (合集列表)
@@ -2272,7 +2271,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | UP 主空间 | `/x/space/wbi/arc/search` | SESSDATA | UP 视频 |
 | 番剧详情 | `/pgc/view/web/season` | SESSDATA | PGC 详情 |
 | 番剧追番 | `/pgc/web/follow/add` / `/del` | SESSDATA+csrf | 追番 |
-| 标签 | `/x/tag/...` | SESSDATA | 标签页 |
 | 时间表 | `/pgc/web/timeline` | 无 | 番剧时间表 |
 | 关注/取关 | `/x/relation/modify` | SESSDATA+csrf | 关注 UP |
 | 搜索 | `/x/web-interface/wbi/search/...` | buvid3 | 搜索 |
