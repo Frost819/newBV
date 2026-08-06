@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -24,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
@@ -49,6 +50,9 @@ fun FavoriteScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    val focusSaver = rememberFocusSaver()
+
+    focusSaver.RestoreFocus()
 
     if (state.favoriteFolders.isEmpty() && !state.favoriteLoading && !state.favoriteError) {
         Box(
@@ -126,7 +130,7 @@ fun FavoriteScreen(
             itemsIndexed(
                 items = state.favoriteItems,
                 key = { _, item -> item.id },
-            ) { _, item ->
+            ) { index, item ->
                 val cardData = remember(item) {
                     VideoCardData(
                         avid = item.id,
@@ -140,6 +144,7 @@ fun FavoriteScreen(
                     )
                 }
                 SmallVideoCard(
+                    modifier = Modifier.focusSaverItem(focusSaver, index),
                     data = cardData,
                     onClick = {
                         navController.navigate(VideoDetailRoute(aid = item.id))

@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -48,7 +49,7 @@ fun PersonalContent(
     viewModel: PersonalViewModel = hiltViewModel(),
 ) {
     val firstTab = remember { Prefs.firstPersonalTopNavItem }
-    var selectedTab by remember { mutableStateOf(firstTab) }
+    var selectedTab by rememberSaveable { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
 
     val reorderedItems = remember {

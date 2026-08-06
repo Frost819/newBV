@@ -15,13 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
-import dev.frost819.newbv.app.ui.component.rememberFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
@@ -32,7 +31,7 @@ import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
  * 稍后再看页面。
  *
  * 按观看状态分为"未看完"和"已看完"两组，4 列网格展示。
- * 支持删除操作（长按卡片后通过稍后再看按钮删除）。
+ * 使用 [rememberScreenFocusSaver] 按 oid 追踪焦点，删除项后不会错位。
  *
  * @param viewModel 个人页 ViewModel。
  * @param navController 导航控制器。
@@ -45,6 +44,9 @@ fun ToViewScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    val focusSaver = rememberScreenFocusSaver()
+
+    focusSaver.RestoreFocus()
 
     val (unwatched, watched) = remember(state.toViewItems) {
         state.toViewItems.partition { it.progress != -1 }
@@ -79,6 +81,7 @@ fun ToViewScreen(
                 items = unwatched,
                 key = { _, item -> "unwatched_${item.oid}" },
             ) { _, item ->
+                val itemKey = "unwatched_${item.oid}"
                 val cardData = remember(item) {
                     VideoCardData(
                         avid = item.oid,
@@ -96,6 +99,7 @@ fun ToViewScreen(
                     )
                 }
                 SmallVideoCard(
+                    modifier = Modifier.focusSaverItem(focusSaver, itemKey),
                     data = cardData,
                     onClick = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))
@@ -115,6 +119,7 @@ fun ToViewScreen(
                 items = watched,
                 key = { _, item -> "watched_${item.oid}" },
             ) { _, item ->
+                val itemKey = "watched_${item.oid}"
                 val cardData = remember(item) {
                     VideoCardData(
                         avid = item.oid,
@@ -130,6 +135,7 @@ fun ToViewScreen(
                     )
                 }
                 SmallVideoCard(
+                    modifier = Modifier.focusSaverItem(focusSaver, itemKey),
                     data = cardData,
                     onClick = {
                         navController.navigate(VideoDetailRoute(aid = item.oid))

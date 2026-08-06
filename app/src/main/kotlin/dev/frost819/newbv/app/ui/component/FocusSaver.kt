@@ -10,7 +10,10 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 
@@ -130,3 +133,55 @@ fun rememberScreenFocusSaver(): ScreenFocusSaver {
     val savedKey = rememberSaveable { mutableStateOf("") }
     return remember { ScreenFocusSaver(savedKey) }
 }
+
+// region Modifier 扩展
+
+/**
+ * 将 [FocusSaver] 绑定到可聚焦元素（Int index 版）。
+ *
+ * 封装 `.focusRequester()` + `.onFocusChanged()` 两行 boilerplate 为一行。
+ * 适用于列表/网格中同类型 item 的焦点追踪。
+ *
+ * 用法：
+ * ```
+ * SmallVideoCard(
+ *     modifier = Modifier.focusSaverItem(focusSaver, index),
+ *     ...
+ * )
+ * ```
+ *
+ * @param focusSaver 焦点恢复器。
+ * @param index item 在列表中的 index。
+ */
+fun Modifier.focusSaverItem(
+    focusSaver: FocusSaver,
+    index: Int,
+): Modifier = this
+    .focusRequester(focusSaver.focusRequesterFor(index))
+    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedIndex(index) }
+
+/**
+ * 将 [ScreenFocusSaver] 绑定到可聚焦元素（String key 版）。
+ *
+ * 封装 `.focusRequester()` + `.onFocusChanged()` 两行 boilerplate 为一行。
+ * 适用于混合布局中不同类型可聚焦元素的焦点追踪。
+ *
+ * 用法：
+ * ```
+ * Card(
+ *     modifier = Modifier.focusSaverItem(focusSaver, "cover"),
+ *     ...
+ * )
+ * ```
+ *
+ * @param focusSaver 焦点恢复器。
+ * @param key 元素的唯一标识（如 `"cover"`、`"tag_${tag.id}"`）。
+ */
+fun Modifier.focusSaverItem(
+    focusSaver: ScreenFocusSaver,
+    key: String,
+): Modifier = this
+    .focusRequester(focusSaver.focusRequesterFor(key))
+    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(key) }
+
+// endregion

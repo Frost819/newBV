@@ -17,14 +17,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
@@ -107,9 +106,7 @@ fun DynamicsScreen(
                 )
             }
             SmallVideoCard(
-                modifier = Modifier
-                    .focusRequester(focusSaver.focusRequesterFor(index))
-                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedIndex(index) },
+                modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,
                 onClick = {
                     navController.navigate(VideoDetailRoute(aid = item.aid))

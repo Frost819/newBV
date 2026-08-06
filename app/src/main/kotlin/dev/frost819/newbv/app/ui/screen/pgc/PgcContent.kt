@@ -16,13 +16,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -38,6 +38,7 @@ import dev.frost819.newbv.app.ui.component.PgcCarousel
 import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
@@ -80,7 +81,7 @@ fun PgcContent(
     navController: NavController,
     viewModel: PgcViewModel = hiltViewModel(),
 ) {
-    var selectedTab by remember { mutableStateOf(PgcTabItem.Anime) }
+    var selectedTab by rememberSaveable { mutableStateOf(PgcTabItem.Anime) }
     var focusOnContent by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
 
@@ -200,9 +201,6 @@ private fun PgcGrid(
                 )
             }
             SeasonCard(
-                modifier = Modifier
-                    .focusRequester(focusSaver.focusRequesterFor(index))
-                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedIndex(index) },
                 data = cardData,
                 onClick = {
                     navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
@@ -210,6 +208,7 @@ private fun PgcGrid(
                 onGoToDetailPage = {
                     navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
                 },
+                modifier = Modifier.focusSaverItem(focusSaver, index),
             )
         }
 

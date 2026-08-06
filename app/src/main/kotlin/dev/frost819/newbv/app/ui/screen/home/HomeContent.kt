@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -51,7 +52,7 @@ fun HomeContent(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val firstTab = remember { Prefs.firstHomeTopNavItem }
-    var selectedTab by remember { mutableStateOf(firstTab) }
+    var selectedTab by rememberSaveable { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
 

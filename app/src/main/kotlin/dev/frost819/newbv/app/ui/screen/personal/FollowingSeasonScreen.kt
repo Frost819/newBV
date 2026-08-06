@@ -33,6 +33,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -58,7 +60,10 @@ fun FollowingSeasonScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    val focusSaver = rememberFocusSaver()
     var showFilter by remember { mutableStateOf(false) }
+
+    focusSaver.RestoreFocus()
 
     if (state.followingSeasons.isEmpty() && !state.followingLoading && !state.followingError) {
         Box(
@@ -105,7 +110,7 @@ fun FollowingSeasonScreen(
             itemsIndexed(
                 items = state.followingSeasons,
                 key = { _, item -> item.seasonId },
-            ) { _, item ->
+            ) { index, item ->
                 val cardData = remember(item) {
                     SeasonCardData(
                         seasonId = item.seasonId,
@@ -118,6 +123,7 @@ fun FollowingSeasonScreen(
                     onClick = {
                         navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
                     },
+                    modifier = Modifier.focusSaverItem(focusSaver, index),
                 )
             }
 

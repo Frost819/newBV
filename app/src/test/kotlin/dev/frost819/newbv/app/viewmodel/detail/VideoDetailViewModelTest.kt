@@ -67,6 +67,7 @@ class VideoDetailViewModelTest {
 
     @AfterEach
     fun tearDown() {
+        io.mockk.unmockkObject(Prefs)
         Dispatchers.resetMain()
     }
 
