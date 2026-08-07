@@ -31,6 +31,7 @@ import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -55,6 +56,8 @@ fun FavoriteScreen(
     val gridState = rememberLazyGridState()
     val focusSaver = rememberFocusSaver()
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
+
+    CollectWatchLaterEffects(watchLaterViewModel)
 
     focusSaver.RestoreFocus()
 

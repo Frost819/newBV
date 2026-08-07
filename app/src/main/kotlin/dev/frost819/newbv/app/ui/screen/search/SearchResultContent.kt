@@ -62,6 +62,7 @@ import dev.frost819.newbv.app.ui.state.search.TypedSearchResult
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.removeHtmlTags
 import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.search.SearchResultViewModel
 import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
@@ -99,6 +100,8 @@ fun SearchResultContent(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
+
+    CollectWatchLaterEffects(watchLaterViewModel)
 
     val gridState = rememberLazyGridState()
     val tabRowFocusRequester = remember { FocusRequester() }

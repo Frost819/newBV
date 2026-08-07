@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,7 +112,6 @@ fun SmallVideoCard(
             ),
         ) {
             if (showActions) {
-                val isFirst = onAddWatchLater != null
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -125,7 +119,7 @@ fun SmallVideoCard(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    onAddWatchLater?.let { action ->
+                    onRemoveWatchLater?.let { action ->
                         IconButton(
                             onClick = {
                                 if (!releaseLongPress) {
@@ -137,14 +131,37 @@ fun SmallVideoCard(
                             modifier = Modifier.focusRequester(firstButtonRequester),
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                                painter = painterResource(id = R.drawable.remove_from_list),
+                                contentDescription = "移除稍后再看",
+                            )
+                        }
+                    }
+
+                    onAddWatchLater?.let { action ->
+                        val addIsFirst = onRemoveWatchLater == null
+                        IconButton(
+                            onClick = {
+                                if (addIsFirst && !releaseLongPress) {
+                                    releaseLongPress = true
+                                    return@IconButton
+                                }
+                                action()
+                            },
+                            modifier = if (addIsFirst) {
+                                Modifier.focusRequester(firstButtonRequester)
+                            } else {
+                                Modifier
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.add_to_list),
                                 contentDescription = "稍后再看",
                             )
                         }
                     }
 
                     onGoToDetailPage?.let { action ->
-                        val detailIsFirst = !isFirst && onAddWatchLater == null
+                        val detailIsFirst = onRemoveWatchLater == null && onAddWatchLater == null
                         IconButton(
                             onClick = {
                                 if (detailIsFirst && !releaseLongPress) {
@@ -160,14 +177,15 @@ fun SmallVideoCard(
                             },
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Info,
+                                painter = painterResource(id = R.drawable.info_24px),
                                 contentDescription = "详情",
                             )
                         }
                     }
 
                     onGoToUpPage?.let { action ->
-                        val upIsFirst = !isFirst && onAddWatchLater == null && onGoToDetailPage == null
+                        val upIsFirst = onRemoveWatchLater == null &&
+                            onAddWatchLater == null && onGoToDetailPage == null
                         IconButton(
                             onClick = {
                                 if (upIsFirst && !releaseLongPress) {
@@ -183,32 +201,8 @@ fun SmallVideoCard(
                             },
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Person,
+                                painter = painterResource(id = R.drawable.contact_page_24px),
                                 contentDescription = "UP主主页",
-                            )
-                        }
-                    }
-
-                    onRemoveWatchLater?.let { action ->
-                        val removeIsFirst = !isFirst && onAddWatchLater == null &&
-                            onGoToDetailPage == null && onGoToUpPage == null
-                        IconButton(
-                            onClick = {
-                                if (removeIsFirst && !releaseLongPress) {
-                                    releaseLongPress = true
-                                    return@IconButton
-                                }
-                                action()
-                            },
-                            modifier = if (removeIsFirst) {
-                                Modifier.focusRequester(firstButtonRequester)
-                            } else {
-                                Modifier
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "移除稍后再看",
                             )
                         }
                     }

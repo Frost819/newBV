@@ -1,5 +1,9 @@
 package dev.frost819.newbv.app.viewmodel.common
 
+import android.widget.Toast
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,6 +47,9 @@ class WatchLaterViewModel @Inject constructor(
 
     /**
      * 添加视频到稍后再看。
+     *
+     * @param aid 视频 AV 号。
+     * @param bvid 视频 BV 号（可选）。
      */
     fun addToView(aid: Long, bvid: String? = null) {
         viewModelScope.launch {
@@ -58,6 +65,48 @@ class WatchLaterViewModel @Inject constructor(
                 if (error is CancellationException) throw error
                 logger.error(error) { "Failed to add to view" }
                 _effect.emit(WatchLaterEffect.ShowToast("添加失败: ${error.message ?: "未知错误"}"))
+            }
+        }
+    }
+
+    /**
+     * 从稍后再看移除视频。
+     *
+     * @param aid 视频 AV 号。
+     */
+    fun delToView(aid: Long) {
+        viewModelScope.launch {
+            runCatching {
+                toViewRepository.delToView(
+                    aid = aid,
+                    viewed = false,
+                    preferApiType = prefApiType(),
+                )
+            }.onSuccess {
+                _effect.emit(WatchLaterEffect.ShowToast("已移除稍后再看"))
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                logger.error(error) { "Failed to delete to view" }
+                _effect.emit(WatchLaterEffect.ShowToast("移除失败: ${error.message ?: "未知错误"}"))
+            }
+        }
+    }
+}
+
+/**
+ * 收集 [WatchLaterViewModel] 的 effect 并显示 Toast。
+ *
+ * 在使用 [WatchLaterViewModel] 的页面中调用此 Composable 即可自动显示 toast。
+ */
+@Composable
+fun CollectWatchLaterEffects(watchLaterViewModel: WatchLaterViewModel) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        watchLaterViewModel.effect.collect { effect ->
+            when (effect) {
+                is WatchLaterEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.personal
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,8 +22,10 @@ import dev.frost819.newbv.data.datastore.Prefs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,12 +35,16 @@ import javax.inject.Inject
 /** 网络请求超时时间（毫秒）。 */
 private const val LOAD_TIMEOUT_MS = 10_000L
 
+/** PersonalViewModel 的 UI 效果（一次性事件）。 */
+sealed interface PersonalUiEffect {
+    data class ShowToast(val message: String) : PersonalUiEffect
+}
+
 /**
  * 个人页 UI 状态。
  *
  * 管理稍后再看、历史、收藏、追番四个 Tab 的数据。
  *
- * @property toViewItems 稍后再看列表。
  * @property toViewLoading 稍后再看加载中。
  * @property toViewError 稍后再看加载失败。
  * @property historyItems 历史列表。
@@ -59,7 +66,6 @@ private const val LOAD_TIMEOUT_MS = 10_000L
  * @property isLogin 是否已登录。
  */
 data class PersonalUiState(
-    val toViewItems: List<ToViewItem> = emptyList(),
     val toViewLoading: Boolean = false,
     val toViewError: Boolean = false,
     val historyItems: List<HistoryItem> = emptyList(),
@@ -102,6 +108,9 @@ class PersonalViewModel @Inject constructor(
 
     private val logger = KotlinLogging.logger("PersonalViewModel")
 
+    private val _effect = MutableSharedFlow<PersonalUiEffect>()
+    val effect = _effect.asSharedFlow()
+
     private fun prefApiType(): BiliApiType = when (Prefs.apiType) {
         DataApiType.Web -> BiliApiType.Web
         DataApiType.App -> BiliApiType.App
@@ -109,6 +118,8 @@ class PersonalViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PersonalUiState())
     val uiState: StateFlow<PersonalUiState> = _uiState.asStateFlow()
+
+    val toViewItems = mutableStateListOf<ToViewItem>()
 
     private var historyCursor: Long = 0L
     private var favoritePageNumber: Int = 1
@@ -144,7 +155,8 @@ class PersonalViewModel @Inject constructor(
                         cursor = 0,
                         preferApiType = prefApiType(),
                     )
-                    _uiState.update { it.copy(toViewItems = data.data) }
+                    toViewItems.clear()
+                    toViewItems.addAll(data.data)
                 }
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) {
@@ -159,10 +171,9 @@ class PersonalViewModel @Inject constructor(
     }
 
     /**
-     * 删除稍后再看项。
+     * 删除稍后再看项（原地移除，保持焦点不丢失）。
      *
      * @param aid 视频 AV 号。
-     * @param viewed 是否已看完（true 时移到已看完，false 时彻底删除）。
      */
     fun delToView(aid: Long, viewed: Boolean = false) {
         viewModelScope.launch {
@@ -172,14 +183,14 @@ class PersonalViewModel @Inject constructor(
                     viewed = viewed,
                     preferApiType = prefApiType(),
                 )
-                _uiState.update {
-                    it.copy(toViewItems = it.toViewItems.filterNot { item -> item.oid == aid })
-                }
+                toViewItems.removeAll { it.oid == aid }
+                _effect.emit(PersonalUiEffect.ShowToast("已移除稍后再看"))
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) {
                     throw error
                 }
                 logger.error(error) { "Failed to delete toview $aid" }
+                _effect.emit(PersonalUiEffect.ShowToast("移除失败: ${error.message ?: "未知错误"}"))
             }
         }
     }
@@ -188,7 +199,8 @@ class PersonalViewModel @Inject constructor(
      * 刷新稍后再看列表。
      */
     fun refreshToView() {
-        _uiState.update { it.copy(toViewItems = emptyList(), toViewError = false) }
+        toViewItems.clear()
+        _uiState.update { it.copy(toViewError = false) }
         loadToView()
     }
 

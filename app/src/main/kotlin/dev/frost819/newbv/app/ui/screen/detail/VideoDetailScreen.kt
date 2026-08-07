@@ -95,6 +95,7 @@ import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
@@ -1155,6 +1156,7 @@ private fun RelatedVideoRow(
     focusSaver: ScreenFocusSaver,
 ) {
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
+    CollectWatchLaterEffects(watchLaterViewModel)
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
