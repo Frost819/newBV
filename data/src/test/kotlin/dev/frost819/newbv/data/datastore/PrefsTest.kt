@@ -150,8 +150,8 @@ class PrefsTest {
     }
 
     @Test
-    fun `default density is 1f`() {
-        assertThat(Prefs.density).isEqualTo(1f)
+    fun `default density is 2f`() {
+        assertThat(Prefs.density).isEqualTo(2f)
     }
 
     @Test
@@ -364,7 +364,7 @@ class PrefsTest {
 
         assertThat(Prefs.isLogin).isFalse()
         assertThat(Prefs.uid).isEqualTo(0L)
-        assertThat(Prefs.density).isEqualTo(1f)
+        assertThat(Prefs.density).isEqualTo(2f)
     }
 
     // ===== flowOf 测试 =====

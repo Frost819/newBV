@@ -76,7 +76,7 @@ class SmallVideoCardTest {
                 SmallVideoCard(data = fakeData, onClick = {})
             }
         }
-        composeRule.onNodeWithText("▶ 1.0万").assertIsDisplayed()
+        composeRule.onNodeWithText("1.0万").assertIsDisplayed()
     }
 
     @Test
@@ -98,7 +98,7 @@ class SmallVideoCardTest {
         }
         composeRule.onNodeWithText("测试视频标题").assertIsDisplayed()
         composeRule.onNodeWithText("测试UP主").assertIsDisplayed()
-        composeRule.onNodeWithText("▶ 1.0万").assertIsDisplayed()
+        composeRule.onNodeWithText("1.0万").assertIsDisplayed()
         composeRule.onNodeWithText("02:00").assertIsDisplayed()
     }
 }

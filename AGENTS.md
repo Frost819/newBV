@@ -111,7 +111,9 @@ export http_proxy=http://127.0.0.1:7890
 ./gradlew :app:connectedDebugAndroidTest
 
 # 生成测试覆盖率报告（JaCoCo）
-./gradlew jacocoTestReport
+./gradlew test jacocoAggregatedReport                    # 聚合所有模块
+./gradlew :bili-api:jacocoTestReport                     # JVM 模块
+./gradlew :app:createDebugJacocoReport                  # Android 模块
 
 # 代码检查
 ./gradlew ktlintCheck
@@ -600,8 +602,13 @@ class SmallVideoCardTest {
 每个模块配置 JaCoCo，生成覆盖率报告：
 
 ```bash
-./gradlew jacocoTestReport
-# 报告位置：build/reports/jacoco/jacocoTestReport/html/index.html
+./gradlew test jacocoAggregatedReport
+# 聚合报告位置：build/reports/jacoco/jacocoAggregatedReport/html/index.html
+
+# Per-module 报告
+./gradlew :bili-api:jacocoTestReport          # JVM 模块
+./gradlew :app:createDebugJacocoReport        # Android 模块
+# Android 模块报告位置：build/reports/jacoco/createDebugJacocoReport/html/index.html
 ```
 
 #### 5.5.2 覆盖率目标
