@@ -2,13 +2,19 @@ package dev.frost819.newbv.app.viewmodel.player
 
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
+import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -104,5 +110,55 @@ class SubtitleViewModelTest {
         advanceUntilIdle()
         assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
         assertThat(viewModel.subtitleData.value).isEmpty()
+    }
+
+    @Test
+    fun `clearSubtitle resets all subtitle state`() = runTest(testDispatcher) {
+        viewModel.clearSubtitle()
+
+        assertThat(viewModel.subtitleList.value).isEmpty()
+        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+        assertThat(viewModel.subtitleData.value).isEmpty()
+    }
+
+    @Test
+    fun `updateSubtitleState SetFontSize persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(48))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultSubtitleFontSize = 48 }
+    }
+
+    @Test
+    fun `updateSubtitleState SetOpacity persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateSubtitleState(SubtitleSettingAction.SetOpacity(0.6f))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultSubtitleBackgroundOpacity = 0.6f }
+    }
+
+    @Test
+    fun `updateSubtitleState SetBottomPadding persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateSubtitleState(SubtitleSettingAction.SetBottomPadding(30))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultSubtitleBottomPadding = 30 }
+    }
+
+    @Test
+    fun `updateSubtitleState with no change is no-op`() = runTest(testDispatcher) {
+        val initialFontSize = viewModel.subtitleState.value.fontSize
+        viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(initialFontSize))
+        advanceUntilIdle()
+
+        assertThat(viewModel.subtitleState.value.fontSize).isEqualTo(initialFontSize)
+    }
+
+    @Test
+    fun `toggleSubtitle does nothing when subtitle is active and list is empty`() = runTest(testDispatcher) {
+        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+        viewModel.toggleSubtitle()
+        advanceUntilIdle()
+        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
     }
 }

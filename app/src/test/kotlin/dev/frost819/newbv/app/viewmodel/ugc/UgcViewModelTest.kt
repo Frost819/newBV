@@ -7,6 +7,7 @@ import dev.frost819.newbv.biliapi.entity.ugc.region.UgcFeedData
 import dev.frost819.newbv.biliapi.entity.ugc.region.UgcFeedPage
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -182,5 +183,85 @@ class UgcViewModelTest {
 
         assertThat(callCount).isEqualTo(1)
         assertThat(viewModel.uiState.value.items).hasSize(1)
+    }
+
+    @Test
+    fun `switchType to same type with existing items is no-op`() = runTest(testDispatcher) {
+        coEvery { ugcRepository.getRegionFeedRcmd(any(), any()) } returns
+            fakeFeedData(listOf(fakeUgcItem(1)), hasNext = true, nextPage = 2)
+        viewModel = UgcViewModel(ugcRepository)
+        advanceUntilIdle()
+
+        viewModel.switchType(UgcTypeV2.Douga)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { ugcRepository.getRegionFeedRcmd(any(), any()) }
+    }
+
+    @Test
+    fun `switchType to different type loads new data`() = runTest(testDispatcher) {
+        coEvery { ugcRepository.getRegionFeedRcmd(UgcTypeV2.Douga, any()) } returns
+            fakeFeedData(listOf(fakeUgcItem(1)), hasNext = true, nextPage = 2)
+        coEvery { ugcRepository.getRegionFeedRcmd(UgcTypeV2.Game, any()) } returns
+            fakeFeedData(listOf(fakeUgcItem(100), fakeUgcItem(101)), hasNext = false, nextPage = 2)
+        viewModel = UgcViewModel(ugcRepository)
+        advanceUntilIdle()
+
+        viewModel.switchType(UgcTypeV2.Game)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.items).hasSize(2)
+        assertThat(viewModel.uiState.value.items[0].aid).isEqualTo(100)
+    }
+
+    @Test
+    fun `init error on first load sets error with empty items`() = runTest(testDispatcher) {
+        coEvery { ugcRepository.getRegionFeedRcmd(any(), any()) } throws IOException("init error")
+        viewModel = UgcViewModel(ugcRepository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.items).isEmpty()
+        assertThat(viewModel.uiState.value.error).isTrue()
+        assertThat(viewModel.uiState.value.loading).isFalse()
+    }
+
+    @Test
+    fun `refresh clears error on reload`() = runTest(testDispatcher) {
+        var callCount = 0
+        coEvery { ugcRepository.getRegionFeedRcmd(any(), any()) } answers {
+            callCount++
+            if (callCount == 1) throw IOException("error")
+            fakeFeedData(listOf(fakeUgcItem(99)), hasNext = false, nextPage = 2)
+        }
+        viewModel = UgcViewModel(ugcRepository)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.error).isTrue()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.error).isFalse()
+        assertThat(viewModel.uiState.value.items[0].aid).isEqualTo(99)
+    }
+
+    @Test
+    fun `loadMore appends to existing items`() = runTest(testDispatcher) {
+        var callCount = 0
+        coEvery { ugcRepository.getRegionFeedRcmd(any(), any()) } answers {
+            callCount++
+            if (callCount == 1) {
+                fakeFeedData(listOf(fakeUgcItem(1), fakeUgcItem(2)), hasNext = true, nextPage = 2)
+            } else {
+                fakeFeedData(listOf(fakeUgcItem(3)), hasNext = false, nextPage = 3)
+            }
+        }
+        viewModel = UgcViewModel(ugcRepository)
+        advanceUntilIdle()
+
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.items).hasSize(3)
+        assertThat(viewModel.uiState.value.items[2].aid).isEqualTo(3)
     }
 }

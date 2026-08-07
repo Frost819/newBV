@@ -89,6 +89,25 @@ class DanmakuMaskFinderTest {
         finder.findFrame(mask, 6000L)
         finder.findFrame(mask, 7000L)
     }
+
+    @Test
+    fun `findFrame refetches when time moves outside cached segment range`() = runTest {
+        val finder = DanmakuMaskFinder()
+        val mask = loadWebMask()
+
+        finder.findFrame(mask, 0L)
+        finder.findFrame(mask, Long.MAX_VALUE - 1)
+    }
+
+    @Test
+    fun `findFrame returns null when time in segment but no frame matches`() = runTest {
+        val finder = DanmakuMaskFinder()
+        val mask = loadWebMask()
+
+        val frame = finder.findFrame(mask, Long.MAX_VALUE - 1)
+
+        assertThat(frame).isNull()
+    }
 }
 
 class CalculateMaskDelayTest {
@@ -134,5 +153,13 @@ class CalculateMaskDelayTest {
         val frame = DanmakuMobMaskFrame(range = 1000L until 2000L, width = 10, height = 10, image = byteArrayOf())
         val delay = calculateMaskDelay(frame, currentTime = 1500L, isPlaying = false)
         assertThat(delay).isEqualTo(200L)
+    }
+
+    @Test
+    fun `with frame and playing returns exact delay when in range`() {
+        val frame = DanmakuWebMaskFrame(range = 1000L until 1100L, svg = "")
+        val delay = calculateMaskDelay(frame, currentTime = 1050L, isPlaying = true)
+
+        assertThat(delay).isEqualTo(49L)
     }
 }

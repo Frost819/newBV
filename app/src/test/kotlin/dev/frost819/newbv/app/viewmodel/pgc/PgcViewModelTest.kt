@@ -8,6 +8,7 @@ import dev.frost819.newbv.biliapi.entity.pgc.PgcType
 import dev.frost819.newbv.biliapi.http.SeasonIndexType
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -214,5 +215,98 @@ class PgcViewModelTest {
         assertThat(viewModel.uiState.value.items).hasSize(1)
         assertThat(viewModel.uiState.value.carouselItems).isEmpty()
         assertThat(viewModel.uiState.value.carouselLoading).isFalse()
+    }
+
+    @Test
+    fun `switchType to same type with existing items is no-op`() = runTest(testDispatcher) {
+        coEvery { pgcRepository.getFeed(any(), any()) } returns
+            fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+        viewModel = PgcViewModel(pgcRepository)
+        advanceUntilIdle()
+
+        viewModel.switchType(PgcType.Anime)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { pgcRepository.getFeed(any(), any()) }
+    }
+
+    @Test
+    fun `init error on first load sets error with empty items`() = runTest(testDispatcher) {
+        coEvery { pgcRepository.getFeed(any(), any()) } throws IOException("init error")
+        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+        viewModel = PgcViewModel(pgcRepository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.items).isEmpty()
+        assertThat(viewModel.uiState.value.error).isTrue()
+        assertThat(viewModel.uiState.value.loading).isFalse()
+    }
+
+    @Test
+    fun `refresh reloads carousel and feed`() = runTest(testDispatcher) {
+        var feedCallCount = 0
+        coEvery { pgcRepository.getFeed(any(), any()) } answers {
+            feedCallCount++
+            if (feedCallCount == 1) {
+                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+            } else {
+                fakeFeedData(listOf(fakePgcItem(99)), hasNext = false, cursor = 1)
+            }
+        }
+        var carouselCallCount = 0
+        coEvery { pgcRepository.getCarousel(any()) } answers {
+            carouselCallCount++
+            fakeCarouselData()
+        }
+        viewModel = PgcViewModel(pgcRepository)
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(feedCallCount).isEqualTo(2)
+        assertThat(carouselCallCount).isAtLeast(2)
+        assertThat(viewModel.uiState.value.items[0].seasonId).isEqualTo(99)
+    }
+
+    @Test
+    fun `loadMore appends to existing items`() = runTest(testDispatcher) {
+        var callCount = 0
+        coEvery { pgcRepository.getFeed(any(), any()) } answers {
+            callCount++
+            if (callCount == 1) {
+                fakeFeedData(listOf(fakePgcItem(1), fakePgcItem(2)), hasNext = true, cursor = 1)
+            } else {
+                fakeFeedData(listOf(fakePgcItem(3)), hasNext = false, cursor = 2)
+            }
+        }
+        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+        viewModel = PgcViewModel(pgcRepository)
+        advanceUntilIdle()
+
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.items).hasSize(3)
+        assertThat(viewModel.uiState.value.items[2].seasonId).isEqualTo(3)
+    }
+
+    @Test
+    fun `carousel success sets carousel items`() = runTest(testDispatcher) {
+        coEvery { pgcRepository.getFeed(any(), any()) } returns
+            fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+        val carouselData = CarouselData(
+            items = listOf(
+                CarouselData.CarouselItem(cover = "c1", title = "B1", seasonId = 10, episodeId = 100),
+                CarouselData.CarouselItem(cover = "c2", title = "B2", seasonId = 20, episodeId = 200),
+            ),
+        )
+        coEvery { pgcRepository.getCarousel(any()) } returns carouselData
+        viewModel = PgcViewModel(pgcRepository)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.carouselItems).hasSize(2)
+        assertThat(viewModel.uiState.value.carouselItems[0].title).isEqualTo("B1")
     }
 }

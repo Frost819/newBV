@@ -311,4 +311,182 @@ class AccountRepositoryImplTest {
         assertThat(authRepository.mid).isNull()
         assertThat(newRepo.uiState.value.isLogin).isFalse()
     }
+
+    // ── refreshUserInfo ──────────────────────────────────────────────
+
+    @Test
+    fun `refreshUserInfo updates username avatar and level from API`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 100L
+        val user = UserEntity(uid = 100L, username = "old_name", avatar = "old_avatar", auth = "{}")
+        coEvery { userDao.findUserByUid(100L) } returns user
+
+        repository.refreshUserInfo()
+
+        assertThat(repository.uiState.value.username).isEqualTo("testuser")
+        assertThat(repository.uiState.value.avatar).isEqualTo("http://example.com/avatar.png")
+        assertThat(repository.uiState.value.level).isEqualTo(6)
+        assertThat(repository.uiState.value.currentMin).isEqualTo(50)
+        assertThat(repository.uiState.value.exp).isEqualTo(100)
+        assertThat(repository.uiState.value.nextExp).isEqualTo(200)
+    }
+
+    @Test
+    fun `refreshUserInfo does nothing when not logged in`() = runTest {
+        Prefs.isLogin = false
+
+        repository.refreshUserInfo()
+
+        coVerify(exactly = 0) { userDao.findUserByUid(any()) }
+    }
+
+    @Test
+    fun `refreshUserInfo returns when user not found in DB`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 999L
+        coEvery { userDao.findUserByUid(999L) } returns null
+
+        repository.refreshUserInfo()
+
+        assertThat(repository.uiState.value.username).isEmpty()
+    }
+
+    @Test
+    fun `refreshUserInfo persists updated username and avatar to DB`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 100L
+        val user = UserEntity(uid = 100L, username = "old", avatar = "old", auth = "{}")
+        coEvery { userDao.findUserByUid(100L) } returns user
+
+        repository.refreshUserInfo()
+
+        coVerify { userDao.update(match { it.username == "testuser" && it.avatar == "http://example.com/avatar.png" }) }
+    }
+
+    @Test
+    fun `refreshUserInfo catches exception without crashing`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 100L
+        coEvery { BiliHttpApi.getUserSelfInfo() } throws RuntimeException("network error")
+        coEvery { userDao.findUserByUid(100L) } returns UserEntity(uid = 100L, username = "u", avatar = "a", auth = "{}")
+
+        repository.refreshUserInfo()
+
+        assertThat(repository.uiState.value.username).isEmpty()
+    }
+
+    // ── reloadAvatar ────────────────────────────────────────────────
+
+    @Test
+    fun `reloadAvatar updates username and avatar from DB`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 100L
+        val user = UserEntity(uid = 100L, username = "db_user", avatar = "db_avatar", auth = "{}")
+        coEvery { userDao.findUserByUid(100L) } returns user
+
+        repository.reloadAvatar()
+
+        assertThat(repository.uiState.value.username).isEqualTo("db_user")
+        assertThat(repository.uiState.value.avatar).isEqualTo("db_avatar")
+    }
+
+    @Test
+    fun `reloadAvatar does nothing when not logged in`() = runTest {
+        Prefs.isLogin = false
+
+        repository.reloadAvatar()
+
+        coVerify(exactly = 0) { userDao.findUserByUid(any()) }
+    }
+
+    @Test
+    fun `reloadAvatar returns when user not found in DB`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 999L
+        coEvery { userDao.findUserByUid(999L) } returns null
+
+        repository.reloadAvatar()
+
+        assertThat(repository.uiState.value.username).isEmpty()
+    }
+
+    // ── uiState ─────────────────────────────────────────────────────
+
+    @Test
+    fun `uiState reflects level info after setCurrentUser`() = runTest {
+        val authData = AuthData(
+            uid = 100L,
+            uidCkMd5 = "ckmd5",
+            sid = "sid",
+            biliJct = "jct",
+            sessData = "sess",
+            tokenExpiredDate = System.currentTimeMillis() + 86400000,
+        )
+        val user = UserEntity(
+            uid = 100L,
+            username = "testuser",
+            avatar = "http://example.com/avatar.png",
+            auth = authData.toJson(),
+        )
+        coEvery { userDao.findUserByUid(100L) } returns user
+
+        repository.setCurrentUser(user)
+
+        assertThat(repository.uiState.value.isLogin).isTrue()
+        assertThat(repository.uiState.value.uid).isEqualTo(100L)
+        assertThat(repository.uiState.value.level).isEqualTo(6)
+        assertThat(repository.uiState.value.exp).isEqualTo(100)
+    }
+
+    @Test
+    fun `uiState shows login state after addUser`() = runTest {
+        val authData = AuthData(
+            uid = 200L,
+            uidCkMd5 = "md5",
+            sid = "sid",
+            biliJct = "jct",
+            sessData = "sess",
+            tokenExpiredDate = System.currentTimeMillis() + 86400000,
+        )
+        coEvery { userDao.findUserByUid(200L) } returns null
+
+        repository.addUser(authData)
+
+        assertThat(repository.uiState.value.isLogin).isTrue()
+        assertThat(repository.uiState.value.uid).isEqualTo(200L)
+    }
+
+    @Test
+    fun `uiState resets to default after logout`() = runTest {
+        Prefs.isLogin = true
+        Prefs.uid = 100L
+        coEvery { userDao.findUserByUid(100L) } returns null
+
+        repository.logout()
+
+        val state = repository.uiState.value
+        assertThat(state.isLogin).isFalse()
+        assertThat(state.uid).isEqualTo(0L)
+        assertThat(state.username).isEmpty()
+    }
+
+    @Test
+    fun `toggleIncognitoMode updates uiState`() {
+        val initial = repository.uiState.value.incognitoMode
+
+        repository.toggleIncognitoMode()
+        assertThat(repository.uiState.value.incognitoMode).isEqualTo(!initial)
+
+        repository.toggleIncognitoMode()
+        assertThat(repository.uiState.value.incognitoMode).isEqualTo(initial)
+    }
+
+    @Test
+    fun `updateUserLock does nothing when user not found`() = runTest {
+        coEvery { userDao.findUserByUid(999L) } returns null
+
+        repository.updateUserLock(999L, "udlr")
+
+        coVerify(exactly = 0) { userDao.update(any()) }
+    }
 }

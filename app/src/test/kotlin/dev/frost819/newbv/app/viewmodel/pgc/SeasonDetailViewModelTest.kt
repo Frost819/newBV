@@ -250,4 +250,175 @@ class SeasonDetailViewModelTest {
         assertThat(viewModel.uiState.value.seasonDetail?.seasonId).isEqualTo(200)
         assertThat(viewModel.uiState.value.isFollowing).isFalse()
     }
+
+    @Test
+    fun `toggleFollow emits toast on failure`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail(follow = false)
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { userRepository.addSeasonFollow(any(), any()) } throws RuntimeException("follow error")
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+
+            val effect = awaitItem()
+            assertThat(effect).isInstanceOf(SeasonDetailUiEffect.ShowToast::class.java)
+            assertThat((effect as SeasonDetailUiEffect.ShowToast).message).contains("追番失败")
+        }
+    }
+
+    @Test
+    fun `toggleFollow is no-op when detail is null`() = runTest(testDispatcher) {
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("error")
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.toggleFollow()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { userRepository.addSeasonFollow(any(), any()) }
+        coVerify(exactly = 0) { userRepository.delSeasonFollow(any(), any()) }
+    }
+
+    @Test
+    fun `toggleFollow with toast message emits ShowToast`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail(follow = false)
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { userRepository.addSeasonFollow(any(), any()) } returns "追番成功！"
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+
+            val effect = awaitItem()
+            assertThat(effect).isInstanceOf(SeasonDetailUiEffect.ShowToast::class.java)
+            assertThat((effect as SeasonDetailUiEffect.ShowToast).message).isEqualTo("追番成功！")
+        }
+    }
+
+    @Test
+    fun `onPlayEpisode emits NavigateToPlayer`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail()
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.onPlayEpisode(detail.episodes[1])
+            advanceUntilIdle()
+
+            val effect = awaitItem()
+            assertThat(effect).isInstanceOf(SeasonDetailUiEffect.NavigateToPlayer::class.java)
+            val navEffect = effect as SeasonDetailUiEffect.NavigateToPlayer
+            assertThat(navEffect.aid).isEqualTo(10002L)
+            assertThat(navEffect.cid).isEqualTo(20002L)
+        }
+    }
+
+    @Test
+    fun `onPlay with progress but episode not found falls back to first`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail(
+            progress = SeasonDetail.UserStatus.Progress(
+                lastEpId = 9999,
+                lastEpIndex = "不存在",
+                lastTime = 300,
+            ),
+        )
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.onPlay()
+            advanceUntilIdle()
+
+            val effect = awaitItem()
+            val navEffect = effect as SeasonDetailUiEffect.NavigateToPlayer
+            assertThat(navEffect.aid).isEqualTo(10001L)
+        }
+    }
+
+    @Test
+    fun `onPlay with no episodes does nothing`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail().copy(episodes = emptyList())
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.onPlay()
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `onPlay is no-op when detail is null`() = runTest(testDispatcher) {
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("error")
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.onPlay()
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `onSwitchSeason error sets error state`() = runTest(testDispatcher) {
+        val detail = fakeSeasonDetail(seasonId = 100, follow = true)
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("switch error")
+        viewModel.onSwitchSeason(200)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.error).isTrue()
+        assertThat(viewModel.uiState.value.loading).isFalse()
+    }
+
+    @Test
+    fun `onPlay finds episode in sections`() = runTest(testDispatcher) {
+        val sectionEpisode = Episode(
+            id = 3, aid = 10003L, bvid = "BV10003", cid = 20003L, epid = 1003,
+            title = "特别篇", longTitle = "SP1", cover = "", duration = 600,
+            dimension = Dimension(1920, 1080),
+        )
+        val detail = fakeSeasonDetail().copy(
+            sections = listOf(
+                Section(id = 1, title = "特别篇", episodes = listOf(sectionEpisode)),
+            ),
+        )
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+
+        viewModel = createViewModel(seasonId = 100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.onPlayEpisode(sectionEpisode)
+            advanceUntilIdle()
+
+            val effect = awaitItem()
+            val navEffect = effect as SeasonDetailUiEffect.NavigateToPlayer
+            assertThat(navEffect.aid).isEqualTo(10003L)
+            assertThat(navEffect.epid).isEqualTo(1003)
+        }
+    }
 }

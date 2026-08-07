@@ -6,11 +6,13 @@ import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.danmaku.entity.DanmakuType
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -134,5 +136,84 @@ class DanmakuViewModelTest {
         viewModel.toggleDanmaku()
         advanceUntilIdle()
         assertThat(viewModel.danmakuState.value.enabledTypes).isEmpty()
+    }
+
+    @Test
+    fun `toggleDanmaku re-enables default types when enabledTypes is empty`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetEnabledTypes(emptyList()))
+        advanceUntilIdle()
+        assertThat(viewModel.danmakuState.value.enabledTypes).isEmpty()
+
+        viewModel.toggleDanmaku()
+        advanceUntilIdle()
+        assertThat(viewModel.danmakuState.value.enabledTypes).isNotEmpty()
+    }
+
+    @Test
+    fun `updateDanmakuState with no change is no-op`() = runTest(testDispatcher) {
+        val initialScale = viewModel.danmakuState.value.scale
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetScale(initialScale))
+        advanceUntilIdle()
+
+        assertThat(viewModel.danmakuState.value.scale).isEqualTo(initialScale)
+    }
+
+    @Test
+    fun `updateDanmakuState SetScale persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetScale(3.0f))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuScale = 3.0f }
+    }
+
+    @Test
+    fun `updateDanmakuState SetOpacity persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetOpacity(0.5f))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuOpacity = 0.5f }
+    }
+
+    @Test
+    fun `updateDanmakuState SetArea persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetArea(0.9f))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuArea = 0.9f }
+    }
+
+    @Test
+    fun `updateDanmakuState SetSpeedFactor persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetSpeedFactor(2.0f))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuSpeedFactor = 2.0f }
+    }
+
+    @Test
+    fun `updateDanmakuState SetMaskEnabled persists to Prefs`() = runTest(testDispatcher) {
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetMaskEnabled(true))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuMask = true }
+    }
+
+    @Test
+    fun `updateDanmakuState SetEnabledTypes persists to Prefs`() = runTest(testDispatcher) {
+        val types = listOf(DanmakuType.Rolling, DanmakuType.Top)
+        viewModel.updateDanmakuState(DanmakuSettingAction.SetEnabledTypes(types))
+        advanceUntilIdle()
+
+        verify { Prefs.defaultDanmakuTypes = any() }
+    }
+
+    @Test
+    fun `danmakuMask initial value is null`() {
+        assertThat(viewModel.danmakuMask.value).isNull()
+    }
+
+    @Test
+    fun `danmakuPlayer initial value is null`() {
+        assertThat(viewModel.danmakuPlayer).isNull()
     }
 }

@@ -23,12 +23,71 @@ subprojects {
         buildUponDefaultConfig = true
     }
 
+    // JaCoCo：统一排除生成代码和纯数据类
+    val jacocoExcludes = listOf(
+        "**/http/entity/**",      // HTTP 响应实体类（纯数据持有，无业务逻辑）
+        "**/http/Bili*HttpApi*.class", // HTTP API 客户端单例（需集成测试）
+        "**/http/BiliHttpApiKt*.class", // HTTP API 顶层函数（需集成测试）
+        "**/ApiSignKt\$encApiSign*.class", // Ktor 插件 lambda（需集成测试）
+        "**/ApiSignKt\$injectCookies*.class", // Ktor 插件 lambda（需集成测试）
+        "**/db/entity/**",         // Room 实体类
+        "**/di/**",                // Hilt DI 模块
+        "**/theme/**",             // 主题定义
+        "**/navigation/**",        // 路由定义
+        "**/impl/exo/**",         // ExoPlayer 实现（需 Android 环境）
+        "**/BvVideoPlayer*.class", // Composable 播放器组件（需插桩测试）
+        "**/OkHttpUtil*.class",   // SSL 工具（需 Android 环境）
+        "**/ui/screen/**",        // Composable 屏幕（需插桩测试）
+        "**/ui/component/**",      // Composable 组件（需插桩测试）
+        "**/BVApplication*.class", // Application 类（需 Android 环境）
+        "**/MainActivity*.class", // Activity 类（需插桩测试）
+        "**/ComposableSingletons*.class", // Compose 编译器生成
+        "**/BuildConfig*.class",  // Gradle 生成
+        "**/CodecUtil*.class",    // Android MediaCodec 工具（需 Android 环境）
+        "**/CodecInfoData*.class", // CodecUtil 内部数据类
+        "**/CodecType*.class",    // CodecUtil 内部枚举
+        "**/CodecMedia*.class",   // CodecUtil 内部枚举
+        "**/CodecMode*.class",    // CodecUtil 内部枚举
+        "**/SupportedFrameRate*.class", // CodecUtil 内部数据类
+        "**/VideoShotExtends*.class", // Android Bitmap 工具（需 Android 环境）
+        "**/VideoShotImageCache*.class", // Android LruCache（需 Android 环境）
+        "**/SpriteFrame*.class",  // VideoShotExtends 内部数据类
+        "**/network/GithubApi*.class", // GitHub API 客户端单例（需集成测试）
+        "**/websocket/**",        // WebSocket 客户端（需集成测试）
+        "**/grpc/utils/**",       // gRPC 工具（需集成测试）
+        "**/http/plugins/**",     // Ktor 插件（需集成测试）
+        "**/com/tfowl/**",        // 第三方 Ktor 插件（需集成测试）
+        "**/*_Hilt*.class",
+        "**/Hilt_*.class",
+        "**/Dagger*.class",
+        "**/*_Factory.class",
+        "**/*_MembersInjector.class",
+        "**/*_Generated*.class",
+        "**/dagger/**",
+        "**/hilt_aggregated_deps/**",
+        "**/bilibili/**",          // protobuf 生成代码
+    )
+
     // JaCoCo：所有模块统一生成覆盖率报告
     tasks.withType<JacocoReport>().configureEach {
         reports {
             xml.required.set(true)
             html.required.set(true)
             csv.required.set(false)
+        }
+    }
+
+    // JVM 模块（bili-api, bili-subtitle）：配置 jacocoTestReport 排除项
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        tasks.named<JacocoReport>("jacocoTestReport") {
+            val compileKotlin = tasks.named("compileKotlin")
+            mustRunAfter(compileKotlin)
+            classDirectories.setFrom(
+                fileTree("${layout.buildDirectory.get().asFile}/classes/kotlin/main") {
+                    include("**/*.class")
+                    exclude(jacocoExcludes)
+                }
+            )
         }
     }
 
@@ -44,14 +103,11 @@ subprojects {
             classDirectories.setFrom(
                 fileTree("${layout.buildDirectory.get().asFile}/intermediates/built_in_kotlinc/debug") {
                     include("**/*.class")
-                    exclude("**/*_Hilt*.class")
-                    exclude("**/Hilt_*.class")
-                    exclude("**/Dagger*.class")
-                    exclude("**/*_Factory.class")
-                    exclude("**/*_MembersInjector.class")
+                    exclude(jacocoExcludes)
                 },
                 fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
                     include("**/*.class")
+                    exclude(jacocoExcludes)
                 },
             )
             executionData.setFrom(
@@ -75,14 +131,11 @@ subprojects {
             classDirectories.setFrom(
                 fileTree("${layout.buildDirectory.get().asFile}/intermediates/built_in_kotlinc/debug") {
                     include("**/*.class")
-                    exclude("**/*_Hilt*.class")
-                    exclude("**/Hilt_*.class")
-                    exclude("**/Dagger*.class")
-                    exclude("**/*_Factory.class")
-                    exclude("**/*_MembersInjector.class")
+                    exclude(jacocoExcludes)
                 },
                 fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
                     include("**/*.class")
+                    exclude(jacocoExcludes)
                 },
             )
             executionData.setFrom(
@@ -118,6 +171,38 @@ val jacocoAggregatedReport = tasks.register<JacocoReport>("jacocoAggregatedRepor
             exclude("**/buildSrc/**")
             exclude("**/bv/**")
             exclude("**/bili-api-grpc/**")
+            exclude("**/http/entity/**")
+            exclude("**/http/Bili*HttpApi*.class")
+            exclude("**/http/BiliHttpApiKt*.class")
+            exclude("**/ApiSignKt\$encApiSign*.class")
+            exclude("**/ApiSignKt\$injectCookies*.class")
+            exclude("**/db/entity/**")
+            exclude("**/di/**")
+            exclude("**/theme/**")
+            exclude("**/navigation/**")
+            exclude("**/impl/exo/**")
+            exclude("**/BvVideoPlayer*.class")
+            exclude("**/OkHttpUtil*.class")
+            exclude("**/ui/screen/**")
+            exclude("**/ui/component/**")
+            exclude("**/BVApplication*.class")
+            exclude("**/MainActivity*.class")
+            exclude("**/ComposableSingletons*.class")
+            exclude("**/BuildConfig*.class")
+            exclude("**/CodecUtil*.class")
+            exclude("**/CodecInfoData*.class")
+            exclude("**/CodecType*.class")
+            exclude("**/CodecMedia*.class")
+            exclude("**/CodecMode*.class")
+            exclude("**/SupportedFrameRate*.class")
+            exclude("**/VideoShotExtends*.class")
+            exclude("**/VideoShotImageCache*.class")
+            exclude("**/SpriteFrame*.class")
+            exclude("**/network/GithubApi*.class")
+            exclude("**/websocket/**")
+            exclude("**/grpc/utils/**")
+            exclude("**/http/plugins/**")
+            exclude("**/com/tfowl/**")
             exclude("**/*_Hilt*.class")
             exclude("**/Hilt_*.class")
             exclude("**/Dagger*.class")

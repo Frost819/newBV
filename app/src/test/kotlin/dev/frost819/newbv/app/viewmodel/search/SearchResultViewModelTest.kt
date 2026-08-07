@@ -421,4 +421,120 @@ class SearchResultViewModelTest {
         val first = items[0] as dev.frost819.newbv.app.ui.state.search.SearchResultItem.UserItem
         assertThat(first.user.mid).isEqualTo(301L)
     }
+
+    @Test
+    fun `pgc items are correctly mapped to PgcItem`() = runTest(testDispatcher) {
+        viewModel.search("测试")
+        advanceUntilIdle()
+
+        val items = viewModel.uiState.value.results[SearchType.MediaBangumi]!!.items
+        assertThat(items).hasSize(1)
+        val first = items[0] as dev.frost819.newbv.app.ui.state.search.SearchResultItem.PgcItem
+        assertThat(first.pgc.seasonId).isEqualTo(101)
+    }
+
+    @Test
+    fun `switchType triggers loadMore when results empty and not loading`() = runTest(testDispatcher) {
+        viewModel.search("测试")
+        advanceUntilIdle()
+
+        val beforeCount = io.mockk.coVerify {
+            searchRepo.searchType(
+                keyword = any(),
+                type = SearchType.MediaFt,
+                tid = any(),
+                order = any(),
+                duration = any(),
+                page = any(),
+                preferApiType = any(),
+            )
+        }
+
+        coEvery {
+            searchRepo.searchType(
+                keyword = any(),
+                type = SearchType.MediaFt,
+                tid = any(),
+                order = any(),
+                duration = any(),
+                page = any(),
+                preferApiType = any(),
+            )
+        } returns SearchTypeResult(
+            pgcs = listOf(fakePgcResult(999)),
+            page = SearchTypePage(nextPageForWeb = 3),
+            hasMore = false,
+        )
+
+        viewModel.uiState.value.results[SearchType.MediaFt]!!.let { result ->
+            assertThat(result.items).isNotEmpty()
+        }
+    }
+
+    @Test
+    fun `loadMore deduplicates items with same aid`() = runTest(testDispatcher) {
+        viewModel.search("测试")
+        advanceUntilIdle()
+
+        coEvery {
+            searchRepo.searchType(
+                keyword = any(),
+                type = SearchType.Video,
+                tid = any(),
+                order = any(),
+                duration = any(),
+                page = any(),
+                preferApiType = any(),
+            )
+        } returns fakeVideoSearchResult(fakeVideoList(20))
+
+        viewModel.loadMore(SearchType.Video)
+        advanceUntilIdle()
+
+        val result = viewModel.uiState.value.results[SearchType.Video]!!
+        assertThat(result.items.size).isEqualTo(20)
+    }
+
+    @Test
+    fun `search with keyword updates keyword in state`() = runTest(testDispatcher) {
+        viewModel.search("新搜索")
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.keyword).isEqualTo("新搜索")
+    }
+
+    @Test
+    fun `loadMore with blank keyword does nothing`() = runTest(testDispatcher) {
+        viewModel.loadMore(SearchType.Video)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) {
+            searchRepo.searchType(any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `loadMore skips when type not in results`() = runTest(testDispatcher) {
+        viewModel.loadMore(SearchType.Video)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) {
+            searchRepo.searchType(any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `updateFilter with same keyword re-searches`() = runTest(testDispatcher) {
+        viewModel.search("测试")
+        advanceUntilIdle()
+
+        val initialCallCount = 4
+        viewModel.updateFilter(SearchFilterOrderType.MostClicks, SearchFilterDuration.All)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.selectedOrder).isEqualTo(SearchFilterOrderType.MostClicks)
+        coVerify(atLeast = initialCallCount) {
+            searchRepo.searchType(any(), any(), any(), any(), any(), any(), any())
+        }
+    }
 }

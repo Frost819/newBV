@@ -17,6 +17,7 @@ import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -355,5 +356,197 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertThat(state.popularItems.any { it.aid == 888L }).isTrue()
+    }
+
+    @Test
+    fun `loadDynamic loads items when logged in`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(10), fakeDynamicVideo(11)),
+            hasMore = false,
+            historyOffset = "offset",
+            updateBaseline = "baseline",
+        )
+
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertThat(state.isLogin).isTrue()
+        assertThat(state.dynamicItems).hasSize(2)
+        assertThat(state.dynamicLoading).isFalse()
+        assertThat(state.dynamicHasMore).isFalse()
+    }
+
+    @Test
+    fun `loadDynamic sets error on failure`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } throws RuntimeException("network error")
+
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertThat(state.dynamicError).isTrue()
+        assertThat(state.dynamicLoading).isFalse()
+    }
+
+    @Test
+    fun `loadDynamic is no-op when hasMore is false`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(10)),
+            hasMore = false,
+            historyOffset = "offset",
+            updateBaseline = "baseline",
+        )
+
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+        assertThat(viewModel.uiState.value.dynamicHasMore).isFalse()
+
+        viewModel.loadDynamic()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userRepo.getDynamicVideos(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `loadRecommend loops until 24 items`() = runTest(testDispatcher) {
+        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
+            items = (1..10).map { fakeUgcItem(it.toLong()) },
+            nextPage = RecommendPage(),
+        )
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.recommendItems.size).isAtLeast(20)
+    }
+
+    @Test
+    fun `refresh dispatches Popular tab`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
+            list = listOf(fakeUgcItem(777)),
+            nextPage = PopularVideoPage(),
+            noMore = true,
+        )
+
+        viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.popularItems[0].aid).isEqualTo(777)
+        assertThat(viewModel.uiState.value.popularHasMore).isFalse()
+    }
+
+    @Test
+    fun `refresh dispatches Dynamics tab when logged in`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(10)),
+            hasMore = false,
+            historyOffset = "o",
+            updateBaseline = "b",
+        )
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(66)),
+            hasMore = false,
+            historyOffset = "o2",
+            updateBaseline = "b2",
+        )
+
+        viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems[0].aid).isEqualTo(66)
+    }
+
+    @Test
+    fun `loadMore dispatches Dynamics tab when logged in`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(10)),
+            hasMore = true,
+            historyOffset = "offset1",
+            updateBaseline = "baseline1",
+        )
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(20)),
+            hasMore = false,
+            historyOffset = "offset2",
+            updateBaseline = "baseline2",
+        )
+
+        viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems).hasSize(2)
+        assertThat(viewModel.uiState.value.dynamicItems[1].aid).isEqualTo(20)
+    }
+
+    @Test
+    fun `updateLoginState to true with existing dynamics does not duplicate load`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
+            videos = listOf(fakeDynamicVideo(10)),
+            hasMore = false,
+            historyOffset = "offset",
+            updateBaseline = "baseline",
+        )
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+
+        viewModel.updateLoginState(true)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+    }
+
+    @Test
+    fun `refreshPopular clears error`() = runTest(testDispatcher) {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { recommendRepo.getPopularVideos(any(), any()) } throws RuntimeException("error")
+        viewModel.refreshPopular()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.popularError).isTrue()
+
+        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
+            list = listOf(fakeUgcItem(1)),
+            nextPage = PopularVideoPage(),
+            noMore = false,
+        )
+        viewModel.refreshPopular()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.popularError).isFalse()
+        assertThat(viewModel.uiState.value.popularItems).isNotEmpty()
     }
 }

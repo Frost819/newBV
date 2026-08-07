@@ -1,5 +1,16 @@
 package dev.frost819.newbv.biliapi.entity
 
+import bilibili.app.playerunite.v1.playViewUniteReply
+import bilibili.pgc.gateway.player.v2.dashItem
+import bilibili.pgc.gateway.player.v2.dashVideo
+import bilibili.pgc.gateway.player.v2.dolbyItem
+import bilibili.pgc.gateway.player.v2.playViewBusinessInfo
+import bilibili.pgc.gateway.player.v2.playViewReply
+import bilibili.pgc.gateway.player.v2.responseUrl
+import bilibili.pgc.gateway.player.v2.segmentVideo
+import bilibili.pgc.gateway.player.v2.stream
+import bilibili.pgc.gateway.player.v2.streamInfo
+import bilibili.pgc.gateway.player.v2.videoInfo
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.http.entity.video.Dash
 import dev.frost819.newbv.biliapi.http.entity.video.DashData
@@ -7,9 +18,19 @@ import dev.frost819.newbv.biliapi.http.entity.video.DashDolby
 import dev.frost819.newbv.biliapi.http.entity.video.DashFlac
 import dev.frost819.newbv.biliapi.http.entity.video.Durl
 import dev.frost819.newbv.biliapi.http.entity.video.PlayUrlData
+import dev.frost819.newbv.biliapi.http.entity.video.PlayUrlV2Data
 import dev.frost819.newbv.biliapi.http.entity.video.SegmentBase
 import dev.frost819.newbv.biliapi.http.entity.video.SupportFormat
 import org.junit.jupiter.api.Test
+import bilibili.playershared.dashItem as sharedDashItem
+import bilibili.playershared.dashVideo as sharedDashVideo
+import bilibili.playershared.dolbyItem as sharedDolbyItem
+import bilibili.playershared.lossLessItem as sharedLossLessItem
+import bilibili.playershared.responseUrl as sharedResponseUrl
+import bilibili.playershared.segmentVideo as sharedSegmentVideo
+import bilibili.playershared.stream as sharedStream
+import bilibili.playershared.streamInfo as sharedStreamInfo
+import bilibili.playershared.vodInfo as sharedVodInfo
 
 /**
  * [PlayData] 实体的单元测试。
@@ -1104,6 +1125,409 @@ class PlayDataTest {
 
         assertThat(a1).isEqualTo(a2)
         assertThat(a1).isNotEqualTo(a3)
+    }
+
+    // endregion
+
+    // region ---- fromPlayUrlV2Data ----
+
+    @Test
+    fun `fromPlayUrlV2Data delegates to fromPlayUrlData with videoInfo`() {
+        val v1 = videoDashData(id = 80, codecId = 7, codecs = "avc1.640028")
+        val data =
+            PlayUrlV2Data(
+                expInfo = PlayUrlV2Data.ExpInfo(buyVipDonatedSeason = 0),
+                playCheck = PlayUrlV2Data.PlayCheck(playDetail = ""),
+                playViewBusinessInfo =
+                    PlayUrlV2Data.PlayViewBusinessInfo(
+                        episodeInfo =
+                            PlayUrlV2Data.PlayViewBusinessInfo.EpisodeInfo(
+                                aid = 1L,
+                                bvid = "BV1",
+                                cid = 1L,
+                                deliveryBusinessFragmentVideo = false,
+                                deliveryFragmentVideo = false,
+                                epId = 1,
+                                epStatus = 0,
+                                interaction =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.EpisodeInfo.Interaction(interaction = false),
+                                longTitle = "",
+                                title = "",
+                            ),
+                        seasonInfo = PlayUrlV2Data.PlayViewBusinessInfo.SeasonInfo(seasonId = 1, seasonType = 1),
+                        userStatus =
+                            PlayUrlV2Data.PlayViewBusinessInfo.UserStatus(
+                                followInfo =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.FollowInfo(
+                                        follow = 0,
+                                        followStatus = 0,
+                                    ),
+                                isLogin = 1,
+                                payInfo =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.PayInfo(
+                                        payCheck = 0,
+                                        payPackPaid = 0,
+                                        sponsor = 0,
+                                    ),
+                                vipInfo = PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.VipInfo(realVip = false),
+                                watchProgress =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.WatchProgress(
+                                        currentWatchProgress = 0,
+                                        lastEpId = 0,
+                                        lastTime = 0,
+                                    ),
+                            ),
+                    ),
+                videoInfo =
+                    playUrlData(
+                        dash = dash(video = listOf(v1)),
+                        supportFormats = listOf(supportFormat(80, listOf("avc1"))),
+                    ),
+                viewInfo =
+                    PlayUrlV2Data.ViewInfo(
+                        aiRepairQnTrialInfo = PlayUrlV2Data.ViewInfo.AiRepairQnTrialInfo(trialAble = false),
+                        endPage = PlayUrlV2Data.ViewInfo.EndPage(hide = false),
+                        extToast = kotlinx.serialization.json.JsonNull,
+                        qnTrialInfo = PlayUrlV2Data.ViewInfo.QnTrialInfo(trialAble = false),
+                        report =
+                            PlayUrlV2Data.ViewInfo.Report(
+                                epId = "",
+                                epStatus = "",
+                                seasonId = "",
+                                seasonStatus = "",
+                                seasonType = "",
+                                vipStatus = "",
+                                vipType = "",
+                            ),
+                    ),
+            )
+
+        val playData = PlayData.fromPlayUrlV2Data(data)
+
+        assertThat(playData.dashVideos).hasSize(1)
+        assertThat(playData.dashVideos[0].quality).isEqualTo(80)
+        assertThat(playData.dashVideos[0].codecs).isEqualTo("avc1.640028")
+        assertThat(playData.codec).hasSize(1)
+        assertThat(playData.codec[80]).containsExactly("avc1")
+        assertThat(playData.needPay).isFalse()
+    }
+
+    @Test
+    fun `fromPlayUrlV2Data with durl-only videoInfo sets needPay true`() {
+        val data =
+            PlayUrlV2Data(
+                expInfo = PlayUrlV2Data.ExpInfo(buyVipDonatedSeason = 0),
+                playCheck = PlayUrlV2Data.PlayCheck(playDetail = ""),
+                playViewBusinessInfo =
+                    PlayUrlV2Data.PlayViewBusinessInfo(
+                        episodeInfo =
+                            PlayUrlV2Data.PlayViewBusinessInfo.EpisodeInfo(
+                                aid = 1L,
+                                bvid = "BV1",
+                                cid = 1L,
+                                deliveryBusinessFragmentVideo = false,
+                                deliveryFragmentVideo = false,
+                                epId = 1,
+                                epStatus = 0,
+                                interaction =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.EpisodeInfo.Interaction(interaction = false),
+                                longTitle = "",
+                                title = "",
+                            ),
+                        seasonInfo = PlayUrlV2Data.PlayViewBusinessInfo.SeasonInfo(seasonId = 1, seasonType = 1),
+                        userStatus =
+                            PlayUrlV2Data.PlayViewBusinessInfo.UserStatus(
+                                followInfo =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.FollowInfo(
+                                        follow = 0,
+                                        followStatus = 0,
+                                    ),
+                                isLogin = 1,
+                                payInfo =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.PayInfo(
+                                        payCheck = 0,
+                                        payPackPaid = 0,
+                                        sponsor = 0,
+                                    ),
+                                vipInfo = PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.VipInfo(realVip = false),
+                                watchProgress =
+                                    PlayUrlV2Data.PlayViewBusinessInfo.UserStatus.WatchProgress(
+                                        currentWatchProgress = 0,
+                                        lastEpId = 0,
+                                        lastTime = 0,
+                                    ),
+                            ),
+                    ),
+                videoInfo = playUrlData(dash = null, durl = listOf(durl())),
+                viewInfo =
+                    PlayUrlV2Data.ViewInfo(
+                        aiRepairQnTrialInfo = PlayUrlV2Data.ViewInfo.AiRepairQnTrialInfo(trialAble = false),
+                        endPage = PlayUrlV2Data.ViewInfo.EndPage(hide = false),
+                        extToast = kotlinx.serialization.json.JsonNull,
+                        qnTrialInfo = PlayUrlV2Data.ViewInfo.QnTrialInfo(trialAble = false),
+                        report =
+                            PlayUrlV2Data.ViewInfo.Report(
+                                epId = "",
+                                epStatus = "",
+                                seasonId = "",
+                                seasonStatus = "",
+                                seasonType = "",
+                                vipStatus = "",
+                                vipType = "",
+                            ),
+                    ),
+            )
+
+        val playData = PlayData.fromPlayUrlV2Data(data)
+
+        assertThat(playData.needPay).isTrue()
+        assertThat(playData.dashVideos).hasSize(1)
+    }
+
+    // endregion
+
+    // region ---- fromPlayViewUniteReply (gRPC) ----
+
+    @Test
+    fun `fromPlayViewUniteReply maps dashVideo streams with audio dolby and flac`() {
+        val reply =
+            playViewUniteReply {
+                vodInfo =
+                    sharedVodInfo {
+                        streamList +=
+                            sharedStream {
+                                streamInfo =
+                                    sharedStreamInfo {
+                                        quality = 80
+                                    }
+                                dashVideo =
+                                    sharedDashVideo {
+                                        baseUrl = "http://cdn.test/video-80.m4s"
+                                        bandwidth = 1_000_000
+                                        codecid = 7
+                                        width = 1920
+                                        height = 1080
+                                        frameRate = "30"
+                                    }
+                            }
+                        dashAudio +=
+                            sharedDashItem {
+                                id = 30280
+                                baseUrl = "http://cdn.test/audio.m4s"
+                                bandwidth = 500_000
+                            }
+                        dolby =
+                            sharedDolbyItem {
+                                audio +=
+                                    sharedDashItem {
+                                        id = 30250
+                                        baseUrl = "http://cdn.test/dolby.m4s"
+                                        bandwidth = 320_000
+                                    }
+                            }
+                        lossLessItem =
+                            sharedLossLessItem {
+                                audio =
+                                    sharedDashItem {
+                                        id = 30251
+                                        baseUrl = "http://cdn.test/flac.m4s"
+                                        bandwidth = 400_000
+                                    }
+                            }
+                    }
+            }
+
+        val playData = PlayData.fromPlayViewUniteReply(reply)
+
+        assertThat(playData.dashVideos).hasSize(1)
+        assertThat(playData.dashVideos[0].quality).isEqualTo(80)
+        assertThat(playData.dashVideos[0].baseUrl).isEqualTo("http://cdn.test/video-80.m4s")
+        assertThat(playData.dashVideos[0].codecId).isEqualTo(7)
+        assertThat(playData.dashAudios).hasSize(1)
+        assertThat(playData.dashAudios[0].baseUrl).isEqualTo("http://cdn.test/audio.m4s")
+        assertThat(playData.dolby).isNotNull()
+        assertThat(playData.dolby?.baseUrl).isEqualTo("http://cdn.test/dolby.m4s")
+        assertThat(playData.flac).isNotNull()
+        assertThat(playData.flac?.baseUrl).isEqualTo("http://cdn.test/flac.m4s")
+        assertThat(playData.needPay).isFalse()
+        assertThat(playData.codec).hasSize(1)
+        assertThat(playData.codec[80]).isNotNull()
+    }
+
+    @Test
+    fun `fromPlayViewUniteReply with segmentVideo only sets needPay true`() {
+        val reply =
+            playViewUniteReply {
+                vodInfo =
+                    sharedVodInfo {
+                        streamList +=
+                            sharedStream {
+                                streamInfo =
+                                    sharedStreamInfo {
+                                        quality = 64
+                                    }
+                                segmentVideo =
+                                    sharedSegmentVideo {
+                                        segment +=
+                                            sharedResponseUrl {
+                                                url = "http://cdn.test/preview.m4s"
+                                            }
+                                    }
+                            }
+                    }
+            }
+
+        val playData = PlayData.fromPlayViewUniteReply(reply)
+
+        assertThat(playData.needPay).isTrue()
+        assertThat(playData.dashVideos).hasSize(1)
+        assertThat(playData.dashVideos[0].baseUrl).isEqualTo("http://cdn.test/preview.m4s")
+        assertThat(playData.dashVideos[0].quality).isEqualTo(64)
+    }
+
+    @Test
+    fun `fromPlayViewUniteReply with empty streams returns empty lists`() {
+        val reply =
+            playViewUniteReply {
+                vodInfo = sharedVodInfo {}
+            }
+
+        val playData = PlayData.fromPlayViewUniteReply(reply)
+
+        assertThat(playData.dashVideos).isEmpty()
+        assertThat(playData.dashAudios).isEmpty()
+        assertThat(playData.dolby).isNull()
+        assertThat(playData.flac).isNull()
+        assertThat(playData.needPay).isFalse()
+    }
+
+    @Test
+    fun `fromPlayViewUniteReply with lossLessItem id zero returns null flac`() {
+        val reply =
+            playViewUniteReply {
+                vodInfo =
+                    sharedVodInfo {
+                        streamList +=
+                            sharedStream {
+                                streamInfo = sharedStreamInfo { quality = 80 }
+                                dashVideo =
+                                    sharedDashVideo {
+                                        baseUrl = "http://cdn.test/video.m4s"
+                                        codecid = 7
+                                    }
+                            }
+                        lossLessItem =
+                            sharedLossLessItem {
+                                audio =
+                                    sharedDashItem {
+                                        id = 0
+                                        baseUrl = ""
+                                    }
+                            }
+                    }
+            }
+
+        val playData = PlayData.fromPlayViewUniteReply(reply)
+
+        assertThat(playData.flac).isNull()
+    }
+
+    // endregion
+
+    // region ---- fromPgcPlayViewReply (gRPC) ----
+
+    @Test
+    fun `fromPgcPlayViewReply maps dashVideo streams with audio and dolby`() {
+        val reply =
+            playViewReply {
+                videoInfo =
+                    videoInfo {
+                        streamList +=
+                            stream {
+                                info = streamInfo { quality = 80 }
+                                dashVideo =
+                                    dashVideo {
+                                        baseUrl = "http://cdn.test/pgc-video.m4s"
+                                        bandwidth = 2_000_000
+                                        codecid = 7
+                                        width = 1920
+                                        height = 1080
+                                        frameRate = "60"
+                                    }
+                            }
+                        dashAudio +=
+                            dashItem {
+                                id = 30280
+                                baseUrl = "http://cdn.test/pgc-audio.m4s"
+                                bandwidth = 500_000
+                            }
+                        dolby =
+                            dolbyItem {
+                                audio =
+                                    dashItem {
+                                        id = 30250
+                                        baseUrl = "http://cdn.test/pgc-dolby.m4s"
+                                        bandwidth = 320_000
+                                    }
+                            }
+                    }
+                business = playViewBusinessInfo { isPreview = false }
+            }
+
+        val playData = PlayData.fromPgcPlayViewReply(reply)
+
+        assertThat(playData.dashVideos).hasSize(1)
+        assertThat(playData.dashVideos[0].quality).isEqualTo(80)
+        assertThat(playData.dashVideos[0].baseUrl).isEqualTo("http://cdn.test/pgc-video.m4s")
+        assertThat(playData.dashAudios).hasSize(1)
+        assertThat(playData.dolby).isNotNull()
+        assertThat(playData.dolby?.baseUrl).isEqualTo("http://cdn.test/pgc-dolby.m4s")
+        assertThat(playData.flac).isNull()
+        assertThat(playData.needPay).isFalse()
+        assertThat(playData.codec).hasSize(1)
+    }
+
+    @Test
+    fun `fromPgcPlayViewReply with isPreview true sets needPay true`() {
+        val reply =
+            playViewReply {
+                videoInfo =
+                    videoInfo {
+                        streamList +=
+                            stream {
+                                info = streamInfo { quality = 64 }
+                                segmentVideo =
+                                    segmentVideo {
+                                        segment +=
+                                            responseUrl {
+                                                url = "http://cdn.test/pgc-preview.m4s"
+                                            }
+                                    }
+                            }
+                    }
+                business = playViewBusinessInfo { isPreview = true }
+            }
+
+        val playData = PlayData.fromPgcPlayViewReply(reply)
+
+        assertThat(playData.needPay).isTrue()
+        assertThat(playData.dashVideos).hasSize(1)
+        assertThat(playData.dashVideos[0].baseUrl).isEqualTo("http://cdn.test/pgc-preview.m4s")
+    }
+
+    @Test
+    fun `fromPgcPlayViewReply with empty streams returns empty lists`() {
+        val reply =
+            playViewReply {
+                videoInfo = videoInfo {}
+                business = playViewBusinessInfo { isPreview = false }
+            }
+
+        val playData = PlayData.fromPgcPlayViewReply(reply)
+
+        assertThat(playData.dashVideos).isEmpty()
+        assertThat(playData.dashAudios).isEmpty()
+        assertThat(playData.needPay).isFalse()
     }
 
     // endregion
