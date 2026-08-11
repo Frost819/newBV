@@ -100,6 +100,7 @@ class VideoDetailViewModel @Inject constructor(
 
     private val routeAid: Long = savedStateHandle.get<Long>("aid") ?: 0L
     val aid: Long = routeAid
+    private val routeBvid: String = savedStateHandle.get<String>("bvid") ?: ""
 
     private val _uiState = MutableStateFlow(VideoDetailUiState())
     val uiState: StateFlow<VideoDetailUiState> = _uiState.asStateFlow()
@@ -171,6 +172,7 @@ class VideoDetailViewModel @Inject constructor(
                     val detail = videoDetailRepository.getVideoDetail(
                         aid = aid,
                         preferApiType = ApiType.Web,
+                        bvid = routeBvid,
                     )
                     _uiState.update {
                         it.copy(
@@ -309,10 +311,8 @@ class VideoDetailViewModel @Inject constructor(
                     bvid = currentDetail.bvid,
                 )
             }.onSuccess {
-                println("sendCoin: success!")
                 _uiState.update { it.copy(isCoined = true) }
             }.onFailure { error ->
-                println("sendCoin: failed! ${error.message}")
                 logger.error(error) { "Failed to send coin" }
                 _uiEffect.emit(
                     VideoDetailUiEffect.ShowToast("投币失败: ${error.message ?: "未知错误"}")

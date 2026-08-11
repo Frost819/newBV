@@ -11,11 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -123,6 +125,10 @@ fun VideoPlayerController(
     // 常显进度条
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
 
+    // 手势状态
+    val gestureTipState = rememberGestureTipState()
+    var currentBrightness by remember { mutableFloatStateOf(-1f) }
+
     fun calCoefficient(): Long {
         return if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
             seekChangeCount++
@@ -178,6 +184,26 @@ fun VideoPlayerController(
         if (uiState.playerState != PlayerState.Playing) onPlay()
         isSeeking = false
         showInfoSeekController = false
+    }
+
+    /**
+     * 控制器自动隐藏计时器。触屏交互后 5 秒无操作自动收起控制器。
+     */
+    fun startControllerAutoHide() {
+        if (!showInfoSeekController) return
+        hideInfoSeekCountdown?.cancel()
+        hideInfoSeekCountdown = scope.launch {
+            delay(5000)
+            showInfoSeekController = false
+        }
+    }
+
+    fun onSeekToPosition(positionMs: Long) {
+        isSeeking = true
+        goTime = positionMs.coerceIn(0L, seekerState.value.totalDuration)
+        lastSeekChangeTime = System.currentTimeMillis()
+        startSeekCountdown()
+        startControllerAutoHide()
     }
 
     fun closeAllControllers() {
@@ -362,16 +388,63 @@ fun VideoPlayerController(
             .background(Color.Black)
             .focusable()
             .onPreviewKeyEvent { event ->
-                // info-seek 自动隐藏计时器
-                if (showInfoSeekController) {
-                    hideInfoSeekCountdown?.cancel()
-                    hideInfoSeekCountdown = scope.launch {
-                        delay(5000)
-                        showInfoSeekController = false
-                    }
-                }
+                startControllerAutoHide()
                 handleKeyEvent(event)
-            },
+            }
+            .playerGestures(
+                totalDuration = { seekerState.value.totalDuration },
+                controllerVisible = { showInfoSeekController },
+                callbacks = PlayerGestureCallbacks(
+                    onSingleTap = {
+                        if (!showClickableControllers) {
+                            showInfoSeekController = !showInfoSeekController
+                            if (showInfoSeekController) startControllerAutoHide()
+                        } else {
+                            closeAllControllers()
+                        }
+                    },
+                    onDoubleTap = { onPlay() },
+                    onSeekDelta = { deltaMs ->
+                        if (!isSeeking) goTime = seekerState.value.currentTime
+                        goTime = (goTime + deltaMs).coerceIn(0L, seekerState.value.totalDuration)
+                        isSeeking = true
+                        showInfoSeekController = true
+                        startSeekCountdown()
+                    },
+                    onSeekCommit = { },
+                    onBrightnessChange = { deltaY ->
+                        val activity = context as? android.app.Activity
+                        if (activity != null) {
+                            currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
+                            gestureTipState.value = GestureTipState(
+                                isActive = true,
+                                type = GestureTipType.Brightness,
+                                value = currentBrightness,
+                            )
+                        }
+                    },
+                    onVolumeChange = { deltaY ->
+                        val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE)
+                            as? android.media.AudioManager
+                        if (audioManager != null) {
+                            val volumePercent = adjustVolume(audioManager, deltaY)
+                            gestureTipState.value = GestureTipState(
+                                isActive = true,
+                                type = GestureTipType.Volume,
+                                value = volumePercent.toFloat(),
+                            )
+                        }
+                    },
+                    onCycleAspectRatio = {
+                        val current = uiState.aspectRatio
+                        val next = VideoAspectRatio.entries[
+                            (current.ordinal + 1) % VideoAspectRatio.entries.size
+                        ]
+                        onAspectRatioChange(next)
+                    },
+                ),
+                gestureTipState = gestureTipState,
+            ),
     ) {
         // 视频画面 + 弹幕层
         content()
@@ -434,6 +507,12 @@ fun VideoPlayerController(
             errorMessage = (uiState.playerState as? PlayerState.Error)?.message,
         )
 
+        // 手势提示（亮度/音量/倍速反馈）
+        GestureTip(
+            state = gestureTipState.value,
+            modifier = Modifier.align(Alignment.Center),
+        )
+
         // 相关视频
         RelatedVideosController(
             show = showRelatedVideosController,
@@ -457,12 +536,13 @@ fun VideoPlayerController(
             onDirectionLeft = ::onDirectionLeft,
             onDirectionRight = ::onDirectionRight,
             onSeekGoTime = ::onSeekGoTime,
-            onPlayPause = { onPlay() },
-            onDanmakuSwitchChange = onToggleDanmaku,
+            onSeekToPosition = ::onSeekToPosition,
+            onPlayPause = { onPlay(); startControllerAutoHide() },
+            onDanmakuSwitchChange = { onToggleDanmaku(); startControllerAutoHide() },
             onShowSettings = { showMenuController = true },
             onShowRelatedVideos = { showRelatedVideosController = true },
             onGoToVideoInfo = onGoToVideoDetail,
-            onToggleLoop = onToggleLoop,
+            onToggleLoop = { onToggleLoop(); startControllerAutoHide() },
             onGoToUpPage = onGoToUpPage,
         )
 

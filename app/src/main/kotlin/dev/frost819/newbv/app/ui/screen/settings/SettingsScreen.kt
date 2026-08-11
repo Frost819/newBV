@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -227,9 +228,11 @@ private fun SettingsMenuButton(
     selected: Boolean,
 ) {
     ListItem(
-        modifier = modifier.onFocusChanged { if (it.hasFocus) onFocus() },
+        modifier = modifier
+            .onFocusChanged { if (it.hasFocus) onFocus() }
+            .touchClickable(onClick = { onFocus() }),
         selected = selected,
-        onClick = {},
+        onClick = { onFocus() },
         headlineContent = {
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp),

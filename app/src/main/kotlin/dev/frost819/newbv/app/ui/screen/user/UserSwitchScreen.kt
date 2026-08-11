@@ -40,6 +40,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.viewmodel.user.UserSwitchViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.data.db.entity.UserEntity
 
 /**
@@ -100,7 +101,10 @@ fun UserSwitchScreen(
                             style = MaterialTheme.typography.headlineMedium,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = onNavigateLogin) {
+                        Button(
+                            onClick = onNavigateLogin,
+                            modifier = Modifier.touchClickable(onClick = onNavigateLogin),
+                        ) {
                             Text(text = stringResource(R.string.user_switch_add))
                         }
                     }
@@ -153,7 +157,9 @@ private fun UserListItem(
         horizontalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         Surface(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .touchClickable(onClick = onClick),
             onClick = onClick,
         ) {
             Row(
@@ -202,7 +208,10 @@ private fun UserListItem(
             }
         }
 
-        IconButton(onClick = onDelete) {
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.touchClickable(onClick = onDelete),
+        ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "删除用户",
@@ -216,7 +225,10 @@ private fun UserListItem(
  */
 @Composable
 private fun AddUserButton(onClick: () -> Unit) {
-    Button(onClick = onClick) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.touchClickable(onClick = onClick),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),

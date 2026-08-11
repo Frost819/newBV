@@ -39,6 +39,7 @@ import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutCatalog
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutKeys
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutsStore
 import dev.frost819.newbv.app.ui.component.settings.SettingsMenuSelectItem
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 自定义快捷键配置弹窗。
@@ -194,6 +195,7 @@ private fun MainStage(
                                             .getActionDisplayName(shortcut.action),
                                     )
                                 },
+                                modifier = Modifier.touchClickable(onClick = { onEdit(shortcut) }),
                                 onClick = { onEdit(shortcut) },
                                 selected = false,
                             )
@@ -204,12 +206,19 @@ private fun MainStage(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Button(onClick = onAdd) { Text("添加") }
+                    Button(
+                        onClick = onAdd,
+                        modifier = Modifier.touchClickable(onClick = onAdd),
+                    ) { Text("添加") }
                     OutlinedButton(
                         onClick = onClear,
                         enabled = shortcuts.isNotEmpty(),
+                        modifier = Modifier.touchClickable(onClick = { if (shortcuts.isNotEmpty()) onClear() }),
                     ) { Text("清空") }
-                    OutlinedButton(onClick = onDismiss) { Text("关闭") }
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.touchClickable(onClick = onDismiss),
+                    ) { Text("关闭") }
                 }
             }
         }
@@ -308,7 +317,10 @@ private fun PickActionStage(
                 }
                 if (currentShortcut != null) {
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(onClick = onRemove) { Text("移除绑定") }
+                        OutlinedButton(
+                            onClick = onRemove,
+                            modifier = Modifier.touchClickable(onClick = onRemove),
+                        ) { Text("移除绑定") }
                     }
                 }
             }
@@ -386,8 +398,14 @@ private fun ConfirmClearStage(
                         .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Button(onClick = onConfirm) { Text("确定") }
-                    OutlinedButton(onClick = onDismiss) { Text("取消") }
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.touchClickable(onClick = onConfirm),
+                    ) { Text("确定") }
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.touchClickable(onClick = onDismiss),
+                    ) { Text("取消") }
                 }
             }
         }

@@ -71,6 +71,7 @@ import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiState
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 
@@ -249,7 +250,8 @@ private fun SeasonInfoHeader(
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
                 .width(240.dp)
                 .fillMaxHeight()
-                .aspectRatio(0.7f),
+                .aspectRatio(0.7f)
+                .touchClickable(onClick = onPlay),
             onClick = onPlay,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
             border = CardDefaults.border(
@@ -357,7 +359,8 @@ private fun SeasonActionButton(
                 } else {
                     Modifier
                 },
-            ),
+            )
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
@@ -455,7 +458,8 @@ private fun EpisodeCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.6f),
+                .aspectRatio(1.6f)
+                .touchClickable(onClick = onClick),
             onClick = onClick,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
             border = CardDefaults.border(
@@ -576,7 +580,8 @@ private fun SeasonChip(
                 } else {
                     Modifier
                 },
-            ),
+            )
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
@@ -620,7 +625,9 @@ private fun SeasonErrorScreen(
                 color = Color.White,
             )
             Surface(
-                modifier = Modifier.focusRequester(focusRequester),
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .touchClickable(onClick = onRetry),
                 onClick = onRetry,
                 shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
                 border = ClickableSurfaceDefaults.border(

@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
@@ -41,6 +47,7 @@ import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonStatus
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonType
+import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -107,6 +114,28 @@ fun FollowingSeasonScreen(
             horizontalArrangement = Arrangement.spacedBy(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "追番",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    IconButton(
+                        onClick = { showFilter = true },
+                        modifier = Modifier.touchClickable(onClick = { showFilter = true }),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.FilterList,
+                            contentDescription = "筛选",
+                        )
+                    }
+                }
+            }
+
             itemsIndexed(
                 items = state.followingSeasons,
                 key = { _, item -> item.seasonId },
@@ -234,6 +263,7 @@ private fun FollowingSeasonFilterDialog(
                     ) {
                         androidx.tv.material3.Button(
                             onClick = { onApply(selectedType, selectedStatus) },
+                            modifier = Modifier.touchClickable(onClick = { onApply(selectedType, selectedStatus) }),
                         ) {
                             androidx.tv.material3.Text("确定")
                         }
@@ -255,6 +285,7 @@ private fun FilterChip(
 ) {
     androidx.tv.material3.Surface(
         onClick = onClick,
+        modifier = Modifier.touchClickable(onClick = onClick),
         shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(
             shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
         ),

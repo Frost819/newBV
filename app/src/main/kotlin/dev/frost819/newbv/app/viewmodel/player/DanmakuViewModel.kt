@@ -179,7 +179,7 @@ class DanmakuViewModel @Inject constructor(
     fun toggleDanmaku() {
         val current = _danmakuState.value.enabledTypes
         if (current.isEmpty()) {
-            updateDanmakuState(DanmakuSettingAction.SetEnabledTypes(Prefs.defaultDanmakuTypes.map { it.toDanmakuEntity() }))
+            updateDanmakuState(DanmakuSettingAction.SetEnabledTypes(DanmakuEntityDanmakuType.entries))
         } else {
             updateDanmakuState(DanmakuSettingAction.SetEnabledTypes(emptyList()))
         }

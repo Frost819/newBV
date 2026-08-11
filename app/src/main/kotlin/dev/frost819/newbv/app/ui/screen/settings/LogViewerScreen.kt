@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -128,7 +129,8 @@ fun LogViewerScreen(
                                         isCreateFocused = true
                                         selectedFile = null
                                     }
-                                },
+                                }
+                                .touchClickable(onClick = { viewModel.createManualLog() }),
                             selected = false,
                             onClick = { viewModel.createManualLog() },
                             headlineContent = {

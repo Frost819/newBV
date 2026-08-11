@@ -79,6 +79,7 @@ fun PopularScreen(
             val cardData = remember(item) {
                 VideoCardData(
                     avid = item.aid,
+                    bvid = item.bvid,
                     title = item.title,
                     cover = item.cover,
                     playString = item.play.takeIf { it != -1 }.toWanString(),
@@ -96,7 +97,7 @@ fun PopularScreen(
                     navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = item.aid))
+                    navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid))
                 },
                 onGoToUpPage = item.authorMid?.let { mid ->
                     { navController.navigate(UserSpaceRoute(mid = mid)) }

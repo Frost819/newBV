@@ -221,8 +221,17 @@ class PlayerViewModel @Inject constructor(
      *
      * @param aid 视频 AV 号
      */
-    suspend fun loadVideoDetail(aid: Long) {
-        videoInfoRepository.loadVideoDetail(aid, getApiType())
+    suspend fun loadVideoDetail(aid: Long, bvid: String = "") {
+        videoInfoRepository.loadVideoDetail(aid, getApiType(), bvid)
+        videoInfoRepository.videoDetail.value?.let { detail ->
+            _uiState.update {
+                it.copy(
+                    cid = detail.cid,
+                    authorMid = detail.author.mid,
+                    authorName = detail.author.name,
+                )
+            }
+        }
         val historyCid = videoInfoRepository.lastPlayedCid.value
         val historyTime = videoInfoRepository.lastPlayedTime.value
         if (historyCid == _uiState.value.cid && historyTime > 0) {

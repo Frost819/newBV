@@ -80,6 +80,7 @@ fun RecommendScreen(
             val cardData = remember(item) {
                 VideoCardData(
                     avid = item.aid,
+                    bvid = item.bvid,
                     title = item.title,
                     cover = item.cover,
                     playString = item.play.takeIf { it != -1 }.toWanString(),
@@ -97,7 +98,7 @@ fun RecommendScreen(
                     navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = item.aid))
+                    navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid))
                 },
                 onGoToUpPage = item.authorMid?.let { mid ->
                     { navController.navigate(UserSpaceRoute(mid = mid)) }

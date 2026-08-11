@@ -164,7 +164,10 @@ fun ClosedCaptionMenuList(
                         .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                     text = item.displayName,
                     selected = selectedCcMenuItem == item,
-                    onClick = {},
+                    onClick = {
+                        selectedCcMenuItem = item
+                        onFocusStateChange(MenuFocusState.Items)
+                    },
                     onFocus = { selectedCcMenuItem = item },
                 )
             }

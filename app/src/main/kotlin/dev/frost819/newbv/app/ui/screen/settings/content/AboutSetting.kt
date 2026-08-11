@@ -22,6 +22,7 @@ import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.network.GithubApi
 import dev.frost819.newbv.app.ui.component.settings.UpdateDialog
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
+import dev.frost819.newbv.core.focus.touchClickable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,7 +70,10 @@ fun AboutSetting(
                 Text(text = "当前版本：${BuildConfig.VERSION_NAME}")
                 Text(text = "最新版本：$latestVersionName")
             }
-            Button(onClick = { showUpdateDialog = true }) {
+            Button(
+                onClick = { showUpdateDialog = true },
+                modifier = Modifier.touchClickable(onClick = { showUpdateDialog = true }),
+            ) {
                 Text(text = "检查更新")
             }
         }

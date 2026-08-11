@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -144,11 +145,13 @@ private fun MediaCodecListItems(
                 Modifier.fillMaxWidth()
             }
             ListItem(
-                modifier = buttonModifier.onFocusChanged {
-                    if (it.hasFocus) onCodecInfoDataChanged(codecInfoData)
-                },
+                modifier = buttonModifier
+                    .onFocusChanged {
+                        if (it.hasFocus) onCodecInfoDataChanged(codecInfoData)
+                    }
+                    .touchClickable(onClick = { onCodecInfoDataChanged(codecInfoData) }),
                 selected = currentCodecInfoData == codecInfoData,
-                onClick = {},
+                onClick = { onCodecInfoDataChanged(codecInfoData) },
                 headlineContent = {
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp),

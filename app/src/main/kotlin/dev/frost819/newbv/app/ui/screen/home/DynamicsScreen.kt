@@ -101,6 +101,7 @@ fun DynamicsScreen(
             val cardData = remember(item) {
                 VideoCardData(
                     avid = item.aid,
+                    bvid = item.bvid ?: "",
                     cid = item.cid,
                     epid = item.epid,
                     title = item.title,
@@ -120,7 +121,7 @@ fun DynamicsScreen(
                     navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = item.aid))
+                    navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid ?: ""))
                 },
                 onGoToUpPage = {
                     navController.navigate(UserSpaceRoute(mid = item.authorMid))

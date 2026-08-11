@@ -168,7 +168,10 @@ fun PictureMenuList(
                         .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                     text = item.displayName,
                     selected = selectedPictureMenuItem == item,
-                    onClick = {},
+                    onClick = {
+                        selectedPictureMenuItem = item
+                        onFocusStateChange(MenuFocusState.Items)
+                    },
                     onFocus = { selectedPictureMenuItem = item },
                 )
             }

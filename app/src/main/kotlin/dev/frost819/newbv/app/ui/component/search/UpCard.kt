@@ -22,6 +22,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * UP 主搜索结果卡片。
@@ -42,7 +43,7 @@ fun UpCard(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier.width(200.dp),
+        modifier = modifier.width(200.dp).touchClickable(onClick = onClick),
         onClick = onClick,
         colors = ClickableSurfaceDefaults.colors(
             containerColor = MaterialTheme.colorScheme.surface,

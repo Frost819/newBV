@@ -27,6 +27,7 @@ import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.InteractionLogger
 import kotlinx.coroutines.Dispatchers
@@ -186,12 +187,18 @@ private fun ConfirmDeleteDialog(
         title = { Text(text = "清除$content") },
         text = { Text(text = "${size / 1024 / 1024} MB") },
         confirmButton = {
-            Button(onClick = onConfirm) {
+            Button(
+                onClick = onConfirm,
+                modifier = Modifier.touchClickable(onClick = onConfirm),
+            ) {
                 Text(text = "确定")
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.touchClickable(onClick = onDismiss),
+            ) {
                 Text(text = "取消")
             }
         },

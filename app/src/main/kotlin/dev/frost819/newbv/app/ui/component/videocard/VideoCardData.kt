@@ -7,6 +7,7 @@ package dev.frost819.newbv.app.ui.component.videocard
  * 或 [dev.frost819.newbv.biliapi.entity.user.DynamicVideo] 转换而来。
  *
  * @property avid 视频 AV 号。
+ * @property bvid 视频 BV 号（用于 API 查询，部分大 AV 号需通过 BV 号查询）。
  * @property cid 视频 CID。
  * @property epid 番剧 EP ID（PGC 动态时有值）。
  * @property title 视频标题。
@@ -21,6 +22,7 @@ package dev.frost819.newbv.app.ui.component.videocard
  */
 data class VideoCardData(
     val avid: Long,
+    val bvid: String = "",
     val cid: Long? = null,
     val epid: Int? = null,
     val title: String,

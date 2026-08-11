@@ -17,6 +17,7 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.data.db.entity.UserEntity
 
 /**
@@ -34,7 +35,9 @@ internal fun UserSelectCard(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.alpha(alpha),
+        modifier = Modifier
+            .alpha(alpha)
+            .touchClickable(onClick = onClick),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -1404,3 +1404,191 @@ if (historyCid == _uiState.value.cid && historyTime > 0) {
 **问题**：`SubtitleViewModel` 直接 `HttpClient(OkHttp)` 创建新实例，绕过了 Hilt DI，每次选择字幕都创建新 client，连接池无法复用。
 
 **解决方案**：在 `NetworkModule` 中 `@Provides` 共享 `HttpClient` 单例，构造注入到 `SubtitleViewModel`。
+
+#### 11.10.6 弹幕 play/pause/seek 未与播放器同步
+
+**问题**：5-way ViewModel 拆分后，`DanmakuViewModel` 的 `play()`/`pause()`/`seekTo()` 从未被调用，弹幕不随播放器播放/暂停/seek 而动。
+
+**原因**：`PlayerViewModel` 无法直接调用 `DanmakuViewModel` 方法，UI 层（`VideoPlayerScreen`）需要充当协调者。
+
+**解决方案**：在 `VideoPlayerScreen` 中添加 `LaunchedEffect` 监听播放器状态，同步调用 DanmakuViewModel：
+
+```kotlin
+// 播放/暂停同步
+LaunchedEffect(uiState.playerState) {
+    when (uiState.playerState) {
+        PlayerState.Playing -> danmakuViewModel.play()
+        PlayerState.Paused, is PlayerState.Error, PlayerState.Ended -> danmakuViewModel.pause()
+        else -> {}
+    }
+}
+
+// 缓冲同步
+LaunchedEffect(uiState.isBuffering) {
+    if (uiState.isBuffering) danmakuViewModel.pause()
+    else if (uiState.playerState == PlayerState.Playing) danmakuViewModel.play()
+}
+
+// seek 同步
+onGoTime = { time ->
+    playerViewModel.seekToTime(time)
+    danmakuViewModel.seekTo(time)
+}
+
+// 倍速同步
+onPlaySpeedChange = { speed ->
+    playerViewModel.updatePlaySpeed(speed)
+    danmakuViewModel.updateSpeed(speed)
+}
+```
+
+#### 11.10.7 直接进播放器时 cid=0 导致 playurl 请求错误
+
+**问题**：`showVideoInfo=false` 时点击视频卡片直接进播放器，但推荐流返回的数据不含 `cid`（或 `cid=0`），播放器用 `cid=0` 调 playurl API 返回"请求错误"。
+
+**原因**：推荐流 API (`/x/web-interface/index/top/feed/rcmd`) 不返回 `cid` 字段，`cid` 需要从视频详情 API 获取。但 `PlayerScreens.kt` 中弹幕/字幕/playurl 在 `loadVideoDetail()` **之前**就用 `route.cid=0` 调用了。
+
+**解决方案**：调整 `PlayerScreens.kt` 中的加载顺序 — 先 `loadVideoDetail()` 获取正确 cid，再用 `actualCid` 加载弹幕/字幕/playurl：
+
+```kotlin
+// PlayerScreens.kt LaunchedEffect 内
+playerViewModel.init(aid = route.aid, cid = route.cid, ...)
+playerViewModel.initVideoPlayer(context)
+danmakuViewModel.init()
+// 先加载详情，获取正确 cid
+playerViewModel.loadVideoDetail(route.aid, route.bvid)
+// 再用正确 cid 加载弹幕/字幕
+val actualCid = playerViewModel.uiState.value.cid
+danmakuViewModel.loadDanmaku(actualCid)
+danmakuViewModel.loadDanmakuMask(route.aid, actualCid)
+subtitleViewModel.loadSubtitleList(route.aid, actualCid)
+// 最后加载播放流
+playerViewModel.loadVideoWithResources()
+```
+
+同时 `PlayerViewModel.loadVideoDetail()` 必须更新 `_uiState.cid`：
+
+```kotlin
+suspend fun loadVideoDetail(aid: Long, bvid: String = "") {
+    videoInfoRepository.loadVideoDetail(aid, getApiType(), bvid)
+    videoInfoRepository.videoDetail.value?.let { detail ->
+        _uiState.update {
+            it.copy(
+                cid = detail.cid,  // 更新为正确 cid
+                authorMid = detail.author.mid,
+                authorName = detail.author.name,
+            )
+        }
+    }
+    // ... 断点续播逻辑 ...
+}
+```
+
+#### 11.10.8 播放器→详情页路由应 popBackStack 而非 navigate
+
+**问题**：播放器中点击"详情"按钮会 `navigate(VideoDetailRoute)` 新建一个详情页路由，导致路由堆栈中出现：详情页 → 播放器 → 详情页。
+
+**原因**：`showVideoInfo=false` 时用户从详情页进入播放器，播放器就在详情页路由之上。再 `navigate` 会创建第二层详情页。
+
+**解决方案**：`onGoToVideoDetail` 改为 `popBackStack()`，返回已有的详情页而非新建：
+
+```kotlin
+onGoToVideoDetail = {
+    navController.popBackStack()
+}
+```
+
+### 11.11 TV Material3 触屏适配
+
+#### 11.11.1 tvClickable/tvSelectable 不处理触屏事件
+
+**问题**：TV Material3 的 `tvClickable()` / `tvSelectable()` 仅处理 D-Pad Enter 键事件，不含 `pointerInput`，触屏点击完全无效。
+
+**原因**：TV Material3 设计目标是 D-Pad 遥控器，触屏手势需要额外补充。
+
+**解决方案**：`core/focus/TouchClickable.kt` 提供 `Modifier.touchClickable()` 扩展：
+
+```kotlin
+fun Modifier.touchClickable(
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+): Modifier = composed {
+    val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnLongClick by rememberUpdatedState(onLongClick)
+    val hasLongClick = onLongClick != null
+    val focusRequester = remember { FocusRequester() }
+
+    this
+        .focusRequester(focusRequester)
+        .pointerInput(hasLongClick) {
+            detectTapGestures(
+                onTap = {
+                    runCatching { focusRequester.requestFocus() }
+                    currentOnClick()
+                },
+                onLongPress = if (hasLongClick) { { ... } } else { null },
+            )
+        }
+}
+```
+
+**关键要点**：
+
+1. **不能用同一 modifier 链叠加多个 `pointerInput`**：`clickable` + `pointerInput(detectTapGestures)` 会导致内层消费 DOWN 事件，外层跳过。只能用单个 `pointerInput`
+2. **`composed` + `rememberUpdatedState`**：确保回调始终为最新值
+3. **触屏点击请求焦点**：通过 `FocusRequester.requestFocus()` 使焦点驱动逻辑（如 Tab 切换）在触屏模式下正常工作
+4. **使用方式**：在 TV Material3 组件的 `onClick` 参数外，同时添加 `Modifier.touchClickable(onClick = ...)` 补充触屏支持
+
+#### 11.11.2 Vector Drawable tint 不解析
+
+**问题**：原版 BV 的 vector drawable XML 带有 `android:tint="?attr/colorControlNormal"`，在 Compose 中不解析为正确颜色，图标不可见。
+
+**解决方案**：在 `Icon` 组件上显式指定 `tint = Color.White`：
+
+```kotlin
+Icon(
+    painter = painterResource(id = iconRes),
+    contentDescription = ...,
+    tint = Color.White,  // 显式指定，不依赖 XML 中的 tint
+)
+```
+
+#### 11.11.3 播放器设置菜单三级展开需手动更新焦点状态
+
+**问题**：设置菜单（画质/弹幕/字幕）的二级菜单点击展开三级菜单时，三级菜单不可见或焦点不正确。
+
+**原因**：二级菜单的 `onClick` 只展开了三级菜单的可见性，未通知父组件焦点状态变化。
+
+**解决方案**：在二级菜单的 `onClick` 中增加 `onFocusStateChange(MenuFocusState.Items)`：
+
+```kotlin
+// PictureMenu.kt / DanmakuMenu.kt / ClosedCaptionMenu.kt
+MenuItem(
+    title = ...,
+    onClick = {
+        // 展开三级菜单
+        onExpandChange(...)
+        // 通知父组件焦点进入 Items 状态
+        onFocusStateChange(MenuFocusState.Items)
+    },
+)
+```
+
+#### 11.11.4 视频铺满溢出
+
+**问题**：播放器使用 `RESIZE_MODE_FILL` + `.fillMaxSize().aspectRatio()`，视频被拉伸溢出屏幕。
+
+**原因**：原版 BV 用 `RESIZE_MODE_FILL` + `.fillMaxHeight().aspectRatio()` 约束尺寸。newBV 误改为 `.fillMaxSize().aspectRatio()` 导致尺寸约束失效。
+
+**解决方案**：改用 `RESIZE_MODE_FIT` + `.fillMaxSize()`，让 `PlayerView` 自己处理 letterbox：
+
+```kotlin
+// BvVideoPlayer.kt
+resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+
+// VideoPlayerScreen.kt
+BvVideoPlayer(
+    modifier = Modifier.fillMaxSize(),  // 不再手动 aspectRatio
+    videoPlayer = videoPlayer,
+)
+```

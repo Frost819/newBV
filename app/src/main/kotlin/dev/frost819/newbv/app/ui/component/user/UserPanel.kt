@@ -31,6 +31,7 @@ import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.data.AccountUiState
 import dev.frost819.newbv.app.viewmodel.user.UserViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 用户信息面板。
@@ -137,17 +138,26 @@ private fun UserPanelContent(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(onClick = onToggleIncognito) {
+                Button(
+                    onClick = onToggleIncognito,
+                    modifier = Modifier.touchClickable(onClick = onToggleIncognito),
+                ) {
                     Text(
                         text = stringResource(R.string.user_panel_incognito) +
                             if (uiState.incognitoMode) "：开" else "：关",
                     )
                 }
-                Button(onClick = onGoUserSwitch) {
+                Button(
+                    onClick = onGoUserSwitch,
+                    modifier = Modifier.touchClickable(onClick = onGoUserSwitch),
+                ) {
                     Text(text = stringResource(R.string.user_panel_account))
                 }
                 if (uiState.isLogin) {
-                    Button(onClick = onGoFollowList) {
+                    Button(
+                        onClick = onGoFollowList,
+                        modifier = Modifier.touchClickable(onClick = onGoFollowList),
+                    ) {
                         Text(text = "关注列表")
                     }
                 }

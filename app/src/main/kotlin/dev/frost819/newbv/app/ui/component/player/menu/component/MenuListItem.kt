@@ -29,6 +29,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 菜单列表项。
@@ -68,7 +69,8 @@ fun MenuListItem(
     Surface(
         modifier = modifier
             .width(itemWidth)
-            .onFocusChanged { if (it.hasFocus) onFocus() },
+            .onFocusChanged { if (it.hasFocus) onFocus() }
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(

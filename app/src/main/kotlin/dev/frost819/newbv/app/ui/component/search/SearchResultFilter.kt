@@ -26,6 +26,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
 import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
+import dev.frost819.newbv.core.focus.touchClickable
 
 private val orderLabels = mapOf(
     SearchFilterOrderType.ComprehensiveSort to "综合排序",
@@ -95,6 +96,7 @@ fun SearchResultFilter(
                             FilterChip(
                                 selected = currentOrder == order,
                                 onClick = { currentOrder = order },
+                                modifier = Modifier.touchClickable(onClick = { currentOrder = order }),
                                 colors = FilterChipDefaults.colors(
                                     selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
                                 ),
@@ -120,6 +122,7 @@ fun SearchResultFilter(
                             FilterChip(
                                 selected = currentDuration == duration,
                                 onClick = { currentDuration = duration },
+                                modifier = Modifier.touchClickable(onClick = { currentDuration = duration }),
                                 colors = FilterChipDefaults.colors(
                                     selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
                                 ),
@@ -134,11 +137,16 @@ fun SearchResultFilter(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    OutlinedButton(onClick = onDismiss) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.touchClickable(onClick = onDismiss),
+                    ) {
                         Text("取消")
                     }
                     Button(
-                        modifier = Modifier.padding(start = 8.dp),
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .touchClickable(onClick = { onConfirm(currentOrder, currentDuration) }),
                         onClick = { onConfirm(currentOrder, currentDuration) },
                     ) {
                         Text("确定")

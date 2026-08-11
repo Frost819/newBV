@@ -101,6 +101,7 @@ import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiState
 import dev.frost819.newbv.biliapi.entity.FavoriteFolderMetadata
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.Tag
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -214,7 +215,9 @@ private fun ErrorScreen(
                 color = Color.White,
             )
             Surface(
-                modifier = Modifier.focusRequester(focusRequester),
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .touchClickable(onClick = onRetry),
                 onClick = onRetry,
                 shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
                 border = ClickableSurfaceDefaults.border(
@@ -295,6 +298,7 @@ private fun VideoDetailContent(
                     VideoPlayerRoute(
                         aid = detail.aid,
                         cid = playCid,
+                        bvid = detail.bvid,
                         title = detail.title,
                         cover = detail.cover,
                     ),
@@ -512,6 +516,16 @@ private fun FavoriteFolderDialog(
                                 }
                                 onUpdate(selectedIds.toList())
                             },
+                            modifier = Modifier.touchClickable(
+                                onClick = {
+                                    if (selectedIds.contains(folder.id)) {
+                                        selectedIds.remove(folder.id)
+                                    } else {
+                                        selectedIds.add(folder.id)
+                                    }
+                                    onUpdate(selectedIds.toList())
+                                },
+                            ),
                         ) {
                             Text(
                                 text = folder.title,
@@ -568,7 +582,8 @@ private fun VideoInfoHeader(
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
                 .weight(3f)
                 .fillMaxHeight()
-                .aspectRatio(1.6f),
+                .aspectRatio(1.6f)
+                .touchClickable(onClick = onPlayVideo),
             onClick = onPlayVideo,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
             border = CardDefaults.border(
@@ -631,7 +646,8 @@ private fun VideoInfoHeader(
                         onClick = onClickUp,
                         modifier = Modifier
                             .focusRequester(upFocusRequester)
-                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") },
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") }
+                            .touchClickable(onClick = onClickUp),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         border = ClickableSurfaceDefaults.border(
                             focusedBorder = Border(
@@ -691,7 +707,8 @@ private fun VideoInfoHeader(
                             onClick = { onClickTag(tag) },
                             modifier = Modifier
                                 .focusRequester(focusSaver.focusRequesterFor(tagKey))
-                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) },
+                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) }
+                                .touchClickable(onClick = { onClickTag(tag) }),
                         ) {
                             Text(
                                 text = tag.name,
@@ -780,7 +797,8 @@ private fun ActionButton(
                 } else {
                     Modifier
                 },
-            ),
+            )
+            .touchClickable(onClick = onClick, onLongClick = onLongClick),
         onClick = onClick,
         onLongClick = onLongClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
@@ -822,7 +840,8 @@ private fun VideoDescription(
             .fillMaxWidth()
             .padding(horizontal = 50.dp)
             .focusRequester(focusRequester)
-            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") },
+            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") }
+            .touchClickable(onClick = { expanded = !expanded }),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.05f),
             focusedContainerColor = Color.White.copy(alpha = 0.12f),
@@ -896,6 +915,7 @@ private fun VideoPartRow(
             if (pages.size > PART_LIST_DIALOG_THRESHOLD) {
                 Surface(
                     onClick = onShowPartListDialog,
+                    modifier = Modifier.touchClickable(onClick = onShowPartListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors = ClickableSurfaceDefaults.colors(
                         containerColor = Color.White.copy(alpha = 0.08f),
@@ -916,6 +936,7 @@ private fun VideoPartRow(
                 if (lastPage != null) {
                     Surface(
                         onClick = { onClick(lastPage) },
+                        modifier = Modifier.touchClickable(onClick = { onClick(lastPage) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors = ClickableSurfaceDefaults.colors(
                             containerColor = Color.White.copy(alpha = 0.08f),
@@ -1000,7 +1021,8 @@ private fun PartButton(
                 } else {
                     Modifier
                 },
-            ),
+            )
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
@@ -1079,6 +1101,7 @@ private fun VideoUgcSeasonRow(
             if (episodes.size > PART_LIST_DIALOG_THRESHOLD) {
                 Surface(
                     onClick = onShowListDialog,
+                    modifier = Modifier.touchClickable(onClick = onShowListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors = ClickableSurfaceDefaults.colors(
                         containerColor = Color.White.copy(alpha = 0.08f),
@@ -1099,6 +1122,7 @@ private fun VideoUgcSeasonRow(
                 if (lastEpisode != null) {
                     Surface(
                         onClick = { onClick(lastEpisode) },
+                        modifier = Modifier.touchClickable(onClick = { onClick(lastEpisode) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors = ClickableSurfaceDefaults.colors(
                             containerColor = Color.White.copy(alpha = 0.08f),
@@ -1271,11 +1295,11 @@ private fun VideoPartListDialog(
                                 selected = selectedTab == index,
                                 onFocus = { selectedTab = index },
                                 onClick = { selectedTab = index },
-                                modifier = if (index == selectedTab) {
+                                modifier = (if (index == selectedTab) {
                                     Modifier.focusRequester(tabFocusRequester)
                                 } else {
                                     Modifier
-                                },
+                                }).touchClickable(onClick = { selectedTab = index }),
                             ) {
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
@@ -1389,11 +1413,11 @@ private fun VideoEpisodeListDialog(
                                 selected = selectedTab == index,
                                 onFocus = { selectedTab = index },
                                 onClick = { selectedTab = index },
-                                modifier = if (index == selectedTab) {
+                                modifier = (if (index == selectedTab) {
                                     Modifier.focusRequester(tabFocusRequester)
                                 } else {
                                     Modifier
-                                },
+                                }).touchClickable(onClick = { selectedTab = index }),
                             ) {
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),

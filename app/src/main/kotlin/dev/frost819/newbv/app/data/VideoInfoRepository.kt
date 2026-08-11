@@ -63,9 +63,9 @@ class VideoInfoRepository @Inject constructor(
      * @param aid 视频 AV 号
      * @param preferApiType 接口类型
      */
-    suspend fun loadVideoDetail(aid: Long, preferApiType: ApiType = ApiType.Web) {
+    suspend fun loadVideoDetail(aid: Long, preferApiType: ApiType = ApiType.Web, bvid: String = "") {
         runCatching {
-            val detail = videoDetailRepository.getVideoDetail(aid = aid, preferApiType = preferApiType)
+            val detail = videoDetailRepository.getVideoDetail(aid = aid, preferApiType = preferApiType, bvid = bvid)
             _videoDetail.update { detail }
             _relatedVideos.update { detail.relatedVideos }
             _lastPlayedCid.update { detail.history.lastPlayedCid }

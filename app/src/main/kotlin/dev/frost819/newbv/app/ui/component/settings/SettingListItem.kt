@@ -13,6 +13,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 设置列表项。
@@ -37,7 +38,8 @@ fun SettingListItem(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp)
-            .onFocusChanged { hasFocus = it.hasFocus },
+            .onFocusChanged { hasFocus = it.hasFocus }
+            .touchClickable(onClick = onClick),
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         onClick = onClick,

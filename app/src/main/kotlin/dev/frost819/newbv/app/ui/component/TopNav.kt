@@ -27,6 +27,7 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.TabRowScope
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 顶部导航 Tab 栏。
@@ -98,7 +99,7 @@ private fun TabRowScope.NavItemTab(
     onFocus: () -> Unit,
 ) {
     Tab(
-        modifier = modifier,
+        modifier = modifier.touchClickable(onClick = onClick),
         selected = selected,
         onFocus = onFocus,
         onClick = onClick,

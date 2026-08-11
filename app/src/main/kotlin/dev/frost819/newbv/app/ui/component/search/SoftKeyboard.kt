@@ -20,6 +20,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 private val keyboardKeys = listOf(
     listOf("A", "B", "C", "D", "E", "F"),
@@ -102,7 +103,7 @@ private fun SoftKeyboardKey(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.touchClickable(onClick = onClick),
         onClick = onClick,
         colors = ClickableSurfaceDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
@@ -128,7 +129,7 @@ private fun SoftKeyboardButton(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier.height(38.dp),
+        modifier = modifier.height(38.dp).touchClickable(onClick = onClick),
         onClick = onClick,
         colors = ClickableSurfaceDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,

@@ -14,18 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Comment
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,12 +30,17 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -58,10 +55,12 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import dev.frost819.newbv.R
 import dev.frost819.newbv.app.ui.state.player.SeekerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.theme.BVTheme
 import kotlinx.coroutines.delay
 
@@ -86,6 +85,7 @@ import kotlinx.coroutines.delay
  * @param onDirectionLeft seek 左移回调
  * @param onDirectionRight seek 右移回调
  * @param onSeekGoTime 确认 seek 回调
+ * @param onSeekToPosition 触屏拖拽/点击进度条时 seek 到指定位置（毫秒）
  * @param onPlayPause 播放/暂停回调
  * @param onDanmakuSwitchChange 弹幕开关回调
  * @param onShowSettings 打开设置回调
@@ -111,6 +111,7 @@ fun ControllerVideoInfo(
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
+    onSeekToPosition: (Long) -> Unit,
     onPlayPause: () -> Unit,
     onDanmakuSwitchChange: () -> Unit,
     onShowSettings: () -> Unit,
@@ -153,6 +154,7 @@ fun ControllerVideoInfo(
                 onDirectionLeft = onDirectionLeft,
                 onDirectionRight = onDirectionRight,
                 onSeekGoTime = onSeekGoTime,
+                onSeekToPosition = onSeekToPosition,
                 onPlayPause = onPlayPause,
                 onDanmakuSwitchChange = onDanmakuSwitchChange,
                 onShowSettings = onShowSettings,
@@ -232,6 +234,7 @@ fun ControllerVideoInfoBottom(
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
+    onSeekToPosition: (Long) -> Unit,
     onPlayPause: () -> Unit,
     onDanmakuSwitchChange: () -> Unit,
     onShowSettings: () -> Unit,
@@ -281,7 +284,7 @@ fun ControllerVideoInfoBottom(
             )
         }
 
-        // Seek bar（可聚焦，处理方向键）
+        // Seek bar（可聚焦，处理方向键 + 触屏拖拽）
         Row(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -292,6 +295,42 @@ fun ControllerVideoInfoBottom(
                 )
                 .focusable()
                 .focusRequester(seekFocusRequester)
+                .pointerInput(seekerState.totalDuration) {
+                    awaitEachGesture {
+                        val firstDown = awaitFirstDown(
+                            requireUnconsumed = false,
+                            pass = PointerEventPass.Initial,
+                        )
+                        firstDown.consume()
+
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull() ?: break
+                            val w = this.size.width.toFloat()
+
+                            if (!change.pressed) {
+                                // 手指抬起：seek 到最终位置
+                                if (w > 0 && seekerState.totalDuration > 0) {
+                                    val ratio = (change.position.x / w).coerceIn(0f, 1f)
+                                    val targetTime = (ratio * seekerState.totalDuration).toLong()
+                                    onSeekToPosition(targetTime)
+                                }
+                                change.consume()
+                                break
+                            }
+
+                            if (change.positionChanged()) {
+                                // 拖拽中：持续 seek 到触摸位置
+                                if (w > 0 && seekerState.totalDuration > 0) {
+                                    val ratio = (change.position.x / w).coerceIn(0f, 1f)
+                                    val targetTime = (ratio * seekerState.totalDuration).toLong()
+                                    onSeekToPosition(targetTime)
+                                }
+                                change.consume()
+                            }
+                        }
+                    }
+                }
                 .onKeyEvent {
                     when (it.key) {
                         Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
@@ -334,18 +373,24 @@ fun ControllerVideoInfoBottom(
 
         // 操作按钮行
         val icons = buildList {
-            add(ControllerIcon(Icons.Rounded.Pause, "Play/Pause", onPlayPause))
-            add(ControllerIcon(Icons.AutoMirrored.Rounded.Comment, "Danmaku toggle", onDanmakuSwitchChange))
-            add(ControllerIcon(Icons.Rounded.Settings, "Open settings", onShowSettings))
+            add(ControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
+            add(
+                ControllerIcon(
+                    if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
+                    "弹幕开关",
+                    onDanmakuSwitchChange,
+                ),
+            )
+            add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
             if (!fromSeason) {
-                add(ControllerIcon(Icons.Rounded.Info, "Video info", onGoToVideoInfo))
-                add(ControllerIcon(Icons.Rounded.Person, "UP page", onGoToUpPage))
-                add(ControllerIcon(Icons.Rounded.VideoLibrary, "Related videos", onShowRelatedVideos))
+                add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
+                add(ControllerIcon(R.drawable.contact_page_24px, "up主页", onGoToUpPage))
+                add(ControllerIcon(R.drawable.related_videos_24px, "相关视频", onShowRelatedVideos))
             }
             add(
                 ControllerIcon(
-                    if (isLooping) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                    "Loop",
+                    if (isLooping) R.drawable.repeat_one_on_24px else R.drawable.repeat_one_24px,
+                    "循环播放",
                     onToggleLoop,
                 ),
             )
@@ -367,15 +412,19 @@ fun ControllerVideoInfoBottom(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
             icons.forEach { (icon, desc, action) ->
-                Surface(
-                    onClick = action,
-                    shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = desc,
-                        modifier = Modifier.padding(5.dp),
-                    )
+                key(icon) {
+                    Surface(
+                        modifier = Modifier.touchClickable(onClick = action),
+                        onClick = action,
+                        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = desc,
+                            modifier = Modifier.padding(5.dp),
+                            tint = Color.White,
+                        )
+                    }
                 }
             }
         }
@@ -386,7 +435,7 @@ fun ControllerVideoInfoBottom(
  * 操作按钮数据三元组。
  */
 private data class ControllerIcon(
-    val icon: ImageVector,
+    val icon: Int,
     val description: String,
     val action: () -> Unit,
 )
@@ -440,6 +489,7 @@ private fun ControllerVideoInfoPreview() {
             onDirectionLeft = {},
             onDirectionRight = {},
             onSeekGoTime = {},
+            onSeekToPosition = {},
             onPlayPause = {},
             onDanmakuSwitchChange = {},
             onShowSettings = {},

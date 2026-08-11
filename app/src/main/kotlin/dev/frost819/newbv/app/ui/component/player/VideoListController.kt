@@ -43,6 +43,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.theme.BVTheme
 
 /**
@@ -260,7 +261,8 @@ fun PlayerListItem(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .onFocusChanged { if (it.hasFocus) onFocus() },
+            .onFocusChanged { if (it.hasFocus) onFocus() }
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(

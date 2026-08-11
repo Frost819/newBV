@@ -49,6 +49,7 @@ import dev.frost819.newbv.app.ui.navigation.FollowRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.viewmodel.user.FollowViewModel
 import dev.frost819.newbv.biliapi.entity.user.FollowedUser
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 关注列表页。
@@ -141,7 +142,7 @@ private fun FollowedUserCard(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.touchClickable(onClick = onClick),
         onClick = onClick,
     ) {
         Row(

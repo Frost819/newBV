@@ -30,6 +30,7 @@ import androidx.tv.material3.Text
 import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.network.GithubApi
 import dev.frost819.newbv.app.network.entity.GithubRelease
+import dev.frost819.newbv.core.focus.touchClickable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -221,13 +222,19 @@ fun UpdateDialog(
                     UpdateStatus.Downloading, UpdateStatus.Installing -> {}
 
                     UpdateStatus.Ready -> {
-                        Button(onClick = startUpdate) {
+                        Button(
+                            onClick = startUpdate,
+                            modifier = Modifier.touchClickable(onClick = startUpdate),
+                        ) {
                             Text(text = "立即更新")
                         }
                     }
 
                     UpdateStatus.InstallError, UpdateStatus.DownloadError, UpdateStatus.CheckError -> {
-                        Button(onClick = checkUpdate) {
+                        Button(
+                            onClick = checkUpdate,
+                            modifier = Modifier.touchClickable(onClick = checkUpdate),
+                        ) {
                             Text(text = "再试一次")
                         }
                     }
@@ -240,6 +247,12 @@ fun UpdateDialog(
                         UpdateStatus.Installing,
                     ),
                     onClick = onHideDialog,
+                    modifier = Modifier.touchClickable(onClick = {
+                        if (updateStatus !in setOf(
+                            UpdateStatus.Downloading,
+                            UpdateStatus.Installing,
+                        )) onHideDialog()
+                    }),
                 ) {
                     Text(
                         text = when (updateStatus) {

@@ -13,6 +13,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.RadioButton
 import androidx.tv.material3.RadioButtonDefaults
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 选项弹窗中的单选项。
@@ -33,7 +34,9 @@ fun SettingsMenuSelectItem(
     var hasFocus by remember { mutableStateOf(false) }
 
     ListItem(
-        modifier = modifier.onFocusChanged { hasFocus = it.hasFocus },
+        modifier = modifier
+            .onFocusChanged { hasFocus = it.hasFocus }
+            .touchClickable(onClick = onClick),
         headlineContent = { Text(text = text) },
         trailingContent = {
             RadioButton(

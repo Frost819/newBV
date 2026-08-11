@@ -4,6 +4,7 @@ import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,6 +75,11 @@ fun QrLoginContent(
             modifier = modifier
                 .focusable()
                 .fillMaxSize()
+                .clickable {
+                    if (uiState.state == QrLoginState.Expired || uiState.state == QrLoginState.Error) {
+                        viewModel.requestAppQrCode()
+                    }
+                }
                 .onKeyEvent { event ->
                     if (event.type == KeyEventType.KeyUp && event.key == Key.DirectionCenter) {
                         if (uiState.state == QrLoginState.Expired || uiState.state == QrLoginState.Error) {

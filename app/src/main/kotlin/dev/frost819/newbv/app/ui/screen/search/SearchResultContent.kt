@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.ListFooterTip
@@ -172,11 +176,12 @@ fun SearchResultContent(
                     modifier = Modifier.weight(1f),
                 )
                 if (isVideoSearchViaWebApi.value) {
-                    Text(
-                        text = "菜单键打开筛选",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.End,
-                    )
+                    IconButton(onClick = { viewModel.toggleFilter(true) }) {
+                        Icon(
+                            imageVector = Icons.Rounded.FilterList,
+                            contentDescription = "筛选",
+                        )
+                    }
                 }
             }
 

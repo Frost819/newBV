@@ -206,7 +206,10 @@ fun DanmakuMenuList(
                         .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                     text = item.displayName,
                     selected = selectedDanmakuMenuItem == item,
-                    onClick = {},
+                    onClick = {
+                        selectedDanmakuMenuItem = item
+                        onFocusStateChange(MenuFocusState.Items)
+                    },
                     onFocus = { selectedDanmakuMenuItem = item },
                 )
             }

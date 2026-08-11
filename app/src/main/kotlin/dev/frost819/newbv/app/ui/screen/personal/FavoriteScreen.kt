@@ -34,6 +34,7 @@ import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -101,6 +102,9 @@ fun FavoriteScreen(
                         onClick = {
                             viewModel.loadFavoriteItems(folder.id, forceRefresh = true)
                         },
+                        modifier = Modifier.touchClickable(onClick = {
+                            viewModel.loadFavoriteItems(folder.id, forceRefresh = true)
+                        }),
                         shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
                         ),

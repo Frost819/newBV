@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +34,6 @@ import dev.frost819.newbv.app.ui.component.player.VideoPlayerController
 import dev.frost819.newbv.app.ui.component.player.VideoProgressSeek
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.app.util.formatHourMinSec
@@ -146,6 +146,21 @@ fun VideoPlayerScreen(
         }
     }
 
+    // 弹幕播放/暂停同步：跟随播放器状态
+    LaunchedEffect(uiState.playerState) {
+        when (val state = uiState.playerState) {
+            PlayerState.Playing -> danmakuViewModel.play()
+            PlayerState.Paused, is PlayerState.Error, PlayerState.Ended -> danmakuViewModel.pause()
+            else -> {}
+        }
+    }
+
+    // 弹幕缓冲同步：缓冲时暂停弹幕
+    LaunchedEffect(uiState.isBuffering) {
+        if (uiState.isBuffering) danmakuViewModel.pause()
+        else if (uiState.playerState == PlayerState.Playing) danmakuViewModel.play()
+    }
+
     // 心跳循环（5s 延迟后，每 15s 发送）
     LaunchedEffect(Unit) {
         delay(5000)
@@ -228,7 +243,10 @@ fun VideoPlayerScreen(
         onExit = {
             navController.popBackStack()
         },
-        onGoTime = { time -> playerViewModel.seekToTime(time) },
+        onGoTime = { time ->
+            playerViewModel.seekToTime(time)
+            danmakuViewModel.seekTo(time)
+        },
         onBackToStart = { playerViewModel.backToStart() },
         onCancelSkipToNextEp = { playerViewModel.cancelPlayNext() },
         onPlayNewVideo = { item: VideoListItem ->
@@ -245,11 +263,14 @@ fun VideoPlayerScreen(
             navController.navigate(UserSpaceRoute(mid = uiState.authorMid))
         },
         onGoToVideoDetail = {
-            navController.navigate(VideoDetailRoute(aid = uiState.aid))
+            navController.popBackStack()
         },
         onMediaProfileSettingChange = { action -> playerViewModel.updateMediaProfile(action) },
         onAspectRatioChange = { ratio -> playerViewModel.updateVideoAspectRatio(ratio) },
-        onPlaySpeedChange = { speed -> playerViewModel.updatePlaySpeed(speed) },
+        onPlaySpeedChange = { speed ->
+            playerViewModel.updatePlaySpeed(speed)
+            danmakuViewModel.updateSpeed(speed)
+        },
         onDanmakuSettingChange = { action -> danmakuViewModel.updateDanmakuState(action) },
         onSubtitleChange = { subtitle -> subtitleViewModel.selectSubtitle(subtitle.id) },
         onSubtitleSettingChange = { action -> subtitleViewModel.updateSubtitleState(action) },
@@ -279,9 +300,7 @@ fun VideoPlayerScreen(
 
             if (videoPlayer != null) {
                 BvVideoPlayer(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .aspectRatio(aspectRatio),
+                    modifier = Modifier.fillMaxSize(),
                     videoPlayer = videoPlayer,
                 )
             }

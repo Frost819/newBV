@@ -56,7 +56,7 @@ fun MenuNavList(
                 icon = item.icon,
                 expanded = isFocusing,
                 selected = selectedMenu == item,
-                onClick = {},
+                onClick = { onSelectedChanged(item) },
                 onFocus = { onSelectedChanged(item) },
             )
         }

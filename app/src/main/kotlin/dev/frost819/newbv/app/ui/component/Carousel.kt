@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.CarouselDefaults
@@ -134,6 +136,21 @@ private fun Carousel(
                 hasFocus = focusState.isFocused
             }
             .clickable { onClick(currentIndex) }
+            .pointerInput(itemCount) {
+                if (itemCount == 0) return@pointerInput
+                detectHorizontalDragGestures(
+                    onDragStart = { },
+                    onDragEnd = { },
+                ) { _, dragAmount ->
+                    if (dragAmount > 40f) {
+                        isMovingBackward = true
+                        currentIndex = (currentIndex - 1 + itemCount) % itemCount
+                    } else if (dragAmount < -40f) {
+                        isMovingBackward = false
+                        currentIndex = (currentIndex + 1) % itemCount
+                    }
+                }
+            }
             .onKeyEvent {
                 when {
                     itemCount == 0 -> false

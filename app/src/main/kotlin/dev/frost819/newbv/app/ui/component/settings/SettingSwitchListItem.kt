@@ -18,6 +18,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.SwitchDefaults
 import androidx.tv.material3.Text
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 带开关的设置列表项。
@@ -43,7 +44,11 @@ fun SettingSwitchListItem(
     ListItem(
         modifier = modifier
             .padding(horizontal = 12.dp)
-            .onFocusChanged { hasFocus = it.hasFocus },
+            .onFocusChanged { hasFocus = it.hasFocus }
+            .touchClickable(onClick = {
+                switchChecked = !switchChecked
+                onCheckedChange(switchChecked)
+            }),
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         trailingContent = {

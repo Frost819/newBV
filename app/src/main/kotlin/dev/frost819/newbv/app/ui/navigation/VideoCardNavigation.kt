@@ -8,17 +8,17 @@ import dev.frost819.newbv.data.datastore.Prefs
  * 根据用户偏好决定点击视频卡片后的导航行为。
  *
  * - `showVideoInfo = true`（默认）：跳转到详情页
- * - `showVideoInfo = false` 且 cid 已知：直接跳转到播放器
- * - `showVideoInfo = false` 但 cid 未知：仍跳转详情页（需要获取 cid）
+ * - `showVideoInfo = false`：直接跳转到播放器（cid 由播放器内部加载详情获取）
  */
 fun NavController.navigateFromVideoCard(data: VideoCardData) {
-    if (Prefs.showVideoInfo || data.cid == null) {
-        navigate(VideoDetailRoute(aid = data.avid))
+    if (Prefs.showVideoInfo) {
+        navigate(VideoDetailRoute(aid = data.avid, bvid = data.bvid))
     } else {
         navigate(
             VideoPlayerRoute(
                 aid = data.avid,
-                cid = data.cid,
+                cid = data.cid ?: 0L,
+                bvid = data.bvid,
                 epid = data.epid?.toLong(),
                 title = data.title,
                 cover = data.cover,

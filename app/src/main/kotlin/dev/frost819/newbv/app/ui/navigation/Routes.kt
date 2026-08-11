@@ -21,6 +21,7 @@ object HomeRoute
 @Serializable
 data class VideoDetailRoute(
     val aid: Long,
+    val bvid: String = "",
     val epid: Long? = null
 )
 
@@ -31,6 +32,7 @@ data class VideoDetailRoute(
 data class VideoPlayerRoute(
     val aid: Long,
     val cid: Long,
+    val bvid: String = "",
     val epid: Long? = null,
     val title: String = "",
     val cover: String = ""

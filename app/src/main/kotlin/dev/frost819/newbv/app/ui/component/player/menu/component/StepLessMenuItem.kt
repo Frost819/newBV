@@ -18,6 +18,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
+import androidx.tv.material3.Surface
 
 /**
  * 无极滑块菜单项（Float 版本）。
@@ -58,7 +59,17 @@ fun StepLessMenuItem(
                 .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = null)
+            Surface(
+                onClick = {
+                    if (value >= range.endInclusive - step) {
+                        onValueChange(range.endInclusive)
+                    } else {
+                        onValueChange(value + step)
+                    }
+                },
+            ) {
+                Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
+            }
             MenuListItem(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,7 +102,17 @@ fun StepLessMenuItem(
                 selected = false,
                 onClick = {},
             )
-            Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = null)
+            Surface(
+                onClick = {
+                    if (value - step <= range.start) {
+                        onValueChange(range.start)
+                    } else {
+                        onValueChange(value - step)
+                    }
+                },
+            ) {
+                Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "减少")
+            }
         }
     }
 }
@@ -132,7 +153,17 @@ fun StepLessMenuItem(
                 .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = null)
+            Surface(
+                onClick = {
+                    if (value >= range.last - step) {
+                        onValueChange(range.last)
+                    } else {
+                        onValueChange(value + step)
+                    }
+                },
+            ) {
+                Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
+            }
             MenuListItem(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -165,7 +196,17 @@ fun StepLessMenuItem(
                 selected = false,
                 onClick = {},
             )
-            Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = null)
+            Surface(
+                onClick = {
+                    if (value - step <= range.first) {
+                        onValueChange(range.first)
+                    } else {
+                        onValueChange(value - step)
+                    }
+                },
+            ) {
+                Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "减少")
+            }
         }
     }
 }

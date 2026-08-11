@@ -57,6 +57,7 @@ import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.user.UserSpaceUiEffect
 import dev.frost819.newbv.app.viewmodel.user.UserSpaceViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -138,6 +139,7 @@ private fun UserSpaceScreen(
             val cardData = remember(video) {
                 VideoCardData(
                     avid = video.aid,
+                    bvid = video.bvid,
                     title = video.title,
                     cover = video.cover,
                     playString = video.play.takeIf { it != -1 }.toWanString(),
@@ -153,7 +155,7 @@ private fun UserSpaceScreen(
                 data = cardData,
                 onClick = { navController.navigateFromVideoCard(cardData) },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = video.aid))
+                    navController.navigate(VideoDetailRoute(aid = video.aid, bvid = video.bvid))
                 },
                 onGoToUpPage = {},
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = video.aid) },
@@ -275,6 +277,7 @@ private fun FollowButton(
     androidx.tv.material3.Surface(
         onClick = onClick,
         enabled = !isLoading,
+        modifier = Modifier.touchClickable(onClick = onClick),
     ) {
         Text(
             text = text,

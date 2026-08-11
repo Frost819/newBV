@@ -42,6 +42,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
+import dev.frost819.newbv.core.interaction.currentInputMethod
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 小型视频卡片。
@@ -75,6 +78,7 @@ fun SmallVideoCard(
     var showActions by remember { mutableStateOf(false) }
     var releaseLongPress by remember { mutableStateOf(false) }
     val firstButtonRequester = remember { FocusRequester() }
+    val isTouchMode = currentInputMethod() == InputMethod.Touch
 
     val hasAnyAction = onAddWatchLater != null || onGoToDetailPage != null ||
         onGoToUpPage != null || onRemoveWatchLater != null
@@ -100,6 +104,10 @@ fun SmallVideoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.6f)
+                .touchClickable(
+                    onClick = { if (!showActions) onClick() },
+                    onLongClick = { if (hasAnyAction) showActions = true },
+                )
                 .onFocusChanged { focusState ->
                     if (!focusState.hasFocus) showActions = false
                 },
@@ -122,13 +130,21 @@ fun SmallVideoCard(
                     onRemoveWatchLater?.let { action ->
                         IconButton(
                             onClick = {
-                                if (!releaseLongPress) {
+                                if (!isTouchMode && !releaseLongPress) {
                                     releaseLongPress = true
                                     return@IconButton
                                 }
                                 action()
                             },
-                            modifier = Modifier.focusRequester(firstButtonRequester),
+                            modifier = Modifier
+                                .focusRequester(firstButtonRequester)
+                                .touchClickable(onClick = {
+                                    if (!isTouchMode && !releaseLongPress) {
+                                        releaseLongPress = true
+                                    } else {
+                                        action()
+                                    }
+                                }),
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.remove_from_list),
@@ -141,7 +157,7 @@ fun SmallVideoCard(
                         val addIsFirst = onRemoveWatchLater == null
                         IconButton(
                             onClick = {
-                                if (addIsFirst && !releaseLongPress) {
+                                if (!isTouchMode && addIsFirst && !releaseLongPress) {
                                     releaseLongPress = true
                                     return@IconButton
                                 }
@@ -149,8 +165,21 @@ fun SmallVideoCard(
                             },
                             modifier = if (addIsFirst) {
                                 Modifier.focusRequester(firstButtonRequester)
+                                    .touchClickable(onClick = {
+                                        if (!isTouchMode && addIsFirst && !releaseLongPress) {
+                                            releaseLongPress = true
+                                        } else {
+                                            action()
+                                        }
+                                    })
                             } else {
-                                Modifier
+                                Modifier.touchClickable(onClick = {
+                                    if (!isTouchMode && addIsFirst && !releaseLongPress) {
+                                        releaseLongPress = true
+                                    } else {
+                                        action()
+                                    }
+                                })
                             },
                         ) {
                             Icon(
@@ -164,7 +193,7 @@ fun SmallVideoCard(
                         val detailIsFirst = onRemoveWatchLater == null && onAddWatchLater == null
                         IconButton(
                             onClick = {
-                                if (detailIsFirst && !releaseLongPress) {
+                                if (!isTouchMode && detailIsFirst && !releaseLongPress) {
                                     releaseLongPress = true
                                     return@IconButton
                                 }
@@ -172,8 +201,21 @@ fun SmallVideoCard(
                             },
                             modifier = if (detailIsFirst) {
                                 Modifier.focusRequester(firstButtonRequester)
+                                    .touchClickable(onClick = {
+                                        if (!isTouchMode && detailIsFirst && !releaseLongPress) {
+                                            releaseLongPress = true
+                                        } else {
+                                            action()
+                                        }
+                                    })
                             } else {
-                                Modifier
+                                Modifier.touchClickable(onClick = {
+                                    if (!isTouchMode && detailIsFirst && !releaseLongPress) {
+                                        releaseLongPress = true
+                                    } else {
+                                        action()
+                                    }
+                                })
                             },
                         ) {
                             Icon(
@@ -188,7 +230,7 @@ fun SmallVideoCard(
                             onAddWatchLater == null && onGoToDetailPage == null
                         IconButton(
                             onClick = {
-                                if (upIsFirst && !releaseLongPress) {
+                                if (!isTouchMode && upIsFirst && !releaseLongPress) {
                                     releaseLongPress = true
                                     return@IconButton
                                 }
@@ -196,8 +238,21 @@ fun SmallVideoCard(
                             },
                             modifier = if (upIsFirst) {
                                 Modifier.focusRequester(firstButtonRequester)
+                                    .touchClickable(onClick = {
+                                        if (!isTouchMode && upIsFirst && !releaseLongPress) {
+                                            releaseLongPress = true
+                                        } else {
+                                            action()
+                                        }
+                                    })
                             } else {
-                                Modifier
+                                Modifier.touchClickable(onClick = {
+                                    if (!isTouchMode && upIsFirst && !releaseLongPress) {
+                                        releaseLongPress = true
+                                    } else {
+                                        action()
+                                    }
+                                })
                             },
                         ) {
                             Icon(

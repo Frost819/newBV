@@ -29,16 +29,18 @@ class VideoDetailRepository(
     suspend fun getVideoDetail(
         aid: Long,
         preferApiType: ApiType = ApiType.Web,
+        bvid: String = "",
     ): VideoDetail {
         return when (preferApiType) {
             ApiType.Web -> {
                 withContext(Dispatchers.IO) {
                     val videoDetailWithoutUserActions =
                         async {
-                            val httpVideoDetail =
-                                BiliHttpApi.getVideoDetail(
-                                    av = aid,
-                                ).getResponseData()
+                            val response = BiliHttpApi.getVideoDetail(
+                                av = aid,
+                                bv = bvid.ifEmpty { null },
+                            )
+                            val httpVideoDetail = response.getResponseData()
                             VideoDetail.fromVideoDetail(httpVideoDetail)
                         }
 
@@ -51,7 +53,6 @@ class VideoDetailRepository(
                                     preferApiType = ApiType.Web,
                                 )
                             }.onFailure {
-                                println("Check video favoured failed: $it")
                             }.getOrDefault(false)
                         }
 
@@ -62,7 +63,6 @@ class VideoDetailRepository(
                                     aid = aid,
                                 )
                             }.onFailure {
-                                println("Check video liked failed: $it")
                             }.getOrDefault(false)
                         }
 
@@ -73,7 +73,6 @@ class VideoDetailRepository(
                                     aid = aid,
                                 )
                             }.onFailure {
-                                println("Check video coined failed: $it")
                             }.getOrDefault(false)
                         }
 
@@ -92,7 +91,6 @@ class VideoDetailRepository(
                                     )
                                 history
                             }.onFailure {
-                                println("Get video history failed: $it")
                             }.getOrDefault(VideoDetail.History(0, 0))
                         }
 
@@ -157,7 +155,6 @@ class VideoDetailRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            println("Get ugc pages failed: aid=$aid, preferApiType=$preferApiType, error=${e.stackTraceToString()}")
             emptyList()
         }
     }
@@ -187,7 +184,6 @@ class VideoDetailRepository(
                         val playerIcon = VideoDetail.PlayerIcon.fromPlayerIcon(videoModeInfo.playerIcon)
                         playerIcon
                     }.onFailure {
-                        println("Get video player icon failed: $it")
                     }.getOrDefault(null)
                 seasonDetail.playerIcon = playerIcon
                 return seasonDetail
