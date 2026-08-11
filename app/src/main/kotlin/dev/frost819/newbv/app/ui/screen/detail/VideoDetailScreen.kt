@@ -308,7 +308,7 @@ private fun VideoDetailContent(
                 }
             },
             onClickUp = {
-                navController.navigate(UserSpaceRoute(mid = detail.author.mid))
+                navController.navigate(UserSpaceRoute(mid = detail.author.mid, name = detail.author.name, face = detail.author.face))
             },
             focusSaver = focusSaver,
         )
@@ -1223,7 +1223,7 @@ private fun RelatedVideoRow(
                     onClick = { onClick(video) },
                     onGoToDetailPage = { onClick(video) },
                     onGoToUpPage = video.author?.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid)) }
+                        { navController.navigate(UserSpaceRoute(mid = mid, name = video.author?.name ?: "", face = video.author?.face)) }
                     },
                     onAddWatchLater = { watchLaterViewModel.addToView(aid = video.aid) },
                 )

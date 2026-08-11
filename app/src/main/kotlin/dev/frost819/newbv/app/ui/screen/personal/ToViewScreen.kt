@@ -118,7 +118,7 @@ fun ToViewScreen(
                         viewModel.delToView(aid = item.oid)
                     },
                     onGoToUpPage = item.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid)) }
+                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
                     },
                 )
             }
@@ -155,7 +155,7 @@ fun ToViewScreen(
                         viewModel.delToView(aid = item.oid)
                     },
                     onGoToUpPage = item.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid)) }
+                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
                     },
                 )
             }

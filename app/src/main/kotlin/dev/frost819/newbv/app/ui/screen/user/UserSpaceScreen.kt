@@ -1,14 +1,11 @@
 package dev.frost819.newbv.app.ui.screen.user
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,8 +14,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +30,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -55,16 +49,15 @@ import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
-import dev.frost819.newbv.app.viewmodel.user.UserSpaceUiEffect
 import dev.frost819.newbv.app.viewmodel.user.UserSpaceViewModel
-import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
 /**
  * 用户空间页。
  *
- * 展示用户信息（头像、昵称、签名、关注按钮）和投稿视频网格。
+ * 展示用户信息（头像、昵称）和投稿视频网格。
+ * 用户名和头像由路由参数传入，不单独调用 API 获取（与原版 BV 行为一致）。
  */
 fun NavGraphBuilder.userSpaceScreen(navController: NavController) {
     composable<UserSpaceRoute> { backStackEntry ->
@@ -72,6 +65,8 @@ fun NavGraphBuilder.userSpaceScreen(navController: NavController) {
         val viewModel: UserSpaceViewModel = hiltViewModel()
         UserSpaceScreen(
             mid = route.mid,
+            name = route.name ?: "",
+            face = route.face,
             viewModel = viewModel,
             navController = navController,
         )
@@ -81,6 +76,8 @@ fun NavGraphBuilder.userSpaceScreen(navController: NavController) {
 @Composable
 private fun UserSpaceScreen(
     mid: Long,
+    name: String,
+    face: String?,
     viewModel: UserSpaceViewModel,
     navController: NavController,
 ) {
@@ -92,17 +89,7 @@ private fun UserSpaceScreen(
     CollectWatchLaterEffects(watchLaterViewModel)
 
     LaunchedEffect(mid) {
-        viewModel.init(mid)
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is UserSpaceUiEffect.ShowToast -> {
-                    // Toast handled by UI
-                }
-            }
-        }
+        viewModel.init(mid, name, face)
     }
 
     focusSaver.RestoreFocus()
@@ -126,10 +113,7 @@ private fun UserSpaceScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            UserSpaceHeader(
-                state = state,
-                onFollowClick = { viewModel.toggleFollow() },
-            )
+            UserSpaceHeader(state = state)
         }
 
         itemsIndexed(
@@ -176,114 +160,34 @@ private fun UserSpaceScreen(
 @Composable
 private fun UserSpaceHeader(
     state: dev.frost819.newbv.app.viewmodel.user.UserSpaceUiState,
-    onFollowClick: () -> Unit,
 ) {
-    val info = state.userInfo
-
-    if (state.userInfoLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    if (state.userInfoError || info == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "加载用户信息失败",
-                color = Color.Gray,
-                fontSize = 14.sp,
-            )
-        }
-        return
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AsyncImage(
-            model = info.face,
-            contentDescription = info.name,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop,
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
+        if (state.face.isNotEmpty()) {
+            AsyncImage(
+                model = state.face,
+                contentDescription = state.name,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+        }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = info.name,
+                text = state.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "LV${info.level}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.border,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = info.sign.ifEmpty { "这个人很神秘" },
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        FollowButton(
-            isFollowing = state.isFollowing,
-            isLoading = state.followLoading,
-            onClick = onFollowClick,
-        )
-    }
-}
-
-@OptIn(ExperimentalTvMaterial3Api::class)
-@Composable
-private fun FollowButton(
-    isFollowing: Boolean,
-    isLoading: Boolean,
-    onClick: () -> Unit,
-) {
-    val text = when {
-        isLoading -> "处理中..."
-        isFollowing -> "已关注"
-        else -> "关注"
-    }
-    val color = if (isFollowing) Color.Gray else MaterialTheme.colorScheme.border
-
-    androidx.tv.material3.Surface(
-        onClick = onClick,
-        enabled = !isLoading,
-        modifier = Modifier.touchClickable(onClick = onClick),
-    ) {
-        Text(
-            text = text,
-            color = color,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
     }
 }

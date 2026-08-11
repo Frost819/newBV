@@ -125,7 +125,7 @@ fun HistoryScreen(
                     navController.navigate(VideoDetailRoute(aid = item.oid))
                 },
                 onGoToUpPage = item.mid?.let { mid ->
-                    { navController.navigate(UserSpaceRoute(mid = mid)) }
+                    { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
                 },
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = item.oid) },
             )

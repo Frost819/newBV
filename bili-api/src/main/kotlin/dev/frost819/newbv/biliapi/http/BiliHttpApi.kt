@@ -436,10 +436,13 @@ object BiliHttpApi {
         }.body()
 
     /**
-     * 获取用户[uid]的详细信息
+     * 获取用户[uid]的详细信息。
+     *
+     * 使用 WBI 签名端点 `/x/space/wbi/acc/info`，旧版 `/x/space/acc/info` 已被 B 站废弃。
+     * 路径中的 `wbi` 会自动触发 [encApiSign] 拦截器添加 `w_rid`/`wts` 签名参数。
      */
     suspend fun getUserInfo(uid: Long): BiliResponse<UserInfoData> =
-        client.get("/x/space/acc/info") {
+        client.get("/x/space/wbi/acc/info") {
             parameter("mid", uid)
         }.body()
 

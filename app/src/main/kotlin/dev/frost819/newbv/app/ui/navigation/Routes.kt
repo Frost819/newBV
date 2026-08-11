@@ -74,7 +74,9 @@ data class LivePlayerRoute(
 /** 用户空间页。 */
 @Serializable
 data class UserSpaceRoute(
-    val mid: Long
+    val mid: Long,
+    val name: String? = null,
+    val face: String? = null,
 )
 
 /** 关注列表页。 */

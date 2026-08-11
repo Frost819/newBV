@@ -164,7 +164,7 @@ fun FavoriteScreen(
                         navController.navigate(VideoDetailRoute(aid = item.id))
                     },
                     onGoToUpPage = {
-                        navController.navigate(UserSpaceRoute(mid = item.upper.mid))
+                        navController.navigate(UserSpaceRoute(mid = item.upper.mid, name = item.upper.name))
                     },
                     onAddWatchLater = { watchLaterViewModel.addToView(aid = item.id) },
                 )

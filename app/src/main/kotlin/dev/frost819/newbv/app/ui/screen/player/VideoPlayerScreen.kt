@@ -260,7 +260,7 @@ fun VideoPlayerScreen(
         },
         onToggleSubtitle = { subtitleViewModel.toggleSubtitle() },
         onGoToUpPage = {
-            navController.navigate(UserSpaceRoute(mid = uiState.authorMid))
+            navController.navigate(UserSpaceRoute(mid = uiState.authorMid, name = uiState.authorName))
         },
         onGoToVideoDetail = {
             navController.popBackStack()

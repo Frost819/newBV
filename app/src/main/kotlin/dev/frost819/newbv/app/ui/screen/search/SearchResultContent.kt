@@ -248,7 +248,7 @@ fun SearchResultContent(
                                     navController.navigate(VideoDetailRoute(aid = v.aid))
                                 },
                                 onGoToUpPage = {
-                                    navController.navigate(UserSpaceRoute(mid = v.mid))
+                                    navController.navigate(UserSpaceRoute(mid = v.mid, name = v.author))
                                 },
                                 onAddWatchLater = { watchLaterViewModel.addToView(aid = v.aid) },
                             )
@@ -278,7 +278,7 @@ fun SearchResultContent(
                                 username = u.name,
                                 sign = u.sign,
                                 onClick = {
-                                    navController.navigate(UserSpaceRoute(mid = u.mid))
+                                    navController.navigate(UserSpaceRoute(mid = u.mid, name = u.name, face = u.avatar))
                                 },
                             )
                         }

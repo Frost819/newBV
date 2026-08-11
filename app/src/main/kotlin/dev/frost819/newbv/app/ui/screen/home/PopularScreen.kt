@@ -100,7 +100,7 @@ fun PopularScreen(
                     navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid))
                 },
                 onGoToUpPage = item.authorMid?.let { mid ->
-                    { navController.navigate(UserSpaceRoute(mid = mid)) }
+                    { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
                 },
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = item.aid) },
             )

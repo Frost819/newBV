@@ -124,7 +124,7 @@ fun DynamicsScreen(
                     navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid ?: ""))
                 },
                 onGoToUpPage = {
-                    navController.navigate(UserSpaceRoute(mid = item.authorMid))
+                    navController.navigate(UserSpaceRoute(mid = item.authorMid, name = item.author))
                 },
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = item.aid) },
             )

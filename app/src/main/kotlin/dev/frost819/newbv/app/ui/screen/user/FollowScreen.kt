@@ -126,7 +126,7 @@ private fun FollowScreen(
                     modifier = Modifier.focusSaverItem(focusSaver, index),
                     user = user,
                     onClick = {
-                        navController.navigate(UserSpaceRoute(mid = user.mid))
+                        navController.navigate(UserSpaceRoute(mid = user.mid, name = user.name, face = user.avatar))
                     },
                 )
             }
