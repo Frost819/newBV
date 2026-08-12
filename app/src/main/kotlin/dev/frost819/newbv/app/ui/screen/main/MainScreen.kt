@@ -163,7 +163,10 @@ fun MainScreen(
                         navFocusRequester = homeFocusRequester,
                         navController = navController,
                     )
-                    LeftNaviItem.Live -> PlaceholderContent("直播")
+                    LeftNaviItem.Live -> dev.frost819.newbv.app.ui.screen.live.LiveContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                    )
                 }
             }
 

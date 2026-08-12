@@ -3,7 +3,11 @@ package dev.frost819.newbv.biliapi.websocket
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
 import dev.frost819.newbv.biliapi.http.entity.live.FrameHeader
+import dev.frost819.newbv.biliapi.http.entity.live.InteractType
+import dev.frost819.newbv.biliapi.http.entity.live.InteractWordEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
+import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
+import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
 import dev.frost819.newbv.biliapi.http.entity.live.readFrameHeader
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
@@ -288,7 +292,24 @@ object LiveDataWebSocket {
             "HOT_RANK_SETTLEMENT" -> {}
             "HOT_RANK_SETTLEMENT_V2" -> {}
             "HOT_ROOM_NOTIFY" -> {}
-            "INTERACT_WORD" -> {}
+            "INTERACT_WORD" -> {
+                runCatching {
+                    val data = dataJson["data"]!!.jsonObject
+                    val uid = data["uid"]!!.jsonPrimitive.long
+                    val uname = data["uname"]?.jsonPrimitive?.content ?: ""
+                    val msgType = data["msg_type"]?.jsonPrimitive?.int ?: 1
+                    val interactType = InteractType.fromCode(msgType)
+                    if (interactType != null) {
+                        return InteractWordEvent(
+                            uid = uid,
+                            uname = uname,
+                            interactType = interactType,
+                        )
+                    }
+                }.onFailure {
+                    logger.warn { "Parse INTERACT_WORD failed: ${it.message}" }
+                }
+            }
             "LIVE" -> {
                 println(dataJson)
             }
@@ -297,7 +318,15 @@ object LiveDataWebSocket {
             "LIKE_INFO_V3_CLICK" -> {}
             "LIKE_INFO_V3_UPDATE" -> {}
             "NOTICE_MSG" -> {}
-            "ONLINE_RANK_COUNT" -> {}
+            "ONLINE_RANK_COUNT" -> {
+                runCatching {
+                    val data = dataJson["data"]?.jsonObject ?: return@runCatching
+                    val count = data["count"]?.jsonPrimitive?.int ?: 0
+                    return OnlineRankCountEvent(count = count)
+                }.onFailure {
+                    logger.warn { "Parse ONLINE_RANK_COUNT failed: ${it.message}" }
+                }
+            }
             "ONLINE_RANK_V2" -> {}
             "ONLINE_RANK_TOP3" -> {}
             "PREPARING" -> {}
@@ -315,7 +344,21 @@ object LiveDataWebSocket {
             }
 
             "USER_TOAST_MSG" -> {}
-            "WATCHED_CHANGE" -> {}
+            "WATCHED_CHANGE" -> {
+                runCatching {
+                    val data = dataJson["data"]?.jsonObject ?: return@runCatching
+                    val num = data["num"]?.jsonPrimitive?.int ?: 0
+                    val textLarge = data["text_large"]?.jsonPrimitive?.content ?: ""
+                    val textSmall = data["text_small"]?.jsonPrimitive?.content ?: ""
+                    return WatchedChangeEvent(
+                        num = num,
+                        textLarge = textLarge,
+                        textSmall = textSmall,
+                    )
+                }.onFailure {
+                    logger.warn { "Parse WATCHED_CHANGE failed: ${it.message}" }
+                }
+            }
             "WIDGET_BANNER" -> {}
             else -> {
                 logger.warn { "Unknown live event: $cmd" }

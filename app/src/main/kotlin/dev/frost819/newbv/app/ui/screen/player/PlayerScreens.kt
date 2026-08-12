@@ -115,6 +115,47 @@ fun NavGraphBuilder.seasonPlayerScreen(navController: NavController) {
 fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
     composable<LivePlayerRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<LivePlayerRoute>()
-        PlaceholderScreen(title = "Live Player (roomId=${route.roomId})")
+        val context = LocalContext.current
+        val viewModel: dev.frost819.newbv.app.viewmodel.live.LivePlayerViewModel = hiltViewModel()
+
+        LaunchedEffect(route.roomId) {
+            viewModel.init(
+                roomId = route.roomId,
+                title = route.title,
+                cover = route.cover,
+            )
+            viewModel.initVideoPlayer(context)
+            viewModel.loadLive(route.roomId)
+        }
+
+        DisposableEffect(Unit) {
+            onDispose {
+                viewModel.detachPlayer()
+            }
+        }
+
+        DisposableEffect(Unit) {
+            val window = (context as? android.app.Activity)?.window
+            window?.let {
+                WindowCompat.setDecorFitsSystemWindows(it, false)
+                WindowInsetsControllerCompat(it, it.decorView).apply {
+                    hide(WindowInsetsCompat.Type.systemBars())
+                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            }
+            onDispose {
+                window?.let {
+                    WindowCompat.setDecorFitsSystemWindows(it, true)
+                    WindowInsetsControllerCompat(it, it.decorView).apply {
+                        show(WindowInsetsCompat.Type.systemBars())
+                    }
+                }
+            }
+        }
+
+        LivePlayerScreen(
+            navController = navController,
+            viewModel = viewModel,
+        )
     }
 }

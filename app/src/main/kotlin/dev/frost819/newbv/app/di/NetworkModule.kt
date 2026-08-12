@@ -14,6 +14,7 @@ import dev.frost819.newbv.biliapi.repositories.CoinRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
 import dev.frost819.newbv.biliapi.repositories.HistoryRepository
 import dev.frost819.newbv.biliapi.repositories.LikeRepository
+import dev.frost819.newbv.biliapi.repositories.LiveRepository
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
 import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
@@ -302,6 +303,15 @@ object NetworkModule {
         authRepository: AuthRepository,
         channelRepository: ChannelRepository,
     ): SearchRepository = SearchRepository(authRepository, channelRepository)
+
+    /**
+     * 提供 [LiveRepository] 单例。
+     *
+     * 封装直播首页推荐、分区列表、直播间信息、流地址获取等接口（Web HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideLiveRepository(): LiveRepository = LiveRepository()
 
     /**
      * 提供 [SearchHistoryRepository] 单例。

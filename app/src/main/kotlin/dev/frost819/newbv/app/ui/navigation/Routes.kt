@@ -69,6 +69,14 @@ data class LivePlayerRoute(
     val cover: String = ""
 )
 
+/** 直播分区列表页面。 */
+@Serializable
+data class LiveAreaRoute(
+    val parentAreaId: Int,
+    val areaId: Int = 0,
+    val title: String,
+)
+
 // ── 用户 ──────────────────────────────────────────────────────────────
 
 /** 用户空间页。 */

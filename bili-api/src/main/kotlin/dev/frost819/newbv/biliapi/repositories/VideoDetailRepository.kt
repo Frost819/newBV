@@ -36,10 +36,11 @@ class VideoDetailRepository(
                 withContext(Dispatchers.IO) {
                     val videoDetailWithoutUserActions =
                         async {
-                            val response = BiliHttpApi.getVideoDetail(
-                                av = aid,
-                                bv = bvid.ifEmpty { null },
-                            )
+                            val response =
+                                BiliHttpApi.getVideoDetail(
+                                    av = aid,
+                                    bv = bvid.ifEmpty { null },
+                                )
                             val httpVideoDetail = response.getResponseData()
                             VideoDetail.fromVideoDetail(httpVideoDetail)
                         }
