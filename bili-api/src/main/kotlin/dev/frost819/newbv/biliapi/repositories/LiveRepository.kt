@@ -126,22 +126,25 @@ class LiveRepository {
     /**
      * 从 v2 流地址响应中解析出最佳流 URL。
      *
-     * 策略：优先 HLS（fmp4 > ts），优先 AVC，fallback 到 http_stream/flv。
+     * 策略：优先 http_stream（FLV），fallback 到 http_hls。
+     * FLV 是渐进式流，不存在分片窗口滑动问题，不会触发 BehindLiveWindowException，
+     * 且启动延迟更低、稳定性更好。HLS 作为兜底。
+     * 两种协议内均优先 AVC 编码。
      */
     internal fun resolveStreamUrl(data: RoomPlayInfoV2Data): String? {
         val streams = data.playUrlInfo.playUrl.stream
 
-        // 优先 HLS
-        val hlsStream = streams.find { it.protocolName == "http_hls" }
-        if (hlsStream != null) {
-            val url = extractUrlFromStream(hlsStream, preferredFormat = "fmp4", fallbackFormat = "ts")
+        // 优先 http_stream (FLV) — 延迟低、稳定性好、无 BehindLiveWindow 问题
+        val httpStream = streams.find { it.protocolName == "http_stream" }
+        if (httpStream != null) {
+            val url = extractUrlFromStream(httpStream, preferredFormat = "flv", fallbackFormat = "fmp4")
             if (url != null) return url
         }
 
-        // fallback http_stream
-        val httpStream = streams.find { it.protocolName == "http_stream" }
-        if (httpStream != null) {
-            val url = extractUrlFromStream(httpStream, preferredFormat = "flv", fallbackFormat = null)
+        // fallback http_hls (fmp4 > ts)
+        val hlsStream = streams.find { it.protocolName == "http_hls" }
+        if (hlsStream != null) {
+            val url = extractUrlFromStream(hlsStream, preferredFormat = "fmp4", fallbackFormat = "ts")
             if (url != null) return url
         }
 

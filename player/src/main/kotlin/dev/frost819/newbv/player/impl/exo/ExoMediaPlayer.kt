@@ -50,12 +50,24 @@ class ExoMediaPlayer(
     private val options: VideoPlayerOptions
 ) : AbstractVideoPlayer(), Player.Listener {
 
+    companion object {
+        private const val BEHIND_LIVE_WINDOW_RECOVER_WINDOW_MS = 15_000L
+        private const val BEHIND_LIVE_WINDOW_RECOVER_MIN_INTERVAL_MS = 1_200L
+        private const val BEHIND_LIVE_WINDOW_MAX_RECOVERS = 2
+    }
+
     /** ExoPlayer 实例，在 [initPlayer] 中创建 */
     var mPlayer: ExoPlayer? = null
         private set
 
     /** 当前 MediaSource，在 [playUrl] 中创建 */
     protected var mMediaSource: MediaSource? = null
+
+    // --- BEHIND_LIVE_WINDOW 恢复状态（参考 blbl tryRecoverBehindLiveWindow） ---
+
+    private var behindLiveWindowWindowStartAtMs = 0L
+    private var behindLiveWindowRecoverCount = 0
+    private var behindLiveWindowLastRecoverAtMs = 0L
 
     private val httpDataSourceFactory =
         OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
@@ -253,11 +265,67 @@ class ExoMediaPlayer(
 
     override fun onPlayerError(error: PlaybackException) {
         if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-            mPlayer?.seekToDefaultPosition()
-            mPlayer?.prepare()
+            tryRecoverBehindLiveWindow(error)
             return
         }
         mPlayerEventListener?.onError(error)
+    }
+
+    /**
+     * BEHIND_LIVE_WINDOW 两级恢复 + 频率限制（参考 blbl `tryRecoverBehindLiveWindow`）。
+     *
+     * - 第 1 次：`seekToDefaultPosition()` + `prepare()`（轻量恢复）
+     * - 第 2 次：`stop()` + 重新 `setMediaSource()` + `prepare()`（重建 MediaSource）
+     * - 超过 2 次（15 秒窗口内）：上报 error，不再自行恢复
+     *
+     * 频率限制：15 秒滑动窗口内最多 2 次，最小间隔 1.2 秒。
+     */
+    private fun tryRecoverBehindLiveWindow(error: PlaybackException) {
+        val player = mPlayer ?: run {
+            mPlayerEventListener?.onError(error)
+            return
+        }
+        val nowMs = android.os.SystemClock.elapsedRealtime()
+
+        // 重置窗口（超过 15 秒或首次）
+        if (behindLiveWindowWindowStartAtMs <= 0L ||
+            nowMs - behindLiveWindowWindowStartAtMs > BEHIND_LIVE_WINDOW_RECOVER_WINDOW_MS
+        ) {
+            behindLiveWindowWindowStartAtMs = nowMs
+            behindLiveWindowRecoverCount = 0
+        }
+
+        // 最小间隔检查（防紧密循环）
+        if (nowMs - behindLiveWindowLastRecoverAtMs < BEHIND_LIVE_WINDOW_RECOVER_MIN_INTERVAL_MS) {
+            return
+        }
+
+        // 超过最大恢复次数，上报 error
+        if (behindLiveWindowRecoverCount >= BEHIND_LIVE_WINDOW_MAX_RECOVERS) {
+            mPlayerEventListener?.onError(error)
+            return
+        }
+
+        behindLiveWindowRecoverCount++
+        behindLiveWindowLastRecoverAtMs = nowMs
+
+        if (behindLiveWindowRecoverCount == 1) {
+            // 第 1 次：轻量恢复 — seekToDefaultPosition + prepare
+            player.seekToDefaultPosition()
+            player.prepare()
+            player.playWhenReady = true
+        } else {
+            // 第 2 次：重建 MediaSource — stop + setMediaSource + prepare
+            mMediaSource?.let { source ->
+                player.stop()
+                player.setMediaSource(source)
+                player.prepare()
+                player.playWhenReady = true
+            } ?: run {
+                // 无 MediaSource 可重建，直接上报
+                mPlayerEventListener?.onError(error)
+            }
+        }
     }
 }
 
