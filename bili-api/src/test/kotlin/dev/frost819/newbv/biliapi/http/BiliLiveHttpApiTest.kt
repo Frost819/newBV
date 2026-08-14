@@ -11,6 +11,8 @@ import java.util.Properties
 @org.junit.jupiter.api.Tag("integration")
 class BiliLiveHttpApiTest {
     companion object {
+        private const val ROOM_ID = 1718159119
+
         private val localProperties =
             Properties().apply {
                 val path = Paths.get("../local.properties").toAbsolutePath().toString()
@@ -39,7 +41,7 @@ class BiliLiveHttpApiTest {
     fun `get history live room danmaku`() {
         Assertions.assertDoesNotThrow {
             runBlocking {
-                BiliLiveHttpApi.getLiveDanmuHistory(roomId = 22739471)
+                BiliLiveHttpApi.getLiveDanmuHistory(roomId = ROOM_ID)
             }
         }
     }
@@ -47,11 +49,11 @@ class BiliLiveHttpApiTest {
     @Test
     fun `get live event websocket connect url and token`() {
         runBlocking {
-            val response = BiliLiveHttpApi.getLiveDanmuInfo(roomId = 22739471)
+            val response = BiliLiveHttpApi.getLiveDanmuInfo(roomId = ROOM_ID)
             Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
-            Assertions.assertNotNull(response.data, "data should not be null")
-            Assertions.assertTrue(response.data!!.token.isNotBlank(), "token should not be blank")
-            Assertions.assertTrue(response.data!!.hostList.isNotEmpty(), "host_list should not be empty")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertTrue(data.token.isNotBlank(), "token should not be blank")
+            Assertions.assertTrue(data.hostList.isNotEmpty(), "host_list should not be empty")
         }
     }
 
@@ -59,8 +61,42 @@ class BiliLiveHttpApiTest {
     fun `get live room info`() {
         Assertions.assertDoesNotThrow {
             runBlocking {
-                BiliLiveHttpApi.getLiveRoomPlayInfo(roomId = 22739471)
+                val response = BiliLiveHttpApi.getLiveRoomPlayInfo(roomId = ROOM_ID)
+                Assertions.assertEquals(0, response.code)
+                Assertions.assertEquals(ROOM_ID, response.data?.roomId)
             }
+        }
+    }
+
+    @Test
+    fun `room init resolves the configured room`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getRoomInit(ROOM_ID)
+
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            Assertions.assertEquals(ROOM_ID, response.data?.roomId)
+        }
+    }
+
+    @Test
+    fun `room play info returns a valid live state`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getRoomPlayInfoV2(ROOM_ID)
+
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data)
+            Assertions.assertEquals(ROOM_ID, data.roomId)
+            Assertions.assertTrue(data.liveStatus in 0..2, "unexpected live_status=${data.liveStatus}")
+        }
+    }
+
+    @Test
+    fun `room stream endpoint returns response`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getLiveStreamUrl(cid = ROOM_ID)
+
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            Assertions.assertNotNull(response.data)
         }
     }
 
@@ -76,9 +112,9 @@ class BiliLiveHttpApiTest {
                     sortType = "online",
                 )
             Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
-            Assertions.assertNotNull(response.data, "data should not be null")
-            Assertions.assertTrue(response.data!!.isNotEmpty(), "list should not be empty")
-            Assertions.assertEquals(30, response.data!!.size, "should return exactly 30 items")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertTrue(data.isNotEmpty(), "list should not be empty")
+            Assertions.assertEquals(30, data.size, "should return exactly 30 items")
         }
     }
 
