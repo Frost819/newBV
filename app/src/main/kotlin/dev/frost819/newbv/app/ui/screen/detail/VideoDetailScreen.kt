@@ -156,7 +156,7 @@ private fun VideoDetailScreen(
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
                 is VideoDetailUiEffect.NavigateToSeason -> {
-                    // TODO: Navigate to PGC season detail page
+                    // TODO(实现 PGC 番剧详情页跳转)
                 }
             }
         }

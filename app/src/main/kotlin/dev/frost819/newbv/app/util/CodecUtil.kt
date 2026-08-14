@@ -119,6 +119,17 @@ enum class CodecMode {
     Software;
 
     companion object {
+        private val softwareCodecPrefixes = listOf(
+            "omx.google.",
+            "c2.android.",
+            "c2.google.",
+            "omx.sprd.soft.",
+            "omx.avcodec.",
+            "omx.pv",
+        )
+
+        private val softwareCodecSuffixes = listOf("sw", "sw.dec", "sw_vd")
+
         fun fromMediaCodecInfo(info: MediaCodecInfo): CodecMode {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 return if (info.isSoftwareOnly) Software else Hardware
@@ -130,25 +141,18 @@ enum class CodecMode {
             if (name.startsWith("omx.intel.hw_vd", true)) return Hardware
             if (name.startsWith("omx.qcom", true) && name.endsWith("hw")) return Hardware
             if (name.startsWith("c2.vda.arc", true) || name.startsWith("arc.")) return Hardware
-            return if (
-                name.startsWith("omx.google.", true) ||
+            return if (isSoftwareCodec(name)) Software else Hardware
+        }
+
+        private fun isSoftwareCodec(name: String): Boolean {
+            val matchesPrefix = softwareCodecPrefixes.any { name.startsWith(it, true) }
+            val matchesSuffix = softwareCodecSuffixes.any { name.endsWith(it, true) }
+            val matchesSpecific =
                 name.contains("ffmpeg", true) ||
-                (name.startsWith("omx.sec.", true) && name.contains(".sw.", true)) ||
-                name.equals("omx.qcom.video.decoder.hevcswvdec", true) ||
-                name.startsWith("c2.android.", true) ||
-                name.startsWith("c2.google.", true) ||
-                name.startsWith("omx.sprd.soft.", true) ||
-                name.startsWith("omx.avcodec.", true) ||
-                name.startsWith("omx.pv", true) ||
-                name.endsWith("sw", true) ||
-                name.endsWith("sw.dec", true) ||
-                name.endsWith("sw_vd", true) ||
-                (!name.startsWith("omx.", true) && !name.startsWith("c2.", true))
-            ) {
-                Software
-            } else {
-                Hardware
-            }
+                    (name.startsWith("omx.sec.", true) && name.contains(".sw.", true)) ||
+                    name.equals("omx.qcom.video.decoder.hevcswvdec", true)
+            val isUnknownVendor = !name.startsWith("omx.", true) && !name.startsWith("c2.", true)
+            return matchesPrefix || matchesSuffix || matchesSpecific || isUnknownVendor
         }
     }
 }

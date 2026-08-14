@@ -603,10 +603,10 @@ class PlayDataTest {
                 quality = 80, baseUrl = "http://other/v.m4s", bandwidth = 200, codecId = 7,
                 width = 1920, height = 1080, frameRate = "30", backUrl = emptyList(), codecs = "avc1",
             )
-        val this_ = playData(dashVideos = listOf(shared))
+        val left = playData(dashVideos = listOf(shared))
         val other = playData(dashVideos = listOf(dup))
 
-        val result = this_ + other
+        val result = left + other
 
         // 去重后只剩一个，且是 this 的（baseUrl 指向 this）
         assertThat(result.dashVideos).hasSize(1)
@@ -625,10 +625,10 @@ class PlayDataTest {
                 quality = 80, baseUrl = "u2", bandwidth = 2, codecId = 12,
                 width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "hev1",
             )
-        val this_ = playData(dashVideos = listOf(v1))
+        val left = playData(dashVideos = listOf(v1))
         val other = playData(dashVideos = listOf(v2))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dashVideos).hasSize(2)
         assertThat(result.dashVideos.map { it.codecId }).containsExactly(7, 12)
@@ -646,10 +646,10 @@ class PlayDataTest {
                 quality = 120, baseUrl = "u2", bandwidth = 2, codecId = 7,
                 width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
             )
-        val this_ = playData(dashVideos = listOf(v1))
+        val left = playData(dashVideos = listOf(v1))
         val other = playData(dashVideos = listOf(v2))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dashVideos).hasSize(2)
     }
@@ -672,10 +672,10 @@ class PlayDataTest {
                 width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
             )
         // this 提供 low+high, other 提供 mid
-        val this_ = playData(dashVideos = listOf(low, high))
+        val left = playData(dashVideos = listOf(low, high))
         val other = playData(dashVideos = listOf(mid))
 
-        val result = this_ + other
+        val result = left + other
 
         // 注意 low 与 high codecId 相同但 quality 不同，不会被去重
         assertThat(result.dashVideos.map { it.quality }).containsExactly(120, 80, 16).inOrder()
@@ -699,10 +699,10 @@ class PlayDataTest {
                 quality = 80, baseUrl = "third", bandwidth = 3, codecId = 13,
                 width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "av01",
             )
-        val this_ = playData(dashVideos = listOf(v1, v2))
+        val left = playData(dashVideos = listOf(v1, v2))
         val other = playData(dashVideos = listOf(v3))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dashVideos.map { it.baseUrl })
             .containsExactly("first", "second", "third").inOrder()
@@ -716,10 +716,10 @@ class PlayDataTest {
     fun `plus merges dashAudios and deduplicates by codecId`() {
         val a1 = DashAudio(baseUrl = "http://this/a.m4s", bandwidth = 100, codecId = 30216, backUrl = emptyList())
         val a2 = DashAudio(baseUrl = "http://other/a.m4s", bandwidth = 200, codecId = 30216, backUrl = emptyList())
-        val this_ = playData(dashAudios = listOf(a1))
+        val left = playData(dashAudios = listOf(a1))
         val other = playData(dashAudios = listOf(a2))
 
-        val result = this_ + other
+        val result = left + other
 
         // 去重后保留 this 的（first wins）
         assertThat(result.dashAudios).hasSize(1)
@@ -730,10 +730,10 @@ class PlayDataTest {
     fun `plus keeps audios with different codecId`() {
         val a1 = DashAudio(baseUrl = "u1", bandwidth = 100, codecId = 30216, backUrl = emptyList())
         val a2 = DashAudio(baseUrl = "u2", bandwidth = 200, codecId = 30232, backUrl = emptyList())
-        val this_ = playData(dashAudios = listOf(a1))
+        val left = playData(dashAudios = listOf(a1))
         val other = playData(dashAudios = listOf(a2))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dashAudios).hasSize(2)
         assertThat(result.dashAudios.map { it.codecId }).containsExactly(30232, 30216).inOrder()
@@ -744,10 +744,10 @@ class PlayDataTest {
         val a1 = DashAudio(baseUrl = "lo", bandwidth = 1, codecId = 30216, backUrl = emptyList())
         val a2 = DashAudio(baseUrl = "hi", bandwidth = 2, codecId = 30280, backUrl = emptyList())
         val a3 = DashAudio(baseUrl = "mid", bandwidth = 3, codecId = 30232, backUrl = emptyList())
-        val this_ = playData(dashAudios = listOf(a1, a2))
+        val left = playData(dashAudios = listOf(a1, a2))
         val other = playData(dashAudios = listOf(a3))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dashAudios.map { it.codecId }).containsExactly(30280, 30232, 30216).inOrder()
     }
@@ -760,10 +760,10 @@ class PlayDataTest {
     fun `plus takes this dolby when both have dolby`() {
         val d1 = DashAudio(baseUrl = "this-dolby", bandwidth = 1, codecId = 30250, backUrl = emptyList())
         val d2 = DashAudio(baseUrl = "other-dolby", bandwidth = 2, codecId = 30251, backUrl = emptyList())
-        val this_ = playData(dolby = d1)
+        val left = playData(dolby = d1)
         val other = playData(dolby = d2)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dolby).isNotNull()
         assertThat(result.dolby!!.baseUrl).isEqualTo("this-dolby")
@@ -772,10 +772,10 @@ class PlayDataTest {
     @Test
     fun `plus takes other dolby when this dolby is null`() {
         val d2 = DashAudio(baseUrl = "other-dolby", bandwidth = 2, codecId = 30251, backUrl = emptyList())
-        val this_ = playData(dolby = null)
+        val left = playData(dolby = null)
         val other = playData(dolby = d2)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dolby).isNotNull()
         assertThat(result.dolby!!.baseUrl).isEqualTo("other-dolby")
@@ -783,10 +783,10 @@ class PlayDataTest {
 
     @Test
     fun `plus returns null dolby when both are null`() {
-        val this_ = playData(dolby = null)
+        val left = playData(dolby = null)
         val other = playData(dolby = null)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.dolby).isNull()
     }
@@ -795,10 +795,10 @@ class PlayDataTest {
     fun `plus takes this flac when both have flac`() {
         val f1 = DashAudio(baseUrl = "this-flac", bandwidth = 1, codecId = 30251, backUrl = emptyList())
         val f2 = DashAudio(baseUrl = "other-flac", bandwidth = 2, codecId = 30252, backUrl = emptyList())
-        val this_ = playData(flac = f1)
+        val left = playData(flac = f1)
         val other = playData(flac = f2)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.flac).isNotNull()
         assertThat(result.flac!!.baseUrl).isEqualTo("this-flac")
@@ -807,10 +807,10 @@ class PlayDataTest {
     @Test
     fun `plus takes other flac when this flac is null`() {
         val f2 = DashAudio(baseUrl = "other-flac", bandwidth = 2, codecId = 30252, backUrl = emptyList())
-        val this_ = playData(flac = null)
+        val left = playData(flac = null)
         val other = playData(flac = f2)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.flac).isNotNull()
         assertThat(result.flac!!.baseUrl).isEqualTo("other-flac")
@@ -818,10 +818,10 @@ class PlayDataTest {
 
     @Test
     fun `plus returns null flac when both are null`() {
-        val this_ = playData(flac = null)
+        val left = playData(flac = null)
         val other = playData(flac = null)
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.flac).isNull()
     }
@@ -832,10 +832,10 @@ class PlayDataTest {
 
     @Test
     fun `plus merges codec maps with distinct values for shared keys`() {
-        val this_ = playData(codec = mapOf(80 to listOf("avc1"), 120 to listOf("hev1")))
+        val left = playData(codec = mapOf(80 to listOf("avc1"), 120 to listOf("hev1")))
         val other = playData(codec = mapOf(80 to listOf("hev1", "av01")))
 
-        val result = this_ + other
+        val result = left + other
 
         // key 80: ["avc1"] + ["hev1", "av01"] 去重 → ["avc1", "hev1", "av01"]
         assertThat(result.codec[80]).containsExactly("avc1", "hev1", "av01")
@@ -845,10 +845,10 @@ class PlayDataTest {
 
     @Test
     fun `plus deduplicates overlapping codec values`() {
-        val this_ = playData(codec = mapOf(80 to listOf("avc1", "hev1")))
+        val left = playData(codec = mapOf(80 to listOf("avc1", "hev1")))
         val other = playData(codec = mapOf(80 to listOf("hev1", "av01")))
 
-        val result = this_ + other
+        val result = left + other
 
         // ["avc1", "hev1", "hev1", "av01"] 去重 → ["avc1", "hev1", "av01"]
         assertThat(result.codec[80]).containsExactly("avc1", "hev1", "av01")
@@ -856,10 +856,10 @@ class PlayDataTest {
 
     @Test
     fun `plus filters out none string from merged codec values`() {
-        val this_ = playData(codec = mapOf(80 to listOf("none", "avc1")))
+        val left = playData(codec = mapOf(80 to listOf("none", "avc1")))
         val other = playData(codec = mapOf(80 to listOf("none", "hev1")))
 
-        val result = this_ + other
+        val result = left + other
 
         // 合并后 ["none", "avc1", "none", "hev1"] → 去重 ["none", "avc1", "hev1"] → 过滤 none → ["avc1", "hev1"]
         assertThat(result.codec[80]).containsExactly("avc1", "hev1")
@@ -869,10 +869,10 @@ class PlayDataTest {
     @Test
     fun `plus drops codec keys that exist only in other`() {
         // plus 仅遍历 this.codec 的 key，other 独有的 key 会被丢弃（当前实现行为）
-        val this_ = playData(codec = mapOf(80 to listOf("avc1")))
+        val left = playData(codec = mapOf(80 to listOf("avc1")))
         val other = playData(codec = mapOf(120 to listOf("hev1")))
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.codec).containsKey(80)
         assertThat(result.codec).doesNotContainKey(120)
@@ -880,10 +880,10 @@ class PlayDataTest {
 
     @Test
     fun `plus preserves codec key when other has no entry for it`() {
-        val this_ = playData(codec = mapOf(80 to listOf("avc1")))
+        val left = playData(codec = mapOf(80 to listOf("avc1")))
         val other = playData(codec = emptyMap())
 
-        val result = this_ + other
+        val result = left + other
 
         assertThat(result.codec[80]).containsExactly("avc1")
     }
@@ -922,7 +922,7 @@ class PlayDataTest {
 
     @Test
     fun `plus end-to-end merge of two complete PlayData`() {
-        val this_ =
+        val left =
             playData(
                 dashVideos =
                     listOf(
@@ -972,7 +972,7 @@ class PlayDataTest {
                 needPay = true,
             )
 
-        val result = this_ + other
+        val result = left + other
 
         // 视频：4 条合并 → t-v80(7,80) + o-v80(13,80) + t-v120(12,120) + o-v120-dup(12,120被去重)
         // 去重后 3 条，按 quality 降序：120, 80, 80

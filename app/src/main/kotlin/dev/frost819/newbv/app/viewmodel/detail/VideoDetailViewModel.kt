@@ -357,7 +357,7 @@ class VideoDetailViewModel @Inject constructor(
      * 切换收藏状态（快速收藏/取消收藏到默认收藏夹）。
      *
      * 已收藏时取消所有收藏夹；未收藏时添加到默认收藏夹。
-     * TODO: 后续实现收藏夹选择弹窗。
+     * TODO(后续实现收藏夹选择弹窗)。
      */
     fun toggleFavorite() {
         val isFav = _uiState.value.isFavorite

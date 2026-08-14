@@ -15,10 +15,6 @@ class ToViewRepository(
                 HistoryGrpcKt.HistoryCoroutineStub(channelRepository.defaultChannel!!)
             }.getOrNull()
 
-    private fun requireSessData(): String =
-        authRepository.sessionData?.takeIf { it.isNotBlank() }
-            ?: throw IllegalStateException("SESSDATA is empty")
-
     private fun requireCsrf(): String =
         authRepository.biliJct?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("bili_jct is empty")

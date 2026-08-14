@@ -133,13 +133,12 @@ class UserEntityTest {
     @Test
     fun `component functions return correct values`() {
         val entity = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
-        val (id, uid, username, avatar, auth, lock) = entity
-        assertThat(id).isEqualTo(1)
-        assertThat(uid).isEqualTo(100L)
-        assertThat(username).isEqualTo("u")
-        assertThat(avatar).isEqualTo("a")
-        assertThat(auth).isEqualTo("x")
-        assertThat(lock).isEqualTo("l")
+        assertThat(entity.component1()).isEqualTo(1)
+        assertThat(entity.component2()).isEqualTo(100L)
+        assertThat(entity.component3()).isEqualTo("u")
+        assertThat(entity.component4()).isEqualTo("a")
+        assertThat(entity.component5()).isEqualTo("x")
+        assertThat(entity.component6()).isEqualTo("l")
     }
 
     @Test

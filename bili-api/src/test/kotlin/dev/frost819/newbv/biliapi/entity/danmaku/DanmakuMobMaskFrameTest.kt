@@ -54,8 +54,8 @@ class DanmakuMobMaskFrameTest {
     @Test
     fun `equals returns false for non DanmakuMobMaskFrame type`() {
         val frame = DanmakuMobMaskFrame(range = 0L until 1000L, width = 10, height = 5, image = byteArrayOf(1, 2, 3))
-        assertThat(frame.equals("string")).isFalse()
-        assertThat(frame.equals(null)).isFalse()
+        assertThat(frame).isNotEqualTo("string")
+        assertThat(frame).isNotEqualTo(null)
     }
 
     @Test
