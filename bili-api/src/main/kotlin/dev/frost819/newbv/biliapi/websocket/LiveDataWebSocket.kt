@@ -3,6 +3,7 @@ package dev.frost819.newbv.biliapi.websocket
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
+import dev.frost819.newbv.biliapi.http.entity.live.HostListItem
 import dev.frost819.newbv.biliapi.http.entity.live.InteractType
 import dev.frost819.newbv.biliapi.http.entity.live.InteractWordEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
@@ -10,7 +11,9 @@ import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
 import dev.frost819.newbv.biliapi.http.util.brotliDecompress
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +45,15 @@ import java.util.concurrent.TimeUnit
  *
  * 使用 OkHttp WebSocket 直接连接 B 站直播弹幕服务器，
  * 接收实时弹幕事件。包含自动重连机制。
+ *
+ * **设计要点**（参考 blbl 项目 `LiveMessageClient`）：
+ * - token 只在首次连接时通过 `getLiveDanmuInfo` 获取一次，后续重连复用缓存 token，
+ *   避免频繁调用 WBI 签名接口触发风控。
+ * - 重连时轮换 host，避免一直连接同一个已断开的服务器。
+ * - 指数退避：1s → 2s → 4s → 8s → 10s 封顶。
+ * - 6 秒 auth 超时检测，超时触发重连。
+ * - 如果 auth 返回非 0 code（token 可能过期），下次重连时重新获取 token。
+ *
  * 调用方通过取消收集 [Flow] 来断开连接。
  */
 object LiveDataWebSocket {
@@ -49,6 +61,8 @@ object LiveDataWebSocket {
     private const val OP_MESSAGE = 5
     private const val OP_AUTH = 7
     private const val OP_AUTH_REPLY = 8
+
+    private val logger = KotlinLogging.logger { }
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -58,9 +72,9 @@ object LiveDataWebSocket {
             .build()
     }
 
-    private val heartbeatScheduler by lazy {
+    private val scheduler by lazy {
         Executors.newSingleThreadScheduledExecutor { r ->
-            Thread(r, "ldw-heartbeat").apply { isDaemon = true }
+            Thread(r, "ldw-scheduler").apply { isDaemon = true }
         }
     }
 
@@ -73,16 +87,31 @@ object LiveDataWebSocket {
     /**
      * 连接直播间弹幕 WebSocket，持续接收事件直到 [Flow] 被取消。
      *
-     * 包含自动重连机制：连接断开后自动重新获取 token 并重连。
+     * 包含自动重连机制：连接断开后自动使用缓存的 token 重新连接，
+     * 无需重新调用 `getLiveDanmuInfo` API。
      *
-     * @param roomId 直播间房间号
+     * @param roomId 直播间房间号（真实房间号）
      */
     fun connectLiveEvent(roomId: Int): Flow<LiveEvent> =
         callbackFlow {
-            var reconnectDelay = 3000L
+            var reconnectAttempt = 0
             var currentWs: WebSocket? = null
+            var heartbeatTask: ScheduledFuture<*>? = null
+            var authTimeoutTask: ScheduledFuture<*>? = null
 
-            suspend fun connectOnce() {
+            // 缓存的 token + hosts，只在首次连接或 token 失效时获取
+            var cachedToken: String? = null
+            var cachedHosts: List<HostListItem> = emptyList()
+            var hostIndex = 0
+            var needRefreshToken = false
+
+            // 断连信号，用于通知重连循环当前连接已断开
+            var disconnectSignal = CompletableDeferred<Unit>()
+
+            /**
+             * 通过 HTTP API 获取弹幕 token 和 host 列表。
+             */
+            suspend fun fetchDanmuInfo() {
                 val danmuResponse = BiliLiveHttpApi.getLiveDanmuInfo(roomId)
                 val danmuInfo =
                     danmuResponse.data
@@ -92,8 +121,26 @@ object LiveDataWebSocket {
 
                 val hosts = danmuInfo.hostList.filter { it.wssPort > 0 }
                 if (hosts.isEmpty()) throw IllegalStateException("No valid WebSocket host in host_list")
-                val host = hosts.firstOrNull { it.host == "broadcastlv.chat.bilibili.com" } ?: hosts.first()
 
+                cachedToken = danmuInfo.token
+                cachedHosts = hosts
+                needRefreshToken = false
+                logger.info { "Fetched danmu info: ${hosts.size} hosts, token length=${danmuInfo.token.length}" }
+            }
+
+            /**
+             * 使用缓存的 token 和指定 host 建立 WebSocket 连接。
+             * 连接断开时完成 [signal] 以通知重连循环。
+             */
+            fun connectCurrentHost(signal: CompletableDeferred<Unit>) {
+                val token = cachedToken
+                val hosts = cachedHosts
+                if (token == null || hosts.isEmpty()) {
+                    signal.complete(Unit)
+                    return
+                }
+
+                val host = hosts[hostIndex % hosts.size]
                 val port = host.wssPort
                 val url = "wss://${host.host}:$port/sub"
 
@@ -106,7 +153,7 @@ object LiveDataWebSocket {
                         put("protover", 3)
                         put("platform", "web")
                         put("type", 2)
-                        put("key", danmuInfo.token)
+                        put("key", token)
                     }.toString().toByteArray(Charsets.UTF_8)
 
                 val authPacket = buildPacket(OP_AUTH, authBody)
@@ -120,7 +167,7 @@ object LiveDataWebSocket {
                         .header("Origin", "https://www.bilibili.com")
                         .build()
 
-                var heartbeatTask: ScheduledFuture<*>? = null
+                var authed = false
 
                 val listener =
                     object : WebSocketListener() {
@@ -128,8 +175,19 @@ object LiveDataWebSocket {
                             webSocket: WebSocket,
                             response: Response,
                         ) {
+                            logger.info { "WebSocket opened to ${host.host}:$port" }
                             @Suppress("SpreadOperator")
                             webSocket.send(ByteString.of(*authPacket))
+
+                            // 6 秒 auth 超时检测
+                            authTimeoutTask?.cancel(false)
+                            authTimeoutTask =
+                                scheduler.schedule({
+                                    if (!authed) {
+                                        logger.warn { "Auth timeout (6s), closing connection" }
+                                        webSocket.close(1000, "auth timeout")
+                                    }
+                                }, 6, TimeUnit.SECONDS)
                         }
 
                         override fun onMessage(
@@ -141,17 +199,29 @@ object LiveDataWebSocket {
                                 val events = handlePacketBytes(data)
                                 for (event in events) {
                                     if (event is AuthSuccessSignal) {
+                                        authed = true
+                                        reconnectAttempt = 0
+                                        authTimeoutTask?.cancel(false)
+                                        authTimeoutTask = null
                                         heartbeatTask?.cancel(true)
                                         heartbeatTask =
-                                            heartbeatScheduler.scheduleWithFixedDelay({
+                                            scheduler.scheduleWithFixedDelay({
                                                 @Suppress("SpreadOperator")
                                                 webSocket.send(ByteString.of(*heartbeatPacket))
                                             }, 30, 30, TimeUnit.SECONDS)
+                                        logger.info { "Auth success, heartbeat started" }
+                                    } else if (event is AuthFailedSignal) {
+                                        needRefreshToken = true
+                                        logger.warn {
+                                            "Auth failed (code=${event.code}), will refresh token"
+                                        }
+                                        webSocket.close(1000, "auth failed")
                                     } else {
                                         trySend(event)
                                     }
                                 }
-                            } catch (_: Exception) {
+                            } catch (e: Exception) {
+                                logger.warn(e) { "Failed to parse WebSocket message" }
                             }
                         }
 
@@ -160,6 +230,7 @@ object LiveDataWebSocket {
                             code: Int,
                             reason: String,
                         ) {
+                            logger.info { "WebSocket closing: code=$code, reason=$reason" }
                             webSocket.close(code, reason)
                         }
 
@@ -168,7 +239,10 @@ object LiveDataWebSocket {
                             code: Int,
                             reason: String,
                         ) {
+                            logger.info { "WebSocket closed: code=$code, reason=$reason" }
                             heartbeatTask?.cancel(true)
+                            authTimeoutTask?.cancel(false)
+                            signal.complete(Unit)
                         }
 
                         override fun onFailure(
@@ -176,38 +250,66 @@ object LiveDataWebSocket {
                             t: Throwable,
                             response: Response?,
                         ) {
+                            logger.warn(t) { "WebSocket failure" }
                             heartbeatTask?.cancel(true)
+                            authTimeoutTask?.cancel(false)
+                            signal.complete(Unit)
                         }
                     }
 
                 currentWs = wsClient.newWebSocket(request, listener)
-
-                while (isActive) {
-                    delay(2000)
-                }
-
-                currentWs?.close(1000, "bye")
-                heartbeatTask?.cancel(true)
             }
 
             val reconnectJob =
                 launch {
+                    // 首次获取 token
+                    try {
+                        fetchDanmuInfo()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        logger.error(e) { "Failed to fetch initial danmu info" }
+                        return@launch
+                    }
+
                     while (isActive) {
+                        disconnectSignal = CompletableDeferred()
+
                         try {
-                            connectOnce()
+                            connectCurrentHost(disconnectSignal)
                         } catch (e: CancellationException) {
                             throw e
-                        } catch (_: Exception) {
+                        } catch (e: Exception) {
+                            logger.warn(e) { "Failed to connect" }
                         }
+
+                        // 等待连接断开
+                        disconnectSignal.await()
+
                         if (!isActive) break
-                        delay(reconnectDelay)
-                        reconnectDelay = (reconnectDelay * 2).coerceAtMost(15_000L)
+
+                        // 如果 auth 从未成功（token 可能过期），下次重连重新获取 token
+                        if (needRefreshToken) {
+                            logger.info { "Re-fetching danmu info (token may have expired)" }
+                            runCatching { fetchDanmuInfo() }
+                                .onFailure { logger.warn(it) { "Failed to re-fetch danmu info" } }
+                        }
+
+                        // 指数退避：1s, 2s, 4s, 8s, 10s, 10s, ...
+                        val delaySec = (1L shl reconnectAttempt.coerceAtMost(4)).coerceAtMost(10)
+                        reconnectAttempt++
+                        hostIndex = (hostIndex + 1) % cachedHosts.size
+
+                        logger.info { "Reconnecting in ${delaySec}s (attempt=$reconnectAttempt, hostIndex=$hostIndex)" }
+                        delay(delaySec * 1000)
                     }
                 }
 
             awaitClose {
                 reconnectJob.cancel()
                 currentWs?.close(1000, "bye")
+                heartbeatTask?.cancel(true)
+                authTimeoutTask?.cancel(false)
             }
         }
 
@@ -276,6 +378,9 @@ object LiveDataWebSocket {
                         }.getOrDefault(-1)
                     if (code == 0) {
                         result.add(AuthSuccessSignal)
+                    } else {
+                        logger.warn { "Auth failed: code=$code, body=$text" }
+                        result.add(AuthFailedSignal(code))
                     }
                 }
 
@@ -358,4 +463,7 @@ object LiveDataWebSocket {
 
     /** 认证成功的内部信号事件，不对外暴露。 */
     private object AuthSuccessSignal : LiveEvent
+
+    /** 认证失败的内部信号事件，不对外暴露。用于通知重连逻辑需要重新获取 token。 */
+    private data class AuthFailedSignal(val code: Int) : LiveEvent
 }

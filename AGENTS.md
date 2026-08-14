@@ -1670,3 +1670,18 @@ wsClient.newWebSocket(request, listener)
 **问题**：B 站弹幕服务器会将多个协议包拼接在同一个 WebSocket 帧中发送，只读第一个包会丢失后续弹幕。
 
 **解决方案**：在 `handlePacketBytes` 中循环读取，按 `packetLength` 偏移，直到帧数据耗尽。压缩包（protover 2/3）解压后递归处理内嵌包。
+
+#### 11.12.6 重连时频繁调用 getDanmuInfo 触发风控
+
+**问题**：弹幕 WebSocket 断连后自动重连，每次重连都重新调用 `getLiveDanmuInfo` API（需 WBI 签名），频繁调用触发 -352 风控，导致 token 获取失败，弹幕永久停止。
+
+**原因**：原实现中 `connectOnce()` 每次都调 `getLiveDanmuInfo`，且重连逻辑存在缺陷——`onFailure` 回调不会中断 `while(isActive) { delay(2000) }` 循环，导致重连实际上从未触发，WebSocket 死了就死了。
+
+**解决方案**（参考 blbl 项目 `LiveMessageClient`）：
+
+1. **token 只获取一次**：首次连接调 `getDanmuInfo` 获取 token + hosts 并缓存，后续重连复用缓存值
+2. **仅在 auth 失败时刷新 token**：auth 返回 `code != 0` 时标记 `needRefreshToken`，下次重连重新调 `getDanmuInfo`
+3. **host 轮换**：每次重连切换到下一个 host，避免一直连同一个已断开的服务器
+4. **指数退避**：1s → 2s → 4s → 8s → 10s 封顶
+5. **6 秒 auth 超时**：发送 auth 包后设 6 秒超时，超时关闭连接触发重连
+6. **正确断连信号**：用 `CompletableDeferred` 替代 `while(delay)` 循环，`onClosed`/`onFailure` 回调完成 signal，重连循环 `await()` 后执行退避重连
