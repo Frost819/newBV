@@ -7,15 +7,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kuaishou.akdanmaku.data.DanmakuItemData
-import com.kuaishou.akdanmaku.render.SimpleRenderer
 import com.kuaishou.akdanmaku.ui.DanmakuPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.ui.component.livecard.formatOnlineCount
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
-import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
+import dev.frost819.newbv.biliapi.repositories.LiveStreamInfo
 import dev.frost819.newbv.biliapi.websocket.LiveDataWebSocket
 import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerListener
@@ -25,19 +24,24 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * 直播播放器状态。
+ */
 enum class LivePlayerState {
     Idle, Loading, Playing, Paused, Buffering, Error, Ended
 }
 
+/**
+ * 直播播放器 UI 状态。
+ */
 data class LivePlayerUiState(
     val title: String = "",
     val uname: String = "",
@@ -50,12 +54,18 @@ data class LivePlayerUiState(
     val playerState: LivePlayerState = LivePlayerState.Idle,
     val isBuffering: Boolean = false,
     val errorMessage: String? = null,
-    val danmakuEnabled: Boolean = true,
     val availableQualities: List<Pair<Int, String>> = emptyList(),
     val currentQuality: Int = 0,
-    val showController: Boolean = true,
 )
 
+/**
+ * 直播播放器 ViewModel。
+ *
+ * 管理直播流加载、播放控制、WebSocket 弹幕连接。
+ * 弹幕播放器实例由 [DanmakuViewModel] 创建并传入，本类仅负责发送直播弹幕数据。
+ *
+ * @see dev.frost819.newbv.app.viewmodel.player.DanmakuViewModel
+ */
 @HiltViewModel
 class LivePlayerViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
@@ -67,8 +77,7 @@ class LivePlayerViewModel @Inject constructor(
     var videoPlayer: AbstractVideoPlayer? by mutableStateOf(null)
         private set
 
-    var danmakuPlayer: DanmakuPlayer? by mutableStateOf(null)
-        private set
+    private var danmakuPlayer: DanmakuPlayer? = null
 
     private val _uiState = MutableStateFlow(LivePlayerUiState())
     val uiState: StateFlow<LivePlayerUiState> = _uiState.asStateFlow()
@@ -76,6 +85,9 @@ class LivePlayerViewModel @Inject constructor(
     private var wsJob: Job? = null
     private var danmakuIdCounter = 0L
 
+    /**
+     * 初始化直播间信息。
+     */
     fun init(roomId: Long, title: String, cover: String) {
         _uiState.update {
             it.copy(
@@ -87,6 +99,12 @@ class LivePlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 初始化播放器。
+     *
+     * 不创建弹幕播放器，弹幕播放器由 [DanmakuViewModel] 管理，
+     * 在 [loadLive] 时传入。
+     */
     fun initVideoPlayer(context: Context) {
         val options = VideoPlayerOptions(
             userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
@@ -96,6 +114,7 @@ class LivePlayerViewModel @Inject constructor(
         videoPlayer?.setPlayerEventListener(object : VideoPlayerListener {
             override fun onError(error: Exception) {
                 logger.error(error) { "Live player error" }
+
                 _uiState.update {
                     it.copy(
                         playerState = LivePlayerState.Error,
@@ -132,11 +151,32 @@ class LivePlayerViewModel @Inject constructor(
         })
         videoPlayer?.initPlayer()
         videoPlayer?.setOptions()
-
-        danmakuPlayer = DanmakuPlayer(SimpleRenderer())
     }
 
-    fun loadLive(roomId: Long) {
+    /**
+     * 加载直播间。
+     *
+     * @param roomId 房间号
+     * @param danmakuPlayer 弹幕播放器实例（由 DanmakuViewModel 提供）
+     */
+    fun loadLive(roomId: Long, danmakuPlayer: DanmakuPlayer? = null) {
+        this.danmakuPlayer = danmakuPlayer
+        loadLiveInternal(roomId)
+    }
+
+    /**
+     * 刷新直播间。
+     *
+     * 重新拉取房间信息、直播流地址、重连 WebSocket。
+     */
+    fun refresh() {
+        val roomId = _uiState.value.roomId
+        if (roomId == 0L) return
+        wsJob?.cancel()
+        loadLiveInternal(roomId)
+    }
+
+    private fun loadLiveInternal(roomId: Long) {
         viewModelScope.launch {
             _uiState.update { it.copy(playerState = LivePlayerState.Loading) }
 
@@ -147,19 +187,22 @@ class LivePlayerViewModel @Inject constructor(
 
                 val roomInfo = liveRepository.getRoomInfo(realRoomId)
                 _uiState.update {
-                    it.copy(
+                    val newState = it.copy(
                         title = roomInfo.title.ifBlank { _uiState.value.title },
                         uname = roomInfo.uname,
                         cover = roomInfo.cover.ifBlank { roomInfo.keyframe },
                         areaName = roomInfo.areaV2Name,
+                        onlineCount = formatOnlineCount(roomInfo.online),
                     )
+                    newState
                 }
 
                 val qualities = liveRepository.getAvailableQualities(realRoomId)
                 _uiState.update { it.copy(availableQualities = qualities) }
 
-                val streamUrl = liveRepository.getLiveStreamUrl(realRoomId)
-                if (streamUrl.isNullOrBlank()) {
+                val qn = _uiState.value.currentQuality.takeIf { it > 0 } ?: 0
+                val streamInfo = liveRepository.getLiveStreamInfo(realRoomId, qn)
+                if (streamInfo.url.isNullOrBlank()) {
                     _uiState.update {
                         it.copy(
                             playerState = LivePlayerState.Error,
@@ -169,7 +212,11 @@ class LivePlayerViewModel @Inject constructor(
                     return@launch
                 }
 
-                videoPlayer?.playUrl(streamUrl)
+                if (streamInfo.currentQn > 0) {
+                    _uiState.update { it.copy(currentQuality = streamInfo.currentQn) }
+                }
+
+                videoPlayer?.playUrl(streamInfo.url)
                 videoPlayer?.prepare()
                 videoPlayer?.start()
                 danmakuPlayer?.start(null)
@@ -192,7 +239,7 @@ class LivePlayerViewModel @Inject constructor(
         wsJob?.cancel()
         wsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                LiveDataWebSocket.connectLiveEvent(realRoomId) { event ->
+                LiveDataWebSocket.connectLiveEvent(realRoomId).collect { event ->
                     handleLiveEvent(event)
                 }
             } catch (e: CancellationException) {
@@ -215,19 +262,24 @@ class LivePlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 处理直播弹幕事件。
+     *
+     * WebSocket 回调运行在 IO 线程，需切换到主线程操作弹幕播放器。
+     */
     private fun handleLiveEvent(event: LiveEvent) {
-        when (event) {
-            is DanmakuEvent -> {
-                if (_uiState.value.danmakuEnabled) {
+        viewModelScope.launch(Dispatchers.Main.immediate) {
+            when (event) {
+                is DanmakuEvent -> {
                     sendDanmaku(event.content, event.mid)
                 }
-            }
-            is OnlineRankCountEvent -> {
-                _uiState.update {
-                    it.copy(onlineCount = formatOnlineCount(event.count))
+                is OnlineRankCountEvent -> {
+                    _uiState.update {
+                        it.copy(onlineCount = formatOnlineCount(event.count))
+                    }
                 }
+                else -> {}
             }
-            else -> {}
         }
     }
 
@@ -235,7 +287,7 @@ class LivePlayerViewModel @Inject constructor(
         val danmakuId = danmakuIdCounter++
         val data = DanmakuItemData(
             danmakuId = danmakuId,
-            position = System.currentTimeMillis(),
+            position = danmakuPlayer?.getCurrentTimeMs() ?: 0,
             content = content,
             mode = DanmakuItemData.DANMAKU_MODE_ROLLING,
             textSize = 25,
@@ -249,25 +301,21 @@ class LivePlayerViewModel @Inject constructor(
         danmakuPlayer?.send(data)
     }
 
+    /**
+     * 播放/暂停切换。
+     */
     fun togglePlayPause() {
         val player = videoPlayer ?: return
         if (player.isPlaying) {
             player.pause()
-            danmakuPlayer?.pause()
         } else {
             player.start()
-            danmakuPlayer?.start(null)
         }
     }
 
-    fun toggleDanmaku() {
-        _uiState.update { it.copy(danmakuEnabled = !it.danmakuEnabled) }
-    }
-
-    fun toggleController() {
-        _uiState.update { it.copy(showController = !it.showController) }
-    }
-
+    /**
+     * 切换画质。
+     */
     fun changeQuality(qn: Int) {
         _uiState.update { it.copy(currentQuality = qn) }
         val realRoomId = _uiState.value.realRoomId
@@ -275,9 +323,9 @@ class LivePlayerViewModel @Inject constructor(
 
         viewModelScope.launch {
             runCatching {
-                val streamUrl = liveRepository.getLiveStreamUrl(realRoomId, qn)
-                if (!streamUrl.isNullOrBlank()) {
-                    videoPlayer?.playUrl(streamUrl)
+                val streamInfo = liveRepository.getLiveStreamInfo(realRoomId, qn)
+                if (!streamInfo.url.isNullOrBlank()) {
+                    videoPlayer?.playUrl(streamInfo.url)
                     videoPlayer?.prepare()
                     videoPlayer?.start()
                 }
@@ -287,11 +335,15 @@ class LivePlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 释放播放器资源。
+     *
+     * 弹幕播放器由 [DanmakuViewModel] 管理释放，此处不释放。
+     */
     fun detachPlayer() {
         wsJob?.cancel()
         videoPlayer?.release()
         videoPlayer = null
-        danmakuPlayer?.release()
         danmakuPlayer = null
     }
 

@@ -117,6 +117,7 @@ fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
         val route = backStackEntry.toRoute<LivePlayerRoute>()
         val context = LocalContext.current
         val viewModel: dev.frost819.newbv.app.viewmodel.live.LivePlayerViewModel = hiltViewModel()
+        val danmakuViewModel: DanmakuViewModel = hiltViewModel()
 
         LaunchedEffect(route.roomId) {
             viewModel.init(
@@ -124,13 +125,15 @@ fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
                 title = route.title,
                 cover = route.cover,
             )
+            danmakuViewModel.init()
             viewModel.initVideoPlayer(context)
-            viewModel.loadLive(route.roomId)
+            viewModel.loadLive(route.roomId, danmakuViewModel.danmakuPlayer)
         }
 
         DisposableEffect(Unit) {
             onDispose {
                 viewModel.detachPlayer()
+                danmakuViewModel.release()
             }
         }
 
@@ -156,6 +159,7 @@ fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
         LivePlayerScreen(
             navController = navController,
             viewModel = viewModel,
+            danmakuViewModel = danmakuViewModel,
         )
     }
 }

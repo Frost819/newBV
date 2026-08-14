@@ -77,6 +77,10 @@ data class LiveAreaRoute(
     val title: String,
 )
 
+/** 关注直播列表页面。 */
+@Serializable
+object LiveFollowRoute
+
 // ── 用户 ──────────────────────────────────────────────────────────────
 
 /** 用户空间页。 */

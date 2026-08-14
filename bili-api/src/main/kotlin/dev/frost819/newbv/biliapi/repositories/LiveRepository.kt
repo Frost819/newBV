@@ -1,7 +1,8 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
-import dev.frost819.newbv.biliapi.http.entity.live.AreaLiveListResponse
+import dev.frost819.newbv.biliapi.http.entity.live.AreaLiveListResult
+import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveAreaParent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveListResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRecommendResponse
@@ -32,6 +33,13 @@ class LiveRepository {
     suspend fun getLiveRecommend(): LiveRecommendResponse = BiliLiveHttpApi.getLiveRecommend().getResponseData()
 
     /**
+     * 获取用户关注的主播正在直播的房间列表。
+     *
+     * 返回当前正在直播的关注房间，含在线人数、分区、封面等信息。
+     */
+    suspend fun getFollowLive(): FollowLiveResponse = BiliLiveHttpApi.getFollowLive().getResponseData()
+
+    /**
      * 获取两级分区列表。
      */
     suspend fun getLiveAreaList(): List<LiveAreaParent> = BiliLiveHttpApi.getLiveAreaList().getResponseData()
@@ -39,19 +47,27 @@ class LiveRepository {
     /**
      * 获取分区直播分页列表。
      *
+     * 端点: `GET /room/v1/Area/getRoomList`
+     * 鉴权: 无需 WBI 签名，Cookie 可选
+     *
      * @param parentAreaId 父分区 ID
      * @param areaId 子分区 ID（0 = 全部）
      * @param page 页码，从 1 开始
-     * @param sortType 排序方式
+     * @param sortType 排序方式：`online`=热门, `sort_type_2221`=综合, `sort_type_2223`=新番
      */
     suspend fun getAreaLiveList(
         parentAreaId: Int,
         areaId: Int,
         page: Int,
-        sortType: String = "sort_type_2221",
-    ): AreaLiveListResponse =
-        BiliLiveHttpApi.getAreaLiveList(parentAreaId, areaId, page, sortType)
-            .getResponseData()
+        sortType: String = "online",
+    ): AreaLiveListResult {
+        val pageSize = 30
+        val list =
+            BiliLiveHttpApi.getAreaLiveList(parentAreaId, areaId, page, pageSize, sortType)
+                .getResponseData()
+        val hasMore = list.size >= pageSize
+        return AreaLiveListResult(list = list, hasMore = hasMore)
+    }
 
     /**
      * 直播间短号→长号转换。
@@ -73,19 +89,37 @@ class LiveRepository {
     suspend fun getLiveStreamUrl(
         roomId: Int,
         qn: Int = 0,
-    ): String? {
+    ): String? = getLiveStreamInfo(roomId, qn).url
+
+    /**
+     * 获取直播流地址和当前画质。
+     *
+     * @param roomId 真实房间号（长号）
+     * @param qn 画质（0 = 自动）
+     * @return [LiveStreamInfo]，包含流 URL 和当前画质 qn
+     */
+    suspend fun getLiveStreamInfo(
+        roomId: Int,
+        qn: Int = 0,
+    ): LiveStreamInfo {
         return runCatching {
             val playInfo = BiliLiveHttpApi.getRoomPlayInfoV2(roomId, qn).getResponseData()
-            resolveStreamUrl(playInfo)
+            val url = resolveStreamUrl(playInfo)
+            val currentQn =
+                playInfo.playUrlInfo.playUrl.stream
+                    .flatMap { it.format }
+                    .flatMap { it.codec }
+                    .firstOrNull { it.currentQn > 0 }?.currentQn ?: 0
+            LiveStreamInfo(url = url, currentQn = currentQn)
         }.onFailure {
-            logger.warn { "getRoomPlayInfoV2 failed: ${it.message}, trying fallback" }
+            logger.warn { "getLiveStreamInfo failed: ${it.message}, trying fallback" }
         }.getOrElse {
             runCatching {
                 val simpleUrl = BiliLiveHttpApi.getLiveStreamUrl(roomId, qn).getResponseData()
-                simpleUrl.durl.firstOrNull()?.url
+                LiveStreamInfo(url = simpleUrl.durl.firstOrNull()?.url, currentQn = 0)
             }.onFailure { e ->
-                logger.warn { "getLiveStreamUrl fallback failed: ${e.message}" }
-            }.getOrNull()
+                logger.warn { "getLiveStreamInfo fallback failed: ${e.message}" }
+            }.getOrDefault(LiveStreamInfo(null, 0))
         }
     }
 
@@ -151,13 +185,37 @@ class LiveRepository {
 
     /**
      * 获取可用画质列表。
+     *
+     * 从 playUrlInfo 中提取 accept_qn（直播间实际支持的画质），
+     * 与 qnDesc（画质描述）交叉过滤，只返回该直播间实际可用的画质。
      */
     suspend fun getAvailableQualities(roomId: Int): List<Pair<Int, String>> {
         return runCatching {
             val playInfo = BiliLiveHttpApi.getRoomPlayInfoV2(roomId, 0).getResponseData()
-            playInfo.playUrlInfo.playUrl.qnDesc.map { it.qn to it.desc }
+            val playUrl = playInfo.playUrlInfo.playUrl
+            val qnDescMap = playUrl.qnDesc.associate { it.qn to it.desc }
+            val acceptQns =
+                playUrl.stream
+                    .flatMap { it.format }
+                    .flatMap { it.codec }
+                    .flatMap { it.acceptQn }
+                    .distinct()
+            acceptQns.sortedByDescending { it }.mapNotNull { qn ->
+                qnDescMap[qn]?.let { desc -> qn to desc }
+            }
         }.onFailure {
             logger.warn { "getAvailableQualities failed: ${it.message}" }
         }.getOrDefault(emptyList())
     }
 }
+
+/**
+ * 直播流信息。
+ *
+ * @param url 流地址 URL，null 表示无可用流
+ * @param currentQn 当前实际画质 qn
+ */
+data class LiveStreamInfo(
+    val url: String?,
+    val currentQn: Int,
+)

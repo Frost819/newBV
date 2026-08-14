@@ -1,6 +1,8 @@
 package dev.frost819.newbv.biliapi.http.util
 
 import io.ktor.utils.io.core.use
+import org.brotli.dec.BrotliInputStream
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.Inflater
@@ -30,4 +32,27 @@ fun ByteArray.zlibDecompress(): ByteArray {
         inflater.end()
         outputStream.toByteArray()
     }
+}
+
+/**
+ * Brotli 解压。
+ *
+ * B 站 WebSocket 直播弹幕协议 version=3 使用 brotli 压缩，
+ * 解压后与 zlib 解压结果相同：一个或多个带头部的弹幕帧。
+ */
+fun ByteArray.brotliDecompress(): ByteArray {
+    val outputStream = ByteArrayOutputStream()
+    outputStream.use { out ->
+        ByteArrayInputStream(this).use { input ->
+            BrotliInputStream(input).use { brotliInput ->
+                val buffer = ByteArray(1024)
+                while (true) {
+                    val read = brotliInput.read(buffer)
+                    if (read == -1) break
+                    out.write(buffer, 0, read)
+                }
+            }
+        }
+    }
+    return outputStream.toByteArray()
 }

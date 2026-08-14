@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.frost819.newbv.app.ui.screen.detail.videoDetailScreen
 import dev.frost819.newbv.app.ui.screen.home.homeScreen
 import dev.frost819.newbv.app.ui.screen.live.liveAreaScreen
+import dev.frost819.newbv.app.ui.screen.live.liveFollowScreen
 import dev.frost819.newbv.app.ui.screen.login.loginScreen
 import dev.frost819.newbv.app.ui.screen.pgc.pgcFeatureScreen
 import dev.frost819.newbv.app.ui.screen.player.livePlayerScreen
@@ -47,6 +48,7 @@ fun AppNavHost(
 
         // ── 直播 ─────────────────────────────────────────────────────
         liveAreaScreen(navController)
+        liveFollowScreen(navController)
 
         // ── 播放器 ───────────────────────────────────────────────────
         videoPlayerScreen(navController)

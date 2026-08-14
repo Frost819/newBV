@@ -1592,3 +1592,81 @@ BvVideoPlayer(
     videoPlayer = videoPlayer,
 )
 ```
+
+### 11.12 直播播放器与弹幕 WebSocket
+
+#### 11.12.1 HLS 直播流 #EXT-X-START 导致 BEHIND_LIVE_WINDOW
+
+**问题**：直播播放几秒后报 `ERROR_CODE_BEHIND_LIVE_WINDOW` 错误。
+
+**原因**：B 站直播 HLS playlist 包含 `#EXT-X-START` 标签，ExoPlayer 解析后会 seek 到该标签指定的偏移位置（通常是直播流开头），导致播放位置落后于直播窗口。
+
+**解决方案**：
+1. 自定义 `HlsPlaylistParserFactory`，在解析前剥离 `#EXT-X-START` 行
+2. 在 `ExoMediaPlayer.onPlayerError()` 中检测 `ERROR_CODE_BEHIND_LIVE_WINDOW`，自动调用 `seekToDefaultPosition()` + `prepare()` 恢复（内部处理，不暴露到抽象层）
+
+```kotlin
+// ExoMediaPlayer.kt
+override fun onPlayerError(error: PlaybackException) {
+    if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+        mPlayer?.seekToDefaultPosition()
+        mPlayer?.prepare()
+        return
+    }
+    mPlayerEventListener?.onError(error)
+}
+```
+
+#### 11.12.2 getDanmuInfo 需要 WBI 签名
+
+**问题**：`getLiveDanmuInfo` 返回 `code=-352`（风控），弹幕 WebSocket 无法获取 token。
+
+**原因**：B 站对 `/xlive/web-room/v1/index/getDanmuInfo` 接口要求 WBI 签名（`w_rid` + `wts`），但该路径不含 `wbi` 关键字，`encApiSign()` 拦截器不会自动签名。
+
+**解决方案**：
+1. 在 `encApiSign()` 的 `isWbiRequest` 判断中显式添加 `getDanmuInfo` 路径
+2. 请求参数添加 `type=0` 和 `web_location=444.8`
+
+```kotlin
+// ApiSign.kt
+val isWbiRequest =
+    request.url.encodedPath.contains("wbi") ||
+        request.url.encodedPath.contains("/xlive/web-room/v1/index/getDanmuInfo")
+
+// BiliLiveHttpApi.kt
+client.get("/xlive/web-room/v1/index/getDanmuInfo") {
+    parameter("id", roomId)
+    parameter("type", 0)
+    parameter("web_location", "444.8")
+}
+```
+
+#### 11.12.3 Ktor WebSocket 发送 auth 后立即 EOF
+
+**问题**：WebSocket 连接成功，发送 auth 包后服务器立即断开（`java.io.EOFException`）。
+
+**原因**：Ktor 的 WebSocket 插件对 HTTP 升级请求的头注入支持不完善，`BiliUserAgent` 插件的 `onRequest` 回调可能不作用于 WebSocket 握手请求，导致缺少 `Referer` / `Origin` 头，B 站服务器拒绝连接。
+
+**解决方案**：放弃 Ktor WebSocket，改用 OkHttp `WebSocket` API 直接构建请求，显式设置 `Referer: https://live.bilibili.com/` 和 `Origin: https://www.bilibili.com`（注意 Origin 是 `www.bilibili.com` 不是 `live.bilibili.com`）：
+
+```kotlin
+val request = Request.Builder()
+    .url(url)
+    .header("User-Agent", webUserAgent)
+    .header("Referer", "https://live.bilibili.com/")
+    .header("Origin", "https://www.bilibili.com")
+    .build()
+wsClient.newWebSocket(request, listener)
+```
+
+#### 11.12.4 弹幕 WebSocket auth 响应未校验
+
+**问题**：auth 失败时不报错，心跳照样发送，但收不到弹幕。
+
+**解决方案**：解析 `OP_AUTH_REPLY`（type=8）响应体 JSON，校验 `code == 0` 后才启动心跳。认证失败则不发心跳，等待重连。
+
+#### 11.12.5 WebSocket 帧包含多个协议包
+
+**问题**：B 站弹幕服务器会将多个协议包拼接在同一个 WebSocket 帧中发送，只读第一个包会丢失后续弹幕。
+
+**解决方案**：在 `handlePacketBytes` 中循环读取，按 `packetLength` 偏移，直到帧数据耗尽。压缩包（protover 2/3）解压后递归处理内嵌包。

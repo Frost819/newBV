@@ -117,7 +117,8 @@ fun HttpClient.encApiSign() =
                     val isWbiRequest =
                         request.url.encodedPath.contains("wbi") ||
                             request.url.encodedPath.contains("/pgc/player/web/playurl") ||
-                            request.url.encodedPath.contains("/pgc/player/web/v2/playurl")
+                            request.url.encodedPath.contains("/pgc/player/web/v2/playurl") ||
+                            request.url.encodedPath.contains("/xlive/web-room/v1/index/getDanmuInfo")
                     if (isWbiRequest) {
                         println("Enc wbi for get request: ${getUrlWithoutAccessToken(request.url)}")
                         request.encWbi()

@@ -18,7 +18,7 @@ data class RoomInfoData(
     @SerialName("live_status")
     val liveStatus: Int,
     @SerialName("live_time")
-    val liveTime: Long,
+    val liveTime: String = "",
     @SerialName("live_day_count")
     val liveDayCount: Int = 0,
     val title: String,
@@ -27,7 +27,7 @@ data class RoomInfoData(
     @SerialName("background")
     val background: String = "",
     @SerialName("uname")
-    val uname: String,
+    val uname: String = "",
     @SerialName("face")
     val face: String = "",
     @SerialName("cover")
@@ -35,17 +35,17 @@ data class RoomInfoData(
     @SerialName("keyframe")
     val keyframe: String = "",
     @SerialName("online")
-    val online: Int,
+    val online: Int = 0,
     @SerialName("area")
-    val area: Int,
+    val area: Int = 0,
     @SerialName("area_name")
     val areaName: String = "",
     @SerialName("area_v2_id")
-    val areaV2Id: Int,
+    val areaV2Id: Int = 0,
     @SerialName("area_v2_name")
     val areaV2Name: String = "",
     @SerialName("area_v2_parent_id")
-    val areaV2ParentId: Int,
+    val areaV2ParentId: Int = 0,
     @SerialName("area_v2_parent_name")
     val areaV2ParentName: String = "",
     @SerialName("parent_area_id")

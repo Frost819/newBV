@@ -1,34 +1,22 @@
 package dev.frost819.newbv.biliapi.websocket
 
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
-import dev.frost819.newbv.biliapi.http.entity.live.FrameHeader
 import dev.frost819.newbv.biliapi.http.entity.live.InteractType
 import dev.frost819.newbv.biliapi.http.entity.live.InteractWordEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
-import dev.frost819.newbv.biliapi.http.entity.live.readFrameHeader
-import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
+import dev.frost819.newbv.biliapi.http.util.brotliDecompress
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
-import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.wss
-import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.buildPacket
-import io.ktor.utils.io.core.remaining
-import io.ktor.utils.io.core.toByteArray
-import io.ktor.utils.io.core.writePacket
-import io.ktor.websocket.Frame
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -37,334 +25,337 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import okio.ByteString
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
+/**
+ * 直播弹幕 WebSocket 连接管理器。
+ *
+ * 使用 OkHttp WebSocket 直接连接 B 站直播弹幕服务器，
+ * 接收实时弹幕事件。包含自动重连机制。
+ * 调用方通过取消收集 [Flow] 来断开连接。
+ */
 object LiveDataWebSocket {
-    private lateinit var client: HttpClient
-    private val logger = KotlinLogging.logger { }
+    private const val OP_HEARTBEAT = 2
+    private const val OP_MESSAGE = 5
+    private const val OP_AUTH = 7
+    private const val OP_AUTH_REPLY = 8
 
-    private val heartbeat =
-        byteArrayOf(
-            0, 0, 0, 0x1f,
-            0, 0x10, 0, 0x1,
-            0, 0, 0, 0x2,
-            0, 0, 0, 0x1,
-            0x5b, 0x6f, 0x62, 0x6a,
-            0x65, 0x63, 0x74, 0x20,
-            0x4f, 0x62, 0x6a, 0x65,
-            0x63, 0x74, 0x5d,
-        )
+    private val json = Json { ignoreUnknownKeys = true }
 
-    init {
-        createClient()
+    private val wsClient by lazy {
+        OkHttpClient.Builder()
+            .pingInterval(30, TimeUnit.SECONDS)
+            .build()
     }
 
-    private fun createClient() {
-        client =
-            HttpClient(OkHttp) {
-                BiliUserAgent()
-                install(WebSockets)
-            }
+    private val heartbeatScheduler by lazy {
+        Executors.newSingleThreadScheduledExecutor { r ->
+            Thread(r, "ldw-heartbeat").apply { isDaemon = true }
+        }
     }
 
-    suspend fun connectLiveEvent(
-        roomId: Int,
-        onEvent: (event: LiveEvent) -> Unit,
-    ) {
-        val danmuInfo =
-            BiliLiveHttpApi.getLiveDanmuInfo(roomId).data ?: throw CancellationException()
-        val realRoomId =
-            BiliLiveHttpApi.getLiveRoomPlayInfo(roomId).data?.roomId
-                ?: throw CancellationException()
-        val hosts = danmuInfo.hostList.last()
+    private const val webUserAgent =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
 
-        val data =
-            buildJsonObject {
-                put("uid", 0)
-                put("roomid", realRoomId)
-                put("protover", 2)
-                put("platform", "web")
-                put("type", 2)
-                put("key", danmuInfo.token)
-            }.toString().toByteArray()
-        val b =
-            buildPacket {
-                val size = 16 + data.size
-                writeInt(size) // 封包总大小
-                writeShort(0x10) // 头部大小
-                writeShort(1) // 协议版本
-                writeInt(7) // 类型
-                writeInt(1)
-                writePacket(ByteReadPacket(data))
-            }
+    private var seq = 1
 
-        val job =
-            client.launch {
-                client.wss(
-                    host = hosts.host,
-                    port = hosts.wssPort,
-                    path = "/sub",
-                ) {
-                    val byte = b.readByteArray()
-                    outgoing.send(Frame.Binary(true, byte))
-                    launch {
-                        delay(5000)
-                        while (isActive) {
-                            // println("send heart")
-                            outgoing.send(Frame.Binary(true, heartbeat))
-                            delay(30_000)
+    /**
+     * 连接直播间弹幕 WebSocket，持续接收事件直到 [Flow] 被取消。
+     *
+     * 包含自动重连机制：连接断开后自动重新获取 token 并重连。
+     *
+     * @param roomId 直播间房间号
+     */
+    fun connectLiveEvent(roomId: Int): Flow<LiveEvent> =
+        callbackFlow {
+            var reconnectDelay = 3000L
+            var currentWs: WebSocket? = null
+
+            suspend fun connectOnce() {
+                val danmuResponse = BiliLiveHttpApi.getLiveDanmuInfo(roomId)
+                val danmuInfo =
+                    danmuResponse.data
+                        ?: throw IllegalStateException(
+                            "getLiveDanmuInfo returned null (code=${danmuResponse.code}, msg=${danmuResponse.message})",
+                        )
+
+                val hosts = danmuInfo.hostList.filter { it.wssPort > 0 }
+                if (hosts.isEmpty()) throw IllegalStateException("No valid WebSocket host in host_list")
+                val host = hosts.firstOrNull { it.host == "broadcastlv.chat.bilibili.com" } ?: hosts.first()
+
+                val port = host.wssPort
+                val url = "wss://${host.host}:$port/sub"
+
+                val uid = BiliHttpApi.mid ?: 0L
+
+                val authBody =
+                    buildJsonObject {
+                        put("uid", uid)
+                        put("roomid", roomId)
+                        put("protover", 3)
+                        put("platform", "web")
+                        put("type", 2)
+                        put("key", danmuInfo.token)
+                    }.toString().toByteArray(Charsets.UTF_8)
+
+                val authPacket = buildPacket(OP_AUTH, authBody)
+                val heartbeatPacket = buildPacket(OP_HEARTBEAT, "[object Object]".toByteArray(Charsets.UTF_8))
+
+                val request =
+                    Request.Builder()
+                        .url(url)
+                        .header("User-Agent", webUserAgent)
+                        .header("Referer", "https://live.bilibili.com/")
+                        .header("Origin", "https://www.bilibili.com")
+                        .build()
+
+                var heartbeatTask: ScheduledFuture<*>? = null
+
+                val listener =
+                    object : WebSocketListener() {
+                        override fun onOpen(
+                            webSocket: WebSocket,
+                            response: Response,
+                        ) {
+                            @Suppress("SpreadOperator")
+                            webSocket.send(ByteString.of(*authPacket))
                         }
-                    }
-                    while (isActive) {
-                        val frame = incoming.receive()
-                        val eventData = frame.data
-                        launch {
-                            handleLiveEventData(eventData).forEach { event ->
-                                onEvent(event)
+
+                        override fun onMessage(
+                            webSocket: WebSocket,
+                            bytes: ByteString,
+                        ) {
+                            val data = bytes.toByteArray()
+                            try {
+                                val events = handlePacketBytes(data)
+                                for (event in events) {
+                                    if (event is AuthSuccessSignal) {
+                                        heartbeatTask?.cancel(true)
+                                        heartbeatTask =
+                                            heartbeatScheduler.scheduleWithFixedDelay({
+                                                @Suppress("SpreadOperator")
+                                                webSocket.send(ByteString.of(*heartbeatPacket))
+                                            }, 30, 30, TimeUnit.SECONDS)
+                                    } else {
+                                        trySend(event)
+                                    }
+                                }
+                            } catch (_: Exception) {
                             }
                         }
+
+                        override fun onClosing(
+                            webSocket: WebSocket,
+                            code: Int,
+                            reason: String,
+                        ) {
+                            webSocket.close(code, reason)
+                        }
+
+                        override fun onClosed(
+                            webSocket: WebSocket,
+                            code: Int,
+                            reason: String,
+                        ) {
+                            heartbeatTask?.cancel(true)
+                        }
+
+                        override fun onFailure(
+                            webSocket: WebSocket,
+                            t: Throwable,
+                            response: Response?,
+                        ) {
+                            heartbeatTask?.cancel(true)
+                        }
+                    }
+
+                currentWs = wsClient.newWebSocket(request, listener)
+
+                while (isActive) {
+                    delay(2000)
+                }
+
+                currentWs?.close(1000, "bye")
+                heartbeatTask?.cancel(true)
+            }
+
+            val reconnectJob =
+                launch {
+                    while (isActive) {
+                        try {
+                            connectOnce()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Exception) {
+                        }
+                        if (!isActive) break
+                        delay(reconnectDelay)
+                        reconnectDelay = (reconnectDelay * 2).coerceAtMost(15_000L)
                     }
                 }
+
+            awaitClose {
+                reconnectJob.cancel()
+                currentWs?.close(1000, "bye")
             }
-        job.invokeOnCompletion {
-            it?.printStackTrace()
         }
+
+    private fun buildPacket(
+        op: Int,
+        body: ByteArray,
+    ): ByteArray {
+        val total = 16 + body.size
+        val buf = ByteBuffer.allocate(total).order(ByteOrder.BIG_ENDIAN)
+        buf.putInt(total)
+        buf.putShort(16)
+        buf.putShort(1)
+        buf.putInt(op)
+        buf.putInt(seq++)
+        buf.put(body)
+        return buf.array()
     }
 
-    private suspend fun handleLiveEventData(data: ByteArray): List<LiveEvent> {
+    /**
+     * 解析 WebSocket 帧中的所有协议包，返回事件列表。
+     *
+     * 对于认证响应（OP_AUTH_REPLY），返回 [AuthSuccessSignal] 信号。
+     * 对于普通消息（OP_MESSAGE），解压后解析 CMD 事件。
+     */
+    private fun handlePacketBytes(bytes: ByteArray): List<LiveEvent> {
         val result = mutableListOf<LiveEvent>()
-        withContext(Dispatchers.IO) {
-            if (data.size <= 16) return@withContext
-            val bytePack = ByteReadPacket(data)
-            val head = bytePack.readFrameHeader()
-            val body = bytePack.readByteArray((head.totalLength - head.headerLength))
-            result.addAll(handleLiveEventBody(head, body))
+        var off = 0
+        while (off + 16 <= bytes.size) {
+            val packetLen = readInt(bytes, off)
+            if (packetLen <= 0 || off + packetLen > bytes.size) break
+            val headerLen = readShort(bytes, off + 4)
+            val ver = readShort(bytes, off + 6)
+            val op = readInt(bytes, off + 8)
+            val bodyOff = off + headerLen
+            val bodyLen = (packetLen - headerLen).coerceAtLeast(0)
+            val body =
+                if (bodyLen > 0 && bodyOff + bodyLen <= bytes.size) {
+                    bytes.copyOfRange(bodyOff, bodyOff + bodyLen)
+                } else {
+                    ByteArray(0)
+                }
+
+            when (op) {
+                OP_MESSAGE -> {
+                    val payload =
+                        when (ver) {
+                            0, 1 -> body
+                            2 -> body.zlibDecompress()
+                            3 -> body.brotliDecompress()
+                            else -> null
+                        }
+                    if (payload != null) {
+                        if (ver == 2 || ver == 3) {
+                            result.addAll(handlePacketBytes(payload))
+                        } else {
+                            handleJsonMessage(payload)?.let { result.add(it) }
+                        }
+                    }
+                }
+
+                OP_AUTH_REPLY -> {
+                    val text = body.toString(Charsets.UTF_8).trim()
+                    val code =
+                        runCatching {
+                            json.parseToJsonElement(text).jsonObject["code"]?.jsonPrimitive?.int ?: -1
+                        }.getOrDefault(-1)
+                    if (code == 0) {
+                        result.add(AuthSuccessSignal)
+                    }
+                }
+
+                OP_HEARTBEAT -> {
+                }
+            }
+
+            off += packetLen
         }
         return result
     }
 
-    private fun handleLiveEventBody(
-        head: FrameHeader,
-        data: ByteArray,
-    ): List<LiveEvent> {
-        val result = mutableListOf<LiveEvent>()
-        val bytePack = ByteReadPacket(data)
-        when (head.type) {
-            // 心跳包回复（人气值）
-            3 -> {
-                // println("接收心跳，房间人气值: ${bytePack.readInt()}")
-            }
+    private fun handleJsonMessage(body: ByteArray): LiveEvent? {
+        val strData = body.toString(Charsets.UTF_8).trim()
+        if (strData.isBlank()) return null
+        val dataJson = runCatching { json.parseToJsonElement(strData).jsonObject }.getOrNull() ?: return null
+        val cmd = dataJson["cmd"]?.jsonPrimitive?.content ?: return null
 
-            // 普通包（命令）
-            5 -> {
-                when (head.version.toInt()) {
-                    // 0 普通包正文不使用压缩
-                    // 1 心跳及认证包正文不使用压缩
-                    0, 1 -> {
-                        val strData = bytePack.readByteArray().decodeToString()
-                        handleLiveCMDEventString(strData)?.let { result += it }
-                    }
-
-                    // 普通包正文使用zlib压缩
-                    2 -> {
-                        val decompress = bytePack.readByteArray().zlibDecompress()
-                        result += handleLiveEventBodyDecompress(decompress)
-                    }
-
-                    // 普通包正文使用brotli压缩,解压为一个带头部的协议0普通包
-                    3 -> {
-                        logger.warn { "todo package version: ${head.version}" }
-                        bytePack.readByteArray()
-                    }
-
-                    else -> {
-                        logger.warn { "Unknown package version: ${head.version}" }
-                        bytePack.readByteArray()
-                    }
+        if (cmd.startsWith("DANMU_MSG")) {
+            return runCatching {
+                val danmakuContent = dataJson["info"]!!.jsonArray[1].jsonPrimitive.content
+                val senderMid = dataJson["info"]!!.jsonArray[2].jsonArray[0].jsonPrimitive.long
+                val senderUsername = dataJson["info"]!!.jsonArray[2].jsonArray[1].jsonPrimitive.content
+                var medalLevel: Int? = null
+                var medalName: String? = null
+                runCatching {
+                    medalLevel = dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(0)?.jsonPrimitive?.int
+                    medalName = dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(1)?.jsonPrimitive?.content
                 }
-            }
-
-            // 认证包回复
-            8 -> {
-                bytePack.readByteArray(10)
-            }
-
-            else -> {
-                logger.warn { "Unknown package type: ${head.type}" }
-                bytePack.readByteArray()
-            }
-        }
-        return if (bytePack.remaining > 16) {
-            result +
-                handleLiveEventBody(
-                    bytePack.readFrameHeader(),
-                    bytePack.readByteArray(),
+                DanmakuEvent(
+                    content = danmakuContent,
+                    mid = senderMid,
+                    username = senderUsername,
+                    medalName = medalName,
+                    medalLevel = medalLevel,
                 )
-        } else {
-            result
+            }.getOrNull()
         }
-    }
 
-    private fun handleLiveEventBodyDecompress(data: ByteArray): List<LiveEvent> {
-        val result = mutableListOf<LiveEvent>()
-        val bytePack = ByteReadPacket(data)
-        val header = bytePack.readFrameHeader()
-        val body = bytePack.readByteArray(header.dataLength)
-        result += handleLiveCMDEvent(header, body)
-        return if (bytePack.remaining > 0) result + handleLiveEventBodyDecompress(bytePack.readByteArray()) else result
-    }
-
-    private fun handleLiveCMDEvent(
-        head: FrameHeader,
-        data: ByteArray,
-    ): List<LiveEvent> {
-        val result = mutableListOf<LiveEvent>()
-        val strData: String
-        when (head.version.toInt()) {
-            0 -> {
-                strData = data.decodeToString()
-            }
-
-            2 -> {
-                val decompress = data.zlibDecompress()
-                val bytePack = ByteReadPacket(decompress)
-                val packageHeader = bytePack.readFrameHeader()
-                val body =
-                    bytePack.readByteArray((packageHeader.totalLength - packageHeader.headerLength))
-                if (bytePack.remaining > 16) {
-                    result +=
-                        handleLiveEventBody(
-                            bytePack.readFrameHeader(),
-                            bytePack.readByteArray(),
-                        )
-                }
-                strData = body.decodeToString()
-            }
-
-            else -> return result
-        }
-        handleLiveCMDEventString(strData)?.let { result += it }
-        return result
-    }
-
-    private fun handleLiveCMDEventString(strData: String): LiveEvent? {
-        val dataJson = Json.parseToJsonElement(strData).jsonObject
-        val cmd = dataJson["cmd"]!!.jsonPrimitive.content
-
-        when (cmd) {
-            "COMBO_SEND" -> {}
-            "DANMU_MSG" -> {
-                runCatching {
-                    val danmakuContent = dataJson["info"]!!.jsonArray[1].jsonPrimitive.content
-                    val senderMid = dataJson["info"]!!.jsonArray[2].jsonArray[0].jsonPrimitive.long
-                    val senderUsername =
-                        dataJson["info"]!!.jsonArray[2].jsonArray[1].jsonPrimitive.content
-                    var medalLevel: Int? = null
-                    var medalName: String? = null
-                    runCatching {
-                        medalLevel =
-                            dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(0)?.jsonPrimitive?.int
-                        medalName =
-                            dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(1)?.jsonPrimitive?.content
-                    }
-
-                    return DanmakuEvent(
-                        content = danmakuContent,
-                        mid = senderMid,
-                        username = senderUsername,
-                        medalName = medalName,
-                        medalLevel = medalLevel,
-                    )
-                }.onFailure {
-                    logger.warn { "Parse danmaku content failed: ${it.message}" }
-                }
-            }
-
-            "ENTRY_EFFECT" -> {}
-            // 有人上舰
-            "GUARD_BUY" -> {}
-            // 千舰通知
-            "GUARD_HONOR_THOUSAND" -> {
-                println(dataJson)
-            }
-
-            "HOT_RANK_CHANGED" -> {}
-            "HOT_RANK_CHANGED_V2" -> {}
-            "HOT_RANK_SETTLEMENT" -> {}
-            "HOT_RANK_SETTLEMENT_V2" -> {}
-            "HOT_ROOM_NOTIFY" -> {}
-            "INTERACT_WORD" -> {
-                runCatching {
+        return runCatching {
+            when (cmd) {
+                "INTERACT_WORD" -> {
                     val data = dataJson["data"]!!.jsonObject
                     val uid = data["uid"]!!.jsonPrimitive.long
                     val uname = data["uname"]?.jsonPrimitive?.content ?: ""
                     val msgType = data["msg_type"]?.jsonPrimitive?.int ?: 1
-                    val interactType = InteractType.fromCode(msgType)
-                    if (interactType != null) {
-                        return InteractWordEvent(
-                            uid = uid,
-                            uname = uname,
-                            interactType = interactType,
-                        )
+                    InteractType.fromCode(msgType)?.let {
+                        InteractWordEvent(uid = uid, uname = uname, interactType = it)
                     }
-                }.onFailure {
-                    logger.warn { "Parse INTERACT_WORD failed: ${it.message}" }
                 }
-            }
-            "LIVE" -> {
-                println(dataJson)
-            }
 
-            "LIVE_INTERACTIVE_GAME" -> {}
-            "LIKE_INFO_V3_CLICK" -> {}
-            "LIKE_INFO_V3_UPDATE" -> {}
-            "NOTICE_MSG" -> {}
-            "ONLINE_RANK_COUNT" -> {
-                runCatching {
-                    val data = dataJson["data"]?.jsonObject ?: return@runCatching
-                    val count = data["count"]?.jsonPrimitive?.int ?: 0
-                    return OnlineRankCountEvent(count = count)
-                }.onFailure {
-                    logger.warn { "Parse ONLINE_RANK_COUNT failed: ${it.message}" }
+                "ONLINE_RANK_COUNT" -> {
+                    val data = dataJson["data"]?.jsonObject
+                    OnlineRankCountEvent(count = data?.get("count")?.jsonPrimitive?.int ?: 0)
                 }
-            }
-            "ONLINE_RANK_V2" -> {}
-            "ONLINE_RANK_TOP3" -> {}
-            "PREPARING" -> {}
-            "ROOM_REAL_TIME_MESSAGE_UPDATE" -> {}
-            "SEND_GIFT" -> {}
-            "STOP_LIVE_ROOM_LIST" -> {}
-            // 醒目留言入口提醒（氪金提醒）
-            "SUPER_CHAT_ENTRANCE" -> {}
-            // 醒目留言
-            "SUPER_CHAT_MESSAGE" -> {}
-            // 醒目留言
-            "SUPER_CHAT_MESSAGE_JPN" -> {}
-            "SYS_MSG" -> {
-                println(dataJson)
-            }
 
-            "USER_TOAST_MSG" -> {}
-            "WATCHED_CHANGE" -> {
-                runCatching {
-                    val data = dataJson["data"]?.jsonObject ?: return@runCatching
-                    val num = data["num"]?.jsonPrimitive?.int ?: 0
-                    val textLarge = data["text_large"]?.jsonPrimitive?.content ?: ""
-                    val textSmall = data["text_small"]?.jsonPrimitive?.content ?: ""
-                    return WatchedChangeEvent(
-                        num = num,
-                        textLarge = textLarge,
-                        textSmall = textSmall,
+                "WATCHED_CHANGE" -> {
+                    val data = dataJson["data"]?.jsonObject
+                    WatchedChangeEvent(
+                        num = data?.get("num")?.jsonPrimitive?.int ?: 0,
+                        textLarge = data?.get("text_large")?.jsonPrimitive?.content ?: "",
+                        textSmall = data?.get("text_small")?.jsonPrimitive?.content ?: "",
                     )
-                }.onFailure {
-                    logger.warn { "Parse WATCHED_CHANGE failed: ${it.message}" }
                 }
+
+                else -> null
             }
-            "WIDGET_BANNER" -> {}
-            else -> {
-                logger.warn { "Unknown live event: $cmd" }
-                logger.warn { dataJson }
-            }
-        }
-        return null
+        }.getOrNull()
     }
+
+    private fun readInt(
+        bytes: ByteArray,
+        offset: Int,
+    ): Int = ByteBuffer.wrap(bytes, offset, 4).order(ByteOrder.BIG_ENDIAN).int
+
+    private fun readShort(
+        bytes: ByteArray,
+        offset: Int,
+    ): Int = ByteBuffer.wrap(bytes, offset, 2).order(ByteOrder.BIG_ENDIAN).short.toInt() and 0xFFFF
+
+    /** 认证成功的内部信号事件，不对外暴露。 */
+    private object AuthSuccessSignal : LiveEvent
 }

@@ -10,21 +10,17 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,9 +31,9 @@ import dev.frost819.newbv.app.ui.component.livecard.LiveRoomCard
 import dev.frost819.newbv.app.ui.component.livecard.LiveRoomCardData
 import dev.frost819.newbv.app.ui.component.livecard.formatOnlineCount
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
-import dev.frost819.newbv.app.ui.navigation.LiveAreaRoute
+import dev.frost819.newbv.app.ui.navigation.LiveFollowRoute
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
-import dev.frost819.newbv.biliapi.http.entity.live.LiveRoomItem
+import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveRoom
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
@@ -45,120 +41,119 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
+/**
+ * 关注直播列表页 ViewModel。
+ *
+ * 加载用户关注的主播中正在直播的全部房间列表。
+ */
 @HiltViewModel
-class LiveAreaListViewModel @Inject constructor(
+class LiveFollowViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     companion object {
         private const val LOAD_TIMEOUT_MS = 10_000L
     }
 
-    private val route = savedStateHandle.toRoute<LiveAreaRoute>()
-
     private val logger = KotlinLogging.logger { }
 
-    private val _uiState = MutableStateFlow(LiveAreaListUiState())
-    val uiState: StateFlow<LiveAreaListUiState> = _uiState.asStateFlow()
-
-    private var currentPage = 1
+    private val _uiState = MutableStateFlow(LiveFollowUiState())
+    val uiState: StateFlow<LiveFollowUiState> = _uiState.asStateFlow()
 
     init {
-        loadFirstPage()
+        loadFollowLive()
     }
 
-    fun loadFirstPage() {
-        currentPage = 1
+    /**
+     * 加载关注主播正在直播的房间列表。
+     */
+    fun loadFollowLive() {
         _uiState.update {
-            it.copy(items = emptyList(), hasMore = true, isLoading = false, isError = false)
+            it.copy(
+                items = emptyList(),
+                isLoading = true,
+                isError = false,
+            )
         }
-        loadMore()
-    }
-
-    fun loadMore() {
-        if (_uiState.value.isLoading || !_uiState.value.hasMore) return
-
-        _uiState.update { it.copy(isLoading = true, isError = false) }
 
         viewModelScope.launch {
             runCatching {
                 withTimeout(LOAD_TIMEOUT_MS) {
-                    val result = liveRepository.getAreaLiveList(
-                        parentAreaId = route.parentAreaId,
-                        areaId = route.areaId,
-                        page = currentPage,
-                    )
-                    val newItems = result.list.map { it.toCardData() }
-                    currentPage to (newItems to result.hasMore)
+                    val response = liveRepository.getFollowLive()
+                    response.rooms.filter { it.liveStatus == 1 }.map { it.toCardData() }
                 }
-            }.onSuccess { (page, pair) ->
-                val (newItems, hasMore) = pair
+            }.onSuccess { items ->
                 _uiState.update {
                     it.copy(
-                        items = it.items + newItems,
-                        hasMore = hasMore,
+                        items = items,
                         isLoading = false,
                         isError = false,
                     )
                 }
-                currentPage = page + 1
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) {
                     throw error
                 }
-                logger.warn(error) { "Failed to load area live list" }
-                _uiState.update { it.copy(isLoading = false, isError = true) }
+                logger.warn(error) { "Failed to load follow live" }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isError = true,
+                    )
+                }
             }
         }
     }
 }
 
-private fun LiveRoomItem.toCardData(): LiveRoomCardData {
-    val coverUrl = cover.ifBlank { keyframe.ifBlank { userCover } }
+private fun FollowLiveRoom.toCardData(): LiveRoomCardData {
+    val coverUrl = coverFromUser.ifBlank { keyframe }
     return LiveRoomCardData(
-        roomId = roomId.toLong(),
+        roomId = roomId,
         title = title,
-        uname = uname,
+        uname = uname.ifBlank { nickname },
         uid = uid,
         cover = coverUrl,
         face = face,
         areaV2Name = areaV2Name,
         areaV2ParentName = areaV2ParentName,
         onlineString = formatOnlineCount(online),
-        watchedString = watchedShow?.textSmall ?: "",
+        watchedString = "",
     )
 }
 
-data class LiveAreaListUiState(
+data class LiveFollowUiState(
     val items: List<LiveRoomCardData> = emptyList(),
     val isLoading: Boolean = false,
     val isError: Boolean = false,
-    val hasMore: Boolean = true,
 )
 
-fun NavGraphBuilder.liveAreaScreen(navController: NavController) {
-    composable<LiveAreaRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<LiveAreaRoute>()
-        val viewModel: LiveAreaListViewModel = hiltViewModel()
-        LiveAreaListScreen(
-            title = route.title,
+/**
+ * 注册关注直播列表页到 NavGraph。
+ */
+fun NavGraphBuilder.liveFollowScreen(navController: NavController) {
+    composable<LiveFollowRoute> {
+        val viewModel: LiveFollowViewModel = hiltViewModel()
+        LiveFollowScreen(
             viewModel = viewModel,
             navController = navController,
         )
     }
 }
 
+/**
+ * 关注直播列表页。
+ *
+ * 全屏 4 列网格展示正在直播的关注房间。
+ */
 @Composable
-private fun LiveAreaListScreen(
-    title: String,
-    viewModel: LiveAreaListViewModel,
+private fun LiveFollowScreen(
+    viewModel: LiveFollowViewModel,
     navController: NavController,
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -167,26 +162,15 @@ private fun LiveAreaListScreen(
 
     focusSaver.RestoreFocus()
 
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
-            .collect { index ->
-                if (index != null && index >= state.items.size - 5 && state.hasMore && !state.isLoading) {
-                    viewModel.loadMore()
-                }
-            }
-    }
-
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             modifier = Modifier.padding(24.dp, 16.dp),
-            text = title,
+            text = "我的关注",
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White,
         )
 
         TvLazyVerticalGrid(
-            modifier = Modifier.weight(1f),
             state = gridState,
             columns = GridCells.Fixed(4),
             contentPadding = PaddingValues(24.dp),
@@ -216,7 +200,7 @@ private fun LiveAreaListScreen(
                 ListFooterTip(
                     isLoading = state.isLoading,
                     isError = state.isError,
-                    hasMore = state.hasMore,
+                    hasMore = false,
                     itemsIsEmpty = state.items.isEmpty(),
                 )
             }
