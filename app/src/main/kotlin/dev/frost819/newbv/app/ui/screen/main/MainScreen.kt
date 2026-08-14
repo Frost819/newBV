@@ -144,10 +144,11 @@ fun MainScreen(
                             viewModel = searchInputViewModel,
                             focusRequester = homeFocusRequester,
                             onSearch = { keyword ->
-                                searchInputViewModel.commitSearch(keyword)
-                                navController.navigate(
-                                    dev.frost819.newbv.app.ui.navigation.SearchResultRoute(keyword = keyword),
-                                )
+                                searchInputViewModel.commitSearch(keyword) {
+                                    navController.navigate(
+                                        dev.frost819.newbv.app.ui.navigation.SearchResultRoute(keyword = keyword),
+                                    )
+                                }
                             },
                         )
                     }

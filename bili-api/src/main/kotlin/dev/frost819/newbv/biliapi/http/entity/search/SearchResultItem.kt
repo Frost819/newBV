@@ -102,6 +102,31 @@ data class SearchBiliUserResult(
 ) : SearchResultItem()
 
 /**
+ * 直播间（live_room）搜索结果。
+ *
+ * 只保留直播卡片和跳转所需字段，接口新增字段由序列化配置忽略。
+ */
+@Serializable
+data class SearchLiveRoomResult(
+    val type: String = "live_room",
+    val uid: Long = 0,
+    val title: String = "",
+    val uname: String = "",
+    val roomid: Long = 0,
+    @SerialName("short_id") val shortId: Long = 0,
+    @SerialName("live_status") val liveStatus: Int = 0,
+    val online: Int = 0,
+    val cover: String = "",
+    @SerialName("user_cover") val userCover: String = "",
+    val uface: String = "",
+    @SerialName("cate_name") val cateName: String = "",
+    @SerialName("live_time") val liveTime: String = "",
+    val tags: String = "",
+    @SerialName("hit_columns") val hitColumns: List<String> = emptyList(),
+    val attentions: Int = 0,
+) : SearchResultItem()
+
+/**
  * 番剧(media_bangumi) 影视(mdeia_ft)
  *
  * @param type 结果类型 media_bangumi：番剧 media_ft：影视

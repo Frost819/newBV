@@ -96,6 +96,19 @@ class SearchResultViewModelTest {
         sign = "签名",
     )
 
+    private fun fakeLiveRoomResult(roomId: Long) = SearchTypeResult.LiveRoom(
+        roomId = roomId,
+        title = "直播间 $roomId",
+        uname = "主播",
+        uid = 100L,
+        cover = "http://example.com/live.jpg",
+        userCover = "http://example.com/user-cover.jpg",
+        face = "http://example.com/avatar.jpg",
+        areaName = "测试分区",
+        online = 1000,
+        liveStatus = 1,
+    )
+
     private fun fakeVideoList(count: Int): List<SearchTypeResult.Video> =
         (1..count).map { fakeVideoResult(it.toLong()) }
 
@@ -113,6 +126,15 @@ class SearchResultViewModelTest {
 
     private fun fakeUserSearchResult(users: List<SearchTypeResult.User>, hasMore: Boolean = true) = SearchTypeResult(
         users = users,
+        page = SearchTypePage(nextPageForWeb = 2),
+        hasMore = hasMore,
+    )
+
+    private fun fakeLiveRoomSearchResult(
+        rooms: List<SearchTypeResult.LiveRoom>,
+        hasMore: Boolean = true,
+    ) = SearchTypeResult(
+        liveRooms = rooms,
         page = SearchTypePage(nextPageForWeb = 2),
         hasMore = hasMore,
     )
@@ -172,6 +194,18 @@ class SearchResultViewModelTest {
             )
         } returns fakeUserSearchResult(listOf(fakeUserResult(301)))
 
+        coEvery {
+            searchRepo.searchType(
+                keyword = any(),
+                type = SearchType.LiveRoom,
+                tid = any(),
+                order = any(),
+                duration = any(),
+                page = any(),
+                preferApiType = any(),
+            )
+        } returns fakeLiveRoomSearchResult(listOf(fakeLiveRoomResult(1718159119L)))
+
         viewModel = SearchResultViewModel(searchRepo)
     }
 
@@ -181,7 +215,7 @@ class SearchResultViewModelTest {
     }
 
     @Test
-    fun `search loads all 4 types in parallel`() = runTest(testDispatcher) {
+    fun `search loads all 5 types in parallel`() = runTest(testDispatcher) {
         viewModel.search("测试")
         advanceUntilIdle()
 
@@ -201,6 +235,12 @@ class SearchResultViewModelTest {
 
         val userResult = state.results[SearchType.BiliUser]!!
         assertThat(userResult.items).hasSize(1)
+
+        val liveResult = state.results[SearchType.LiveRoom]!!
+        assertThat(liveResult.items).hasSize(1)
+        assertThat(liveResult.items.single()).isInstanceOf(
+            dev.frost819.newbv.app.ui.state.search.SearchResultItem.LiveRoomItem::class.java,
+        )
     }
 
     @Test

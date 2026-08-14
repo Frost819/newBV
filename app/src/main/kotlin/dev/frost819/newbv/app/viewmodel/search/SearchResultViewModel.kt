@@ -28,7 +28,7 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 /**
  * 搜索结果页 ViewModel。
  *
- * 管理 4 类搜索结果（视频/番剧/影视/用户）的加载、分页、筛选。
+ * 管理 5 类搜索结果（视频/番剧/影视/用户/直播间）的加载、分页、筛选。
  *
  * @param searchRepository 搜索数据仓库
  */
@@ -107,6 +107,7 @@ class SearchResultViewModel @Inject constructor(
                     SearchType.Video -> searchResult.videos.map { SearchResultItem.VideoItem(it) }
                     SearchType.MediaBangumi, SearchType.MediaFt -> searchResult.pgcs.map { SearchResultItem.PgcItem(it) }
                     SearchType.BiliUser -> searchResult.users.map { SearchResultItem.UserItem(it) }
+                    SearchType.LiveRoom -> searchResult.liveRooms.map { SearchResultItem.LiveRoomItem(it) }
                 }
                 updateResult(type) {
                     val existingIds = it.items.mapNotNull { item ->
@@ -114,6 +115,7 @@ class SearchResultViewModel @Inject constructor(
                             is SearchResultItem.VideoItem -> "v_${item.video.aid}"
                             is SearchResultItem.PgcItem -> "p_${item.pgc.seasonId}"
                             is SearchResultItem.UserItem -> "u_${item.user.mid}"
+                            is SearchResultItem.LiveRoomItem -> "l_${item.room.roomId}"
                         }
                     }.toSet()
                     val dedupedNewItems = newItems.filter { item ->
@@ -121,6 +123,7 @@ class SearchResultViewModel @Inject constructor(
                             is SearchResultItem.VideoItem -> "v_${item.video.aid}"
                             is SearchResultItem.PgcItem -> "p_${item.pgc.seasonId}"
                             is SearchResultItem.UserItem -> "u_${item.user.mid}"
+                            is SearchResultItem.LiveRoomItem -> "l_${item.room.roomId}"
                         }
                         key !in existingIds
                     }

@@ -66,11 +66,12 @@ class SearchInputViewModel @Inject constructor(
      *
      * @param keyword 搜索关键词
      */
-    fun commitSearch(keyword: String) {
+    fun commitSearch(keyword: String, onCompleted: () -> Unit = {}) {
         if (keyword.isBlank()) return
         viewModelScope.launch {
             searchHistoryRepository.addHistory(keyword)
             loadHistories()
+            onCompleted()
         }
     }
 

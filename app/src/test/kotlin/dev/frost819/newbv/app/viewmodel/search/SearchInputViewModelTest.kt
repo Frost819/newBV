@@ -158,6 +158,17 @@ class SearchInputViewModelTest {
     }
 
     @Test
+    fun `commitSearch calls completion after history is persisted`() = runTest(testDispatcher) {
+        var completed = false
+
+        viewModel.commitSearch("搜索词") { completed = true }
+        advanceUntilIdle()
+
+        coVerify { historyRepo.addHistory("搜索词") }
+        assertThat(completed).isTrue()
+    }
+
+    @Test
     fun `commitSearch with blank keyword does nothing`() = runTest(testDispatcher) {
         advanceUntilIdle()
 

@@ -36,6 +36,7 @@ sealed class SearchResultItem {
     data class VideoItem(val video: SearchTypeResult.Video) : SearchResultItem()
     data class PgcItem(val pgc: SearchTypeResult.Pgc) : SearchResultItem()
     data class UserItem(val user: SearchTypeResult.User) : SearchResultItem()
+    data class LiveRoomItem(val room: SearchTypeResult.LiveRoom) : SearchResultItem()
 }
 
 /**

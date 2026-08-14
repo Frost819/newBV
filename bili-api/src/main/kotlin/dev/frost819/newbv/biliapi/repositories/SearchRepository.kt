@@ -169,7 +169,7 @@ enum class SearchType(
     MediaBangumi(httpTypeParam = "media_bangumi", grpcTypeParam = 7),
     MediaFt(httpTypeParam = "media_ft", grpcTypeParam = 8),
     BiliUser(httpTypeParam = "bili_user", grpcTypeParam = 2),
-    // Live grpcTypeParam = 4/5
+    LiveRoom(httpTypeParam = "live_room", grpcTypeParam = 4),
     // Article grpcTypeParam = 6
 }
 
@@ -230,6 +230,7 @@ data class SearchTypeResult(
     val videos: List<Video> = emptyList(),
     val pgcs: List<Pgc> = emptyList(),
     val users: List<User> = emptyList(),
+    val liveRooms: List<LiveRoom> = emptyList(),
     val page: SearchTypePage,
     val hasMore: Boolean = true,
 ) {
@@ -238,7 +239,7 @@ data class SearchTypeResult(
             result: dev.frost819.newbv.biliapi.http.entity.search.SearchResultData,
         ): SearchTypeResult {
             val hasMore = result.page < result.numPages
-            return when (result.searchTypeResults.first()) {
+            return when (result.searchTypeResults.firstOrNull()) {
                 is dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult -> {
                     SearchTypeResult(
                         videos =
@@ -271,6 +272,19 @@ data class SearchTypeResult(
                             result.searchTypeResults.map {
                                 User.fromSearchUserResult(
                                     it as dev.frost819.newbv.biliapi.http.entity.search.SearchBiliUserResult,
+                                )
+                            },
+                        page = SearchTypePage(nextPageForWeb = result.page + 1),
+                        hasMore = hasMore,
+                    )
+                }
+
+                is dev.frost819.newbv.biliapi.http.entity.search.SearchLiveRoomResult -> {
+                    SearchTypeResult(
+                        liveRooms =
+                            result.searchTypeResults.map {
+                                LiveRoom.fromSearchLiveRoomResult(
+                                    it as dev.frost819.newbv.biliapi.http.entity.search.SearchLiveRoomResult,
                                 )
                             },
                         page = SearchTypePage(nextPageForWeb = result.page + 1),
@@ -410,7 +424,40 @@ data class SearchTypeResult(
                 )
         }
     }
+
+    data class LiveRoom(
+        val roomId: Long,
+        val title: String,
+        val uname: String,
+        val uid: Long,
+        val cover: String,
+        val userCover: String,
+        val face: String,
+        val areaName: String,
+        val online: Int,
+        val liveStatus: Int,
+    ) : SearchTypeResultItem {
+        companion object {
+            fun fromSearchLiveRoomResult(
+                room: dev.frost819.newbv.biliapi.http.entity.search.SearchLiveRoomResult,
+            ) =
+                LiveRoom(
+                    roomId = room.roomid,
+                    title = room.title,
+                    uname = room.uname,
+                    uid = room.uid,
+                    cover = room.cover.toHttpsUrl(),
+                    userCover = room.userCover.toHttpsUrl(),
+                    face = room.uface.toHttpsUrl(),
+                    areaName = room.cateName,
+                    online = room.online,
+                    liveStatus = room.liveStatus,
+                )
+        }
+    }
 }
+
+private fun String.toHttpsUrl(): String = if (startsWith("//")) "https:$this" else this
 
 private fun convertStringTimeToSeconds(time: String): Int {
     val parts = time.split(":")

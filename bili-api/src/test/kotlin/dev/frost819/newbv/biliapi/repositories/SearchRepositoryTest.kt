@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
@@ -104,5 +105,37 @@ class SearchRepositoryTest {
                     preferApiType = ApiType.App,
                 )
             println(reply)
+        }
+
+    @Test
+    fun `search bangumi with web api`() =
+        runBlocking {
+            val reply =
+                searchRepository.searchType(
+                    keyword = "英雄联盟",
+                    type = SearchType.MediaBangumi,
+                    page = SearchTypePage(),
+                    tid = null,
+                    order = SearchFilterOrderType.ComprehensiveSort,
+                    duration = SearchFilterDuration.All,
+                    preferApiType = ApiType.Web,
+                )
+            assertThat(reply.pgcs).isNotEmpty()
+        }
+
+    @Test
+    fun `search film and television with web api`() =
+        runBlocking {
+            val reply =
+                searchRepository.searchType(
+                    keyword = "英雄联盟",
+                    type = SearchType.MediaFt,
+                    page = SearchTypePage(),
+                    tid = null,
+                    order = SearchFilterOrderType.ComprehensiveSort,
+                    duration = SearchFilterDuration.All,
+                    preferApiType = ApiType.Web,
+                )
+            assertThat(reply.pgcs).isNotEmpty()
         }
 }

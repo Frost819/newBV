@@ -54,8 +54,14 @@ class SearchRepositoryHelpersTest {
     }
 
     @Test
-    fun `SearchType has exactly 4 values`() {
-        assertThat(SearchType.entries).hasSize(4)
+    fun `SearchType LiveRoom uses web search params`() {
+        assertThat(SearchType.LiveRoom.httpTypeParam).isEqualTo("live_room")
+        assertThat(SearchType.LiveRoom.grpcTypeParam).isEqualTo(4)
+    }
+
+    @Test
+    fun `SearchType has exactly 5 values`() {
+        assertThat(SearchType.entries).hasSize(5)
     }
 
     // ------------------------------------------------------------------
@@ -258,6 +264,62 @@ class SearchRepositoryHelpersTest {
         assertThat(result.pgcs[0].cover).isEqualTo("http://cover.example.com/1.jpg")
         assertThat(result.pgcs[0].star).isEqualTo(9.5f)
         assertThat(result.pgcs[0].seasonId).isEqualTo(39707)
+    }
+
+    @Test
+    fun `fromSearchTypeResult HTTP with no results returns empty lists`() {
+        val result =
+            SearchTypeResult.fromSearchTypeResult(
+                SearchResultData(
+                    seid = "test-seid",
+                    page = 1,
+                    pageSize = 20,
+                    numResults = 0,
+                    numPages = 0,
+                    suggestKeyword = "",
+                    rqtType = "",
+                    eggHit = 0,
+                ),
+            )
+
+        assertThat(result.videos).isEmpty()
+        assertThat(result.pgcs).isEmpty()
+        assertThat(result.users).isEmpty()
+        assertThat(result.liveRooms).isEmpty()
+        assertThat(result.hasMore).isFalse()
+    }
+
+    @Test
+    fun `SearchResultData maps result_type media wrapper to typed results`() {
+        val mediaJson =
+            kotlinx.serialization.json.Json.encodeToString(
+                SearchMediaResult.serializer(),
+                fakeSearchMediaResult(),
+            )
+        val wrappedJson =
+            kotlinx.serialization.json.Json.parseToJsonElement(
+                """
+                {
+                  "result_type": "media_bangumi",
+                  "data": [$mediaJson]
+                }
+                """.trimIndent(),
+            )
+
+        val searchResultData =
+            SearchResultData(
+                seid = "test-seid",
+                page = 1,
+                pageSize = 20,
+                numResults = 1,
+                numPages = 2,
+                suggestKeyword = "",
+                rqtType = "",
+                eggHit = 0,
+                result = listOf(wrappedJson),
+            )
+
+        assertThat(SearchTypeResult.fromSearchTypeResult(searchResultData).pgcs).hasSize(1)
     }
 
     // ------------------------------------------------------------------

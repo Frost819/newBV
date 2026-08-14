@@ -15,22 +15,22 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 @Serializable
 data class SearchResultData(
-    val seid: String,
-    val page: Int,
+    val seid: String = "",
+    val page: Int = 1,
     @SerialName("pagesize")
-    val pageSize: Int,
-    val numResults: Int,
-    val numPages: Int,
+    val pageSize: Int = 20,
+    val numResults: Int = 0,
+    val numPages: Int = 0,
     @SerialName("suggest_keyword")
-    val suggestKeyword: String,
+    val suggestKeyword: String = "",
     @SerialName("rqt_type")
-    val rqtType: String,
+    val rqtType: String = "",
     @SerialName("cost_time")
     val costTime: SearchCost? = null,
     @SerialName("exp_list")
     val expList: JsonElement? = null,
     @SerialName("egg_hit")
-    val eggHit: Int,
+    val eggHit: Int = 0,
     @SerialName("pageinfo")
     val pageInfo: PageInfo? = null,
     @SerialName("top_tlist")
@@ -94,6 +94,9 @@ data class SearchResultData(
                         data = data,
                     )
                 searchAllResults.add(resultResult)
+                if (resultType == "video" || resultType == "media_bangumi" || resultType == "media_ft") {
+                    searchTypeResults.addAll(data)
+                }
             } else {
                 // 分类搜索
                 resultType = searchResultJsonObject["type"]?.jsonPrimitive?.content
@@ -114,7 +117,10 @@ data class SearchResultData(
                                 searchResultJsonObject,
                             )
 
-                        // TODO live search result
+                        "live_room" ->
+                            json.decodeFromJsonElement<SearchLiveRoomResult>(searchResultJsonObject)
+
+                        // 综合搜索可能返回直播聚合结果，分类搜索使用 live_room。
                         "live" -> return@forEach
 
                         "media_bangumi", "media_ft" ->

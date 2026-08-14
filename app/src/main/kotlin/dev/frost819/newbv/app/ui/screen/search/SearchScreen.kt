@@ -26,8 +26,9 @@ fun NavGraphBuilder.searchScreen(navController: NavController) {
             viewModel = viewModel,
             focusRequester = focusRequester,
             onSearch = { keyword ->
-                viewModel.commitSearch(keyword)
-                navController.navigate(SearchResultRoute(keyword = keyword))
+                viewModel.commitSearch(keyword) {
+                    navController.navigate(SearchResultRoute(keyword = keyword))
+                }
             },
         )
     }
