@@ -103,6 +103,7 @@ class PlayerViewModel @Inject constructor(
     val videoSwitchEvent = _videoSwitchEvent.asSharedFlow()
 
     private var seekerUpdateJob: Job? = null
+    private var debugInfoUpdateJob: Job? = null
     private var clockUpdateJob: Job? = null
     private var heartbeatJob: Job? = null
     private var loadVideoJob: Job? = null
@@ -134,6 +135,7 @@ class PlayerViewModel @Inject constructor(
             _uiState.update { it.copy(playerState = PlayerState.Ready) }
             updatePlaySpeed(forceUpdate = true)
             startSeekerUpdater()
+            startDebugInfoUpdater()
         }
 
         override fun onPlay() {
@@ -158,6 +160,7 @@ class PlayerViewModel @Inject constructor(
         override fun onEnd() {
             logger.info { "onEnd" }
             stopSeekerUpdater()
+            stopDebugInfoUpdater()
             _uiState.update { it.copy(playerState = PlayerState.Ended) }
             viewModelScope.launch { _uiEffect.emit(PlayerUiEffect.PlayEnded) }
         }
@@ -273,6 +276,7 @@ class PlayerViewModel @Inject constructor(
         videoPlayer?.release()
         videoPlayer = null
         stopSeekerUpdater()
+        stopDebugInfoUpdater()
         clockUpdateJob?.cancel()
     }
 
@@ -373,6 +377,7 @@ class PlayerViewModel @Inject constructor(
         // 清空旧视频状态，防止新视频加载失败时残留旧数据
         playData = null
         stopSeekerUpdater()
+        stopDebugInfoUpdater()
 
         _uiState.update {
             it.copy(
@@ -794,6 +799,28 @@ class PlayerViewModel @Inject constructor(
         seekerUpdateJob = null
     }
 
+    /**
+     * 启动调试信息轮询（仅 [Prefs.showPlayerDebugInfo] 开启时）。
+     *
+     * 独立于 seekerUpdater，以 500ms 间隔运行，避免无谓开销。
+     */
+    private fun startDebugInfoUpdater() {
+        if (!Prefs.showPlayerDebugInfo) return
+        if (debugInfoUpdateJob?.isActive == true) return
+        debugInfoUpdateJob = viewModelScope.launch(Dispatchers.Main) {
+            while (isActive) {
+                val player = videoPlayer ?: break
+                _seekerState.update { it.copy(debugInfo = player.debugInfo) }
+                delay(500)
+            }
+        }
+    }
+
+    private fun stopDebugInfoUpdater() {
+        debugInfoUpdateJob?.cancel()
+        debugInfoUpdateJob = null
+    }
+
     private fun updateSeekerState() {
         val player = videoPlayer ?: return
         _seekerState.update {
@@ -801,7 +828,6 @@ class PlayerViewModel @Inject constructor(
                 totalDuration = player.duration.coerceAtLeast(0L),
                 currentTime = player.currentPosition.coerceAtLeast(0L),
                 bufferedPercentage = player.bufferedPercentage,
-                debugInfo = player.debugInfo,
             )
         }
     }

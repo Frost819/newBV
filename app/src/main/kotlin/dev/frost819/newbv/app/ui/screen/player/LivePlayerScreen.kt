@@ -37,6 +37,7 @@ fun LivePlayerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val danmakuState by danmakuViewModel.danmakuState.collectAsState()
+    val debugInfo by viewModel.debugInfo.collectAsState()
     val videoPlayer = viewModel.videoPlayer
     val danmakuPlayer = danmakuViewModel.danmakuPlayer
 
@@ -81,6 +82,7 @@ fun LivePlayerScreen(
         onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
         onQualityChange = { viewModel.changeQuality(it) },
         onDanmakuSettingChange = { danmakuViewModel.updateDanmakuState(it) },
+        debugInfo = debugInfo,
     ) {
         if (videoPlayer != null) {
             BvVideoPlayer(

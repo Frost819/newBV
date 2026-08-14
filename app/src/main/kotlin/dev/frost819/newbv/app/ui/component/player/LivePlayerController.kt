@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.LiveMenuController
 import dev.frost819.newbv.danmaku.config.DanmakuState
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -69,6 +70,7 @@ import kotlinx.coroutines.launch
  * @param onToggleDanmaku 弹幕开关回调
  * @param onQualityChange 画质变化回调
  * @param onDanmakuSettingChange 弹幕设置变化回调
+ * @param debugInfo 调试信息文本（仅 [Prefs.showPlayerDebugInfo] 开启时有值）
  * @param content 视频画面 + 弹幕层内容
  */
 @Composable
@@ -94,6 +96,7 @@ fun LivePlayerController(
     onToggleDanmaku: () -> Unit,
     onQualityChange: (Int) -> Unit,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
+    debugInfo: String,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -258,6 +261,24 @@ fun LivePlayerController(
             ),
     ) {
         content()
+
+        // 调试信息
+        if (Prefs.showPlayerDebugInfo && debugInfo.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(Color.Black.copy(alpha = 0.5f)),
+            ) {
+                Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = debugInfo,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
 
         PlayStateTips(
             isPlaying = isPlaying,

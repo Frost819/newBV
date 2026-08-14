@@ -16,19 +16,23 @@ import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
 import dev.frost819.newbv.biliapi.repositories.LiveStreamInfo
 import dev.frost819.newbv.biliapi.websocket.LiveDataWebSocket
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.VideoPlayerOptions
+import dev.frost819.newbv.player.impl.exo.ExoMediaPlayer
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -83,7 +87,12 @@ class LivePlayerViewModel @Inject constructor(
     val uiState: StateFlow<LivePlayerUiState> = _uiState.asStateFlow()
 
     private var wsJob: Job? = null
+    private var debugInfoJob: Job? = null
     private var danmakuIdCounter = 0L
+
+    private val _debugInfo = MutableStateFlow("")
+    /** 调试信息，仅在 [Prefs.showPlayerDebugInfo] 开启时更新。 */
+    val debugInfo: StateFlow<String> = _debugInfo.asStateFlow()
 
     /**
      * 初始化直播间信息。
@@ -173,6 +182,7 @@ class LivePlayerViewModel @Inject constructor(
         val roomId = _uiState.value.roomId
         if (roomId == 0L) return
         wsJob?.cancel()
+        stopDebugInfoUpdater()
         loadLiveInternal(roomId)
     }
 
@@ -220,6 +230,7 @@ class LivePlayerViewModel @Inject constructor(
                 videoPlayer?.prepare()
                 videoPlayer?.start()
                 danmakuPlayer?.start(null)
+                startDebugInfoUpdater()
 
                 connectDanmaku(realRoomId)
             }.onFailure { error ->
@@ -260,6 +271,43 @@ class LivePlayerViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * 启动调试信息轮询（仅 [Prefs.showPlayerDebugInfo] 开启时）。
+     *
+     * 以 500ms 间隔从播放器读取属性，组合成 debug 字符串。
+     * 设置关闭时不启动，避免无谓开销。
+     */
+    private fun startDebugInfoUpdater() {
+        if (!Prefs.showPlayerDebugInfo) return
+        if (debugInfoJob?.isActive == true) return
+        debugInfoJob = viewModelScope.launch(Dispatchers.Main) {
+            while (isActive) {
+                val player = videoPlayer as? ExoMediaPlayer ?: break
+                val state = _uiState.value
+                _debugInfo.value = buildString {
+                    appendLine("player: ${androidx.media3.common.MediaLibraryInfo.VERSION_SLASHY}")
+                    appendLine("state: ${state.playerState}")
+                    appendLine("stream: ${player.streamProtocol}")
+                    val qnDesc = state.availableQualities
+                        .firstOrNull { it.first == state.currentQuality }?.second
+                    appendLine("quality: ${qnDesc ?: "?"}(${state.currentQuality})")
+                    appendLine("roomId: ${state.realRoomId}")
+                    appendLine("resolution: ${player.videoWidth} x ${player.videoHeight}")
+                    appendLine("buffered: ${player.bufferedPercentage}%")
+                    appendLine("video: ${player.mPlayer?.videoFormat?.sampleMimeType ?: "null"}")
+                    val audioCodec = player.mPlayer?.audioFormat?.sampleMimeType ?: "null"
+                    appendLine("audio: $audioCodec (${player.audioRendererName})")
+                }.trimEnd()
+                delay(500)
+            }
+        }
+    }
+
+    private fun stopDebugInfoUpdater() {
+        debugInfoJob?.cancel()
+        debugInfoJob = null
     }
 
     /**
@@ -342,6 +390,7 @@ class LivePlayerViewModel @Inject constructor(
      */
     fun detachPlayer() {
         wsJob?.cancel()
+        stopDebugInfoUpdater()
         videoPlayer?.release()
         videoPlayer = null
         danmakuPlayer = null

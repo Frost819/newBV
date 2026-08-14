@@ -63,6 +63,10 @@ class ExoMediaPlayer(
     /** 当前 MediaSource，在 [playUrl] 中创建 */
     protected var mMediaSource: MediaSource? = null
 
+    /** 当前播放的流协议（"FLV" / "HLS" / "DASH" / "Unknown"），在 [playUrl] 中赋值 */
+    var streamProtocol: String = "Unknown"
+        private set
+
     // --- BEHIND_LIVE_WINDOW 恢复状态（参考 blbl tryRecoverBehindLiveWindow） ---
 
     private var behindLiveWindowWindowStartAtMs = 0L
@@ -122,6 +126,7 @@ class ExoMediaPlayer(
     }
 
     override fun playUrl(videoUrl: String?, audioUrl: String?) {
+        streamProtocol = resolveStreamProtocol(videoUrl, audioUrl)
         val videoMediaSource = videoUrl?.let { createMediaSource(it) }
         val audioMediaSource = audioUrl?.let { createMediaSource(it) }
 
@@ -132,6 +137,23 @@ class ExoMediaPlayer(
         } else {
             mediaSources.firstOrNull()
         }
+    }
+
+    /**
+     * 从 URL 推断流协议类型。
+     *
+     * - 双 URL（video + audio）→ DASH
+     * - `.m3u8` → HLS
+     * - 其余（`.flv` / progressive）→ FLV
+     */
+    private fun resolveStreamProtocol(
+        videoUrl: String?,
+        audioUrl: String?,
+    ): String {
+        if (videoUrl != null && audioUrl != null) return "DASH"
+        val url = videoUrl ?: return "Unknown"
+        val isHls = url.substringBefore('?').trim().lowercase(Locale.US).endsWith(".m3u8")
+        return if (isHls) "HLS" else "FLV"
     }
 
     /**
@@ -243,11 +265,15 @@ class ExoMediaPlayer(
                 resolution: ${mPlayer?.videoSize?.width} x ${mPlayer?.videoSize?.height}
                 audio: ${mPlayer?.audioFormat?.bitrate ?: 0} kbps
                 video codec: ${mPlayer?.videoFormat?.sampleMimeType ?: "null"}
-                audio codec: ${mPlayer?.audioFormat?.sampleMimeType ?: "null"} (${getAudioRendererName()})
+                audio codec: ${mPlayer?.audioFormat?.sampleMimeType ?: "null"} ($audioRendererName)
             """.trimIndent()
         }
 
-    private fun getAudioRendererName(): String {
+    /** 当前活跃的音频渲染器名称（如 "OMX.google.aac.decoder"）。 */
+    val audioRendererName: String
+        get() = findAudioRendererName()
+
+    private fun findAudioRendererName(): String {
         val rendererCount = mPlayer?.rendererCount ?: return "UnknownRenderer"
         for (i in 0 until rendererCount) {
             val renderer = mPlayer!!.getRenderer(i)
