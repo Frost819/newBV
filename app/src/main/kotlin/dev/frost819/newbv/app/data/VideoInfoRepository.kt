@@ -13,6 +13,28 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * 视频共享状态（播放器与详情页同步）。
+ *
+ * 合并了交互状态（点赞/投币/收藏）与历史播放进度（cid/时间），
+ * 避免多个独立 StateFlow 造成的分散读写。
+ *
+ * @property aid 视频 AV 号，用于校验状态归属。
+ * @property liked 是否已点赞。
+ * @property coined 是否已投币。
+ * @property favorited 是否已收藏。
+ * @property lastPlayedCid 最近播放的 CID。
+ * @property lastPlayedTime 最近播放位置（秒），-1 表示已看完。
+ */
+data class VideoSharedState(
+    val aid: Long,
+    val liked: Boolean = false,
+    val coined: Boolean = false,
+    val favorited: Boolean = false,
+    val lastPlayedCid: Long = 0L,
+    val lastPlayedTime: Int = 0,
+)
+
+/**
  * 应用级视频信息共享仓库。
  *
  * 在详情页加载视频详情后，播放器页面通过本仓库获取已缓存的视频列表和详情，
@@ -35,16 +57,12 @@ class VideoInfoRepository @Inject constructor(
     private val _relatedVideos = MutableStateFlow<List<RelatedVideo>>(emptyList())
     val relatedVideos = _relatedVideos.asStateFlow()
 
-    /** 最近播放的 CID。 */
-    private val _lastPlayedCid = MutableStateFlow(0L)
-    val lastPlayedCid = _lastPlayedCid.asStateFlow()
-
-    /** 最近播放位置（秒）。 */
-    private val _lastPlayedTime = MutableStateFlow(0)
-    val lastPlayedTime = _lastPlayedTime.asStateFlow()
+    private val _videoSharedState = MutableStateFlow<VideoSharedState?>(null)
+    /** 当前视频的共享状态（交互 + 历史）。 */
+    val videoSharedState = _videoSharedState.asStateFlow()
 
     /**
-     * 更新视频详情（同步相关视频和历史进度）。
+     * 更新视频详情（同步相关视频和共享状态）。
      *
      * 供详情页 ViewModel 在加载完成后调用，确保播放器页面能获取相关视频数据。
      *
@@ -53,8 +71,16 @@ class VideoInfoRepository @Inject constructor(
     fun updateVideoDetail(detail: VideoDetail) {
         _videoDetail.update { detail }
         _relatedVideos.update { detail.relatedVideos }
-        _lastPlayedCid.update { detail.history.lastPlayedCid }
-        _lastPlayedTime.update { detail.history.progress }
+        _videoSharedState.update {
+            VideoSharedState(
+                aid = detail.aid,
+                liked = detail.userActions.like,
+                coined = detail.userActions.coin,
+                favorited = detail.userActions.favorite,
+                lastPlayedCid = detail.history.lastPlayedCid,
+                lastPlayedTime = detail.history.progress,
+            )
+        }
     }
 
     /**
@@ -68,8 +94,16 @@ class VideoInfoRepository @Inject constructor(
             val detail = videoDetailRepository.getVideoDetail(aid = aid, preferApiType = preferApiType, bvid = bvid)
             _videoDetail.update { detail }
             _relatedVideos.update { detail.relatedVideos }
-            _lastPlayedCid.update { detail.history.lastPlayedCid }
-            _lastPlayedTime.update { detail.history.progress }
+            _videoSharedState.update {
+                VideoSharedState(
+                    aid = detail.aid,
+                    liked = detail.userActions.like,
+                    coined = detail.userActions.coin,
+                    favorited = detail.userActions.favorite,
+                    lastPlayedCid = detail.history.lastPlayedCid,
+                    lastPlayedTime = detail.history.progress,
+                )
+            }
             logger.info { "Loaded video detail: aid=$aid, related=${detail.relatedVideos.size}" }
         }.onFailure { e ->
             logger.error(e) { "Failed to load video detail: aid=$aid" }
@@ -104,14 +138,43 @@ class VideoInfoRepository @Inject constructor(
     }
 
     /**
-     * 更新播放历史。
+     * 更新播放历史（仅历史字段，不影响交互状态）。
      *
      * @param progress 播放进度（秒），-1 表示已看完
      * @param lastPlayedCid 最近播放的 CID
      */
     fun updateHistory(progress: Int, lastPlayedCid: Long) {
-        _lastPlayedCid.update { lastPlayedCid }
-        _lastPlayedTime.update { progress }
+        _videoSharedState.update { old ->
+            old?.copy(lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
+                ?: VideoSharedState(aid = 0, lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
+        }
+    }
+
+    /**
+     * 更新视频交互状态（仅交互字段，不影响历史进度），并通知详情页与播放器。
+     *
+     * @param aid 视频 AV 号
+     * @param liked 是否点赞
+     * @param coined 是否投币
+     * @param favorited 是否收藏
+     */
+    fun updateVideoActionState(
+        aid: Long,
+        liked: Boolean? = null,
+        coined: Boolean? = null,
+        favorited: Boolean? = null,
+    ) {
+        _videoSharedState.update { old ->
+            val current = old?.takeIf { it.aid == aid }
+            VideoSharedState(
+                aid = aid,
+                liked = liked ?: current?.liked ?: false,
+                coined = coined ?: current?.coined ?: false,
+                favorited = favorited ?: current?.favorited ?: false,
+                lastPlayedCid = current?.lastPlayedCid ?: 0L,
+                lastPlayedTime = current?.lastPlayedTime ?: 0,
+            )
+        }
     }
 
     /** 重置所有状态。 */
@@ -119,7 +182,6 @@ class VideoInfoRepository @Inject constructor(
         _videoList.update { emptyList() }
         _videoDetail.update { null }
         _relatedVideos.update { emptyList() }
-        _lastPlayedCid.update { 0L }
-        _lastPlayedTime.update { 0 }
+        _videoSharedState.update { null }
     }
 }

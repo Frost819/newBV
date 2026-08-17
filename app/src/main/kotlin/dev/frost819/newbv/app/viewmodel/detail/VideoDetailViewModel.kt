@@ -46,6 +46,8 @@ private const val LOAD_TIMEOUT_MS = 15_000L
  * @property isFollowing 是否已关注 UP 主。
  * @property favoriteFolders 用户收藏夹列表。
  * @property videoFavoriteFolderIds 视频已加入的收藏夹 ID 集合。
+ * @property historyLastPlayedCid 播放器返回后的历史进度 CID。
+ * @property historyLastPlayedTime 播放器返回后的历史进度时间（秒）。
  */
 data class VideoDetailUiState(
     val detail: VideoDetail? = null,
@@ -58,6 +60,8 @@ data class VideoDetailUiState(
     val isFollowing: Boolean = false,
     val favoriteFolders: List<FavoriteFolderMetadata> = emptyList(),
     val videoFavoriteFolderIds: Set<Long> = emptySet(),
+    val historyLastPlayedCid: Long = 0L,
+    val historyLastPlayedTime: Int = 0,
 )
 
 /**
@@ -105,24 +109,26 @@ class VideoDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(VideoDetailUiState())
     val uiState: StateFlow<VideoDetailUiState> = _uiState.asStateFlow()
 
-    /**
-     * 播放器返回后的历史进度 CID。
-     *
-     * 单独暴露而非合并到 [uiState] 的 [VideoDetailUiState.detail] 中，
-     * 避免播放器更新历史时触发详情页整体重组（导致 LazyRow focusRestorer 崩溃）。
-     */
-    val historyLastPlayedCid: StateFlow<Long> = videoInfoRepository.lastPlayedCid
-
-    /**
-     * 播放器返回后的历史进度时间（秒）。
-     */
-    val historyLastPlayedTime: StateFlow<Int> = videoInfoRepository.lastPlayedTime
-
     private val _uiEffect = MutableSharedFlow<VideoDetailUiEffect>()
     val uiEffect: SharedFlow<VideoDetailUiEffect> = _uiEffect.asSharedFlow()
 
     init {
         loadVideoDetail()
+        viewModelScope.launch {
+            videoInfoRepository.videoSharedState
+                .collect { state ->
+                    val matched = state?.takeIf { it.aid == aid }
+                    _uiState.update {
+                        it.copy(
+                            isLiked = matched?.liked ?: it.isLiked,
+                            isCoined = matched?.coined ?: it.isCoined,
+                            isFavorite = matched?.favorited ?: it.isFavorite,
+                            historyLastPlayedCid = state?.lastPlayedCid ?: it.historyLastPlayedCid,
+                            historyLastPlayedTime = state?.lastPlayedTime ?: it.historyLastPlayedTime,
+                        )
+                    }
+                }
+        }
     }
 
     /**
@@ -286,6 +292,7 @@ class VideoDetailViewModel @Inject constructor(
                 )
             }.onSuccess {
                 _uiState.update { it.copy(isLiked = like) }
+                videoInfoRepository.updateVideoActionState(aid = currentDetail.aid, liked = like)
             }.onFailure { error ->
                 logger.error(error) { "Failed to toggle like" }
                 _uiEffect.emit(
@@ -312,6 +319,7 @@ class VideoDetailViewModel @Inject constructor(
                 )
             }.onSuccess {
                 _uiState.update { it.copy(isCoined = true) }
+                videoInfoRepository.updateVideoActionState(aid = currentDetail.aid, coined = true)
             }.onFailure { error ->
                 logger.error(error) { "Failed to send coin" }
                 _uiEffect.emit(
@@ -349,8 +357,12 @@ class VideoDetailViewModel @Inject constructor(
                 _uiEffect.emit(
                     VideoDetailUiEffect.ShowToast("收藏失败: ${error.message ?: "未知错误"}")
                 )
-            }
-        }
+                    }
+                }
+                videoInfoRepository.updateVideoActionState(
+                    aid = currentDetail.aid,
+                    favorited = folderIds.isNotEmpty(),
+                )
     }
 
     /**
@@ -404,6 +416,12 @@ class VideoDetailViewModel @Inject constructor(
                             } ?: it.videoFavoriteFolderIds,
                         )
                     }
+                    videoInfoRepository.updateVideoActionState(
+                        aid = currentDetail.aid,
+                        liked = data.like,
+                        coined = data.coin,
+                        favorited = data.fav,
+                    )
                     _uiEffect.emit(VideoDetailUiEffect.ShowToast("一键三连"))
                 }
             }.onFailure { error ->

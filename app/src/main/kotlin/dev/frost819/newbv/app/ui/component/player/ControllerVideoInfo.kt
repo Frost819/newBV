@@ -93,6 +93,8 @@ import kotlinx.coroutines.delay
  * @param onGoToVideoInfo 跳转视频详情回调
  * @param onToggleLoop 切换循环回调
  * @param onGoToUpPage 跳转 UP 主页面回调
+ * @param onShowInteraction 打开视频交互弹窗回调
+ * @param onShowComments 打开评论弹窗回调
  */
 @Composable
 fun ControllerVideoInfo(
@@ -119,6 +121,8 @@ fun ControllerVideoInfo(
     onGoToVideoInfo: () -> Unit,
     onToggleLoop: () -> Unit,
     onGoToUpPage: () -> Unit,
+    onShowInteraction: () -> Unit,
+    onShowComments: () -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -162,6 +166,8 @@ fun ControllerVideoInfo(
                 onGoToVideoInfo = onGoToVideoInfo,
                 onToggleLoop = onToggleLoop,
                 onGoToUpPage = onGoToUpPage,
+                onShowInteraction = onShowInteraction,
+                onShowComments = onShowComments,
             )
         }
     }
@@ -242,6 +248,8 @@ fun ControllerVideoInfoBottom(
     onGoToVideoInfo: () -> Unit,
     onToggleLoop: () -> Unit,
     onGoToUpPage: () -> Unit,
+    onShowInteraction: () -> Unit,
+    onShowComments: () -> Unit,
 ) {
     val seekFocusRequester = remember { FocusRequester() }
     val buttonsFocusRequester = remember { FocusRequester() }
@@ -394,6 +402,20 @@ fun ControllerVideoInfoBottom(
                     onToggleLoop,
                 ),
             )
+            add(
+                ControllerIcon(
+                    icon = R.drawable.interaction_24px,
+                    description = "交互",
+                    action = onShowInteraction,
+                ),
+            )
+            add(
+                ControllerIcon(
+                    icon = R.drawable.comment,
+                    description = "评论",
+                    action = onShowComments,
+                ),
+            )
         }
 
         Row(
@@ -411,16 +433,18 @@ fun ControllerVideoInfoBottom(
                 .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
-            icons.forEach { (icon, desc, action) ->
-                key(icon) {
+            icons.forEach { item ->
+                key(item.description) {
                     Surface(
-                        modifier = Modifier.touchClickable(onClick = action),
-                        onClick = action,
+                        modifier = Modifier.touchClickable(
+                            onClick = item.action,
+                        ),
+                        onClick = item.action,
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     ) {
                         Icon(
-                            painter = painterResource(id = icon),
-                            contentDescription = desc,
+                            painter = painterResource(id = item.icon),
+                            contentDescription = item.description,
                             modifier = Modifier.padding(5.dp),
                             tint = Color.White,
                         )
@@ -497,6 +521,8 @@ private fun ControllerVideoInfoPreview() {
             onGoToVideoInfo = {},
             onToggleLoop = {},
             onGoToUpPage = {},
+            onShowInteraction = {},
+            onShowComments = {},
         )
     }
 }

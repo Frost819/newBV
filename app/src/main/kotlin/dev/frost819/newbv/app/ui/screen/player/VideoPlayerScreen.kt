@@ -31,6 +31,9 @@ import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
 import dev.frost819.newbv.app.ui.component.player.VideoPlayerController
+import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
+import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
+import dev.frost819.newbv.app.ui.component.player.VideoInteractionDialog
 import dev.frost819.newbv.app.ui.component.player.VideoProgressSeek
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
@@ -42,6 +45,7 @@ import dev.frost819.newbv.app.viewmodel.player.DanmakuViewModel
 import dev.frost819.newbv.app.viewmodel.player.PlayerViewModel
 import dev.frost819.newbv.app.viewmodel.player.SubtitleViewModel
 import dev.frost819.newbv.app.viewmodel.player.VideoListViewModel
+import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMaskFrame
 import dev.frost819.newbv.danmaku.component.DanmakuPlayerCompose
 import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
@@ -65,6 +69,7 @@ fun VideoPlayerScreen(
     danmakuViewModel: DanmakuViewModel = hiltViewModel(),
     subtitleViewModel: SubtitleViewModel = hiltViewModel(),
     videoListViewModel: VideoListViewModel = hiltViewModel(),
+    commentViewModel: CommentViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -81,10 +86,15 @@ fun VideoPlayerScreen(
     val subtitleId by subtitleViewModel.subtitleId.collectAsState()
     val subtitleData by subtitleViewModel.subtitleData.collectAsState()
     val subtitleList by subtitleViewModel.subtitleList.collectAsState()
+    val sharedState by playerViewModel.videoSharedState.collectAsState()
 
     val maskFinder = remember { DanmakuMaskFinder() }
     var currentDanmakuMaskFrame by remember { mutableStateOf<DanmakuMaskFrame?>(null) }
     var isLooping by remember { mutableStateOf(false) }
+    var showInteractionDialog by remember { mutableStateOf(false) }
+    var showCommentsDialog by remember { mutableStateOf(false) }
+    var resumeAfterComments by remember { mutableStateOf(false) }
+    var resumeAfterInteraction by remember { mutableStateOf(false) }
 
     val videoShotCache by remember(uiState.videoShot) { mutableStateOf(VideoShotImageCache()) }
 
@@ -123,6 +133,9 @@ fun VideoPlayerScreen(
             when (effect) {
                 dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.FinishActivity -> {
                     (context as? Activity)?.finish()
+                }
+                is dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
                 dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.PlayEnded -> {
                     if (isLooping) {
@@ -265,6 +278,18 @@ fun VideoPlayerScreen(
         onGoToVideoDetail = {
             navController.popBackStack()
         },
+        onShowInteraction = {
+            resumeAfterInteraction = uiState.playerState == PlayerState.Playing
+            playerViewModel.pausePlayback()
+            danmakuViewModel.pause()
+            showInteractionDialog = true
+        },
+        onShowComments = {
+            resumeAfterComments = uiState.playerState == PlayerState.Playing
+            playerViewModel.pausePlayback()
+            danmakuViewModel.pause()
+            showCommentsDialog = true
+        },
         onMediaProfileSettingChange = { action -> playerViewModel.updateMediaProfile(action) },
         onAspectRatioChange = { ratio -> playerViewModel.updateVideoAspectRatio(ratio) },
         onPlaySpeedChange = { speed ->
@@ -319,5 +344,39 @@ fun VideoPlayerScreen(
                 )
             }
         }
+    }
+
+    if (showInteractionDialog) {
+        VideoInteractionDialog(
+            actionState = sharedState?.takeIf { it.aid == uiState.aid },
+            onLike = { playerViewModel.toggleVideoLike() },
+            onCoin = { playerViewModel.sendVideoCoin() },
+            onFavorite = { playerViewModel.toggleVideoFavorite() },
+            onOneClickTriple = { playerViewModel.oneClickTripleAction() },
+            onDismiss = {
+                showInteractionDialog = false
+                if (resumeAfterInteraction) {
+                    playerViewModel.resumePlayback()
+                    danmakuViewModel.play()
+                }
+                resumeAfterInteraction = false
+            },
+        )
+    }
+
+    if (showCommentsDialog) {
+        CommentsDialog(
+            aid = uiState.aid,
+            mode = CommentDialogMode.Player,
+            viewModel = commentViewModel,
+            onDismiss = {
+                showCommentsDialog = false
+                if (resumeAfterComments) {
+                    playerViewModel.resumePlayback()
+                    danmakuViewModel.play()
+                }
+                resumeAfterComments = false
+            },
+        )
     }
 }

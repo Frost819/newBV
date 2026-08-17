@@ -22,6 +22,7 @@ import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import app.cash.turbine.test
@@ -31,6 +32,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -66,6 +68,7 @@ class VideoDetailViewModelTest {
         oneClickTripleActionRepository = mockk()
         userRepository = mockk()
         videoInfoRepository = mockk(relaxed = true)
+        every { videoInfoRepository.videoSharedState } returns MutableStateFlow(null)
 
         mockkObject(Prefs)
         coEvery { Prefs.isLogin } returns false

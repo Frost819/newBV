@@ -21,6 +21,10 @@ import dev.frost819.newbv.biliapi.entity.PlayData
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.CoinRepository
+import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
+import dev.frost819.newbv.biliapi.repositories.LikeRepository
+import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.Audio
 import dev.frost819.newbv.data.datastore.Prefs
@@ -37,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -52,6 +57,8 @@ import java.net.URI
 import java.util.Calendar
 import javax.inject.Inject
 
+private const val PLAYER_ACTION_TIMEOUT_MS = 10_000L
+
 /**
  * 播放器主 ViewModel。
  *
@@ -64,6 +71,10 @@ import javax.inject.Inject
  * @param videoPlayRepository 播放数据仓库（URL、弹幕、字幕、蒙版、心跳、缩略图）
  * @param videoInfoRepository 视频信息共享仓库（分集列表、详情）
  * @param authRepository 鉴权仓库（会话凭证）
+ * @param likeRepository 视频点赞仓库
+ * @param coinRepository 视频投币仓库
+ * @param favoriteRepository 视频收藏仓库
+ * @param oneClickTripleActionRepository 一键三连仓库
  * @param exoPlayerFactory ExoPlayer 工厂
  */
 @HiltViewModel
@@ -72,6 +83,10 @@ class PlayerViewModel @Inject constructor(
     private val videoInfoRepository: VideoInfoRepository,
     private val authRepository: AuthRepository,
     private val exoPlayerFactory: ExoPlayerFactory,
+    private val likeRepository: LikeRepository,
+    private val coinRepository: CoinRepository,
+    private val favoriteRepository: FavoriteRepository,
+    private val oneClickTripleActionRepository: OneClickTripleActionRepository,
 ) : ViewModel() {
 
     private val logger = KotlinLogging.logger { }
@@ -89,6 +104,9 @@ class PlayerViewModel @Inject constructor(
 
     private val _seekerState = MutableStateFlow(SeekerState())
     val seekerState = _seekerState.asStateFlow()
+
+    /** 当前视频共享状态（交互 + 历史）。 */
+    val videoSharedState = videoInfoRepository.videoSharedState
 
     private val _uiEffect = MutableSharedFlow<PlayerUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
@@ -235,8 +253,9 @@ class PlayerViewModel @Inject constructor(
                 )
             }
         }
-        val historyCid = videoInfoRepository.lastPlayedCid.value
-        val historyTime = videoInfoRepository.lastPlayedTime.value
+        val sharedState = videoInfoRepository.videoSharedState.value
+        val historyCid = sharedState?.lastPlayedCid ?: 0L
+        val historyTime = sharedState?.lastPlayedTime ?: 0
         if (historyCid == _uiState.value.cid && historyTime > 0) {
             _uiState.update { it.copy(lastPlayed = historyTime) }
         }
@@ -287,6 +306,126 @@ class PlayerViewModel @Inject constructor(
             player.pause()
         } else {
             player.start()
+        }
+    }
+
+    /** 暂停视频，不改变其它播放器设置。 */
+    fun pausePlayback() {
+        if (videoPlayer?.isPlaying == true) videoPlayer?.pause()
+    }
+
+    /** 恢复视频播放。 */
+    fun resumePlayback() {
+        if (videoPlayer?.isPlaying != true) videoPlayer?.start()
+    }
+
+    /** 切换当前视频点赞状态，并同步详情页。 */
+    fun toggleVideoLike() {
+        val aid = _uiState.value.aid.takeIf { it > 0L } ?: return
+        val current = videoInfoRepository.videoSharedState.value?.takeIf { it.aid == aid }?.liked ?: false
+        viewModelScope.launch {
+            runCatching {
+                withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                    likeRepository.updateVideoLiked(aid = aid, like = !current)
+                }
+            }.onSuccess {
+                videoInfoRepository.updateVideoActionState(aid = aid, liked = !current)
+                _uiEffect.emit(PlayerUiEffect.ShowToast(if (!current) "已点赞" else "已取消点赞"))
+            }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                logger.error(error) { "Failed to toggle video like: aid=$aid" }
+                _uiEffect.emit(PlayerUiEffect.ShowToast("点赞失败: ${error.message ?: "未知错误"}"))
+            }
+        }
+    }
+
+    /** 为当前视频投一枚硬币，并同步详情页。 */
+    fun sendVideoCoin() {
+        val aid = _uiState.value.aid.takeIf { it > 0L } ?: return
+        viewModelScope.launch {
+            runCatching {
+                withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                    coinRepository.sendVideoCoin(aid = aid)
+                }
+            }.onSuccess {
+                videoInfoRepository.updateVideoActionState(aid = aid, coined = true)
+                _uiEffect.emit(PlayerUiEffect.ShowToast("已投币"))
+            }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                logger.error(error) { "Failed to send video coin: aid=$aid" }
+                _uiEffect.emit(PlayerUiEffect.ShowToast("投币失败: ${error.message ?: "未知错误"}"))
+            }
+        }
+    }
+
+    /** 收藏当前视频到默认收藏夹，并同步详情页。 */
+    fun toggleVideoFavorite() {
+        val aid = _uiState.value.aid.takeIf { it > 0L } ?: return
+        val current = videoInfoRepository.videoSharedState.value?.takeIf { it.aid == aid }?.favorited ?: false
+        viewModelScope.launch {
+            runCatching {
+                withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                    val folders = favoriteRepository.getAllFavoriteFolderMetadataList(
+                        mid = authRepository.mid ?: error("未登录"),
+                        rid = aid,
+                        preferApiType = ApiType.Web,
+                    )
+                    val selected = folders.filter { it.videoInThisFav }.map { it.id }
+                    val defaultFolder = folders.firstOrNull { it.title == "默认收藏夹" }?.id
+                    if (current) {
+                        favoriteRepository.updateVideoToFavoriteFolder(
+                            aid = aid,
+                            addMediaIds = emptyList(),
+                            delMediaIds = selected,
+                            preferApiType = ApiType.Web,
+                        )
+                    } else {
+                        favoriteRepository.updateVideoToFavoriteFolder(
+                            aid = aid,
+                            addMediaIds = listOfNotNull(defaultFolder),
+                            delMediaIds = emptyList(),
+                            preferApiType = ApiType.Web,
+                        )
+                    }
+                }
+            }.onSuccess {
+                videoInfoRepository.updateVideoActionState(aid = aid, favorited = !current)
+                _uiEffect.emit(PlayerUiEffect.ShowToast(if (current) "已取消收藏" else "已收藏"))
+            }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                logger.error(error) { "Failed to toggle video favorite: aid=$aid" }
+                _uiEffect.emit(PlayerUiEffect.ShowToast("收藏失败: ${error.message ?: "未知错误"}"))
+            }
+        }
+    }
+
+    /** 执行当前视频一键三连，并同步详情页。 */
+    fun oneClickTripleAction() {
+        val aid = _uiState.value.aid.takeIf { it > 0L } ?: return
+        val bvid = videoInfoRepository.videoDetail.value?.bvid
+        viewModelScope.launch {
+            runCatching {
+                withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                    oneClickTripleActionRepository.sendVideoOneClickTripleAction(
+                        aid = aid,
+                        bvid = bvid,
+                    )
+                }
+            }.onSuccess { result ->
+                if (result != null) {
+                    videoInfoRepository.updateVideoActionState(
+                        aid = aid,
+                        liked = result.like,
+                        coined = result.coin,
+                        favorited = result.fav,
+                    )
+                }
+                _uiEffect.emit(PlayerUiEffect.ShowToast("一键三连"))
+            }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                logger.error(error) { "Failed to send one-click triple action: aid=$aid" }
+                _uiEffect.emit(PlayerUiEffect.ShowToast("一键三连失败: ${error.message ?: "未知错误"}"))
+            }
         }
     }
 
@@ -411,8 +550,9 @@ class PlayerViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 videoInfoRepository.loadVideoDetail(newVideo.aid, getApiType())
                 // 仅当历史 cid 与当前播放 cid 一致时才应用断点续播
-                val historyCid = videoInfoRepository.lastPlayedCid.value
-                val historyTime = videoInfoRepository.lastPlayedTime.value
+                val sharedState = videoInfoRepository.videoSharedState.value
+                val historyCid = sharedState?.lastPlayedCid ?: 0L
+                val historyTime = sharedState?.lastPlayedTime ?: 0
                 if (historyCid == newVideo.cid && historyTime > 0) {
                     _uiState.update { it.copy(lastPlayed = historyTime) }
                 }

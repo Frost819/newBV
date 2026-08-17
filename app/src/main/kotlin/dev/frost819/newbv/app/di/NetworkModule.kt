@@ -10,6 +10,7 @@ import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
+import dev.frost819.newbv.biliapi.repositories.CommentRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
 import dev.frost819.newbv.biliapi.repositories.HistoryRepository
@@ -126,6 +127,16 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideChannelRepository(): ChannelRepository = ChannelRepository()
+
+    /**
+     * 提供 [CommentRepository] 单例。
+     *
+     * 封装主评论、楼中楼与评论点赞接口（Web/App HTTP）。
+     */
+    @Provides
+    @Singleton
+    fun provideCommentRepository(authRepository: AuthRepository): CommentRepository =
+        CommentRepository(authRepository)
 
     /**
      * 提供 [RecommendVideoRepository] 单例。

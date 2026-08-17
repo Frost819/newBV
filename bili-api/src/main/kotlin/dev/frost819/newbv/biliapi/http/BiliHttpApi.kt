@@ -779,6 +779,95 @@ object BiliHttpApi {
         }.bodyAsText()
 
     /**
+     * 获取视频主评论列表。
+     *
+     * Web 请求使用 SESSDATA，App 请求通过 [accessKey] 鉴权。两种请求返回相同的 JSON
+     * 结构，便于 Repository 统一解析。
+     *
+     * @param aid 视频 AV 号
+     * @param sort 排序方式，0 为时间，1 为热度，2 为回复数
+     * @param page 页码，从 1 开始
+     * @param pageSize 每页数量，接口上限为 20
+     * @param accessKey App access_key，为空时使用 Web 请求
+     */
+    suspend fun getVideoComments(
+        aid: Long,
+        sort: Int = 1,
+        page: Int = 1,
+        pageSize: Int = 20,
+        accessKey: String? = null,
+    ): BiliResponse<JsonObject> =
+        client.get("/x/v2/reply") {
+            parameter("type", 1)
+            parameter("oid", aid)
+            parameter("sort", sort)
+            parameter("pn", page.coerceAtLeast(1))
+            parameter("ps", pageSize.coerceIn(1, 20))
+            parameter("nohot", 1)
+            accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
+        }.body()
+
+    /**
+     * 获取视频评论的楼中楼。
+     *
+     * @param aid 视频 AV 号
+     * @param rootRpid 根评论 ID
+     * @param page 页码，从 1 开始
+     * @param pageSize 每页数量，接口上限为 49
+     * @param accessKey App access_key，为空时使用 Web 请求
+     */
+    suspend fun getVideoCommentReplies(
+        aid: Long,
+        rootRpid: Long,
+        page: Int = 1,
+        pageSize: Int = 20,
+        accessKey: String? = null,
+    ): BiliResponse<JsonObject> =
+        client.get("/x/v2/reply/reply") {
+            parameter("type", 1)
+            parameter("oid", aid)
+            parameter("root", rootRpid)
+            parameter("pn", page.coerceAtLeast(1))
+            parameter("ps", pageSize.coerceIn(1, 49))
+            accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
+        }.body()
+
+    /**
+     * 点赞或取消点赞评论。
+     *
+     * @param aid 视频 AV 号
+     * @param rpid 评论 ID
+     * @param like 是否点赞
+     * @param csrf Web 请求的 bili_jct
+     * @param accessKey App access_key
+     */
+    suspend fun updateCommentLiked(
+        aid: Long,
+        rpid: Long,
+        like: Boolean,
+        csrf: String? = null,
+        accessKey: String? = null,
+    ): Pair<Boolean, String> {
+        val response =
+            client.post("/x/v2/reply/action") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("type", "1")
+                            append("oid", aid.toString())
+                            append("rpid", rpid.toString())
+                            append("action", if (like) "1" else "0")
+                            csrf?.takeIf { it.isNotBlank() }?.let { append("csrf", it) }
+                            accessKey?.takeIf { it.isNotBlank() }?.let { append("access_key", it) }
+                        },
+                    ),
+                )
+                header("Referer", "https://www.bilibili.com")
+            }.body<BiliResponseWithoutData>()
+        return (response.code == 0) to response.message
+    }
+
+    /**
      * 获取视频[avid]的[cid]视频更多信息，例如播放进度
      */
     suspend fun getVideoMoreInfo(

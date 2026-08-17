@@ -29,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Paid
@@ -84,6 +85,8 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.LoadingTip
+import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
+import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
@@ -97,6 +100,7 @@ import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
+import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiState
@@ -145,8 +149,6 @@ private fun VideoDetailScreen(
 ) {
     val viewModel: VideoDetailViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
-    val historyLastPlayedCid by viewModel.historyLastPlayedCid.collectAsState()
-    val historyLastPlayedTime by viewModel.historyLastPlayedTime.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -171,13 +173,15 @@ private fun VideoDetailScreen(
             )
         }
         state.detail != null -> {
+            val commentViewModel: CommentViewModel = hiltViewModel()
             VideoDetailContent(
                 detail = state.detail!!,
                 state = state,
                 viewModel = viewModel,
                 navController = navController,
-                lastPlayedCid = historyLastPlayedCid,
-                lastPlayedTime = historyLastPlayedTime,
+                lastPlayedCid = state.historyLastPlayedCid,
+                lastPlayedTime = state.historyLastPlayedTime,
+                commentViewModel = commentViewModel,
             )
         }
     }
@@ -252,6 +256,7 @@ private fun VideoDetailContent(
     navController: NavController,
     lastPlayedCid: Long,
     lastPlayedTime: Int,
+    commentViewModel: CommentViewModel,
 ) {
     val scrollState = rememberScrollState()
     val focusSaver = rememberScreenFocusSaver()
@@ -263,6 +268,7 @@ private fun VideoDetailContent(
     var seasonDialogSectionIndex by remember { mutableStateOf(0) }
     var seasonDialogEpisodes by remember { mutableStateOf<List<Episode>>(emptyList()) }
     var seasonDialogTitle by remember { mutableStateOf("") }
+    var showCommentsDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -288,6 +294,7 @@ private fun VideoDetailContent(
                 }
             },
             onToggleFollow = { viewModel.toggleFollow() },
+            onShowComments = { showCommentsDialog = true },
             onClickTag = { tag ->
                 navController.navigate(SearchResultRoute(keyword = tag.name))
             },
@@ -456,6 +463,15 @@ private fun VideoDetailContent(
             },
         )
     }
+
+    if (showCommentsDialog) {
+        CommentsDialog(
+            aid = detail.aid,
+            mode = CommentDialogMode.Detail,
+            viewModel = commentViewModel,
+            onDismiss = { showCommentsDialog = false },
+        )
+    }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -552,6 +568,7 @@ private fun VideoInfoHeader(
     onOneClickTriple: () -> Unit,
     onToggleFavorite: () -> Unit,
     onToggleFollow: () -> Unit,
+    onShowComments: () -> Unit,
     onClickTag: (Tag) -> Unit,
     onPlayVideo: () -> Unit,
     onClickUp: () -> Unit,
@@ -563,6 +580,7 @@ private fun VideoInfoHeader(
     val likeFocusRequester = focusSaver.focusRequesterFor("like")
     val coinFocusRequester = focusSaver.focusRequesterFor("coin")
     val favoriteFocusRequester = focusSaver.focusRequesterFor("favorite")
+    val commentsFocusRequester = focusSaver.focusRequesterFor("comments")
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     LaunchedEffect(Unit) {
@@ -751,6 +769,15 @@ private fun VideoInfoHeader(
                     modifier = Modifier
                         .focusRequester(favoriteFocusRequester)
                         .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("favorite") },
+                )
+                ActionButton(
+                    text = "评论",
+                    icon = Icons.AutoMirrored.Outlined.Comment,
+                    highlighted = false,
+                    onClick = onShowComments,
+                    modifier = Modifier
+                        .focusRequester(commentsFocusRequester)
+                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("comments") },
                 )
             }
         }

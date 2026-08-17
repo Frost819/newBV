@@ -86,6 +86,8 @@ fun VideoPlayerController(
     onToggleSubtitle: () -> Unit,
     onGoToUpPage: () -> Unit,
     onGoToVideoDetail: () -> Unit,
+    onShowInteraction: () -> Unit,
+    onShowComments: () -> Unit,
     onMediaProfileSettingChange: (MediaProfileSettingAction) -> Unit,
     onAspectRatioChange: (VideoAspectRatio) -> Unit,
     onPlaySpeedChange: (Float) -> Unit,
@@ -544,6 +546,8 @@ fun VideoPlayerController(
             onGoToVideoInfo = onGoToVideoDetail,
             onToggleLoop = { onToggleLoop(); startControllerAutoHide() },
             onGoToUpPage = onGoToUpPage,
+            onShowInteraction = onShowInteraction,
+            onShowComments = onShowComments,
         )
 
         // 分集列表

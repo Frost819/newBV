@@ -103,13 +103,8 @@ class VideoInfoRepositoryTest {
     }
 
     @Test
-    fun `initial state has zero lastPlayedCid`() {
-        assertThat(repository.lastPlayedCid.value).isEqualTo(0L)
-    }
-
-    @Test
-    fun `initial state has zero lastPlayedTime`() {
-        assertThat(repository.lastPlayedTime.value).isEqualTo(0)
+    fun `initial state has null videoSharedState`() {
+        assertThat(repository.videoSharedState.value).isNull()
     }
 
     // ── updateVideoList ──────────────────────────────────────────────
@@ -168,14 +163,15 @@ class VideoInfoRepositoryTest {
     }
 
     @Test
-    fun `updateVideoDetail sets lastPlayedCid and lastPlayedTime from history`() = runTest(testDispatcher) {
+    fun `updateVideoDetail sets lastPlayedCid and lastPlayedTime in sharedState`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail(history = VideoDetail.History(progress = 300, lastPlayedCid = 999L))
 
         repository.updateVideoDetail(detail)
         advanceUntilIdle()
 
-        assertThat(repository.lastPlayedCid.value).isEqualTo(999L)
-        assertThat(repository.lastPlayedTime.value).isEqualTo(300)
+        val shared = repository.videoSharedState.value
+        assertThat(shared?.lastPlayedCid).isEqualTo(999L)
+        assertThat(shared?.lastPlayedTime).isEqualTo(300)
     }
 
     @Test
@@ -204,8 +200,8 @@ class VideoInfoRepositoryTest {
 
         assertThat(repository.videoDetail.value).isEqualTo(detail)
         assertThat(repository.relatedVideos.value).hasSize(1)
-        assertThat(repository.lastPlayedCid.value).isEqualTo(50L)
-        assertThat(repository.lastPlayedTime.value).isEqualTo(500)
+        assertThat(repository.videoSharedState.value?.lastPlayedCid).isEqualTo(50L)
+        assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(500)
     }
 
     @Test
@@ -287,12 +283,12 @@ class VideoInfoRepositoryTest {
     // ── updateHistory ────────────────────────────────────────────────
 
     @Test
-    fun `updateHistory sets lastPlayedCid and lastPlayedTime`() = runTest(testDispatcher) {
+    fun `updateHistory sets lastPlayedCid and lastPlayedTime in sharedState`() = runTest(testDispatcher) {
         repository.updateHistory(progress = 600, lastPlayedCid = 200L)
         advanceUntilIdle()
 
-        assertThat(repository.lastPlayedCid.value).isEqualTo(200L)
-        assertThat(repository.lastPlayedTime.value).isEqualTo(600)
+        assertThat(repository.videoSharedState.value?.lastPlayedCid).isEqualTo(200L)
+        assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(600)
     }
 
     @Test
@@ -300,18 +296,19 @@ class VideoInfoRepositoryTest {
         repository.updateHistory(progress = -1, lastPlayedCid = 0L)
         advanceUntilIdle()
 
-        assertThat(repository.lastPlayedTime.value).isEqualTo(-1)
+        assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(-1)
     }
 
     @Test
-    fun `lastPlayedCid StateFlow emits on updateHistory`() = runTest(testDispatcher) {
-        repository.lastPlayedCid.test {
-            assertThat(awaitItem()).isEqualTo(0L)
+    fun `videoSharedState emits lastPlayedCid on updateHistory`() = runTest(testDispatcher) {
+        repository.videoSharedState.test {
+            assertThat(awaitItem()).isNull()
 
             repository.updateHistory(progress = 100, lastPlayedCid = 42L)
             advanceUntilIdle()
 
-            assertThat(awaitItem()).isEqualTo(42L)
+            val shared = awaitItem()
+            assertThat(shared?.lastPlayedCid).isEqualTo(42L)
         }
     }
 
@@ -334,7 +331,6 @@ class VideoInfoRepositoryTest {
         assertThat(repository.videoList.value).isEmpty()
         assertThat(repository.videoDetail.value).isNull()
         assertThat(repository.relatedVideos.value).isEmpty()
-        assertThat(repository.lastPlayedCid.value).isEqualTo(0L)
-        assertThat(repository.lastPlayedTime.value).isEqualTo(0)
+        assertThat(repository.videoSharedState.value).isNull()
     }
 }

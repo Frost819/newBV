@@ -12,6 +12,10 @@ import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.CoinRepository
+import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
+import dev.frost819.newbv.biliapi.repositories.LikeRepository
+import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.ActionAfterPlay
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
@@ -61,6 +65,10 @@ class PlayerViewModelTest {
     private lateinit var videoInfoRepository: VideoInfoRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var exoPlayerFactory: ExoPlayerFactory
+    private lateinit var likeRepository: LikeRepository
+    private lateinit var coinRepository: CoinRepository
+    private lateinit var favoriteRepository: FavoriteRepository
+    private lateinit var oneClickTripleActionRepository: OneClickTripleActionRepository
     private lateinit var viewModel: PlayerViewModel
     private lateinit var mockPlayer: AbstractVideoPlayer
 
@@ -72,6 +80,10 @@ class PlayerViewModelTest {
         videoInfoRepository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
         exoPlayerFactory = mockk()
+        likeRepository = mockk(relaxed = true)
+        coinRepository = mockk(relaxed = true)
+        favoriteRepository = mockk(relaxed = true)
+        oneClickTripleActionRepository = mockk(relaxed = true)
 
         mockkObject(Prefs)
         every { Prefs.apiType } returns DataApiType.Web
@@ -88,14 +100,17 @@ class PlayerViewModelTest {
 
         every { videoInfoRepository.videoList } returns MutableStateFlow(emptyList())
         every { videoInfoRepository.relatedVideos } returns MutableStateFlow(emptyList())
-        every { videoInfoRepository.lastPlayedCid } returns MutableStateFlow(0L)
-        every { videoInfoRepository.lastPlayedTime } returns MutableStateFlow(0)
+        every { videoInfoRepository.videoSharedState } returns MutableStateFlow(null)
 
         viewModel = PlayerViewModel(
             videoPlayRepository = videoPlayRepository,
             videoInfoRepository = videoInfoRepository,
             authRepository = authRepository,
             exoPlayerFactory = exoPlayerFactory,
+            likeRepository = likeRepository,
+            coinRepository = coinRepository,
+            favoriteRepository = favoriteRepository,
+            oneClickTripleActionRepository = oneClickTripleActionRepository,
         )
     }
 
