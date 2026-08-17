@@ -286,26 +286,26 @@ private fun SeasonInfoHeader(
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (detail.styles.isNotEmpty()) {
                     Text(
                         text = detail.styles.joinToString(" / "),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 if (detail.newEpDesc.isNotEmpty()) {
                     Text(
                         text = detail.newEpDesc,
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Text(
                     text = detail.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -328,6 +328,7 @@ private fun SeasonInfoHeader(
                     text = if (isFollowing) "已追番" else "追番",
                     icon = if (isFollowing) Icons.Rounded.Star else Icons.Outlined.StarBorder,
                     highlighted = isFollowing,
+                    accentColor = MaterialTheme.colorScheme.secondary,
                     onClick = onToggleFollow,
                     modifier = Modifier
                         .focusRequester(followFocusRequester)
@@ -343,6 +344,7 @@ private fun SeasonActionButton(
     text: String,
     icon: ImageVector,
     highlighted: Boolean,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -365,11 +367,15 @@ private fun SeasonActionButton(
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = if (highlighted) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                accentColor.copy(alpha = 0.2f)
             } else {
-                Color.White.copy(alpha = 0.08f)
+                MaterialTheme.colorScheme.surfaceVariant
             },
-            contentColor = Color.White,
+            contentColor = if (highlighted) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         ),
     ) {
         Row(
@@ -381,12 +387,16 @@ private fun SeasonActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint = if (highlighted) MaterialTheme.colorScheme.border else Color.White,
+                tint = if (highlighted) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
+                color = if (highlighted) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
     }
@@ -408,7 +418,7 @@ private fun SeasonEpisodeRow(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 50.dp),
         )
         val focusRequester = focusSaver.focusRequesterFor(rowKey)
@@ -503,7 +513,7 @@ private fun EpisodeCard(
         Text(
             text = episode.title,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
+             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -524,7 +534,7 @@ private fun SeasonSwitcherRow(
         Text(
             text = "系列",
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 50.dp),
         )
         val focusRequester = focusSaver.focusRequesterFor("seasons")
@@ -586,18 +596,26 @@ private fun SeasonChip(
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = if (isCurrent) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                MaterialTheme.colorScheme.secondaryContainer
             } else {
-                Color.White.copy(alpha = 0.08f)
+                MaterialTheme.colorScheme.surfaceVariant
             },
-            contentColor = Color.White,
+            contentColor = if (isCurrent) {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         ),
     ) {
         Text(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color = Color.White,
+            color = if (isCurrent) {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         )
     }
 }
@@ -622,7 +640,7 @@ private fun SeasonErrorScreen(
         ) {
             Text(
                 text = message.ifBlank { "加载失败" },
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Surface(
                 modifier = Modifier
@@ -640,14 +658,14 @@ private fun SeasonErrorScreen(
                     ),
                 ),
                 colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     text = "重试",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

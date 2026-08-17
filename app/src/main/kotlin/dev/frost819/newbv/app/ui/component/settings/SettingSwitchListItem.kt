@@ -39,7 +39,7 @@ fun SettingSwitchListItem(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
-    var switchChecked by remember { mutableStateOf(checked) }
+    var switchChecked by remember(checked) { mutableStateOf(checked) }
 
     ListItem(
         modifier = modifier
@@ -54,7 +54,7 @@ fun SettingSwitchListItem(
         trailingContent = {
             Box(
                 modifier = Modifier
-                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                    .border(2.dp, MaterialTheme.colorScheme.border, CircleShape),
             ) {
                 Switch(
                     modifier = Modifier
@@ -63,10 +63,10 @@ fun SettingSwitchListItem(
                     checked = switchChecked,
                     onCheckedChange = null,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.inverseSurface,
-                        checkedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surface,
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                     ),
                 )
             }

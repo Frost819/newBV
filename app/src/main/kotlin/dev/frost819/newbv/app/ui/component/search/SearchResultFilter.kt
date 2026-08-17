@@ -98,10 +98,17 @@ fun SearchResultFilter(
                                 onClick = { currentOrder = order },
                                 modifier = Modifier.touchClickable(onClick = { currentOrder = order }),
                                 colors = FilterChipDefaults.colors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                 ),
                             ) {
-                                Text(label)
+                                Text(
+                                    text = label,
+                                    color = if (currentOrder == order) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                                )
                             }
                         }
                     }
@@ -124,10 +131,17 @@ fun SearchResultFilter(
                                 onClick = { currentDuration = duration },
                                 modifier = Modifier.touchClickable(onClick = { currentDuration = duration }),
                                 colors = FilterChipDefaults.colors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                 ),
                             ) {
-                                Text(label)
+                                Text(
+                                    text = label,
+                                    color = if (currentDuration == duration) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                                )
                             }
                         }
                     }

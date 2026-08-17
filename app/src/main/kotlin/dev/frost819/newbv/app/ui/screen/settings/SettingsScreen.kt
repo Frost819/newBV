@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -229,6 +231,14 @@ private fun SettingsMenuButton(
 ) {
     ListItem(
         modifier = modifier
+            .background(
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    androidx.compose.ui.graphics.Color.Transparent
+                },
+                shape = RoundedCornerShape(12.dp),
+            )
             .onFocusChanged { if (it.hasFocus) onFocus() }
             .touchClickable(onClick = { onFocus() }),
         selected = selected,
@@ -238,6 +248,11 @@ private fun SettingsMenuButton(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 text = text,
                 style = MaterialTheme.typography.titleLarge,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         },
     )

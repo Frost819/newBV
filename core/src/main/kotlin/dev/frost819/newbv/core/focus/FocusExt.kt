@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 import dev.frost819.newbv.core.interaction.currentInputMethod
 import dev.frost819.newbv.core.interaction.InputMethod
@@ -43,16 +44,17 @@ import kotlinx.coroutines.launch
  *
  * @param shape 边框形状，默认 [ShapeDefaults.Large]。
  * @param animate 是否启用呼吸动画。
- * @param color 边框颜色，默认白色。
+ * @param color 边框颜色，默认使用当前主题的边框色。
  * @param width 边框宽度，默认 3dp。
  */
 fun Modifier.focusedBorder(
     shape: Shape = ShapeDefaults.Large,
     animate: Boolean = false,
-    color: Color = Color.White,
+    color: Color? = null,
     width: Dp = 3.dp
 ): Modifier = composed {
     val tracker = LocalInteractionTracker.current
+    val resolvedColor = color ?: MaterialTheme.colorScheme.border
     var hasFocus by remember { mutableStateOf(false) }
 
     val showBorder = if (tracker != null) {
@@ -64,8 +66,8 @@ fun Modifier.focusedBorder(
 
     val infiniteTransition = rememberInfiniteTransition(label = "focused-border-transition")
     val animateColor by infiniteTransition.animateColor(
-        initialValue = color.copy(alpha = 1f),
-        targetValue = color.copy(alpha = 0.1f),
+        initialValue = resolvedColor.copy(alpha = 1f),
+        targetValue = resolvedColor.copy(alpha = 0.1f),
         animationSpec = infiniteRepeatable(
             animation = tween(1000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
@@ -73,7 +75,7 @@ fun Modifier.focusedBorder(
         label = "focused-border-color"
     )
     val borderColor = if (showBorder) {
-        if (animate) animateColor else color
+        if (animate) animateColor else resolvedColor
     } else Color.Transparent
 
     onFocusChanged { hasFocus = it.hasFocus }

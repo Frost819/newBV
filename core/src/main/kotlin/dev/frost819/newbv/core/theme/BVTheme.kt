@@ -43,39 +43,69 @@ fun BVTheme(
     val isDark = themeMode.isDark(systemIsDark)
 
     val tvColorScheme = if (isDark) tvDark(
-        primary = BVColors.Pink,
+        primary = BVColors.Primary,
         onPrimary = Color.White,
-        primaryContainer = BVColors.PinkDark,
-        secondary = BVColors.Blue,
-        onSecondary = Color.White,
+        primaryContainer = BVColors.PrimaryStrong,
+        onPrimaryContainer = Color.White,
+        secondary = BVColors.Secondary,
+        onSecondary = BVColors.DarkOnBackground,
+        secondaryContainer = BVColors.DarkSurfaceVariant,
+        onSecondaryContainer = BVColors.DarkOnSurface,
+        background = BVColors.DarkBackground,
+        onBackground = BVColors.DarkOnBackground,
+        surface = BVColors.DarkSurface,
+        onSurface = BVColors.DarkOnSurface,
+        surfaceVariant = BVColors.DarkSurfaceVariant,
+        onSurfaceVariant = BVColors.DarkOnSurfaceVariant,
         border = BVColors.DarkBorder
     ) else tvLight(
-        primary = BVColors.Pink,
+        primary = BVColors.PrimaryStrong,
         onPrimary = Color.White,
-        primaryContainer = BVColors.PinkLight,
-        secondary = BVColors.Blue,
-        onSecondary = Color.White,
+        primaryContainer = BVColors.PrimaryLight,
+        onPrimaryContainer = BVColors.LightOnBackground,
+        secondary = BVColors.Secondary,
+        onSecondary = BVColors.LightOnBackground,
+        secondaryContainer = BVColors.LightSurfaceVariant,
+        onSecondaryContainer = BVColors.LightOnBackground,
+        background = BVColors.LightBackground,
+        onBackground = BVColors.LightOnBackground,
+        surface = BVColors.LightSurface,
+        onSurface = BVColors.LightOnSurface,
+        surfaceVariant = BVColors.LightSurfaceVariant,
+        onSurfaceVariant = BVColors.LightOnSurfaceVariant,
         border = BVColors.LightBorder
     )
 
     val commonColorScheme = if (isDark) commonDark(
-        primary = BVColors.Pink,
+        primary = BVColors.Primary,
         onPrimary = Color.White,
-        secondary = BVColors.Blue,
-        onSecondary = Color.White,
+        primaryContainer = BVColors.PrimaryStrong,
+        onPrimaryContainer = Color.White,
+        secondary = BVColors.Secondary,
+        onSecondary = BVColors.DarkOnBackground,
+        secondaryContainer = BVColors.DarkSurfaceVariant,
+        onSecondaryContainer = BVColors.DarkOnSurface,
         background = BVColors.DarkBackground,
         onBackground = BVColors.DarkOnBackground,
         surface = BVColors.DarkSurface,
-        onSurface = BVColors.DarkOnSurface
+        onSurface = BVColors.DarkOnSurface,
+        surfaceVariant = BVColors.DarkSurfaceVariant,
+        onSurfaceVariant = BVColors.DarkOnSurfaceVariant
     ) else commonLight(
-        primary = BVColors.Pink,
+        primary = BVColors.PrimaryStrong,
         onPrimary = Color.White,
-        secondary = BVColors.Blue,
-        onSecondary = Color.White,
+        primaryContainer = BVColors.PrimaryLight,
+        onPrimaryContainer = BVColors.LightOnBackground,
+        secondary = BVColors.Secondary,
+        onSecondary = BVColors.LightOnBackground,
+        secondaryContainer = BVColors.LightSurfaceVariant,
+        onSecondaryContainer = BVColors.LightOnBackground,
         background = BVColors.LightBackground,
         onBackground = BVColors.LightOnBackground,
         surface = BVColors.LightSurface,
-        onSurface = BVColors.LightOnSurface
+        onSurface = BVColors.LightOnSurface,
+        surfaceVariant = BVColors.LightSurfaceVariant,
+        onSurfaceVariant = BVColors.LightOnSurfaceVariant
     )
 
     if (!view.isInEditMode) {

@@ -419,7 +419,7 @@ private fun CardInfo(
             Icon(
                 painter = painterResource(id = R.drawable.ic_up),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.size(24.dp),
             )
             Text(
@@ -428,12 +428,14 @@ private fun CardInfo(
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = pubTime ?: "",
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

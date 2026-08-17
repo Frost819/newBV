@@ -212,7 +212,7 @@ private fun ErrorScreen(
         ) {
             Text(
                 text = message.ifBlank { "加载失败" },
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Surface(
                 modifier = Modifier
@@ -230,14 +230,14 @@ private fun ErrorScreen(
                     ),
                 ),
                 colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     text = "重试",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -486,14 +486,14 @@ private fun FavoriteFolderDialog(
                 }
                 .width(500.dp)
                 .clip(MaterialTheme.shapes.large)
-                .background(Color.Black.copy(alpha = 0.95f))
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(20.dp),
         ) {
             Column {
                 Text(
                     text = "选择收藏夹",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
 
@@ -618,7 +618,7 @@ private fun VideoInfoHeader(
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -659,8 +659,8 @@ private fun VideoInfoHeader(
                             ),
                         ),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.White.copy(alpha = 0.08f),
-                            contentColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     ) {
                         Row(
@@ -680,7 +680,7 @@ private fun VideoInfoHeader(
                             Text(
                                 text = detail.author.name,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -762,7 +762,7 @@ private fun StatText(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = Color.White.copy(alpha = 0.7f),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -771,7 +771,7 @@ private fun StatSeparator() {
     Text(
         text = "·",
         style = MaterialTheme.typography.labelMedium,
-        color = Color.White.copy(alpha = 0.4f),
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
     )
 }
 
@@ -803,8 +803,16 @@ private fun ActionButton(
         onLongClick = onLongClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.08f),
-            contentColor = Color.White,
+            containerColor = if (highlighted) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+            contentColor = if (highlighted) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         ),
     ) {
         Row(
@@ -816,12 +824,16 @@ private fun ActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint = if (highlighted) MaterialTheme.colorScheme.border else Color.White,
+                tint = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
+                color = if (highlighted) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
     }
@@ -843,9 +855,9 @@ private fun VideoDescription(
             .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") }
             .touchClickable(onClick = { expanded = !expanded }),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.05f),
-            focusedContainerColor = Color.White.copy(alpha = 0.12f),
-            contentColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
         border = ClickableSurfaceDefaults.border(
@@ -865,7 +877,7 @@ private fun VideoDescription(
                 .animateContentSize(),
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = if (expanded) Int.MAX_VALUE else 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -910,7 +922,7 @@ private fun VideoPartRow(
             Text(
                 text = "分P",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (pages.size > PART_LIST_DIALOG_THRESHOLD) {
                 Surface(
@@ -918,8 +930,8 @@ private fun VideoPartRow(
                     modifier = Modifier.touchClickable(onClick = onShowPartListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors = ClickableSurfaceDefaults.colors(
-                        containerColor = Color.White.copy(alpha = 0.08f),
-                        contentColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                 ) {
                     Icon(
@@ -939,8 +951,8 @@ private fun VideoPartRow(
                         modifier = Modifier.touchClickable(onClick = { onClick(lastPage) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.White.copy(alpha = 0.08f),
-                            contentColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     ) {
                         Row(
@@ -956,7 +968,7 @@ private fun VideoPartRow(
                             Text(
                                 text = "上次看到 P${lastPage.index}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -1029,9 +1041,9 @@ private fun PartButton(
             containerColor = if (isCurrent) {
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
             } else {
-                Color.White.copy(alpha = 0.08f)
+                MaterialTheme.colorScheme.surfaceVariant
             },
-            contentColor = Color.White,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -1050,7 +1062,7 @@ private fun PartButton(
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1096,7 +1108,7 @@ private fun VideoUgcSeasonRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (episodes.size > PART_LIST_DIALOG_THRESHOLD) {
                 Surface(
@@ -1104,8 +1116,8 @@ private fun VideoUgcSeasonRow(
                     modifier = Modifier.touchClickable(onClick = onShowListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors = ClickableSurfaceDefaults.colors(
-                        containerColor = Color.White.copy(alpha = 0.08f),
-                        contentColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                 ) {
                     Icon(
@@ -1125,8 +1137,8 @@ private fun VideoUgcSeasonRow(
                         modifier = Modifier.touchClickable(onClick = { onClick(lastEpisode) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.White.copy(alpha = 0.08f),
-                            contentColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     ) {
                         Row(
@@ -1142,7 +1154,7 @@ private fun VideoUgcSeasonRow(
                             Text(
                                 text = "上次看到 ${lastEpisode.title}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -1188,7 +1200,7 @@ private fun RelatedVideoRow(
         Text(
             text = "相关视频",
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 50.dp),
         )
         val focusRequester = focusSaver.focusRequesterFor("related")
@@ -1275,7 +1287,7 @@ private fun VideoPartListDialog(
                 .focusRequester(dialogFocusRequester)
                 .size(width = 600.dp, height = 330.dp)
                 .clip(MaterialTheme.shapes.large)
-                .background(Color.Black.copy(alpha = 0.9f)),
+                .background(MaterialTheme.colorScheme.surface),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (pageCount > 1) {
@@ -1308,7 +1320,7 @@ private fun VideoPartListDialog(
                                     color = if (selectedTab == index) {
                                         MaterialTheme.colorScheme.border
                                     } else {
-                                        Color.White
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                     },
                                 )
                             }
@@ -1385,7 +1397,7 @@ private fun VideoEpisodeListDialog(
                 .focusRequester(dialogFocusRequester)
                 .size(width = 600.dp, height = 330.dp)
                 .clip(MaterialTheme.shapes.large)
-                .background(Color.Black.copy(alpha = 0.9f)),
+                .background(MaterialTheme.colorScheme.surface),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
@@ -1394,7 +1406,7 @@ private fun VideoEpisodeListDialog(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (pageCount > 1) {
                     TabRow(
@@ -1426,7 +1438,7 @@ private fun VideoEpisodeListDialog(
                                     color = if (selectedTab == index) {
                                         MaterialTheme.colorScheme.border
                                     } else {
-                                        Color.White
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                     },
                                 )
                             }

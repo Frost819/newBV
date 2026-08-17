@@ -68,16 +68,24 @@ class LiveRepositoryUnitTest {
             playUrlInfo = PlayUrlInfo(PlayUrl(cid = 1, qnDesc = listOf(QnDesc(10000, "原画")), stream = streams)),
         )
 
-    private fun stream(protocol: String, vararg formats: PlayFormat) = PlayStream(protocol, formats.toList())
+    private fun stream(
+        protocol: String,
+        vararg formats: PlayFormat,
+    ) = PlayStream(protocol, formats.toList())
 
-    private fun format(name: String, vararg codecs: PlayCodec) = PlayFormat(name, codecs.toList())
+    private fun format(
+        name: String,
+        vararg codecs: PlayCodec,
+    ) = PlayFormat(name, codecs.toList())
 
-    private fun codec(name: String, path: String) =
-        PlayCodec(
-            codecName = name,
-            currentQn = 10000,
-            baseUrl = "/$path",
-            urlInfo = listOf(PlayUrlInfoItem(host = "https://cdn.example", extra = "")),
-            mediaInfo = MediaInfo(),
-        )
+    private fun codec(
+        name: String,
+        path: String,
+    ) = PlayCodec(
+        codecName = name,
+        currentQn = 10000,
+        baseUrl = "/$path",
+        urlInfo = listOf(PlayUrlInfoItem(host = "https://cdn.example", extra = "")),
+        mediaInfo = MediaInfo(),
+    )
 }

@@ -4,6 +4,7 @@ import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +56,11 @@ fun QrLoginContent(
     onLoginSuccess: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val statusColor = when (uiState.state) {
+        QrLoginState.Error, QrLoginState.Expired -> MaterialTheme.colorScheme.error
+        QrLoginState.Success -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.onSurface
+    }
 
     LaunchedEffect(Unit) {
         viewModel.requestAppQrCode()
@@ -126,7 +132,7 @@ fun QrLoginContent(
                                 uiState.errorMessage.ifEmpty { stringResource(R.string.login_error) }
                         },
                         style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
+                        color = statusColor,
                     )
                     AnimatedVisibility(
                         visible = uiState.state == QrLoginState.Expired ||
@@ -135,7 +141,7 @@ fun QrLoginContent(
                         Text(
                             text = stringResource(R.string.login_retry),
                             style = MaterialTheme.typography.displaySmall,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.error,
                             fontSize = 26.sp,
                         )
                     }
@@ -167,6 +173,7 @@ private fun QrCodeImage(
     Box(
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
+            .border(2.dp, MaterialTheme.colorScheme.border, MaterialTheme.shapes.large)
             .background(Color.White),
         contentAlignment = Alignment.Center,
     ) {

@@ -33,7 +33,7 @@ import dev.frost819.newbv.core.focus.touchClickable
  * 番剧/影视卡片。
  *
  * 封面（0.75 宽高比）+ 底部渐变评分 + 标题/副标题。
- * 焦点选中时显示白色边框。
+ * 焦点选中时显示主题边框。
  *
  * @param data 卡片数据。
  * @param onClick 点击回调。
@@ -58,7 +58,7 @@ fun SeasonCard(
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.large),
         border = ClickableSurfaceDefaults.border(
             focusedBorder = Border(
-                border = BorderStroke(width = 3.dp, color = Color.White),
+                    border = BorderStroke(width = 3.dp, color = MaterialTheme.colorScheme.border),
                 shape = MaterialTheme.shapes.large,
             ),
         ),

@@ -45,14 +45,14 @@ fun SettingsMenuSelectItem(
                 onClick = { },
                 colors = RadioButtonDefaults.colors(
                     selectedColor = if (hasFocus) {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.primary
                     },
                     unselectedColor = if (hasFocus) {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        MaterialTheme.colorScheme.primaryContainer
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.border
                     },
                 ),
             )

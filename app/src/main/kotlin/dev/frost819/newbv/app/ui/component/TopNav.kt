@@ -2,6 +2,8 @@ package dev.frost819.newbv.app.ui.component
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,9 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
@@ -38,6 +43,7 @@ import dev.frost819.newbv.core.focus.touchClickable
  * @param items Tab 项列表（已按首选项排序）。
  * @param selectedIndex 当前选中的 Tab 索引（由外部控制，用于导航返回后恢复）。
  * @param isLargePadding 内容区未获焦点时使用较大内边距。
+ * @param accentColor 当前页面 Tab 的强调色。
  * @param onSelectedChanged Tab 焦点切换回调。
  * @param onClick Tab 点击回调。
  */
@@ -47,6 +53,7 @@ fun TopNav(
     items: List<TopNavItem>,
     selectedIndex: Int = 0,
     isLargePadding: Boolean,
+    accentColor: Color? = null,
     onSelectedChanged: (TopNavItem) -> Unit = {},
     onClick: (TopNavItem) -> Unit = {},
 ) {
@@ -83,6 +90,7 @@ fun TopNav(
                         selectedTabIndex = index
                         onSelectedChanged(tab)
                     },
+                    accentColor = accentColor ?: MaterialTheme.colorScheme.primary,
                     onClick = { onClick(tab) },
                 )
             }
@@ -95,11 +103,24 @@ private fun TabRowScope.NavItemTab(
     modifier: Modifier = Modifier,
     topNavItem: TopNavItem,
     selected: Boolean,
+    accentColor: Color,
     onClick: () -> Unit,
     onFocus: () -> Unit,
 ) {
+    var hasFocus by remember { mutableStateOf(false) }
+    val containerColor = if (selected) {
+        accentColor.copy(alpha = if (hasFocus) 0.24f else 0.14f)
+    } else {
+        Color.Transparent
+    }
+    val borderColor = if (hasFocus) accentColor else Color.Transparent
     Tab(
-        modifier = modifier.touchClickable(onClick = onClick),
+        modifier = modifier
+            .onFocusChanged { hasFocus = it.hasFocus }
+            .clip(RoundedCornerShape(50))
+            .background(containerColor)
+            .border(2.dp, borderColor, RoundedCornerShape(50))
+            .touchClickable(onClick = onClick),
         selected = selected,
         onFocus = onFocus,
         onClick = onClick,
@@ -109,7 +130,7 @@ private fun TabRowScope.NavItemTab(
                 .height(32.dp)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             text = topNavItem.displayName,
-            color = LocalContentColor.current,
+            color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelLarge,
         )
     }

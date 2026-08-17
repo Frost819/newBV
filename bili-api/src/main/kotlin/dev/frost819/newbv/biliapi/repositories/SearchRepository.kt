@@ -438,9 +438,7 @@ data class SearchTypeResult(
         val liveStatus: Int,
     ) : SearchTypeResultItem {
         companion object {
-            fun fromSearchLiveRoomResult(
-                room: dev.frost819.newbv.biliapi.http.entity.search.SearchLiveRoomResult,
-            ) =
+            fun fromSearchLiveRoomResult(room: dev.frost819.newbv.biliapi.http.entity.search.SearchLiveRoomResult) =
                 LiveRoom(
                     roomId = room.roomid,
                     title = room.title,

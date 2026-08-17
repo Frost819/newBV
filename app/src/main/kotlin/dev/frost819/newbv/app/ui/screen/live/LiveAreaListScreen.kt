@@ -182,7 +182,7 @@ private fun LiveAreaListScreen(
             modifier = Modifier.padding(24.dp, 16.dp),
             text = title,
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         TvLazyVerticalGrid(

@@ -192,6 +192,7 @@ fun SearchResultContent(
                 modifier = Modifier.focusRequester(tabRowFocusRequester),
                 items = SearchType.entries.map { SearchTypeNavItem(it) },
                 isLargePadding = !focusOnContent,
+                accentColor = MaterialTheme.colorScheme.primary,
                 onSelectedChanged = { item ->
                     viewModel.switchType((item as SearchTypeNavItem).type)
                 },

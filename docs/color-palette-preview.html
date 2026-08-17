@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>new BV 配色预览</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #e8ecf5;
+      --surface-3: #dbe2f0;
+      --text: #172033;
+      --muted: #59657c;
+      --faint: #7d889d;
+      --primary: #7773ad;
+      --primary-strong: #5e5a8b;
+      --secondary: #5b9b94;
+      --success: #70a684;
+      --warning: #c49b5c;
+      --danger: #c87878;
+      --shadow: 0 18px 48px rgba(32, 43, 72, .12);
+      --line: rgba(81, 72, 199, .14);
+    }
+
+    [data-theme="dark"] {
+      --bg: #171717;
+      --surface: #222222;
+      --surface-2: #303030;
+      --surface-3: #3b3b3b;
+      --text: #f2f2f2;
+      --muted: #b8b8b8;
+      --faint: #8f8f8f;
+      --primary: #9995cf;
+      --primary-strong: #7773ad;
+      --secondary: #79b8ae;
+      --success: #8bc29b;
+      --warning: #d5b477;
+      --danger: #db9090;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .3);
+      --line: rgba(139, 133, 255, .2);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      transition: background .25s, color .25s;
+    }
+    button { font: inherit; }
+    .shell { max-width: 1180px; margin: auto; padding: 42px 24px 72px; }
+    .hero { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 34px; }
+    .eyebrow { color: var(--secondary); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    h1 { margin: 8px 0 8px; font-size: clamp(32px, 6vw, 62px); line-height: .98; letter-spacing: -.055em; }
+    .intro { max-width: 590px; color: var(--muted); font-size: 17px; margin: 0; }
+    .theme-toggle { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 999px; padding: 11px 17px; cursor: pointer; box-shadow: var(--shadow); white-space: nowrap; }
+    .section { margin-top: 34px; }
+    .section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    h2 { font-size: 18px; margin: 0; }
+    .section-title span { color: var(--faint); font-size: 12px; }
+    .palette-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .swatch { min-height: 112px; border-radius: 16px; padding: 13px; display: flex; flex-direction: column; justify-content: end; box-shadow: var(--shadow); }
+    .swatch strong { font-size: 13px; }
+    .swatch code { opacity: .8; font-size: 11px; margin-top: 2px; }
+    .light { color: #fff; }
+    .dark { color: #172033; }
+    .layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 22px; box-shadow: var(--shadow); }
+    .mock-app { overflow: hidden; padding: 0; }
+    .mock-top { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+    .logo { font-weight: 850; letter-spacing: -.04em; font-size: 20px; }
+    .logo i { color: var(--secondary); font-style: normal; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+    .mock-body { padding: 22px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+    .tab { border: 0; border-radius: 999px; padding: 9px 16px; color: var(--muted); background: var(--surface-2); }
+    .tab.active { color: #fff; background: var(--primary); box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 28%, transparent); }
+    .feature { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .cover { min-height: 165px; border-radius: 18px; padding: 16px; display: flex; align-items: end; color: #fff; background: linear-gradient(145deg, #4d5378, #171b2e 62%, #4f8883); }
+    .cover b { font-size: 19px; line-height: 1.15; }
+    .card { background: var(--surface-2); border-radius: 18px; padding: 16px; }
+    .card h3 { margin: 0 0 7px; font-size: 16px; }
+    .card p { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+    .progress { height: 5px; background: var(--surface-3); border-radius: 8px; overflow: hidden; }
+    .progress i { display: block; width: 64%; height: 100%; background: var(--primary); }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
+    .btn { border: 1px solid var(--line); color: var(--text); background: var(--surface); padding: 9px 14px; border-radius: 11px; }
+    .btn.primary { border-color: transparent; color: #fff; background: var(--primary); }
+    .btn.secondary { border-color: transparent; color: #082f2b; background: var(--secondary); }
+    .focus-demo { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .text-samples { display: grid; gap: 16px; }
+    .sample { padding: 16px; border-radius: 16px; background: var(--surface-2); }
+    .sample strong { display: block; margin-bottom: 4px; }
+    .sample p { margin: 0; color: var(--muted); }
+    .sample small { display: block; color: var(--faint); margin-top: 7px; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .status { padding: 8px 12px; border-radius: 9px; font-weight: 700; font-size: 13px; }
+    .status.success { color: #0d4828; background: var(--success); }
+    .status.warning { color: #50320b; background: var(--warning); }
+    .status.danger { color: #fff; background: var(--danger); }
+    .note { color: var(--muted); font-size: 13px; margin: 16px 0 0; }
+    @media (max-width: 820px) {
+      .hero { align-items: start; flex-direction: column; }
+      .palette-grid { grid-template-columns: repeat(3, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .shell { padding: 28px 15px 48px; }
+      .palette-grid { grid-template-columns: repeat(2, 1fr); }
+      .feature { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">NEW BV / COLOR STUDY 01</div>
+        <h1>深海极光</h1>
+        <p class="intro">用灰调蓝紫建立品牌识别，用低饱和青色补充层次。整体避开 B 站粉色，深色稳重，浅色清爽，适合电视大屏观看。</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle">切换到浅色模式</button>
+    </header>
+
+    <section class="section">
+      <div class="section-title"><h2>品牌与状态色</h2><span>Brand / Status</span></div>
+      <div class="palette-grid">
+        <div class="swatch light" style="background:#7773AD"><strong>Primary</strong><code>#7773AD</code></div>
+        <div class="swatch light" style="background:#5E5A8B"><strong>Primary Strong</strong><code>#5E5A8B</code></div>
+        <div class="swatch dark" style="background:#9995CF"><strong>Primary Light</strong><code>#9995CF</code></div>
+        <div class="swatch dark" style="background:#5B9B94"><strong>Secondary</strong><code>#5B9B94</code></div>
+        <div class="swatch dark" style="background:#C49B5C"><strong>Warning</strong><code>#C49B5C</code></div>
+        <div class="swatch light" style="background:#C87878"><strong>Danger</strong><code>#C87878</code></div>
+      </div>
+    </section>
+
+    <section class="section layout">
+      <div class="panel mock-app">
+        <div class="mock-top"><div class="logo">new <i>BV</i></div><div class="avatar"></div></div>
+        <div class="mock-body">
+          <div class="tabs"><button class="tab active">推荐</button><button class="tab">热门</button><button class="tab">直播</button></div>
+          <div class="feature">
+            <div class="cover"><b>在夜色里发现<br>下一段故事</b></div>
+            <div class="card">
+              <h3>主题层级示例</h3>
+              <p>这是 surface、正文和辅助文字的组合，浅色与深色都保持清晰。</p>
+              <div class="progress"><i></i></div>
+              <div class="actions"><button class="btn primary">继续观看</button><button class="btn secondary">收藏</button><button class="btn focus-demo">焦点态</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title"><h2>文字与状态</h2><span>Contrast / Feedback</span></div>
+        <div class="text-samples">
+          <div class="sample"><strong>主标题文字</strong><p>用于页面标题、视频标题和重要信息。</p><small>次级文字用于时间、播放量和说明信息</small></div>
+          <div class="sample"><strong>播放器始终保持深色</strong><p>全局切换浅色后，播放器控制层仍使用深色背景和浅色文字。</p></div>
+        </div>
+        <div class="status-row"><span class="status success">播放正常</span><span class="status warning">需要登录</span><span class="status danger">加载失败</span></div>
+        <p class="note">焦点态使用 Primary，避免浅色主题中的黑色粗边框，也避免深色主题中的纯白刺眼边框。</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const page = document.body;
+    const button = document.getElementById('themeToggle');
+    button.addEventListener('click', () => {
+      const dark = page.dataset.theme === 'dark';
+      page.dataset.theme = dark ? 'light' : 'dark';
+      button.textContent = dark ? '切换到深色模式' : '切换到浅色模式';
+    });
+  </script>
+</body>
+</html>

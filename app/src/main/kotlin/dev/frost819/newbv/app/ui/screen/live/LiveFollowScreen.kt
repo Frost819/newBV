@@ -167,7 +167,7 @@ private fun LiveFollowScreen(
             modifier = Modifier.padding(24.dp, 16.dp),
             text = "我的关注",
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         TvLazyVerticalGrid(

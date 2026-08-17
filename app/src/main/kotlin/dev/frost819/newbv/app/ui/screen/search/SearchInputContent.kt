@@ -136,8 +136,11 @@ private fun SearchInputColumn(
                 maxLines = 1,
                 shape = MaterialTheme.shapes.large,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.inverseSurface,
-                    cursorColor = MaterialTheme.colorScheme.inverseSurface,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.border,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    cursorColor = MaterialTheme.colorScheme.primary,
                 ),
                 placeholder = { Text("搜索") },
             )
@@ -187,7 +190,8 @@ private fun SearchHotwordsColumn(
                     Prefs.showHotword = showHotword
                 },
                 colors = ButtonDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             ) {
                 if (showHotword) {

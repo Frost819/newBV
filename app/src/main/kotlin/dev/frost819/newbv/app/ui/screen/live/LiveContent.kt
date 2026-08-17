@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -130,7 +129,7 @@ fun LiveContent(
                 Text(
                     text = "加载中…",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else if (state.followError) {
@@ -138,7 +137,7 @@ fun LiveContent(
                 Text(
                     text = "加载失败",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Red.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         } else if (state.followItems.isEmpty()) {
@@ -146,7 +145,7 @@ fun LiveContent(
                 Text(
                     text = "暂无关注的直播",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else {
@@ -192,7 +191,7 @@ fun LiveContent(
             Text(
                 text = "推荐直播",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
@@ -247,7 +246,7 @@ private fun FollowHeader(
         Text(
             text = "我的关注",
             style = MaterialTheme.typography.titleLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.width(12.dp))
         Surface(
@@ -257,7 +256,8 @@ private fun FollowHeader(
             onClick = onMoreClick,
             shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
             colors = ClickableSurfaceDefaults.colors(
-                containerColor = Color.White.copy(alpha = 0.1f),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             ),
         ) {
             Row(
@@ -267,13 +267,13 @@ private fun FollowHeader(
                 Text(
                     text = "更多",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
                 Spacer(Modifier.width(2.dp))
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.height(12.dp),
                 )
             }
@@ -296,7 +296,7 @@ private fun AreaSection(
         Text(
             text = "推荐分区",
             style = MaterialTheme.typography.titleLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 2.dp) // 标题稍微往右缩进对齐
         )
         Spacer(Modifier.height(10.dp))
@@ -362,7 +362,7 @@ private fun AreaMiniCard(
                     modifier = Modifier
                         .size(48.dp)
                         .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            MaterialTheme.colorScheme.secondaryContainer,
                             MaterialTheme.shapes.small,
                         ),
                 )
@@ -371,7 +371,7 @@ private fun AreaMiniCard(
             Text(
                 text = area.name,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

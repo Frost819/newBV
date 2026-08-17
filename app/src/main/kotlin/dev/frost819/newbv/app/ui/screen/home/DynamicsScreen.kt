@@ -61,7 +61,7 @@ fun DynamicsScreen(
             Text(
                 text = "请先登录",
                 style = androidx.tv.material3.MaterialTheme.typography.displaySmall,
-                color = Color.White,
+                color = androidx.tv.material3.MaterialTheme.colorScheme.onSurface,
             )
         }
         return

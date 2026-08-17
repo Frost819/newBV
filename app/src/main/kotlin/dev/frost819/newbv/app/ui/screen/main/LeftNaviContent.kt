@@ -84,7 +84,7 @@ fun LeftNaviContent(
                 }
                 false
             },
-        containerColor = Color.White.copy(alpha = 0.05f),
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         var userIsFocused by remember { mutableStateOf(false) }
         NavigationRailItem(
@@ -106,7 +106,7 @@ fun LeftNaviContent(
                             .size(40.dp)
                             .clip(CircleShape),
                         colors = SurfaceDefaults.colors(
-                            containerColor = Color.Gray,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         ),
                     ) {
                         AsyncImage(
