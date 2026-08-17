@@ -38,6 +38,7 @@ private val keyboardKeys = listOf(
  * D-Pad 焦点导航，首个按键可绑定 [firstButtonFocusRequester]。
  *
  * @param firstButtonFocusRequester 首个按键的焦点请求器
+ * @param searchButtonModifier 搜索按钮的额外 modifier（用于焦点恢复）
  * @param onClick 字符键点击回调
  * @param onClear 清除全部
  * @param onDelete 删除最后一个字符
@@ -47,6 +48,7 @@ private val keyboardKeys = listOf(
 fun SoftKeyboard(
     modifier: Modifier = Modifier,
     firstButtonFocusRequester: FocusRequester,
+    searchButtonModifier: Modifier = Modifier,
     onClick: (String) -> Unit,
     onClear: () -> Unit,
     onDelete: () -> Unit,
@@ -88,7 +90,9 @@ fun SoftKeyboard(
                 onClick = onDelete,
             )
             SoftKeyboardButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .then(searchButtonModifier),
                 key = "搜索",
                 onClick = onSearch,
             )

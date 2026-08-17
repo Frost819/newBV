@@ -10,11 +10,13 @@ import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.repository.SearchHistoryRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
@@ -69,7 +71,10 @@ class SearchInputViewModel @Inject constructor(
     fun commitSearch(keyword: String, onCompleted: () -> Unit = {}) {
         if (keyword.isBlank()) return
         viewModelScope.launch {
-            searchHistoryRepository.addHistory(keyword)
+            // 页面会在提交后跳转，确保数据库写入不会因源页面销毁而被取消。
+            withContext(NonCancellable) {
+                searchHistoryRepository.addHistory(keyword)
+            }
             loadHistories()
             onCompleted()
         }

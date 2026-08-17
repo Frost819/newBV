@@ -1,9 +1,13 @@
 package dev.frost819.newbv.app.ui.screen.search
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,8 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -28,23 +38,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.search.SearchKeyword
 import dev.frost819.newbv.app.ui.component.search.SoftKeyboard
 import dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DeleteSweep
+import dev.frost819.newbv.data.datastore.Prefs
 
 /**
  * 搜索输入页内容。
  *
  * 三列水平布局：搜索框+软键盘 | 热词/建议 | 搜索历史。
+ * 所有可聚焦元素接入 [ScreenFocusSaver]，从搜索结果页返回后恢复焦点。
  */
 @Composable
 fun SearchInputContent(
@@ -54,6 +64,9 @@ fun SearchInputContent(
     onSearch: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val focusSaver = rememberScreenFocusSaver()
+
+    focusSaver.RestoreFocus()
 
     Row(
         modifier = modifier
@@ -65,6 +78,7 @@ fun SearchInputContent(
         // 列 1：搜索框 + 软键盘
         SearchInputColumn(
             focusRequester = focusRequester,
+            searchButtonModifier = Modifier.focusSaverItem(focusSaver, "search_button"),
             keyword = uiState.keyword,
             onKeywordChange = { viewModel.updateKeyword(it) },
             onSearch = { onSearch(uiState.keyword) },
@@ -75,11 +89,13 @@ fun SearchInputContent(
             SearchHotwordsColumn(
                 hotwords = uiState.hotwords,
                 onSearch = onSearch,
+                focusSaver = focusSaver,
             )
         } else {
             SearchSuggestsColumn(
                 suggests = uiState.suggests,
                 onSearch = onSearch,
+                focusSaver = focusSaver,
             )
         }
 
@@ -89,6 +105,7 @@ fun SearchInputContent(
             onSearch = onSearch,
             onDelete = { viewModel.deleteHistory(it) },
             onDeleteAll = { viewModel.clearAllHistories() },
+            focusSaver = focusSaver,
         )
     }
 }
@@ -96,11 +113,12 @@ fun SearchInputContent(
 @Composable
 private fun SearchInputColumn(
     focusRequester: FocusRequester,
+    searchButtonModifier: Modifier,
     keyword: String,
     onKeywordChange: (String) -> Unit,
     onSearch: () -> Unit,
 ) {
-    Box(
+    androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .width(280.dp)
             .fillMaxHeight()
@@ -125,6 +143,7 @@ private fun SearchInputColumn(
             )
             SoftKeyboard(
                 firstButtonFocusRequester = focusRequester,
+                searchButtonModifier = searchButtonModifier,
                 onClick = { onKeywordChange(keyword + it) },
                 onClear = { onKeywordChange("") },
                 onDelete = {
@@ -142,26 +161,63 @@ private fun SearchInputColumn(
 private fun SearchHotwordsColumn(
     hotwords: List<dev.frost819.newbv.biliapi.entity.search.Hotword>,
     onSearch: (String) -> Unit,
+    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
 ) {
+    var showHotword by remember { mutableStateOf(Prefs.showHotword) }
+
     Column(
         modifier = Modifier
             .width(250.dp)
             .fillMaxHeight()
             .focusGroup(),
     ) {
-        Text(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            text = "热搜",
-            style = MaterialTheme.typography.titleLarge,
-        )
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = 4.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            items(hotwords) { hotword ->
-                SearchKeyword(
-                    keyword = hotword.showName,
-                    onClick = { onSearch(hotword.showName) },
-                )
+            Text(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                text = "热搜",
+                style = MaterialTheme.typography.titleLarge,
+            )
+            IconButton(
+                onClick = {
+                    showHotword = !showHotword
+                    Prefs.showHotword = showHotword
+                },
+                colors = ButtonDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            ) {
+                if (showHotword) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "收起热搜",
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "展开热搜",
+                    )
+                }
+            }
+        }
+        AnimatedVisibility(
+            visible = showHotword,
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+        ) {
+            LazyColumn(
+                contentPadding = PaddingValues(vertical = 4.dp),
+            ) {
+                itemsIndexed(hotwords) { index, hotword ->
+                    SearchKeyword(
+                        modifier = Modifier.focusSaverItem(focusSaver, "hotword_$index"),
+                        keyword = hotword.showName,
+                        onClick = { onSearch(hotword.showName) },
+                    )
+                }
             }
         }
     }
@@ -171,6 +227,7 @@ private fun SearchHotwordsColumn(
 private fun SearchSuggestsColumn(
     suggests: List<String>,
     onSearch: (String) -> Unit,
+    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
 ) {
     Column(
         modifier = Modifier
@@ -186,8 +243,9 @@ private fun SearchSuggestsColumn(
         LazyColumn(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
-            items(suggests) { suggest ->
+            itemsIndexed(suggests) { index, suggest ->
                 SearchKeyword(
+                    modifier = Modifier.focusSaverItem(focusSaver, "suggest_$index"),
                     keyword = suggest,
                     onClick = { onSearch(suggest) },
                 )
@@ -202,6 +260,7 @@ private fun SearchHistoryColumn(
     onSearch: (String) -> Unit,
     onDelete: (String) -> Unit,
     onDeleteAll: () -> Unit,
+    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
 ) {
     var deleteMode by remember { mutableStateOf(false) }
 
@@ -253,8 +312,9 @@ private fun SearchHistoryColumn(
         LazyColumn(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
-            items(histories) { history ->
+            itemsIndexed(histories) { index, history ->
                 SearchKeyword(
+                    modifier = Modifier.focusSaverItem(focusSaver, "history_$index"),
                     keyword = history.keyword,
                     onClick = {
                         if (deleteMode) {
@@ -264,10 +324,12 @@ private fun SearchHistoryColumn(
                         }
                     },
                     trailingIcon = if (deleteMode) {
-                        { Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                        ) }
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                            )
+                        }
                     } else null,
                 )
             }
