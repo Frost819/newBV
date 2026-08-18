@@ -16,19 +16,17 @@ import java.util.Locale
  * 全局崩溃处理器。
  *
  * 通过 [Thread.setDefaultUncaughtExceptionHandler] 捕获未处理异常，
- * 将崩溃日志（含设备信息、最近交互日志、logcat 输出）写入文件，
+ * 将崩溃日志（含设备信息、应用日志和 logcat 输出）写入文件，
  * 然后转发给原始 handler 执行默认行为（如退出）。
  *
  * 文件命名：`logs_crash_YYYY-MM-dd_HH:mm:ss.log`
  * 日志目录：`filesDir/crash_logs`
  *
  * @param context 应用 Context（用于获取文件目录和包信息）。
- * @param interactionLogger 交互日志记录器（提供最近交互上下文）。
  * @param maxLogCount 崩溃日志最大保留数量，超出删除最旧的。
  */
 class CrashHandler(
     private val context: Context,
-    private val interactionLogger: InteractionLogger,
     private val maxLogCount: Int = 10
 ) {
     private val logger = KotlinLogging.logger("CrashHandler")
@@ -141,11 +139,9 @@ class CrashHandler(
             val crashFile = File(logDir, createFilename(manual = false))
             crashFile.createNewFile()
 
-            // 写入崩溃上下文（设备信息 + 最近交互日志 + 异常堆栈）
+            // 先写入设备信息和异常，再追加 Logcat，确保 KotlinLogging 输出也被保留。
             val deviceInfo = collectDeviceInfo()
-            kotlinx.coroutines.runBlocking {
-                interactionLogger.writeCrashContext(crashFile, deviceInfo, exception)
-            }
+            writeCrashContext(crashFile, deviceInfo, thread, exception)
 
             // 追加 logcat 输出
             appendLogcat(crashFile)
@@ -168,6 +164,36 @@ class CrashHandler(
                 writer.flush()
             }
             reader.close()
+        }
+    }
+
+    private fun writeCrashContext(
+        file: File,
+        deviceInfo: DeviceInfo,
+        thread: Thread,
+        throwable: Throwable,
+    ) {
+        OutputStreamWriter(FileOutputStream(file, true)).use { writer ->
+            writer.append(
+                LogFormat.crashHeader(
+                    appVersion = deviceInfo.appVersion,
+                    appVersionCode = deviceInfo.appVersionCode,
+                    androidVersion = deviceInfo.androidVersion,
+                    androidSdk = deviceInfo.androidSdk,
+                    device = deviceInfo.device,
+                    model = deviceInfo.model,
+                    manufacturer = deviceInfo.manufacturer,
+                )
+            )
+            writer.appendLine("======== Exception ========")
+            writer.appendLine("Thread: ${thread.name}")
+            writer.appendLine("Exception: ${throwable.javaClass.name}: ${throwable.message}")
+            throwable.stackTrace.forEach { writer.appendLine("    at $it") }
+            throwable.cause?.let { cause ->
+                writer.appendLine("Caused by: ${cause.javaClass.name}: ${cause.message}")
+                cause.stackTrace.forEach { writer.appendLine("    at $it") }
+            }
+            writer.appendLine("================================")
         }
     }
 
@@ -204,3 +230,24 @@ class CrashHandler(
         return "${prefix}_$date.log"
     }
 }
+
+/**
+ * 崩溃日志中的设备与应用信息。
+ *
+ * @property appVersion 应用版本名。
+ * @property appVersionCode 应用版本号。
+ * @property androidVersion Android 版本。
+ * @property androidSdk Android SDK 版本。
+ * @property device 设备代号。
+ * @property model 设备型号。
+ * @property manufacturer 设备制造商。
+ */
+data class DeviceInfo(
+    val appVersion: String,
+    val appVersionCode: Int,
+    val androidVersion: String,
+    val androidSdk: Int,
+    val device: String,
+    val model: String,
+    val manufacturer: String,
+)

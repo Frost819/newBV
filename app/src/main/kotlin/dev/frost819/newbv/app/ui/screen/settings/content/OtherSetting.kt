@@ -20,7 +20,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
-import dev.frost819.newbv.app.ui.component.settings.SettingSwitchListItem
 import dev.frost819.newbv.app.ui.component.settings.displayName
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.data.datastore.ApiType
@@ -29,7 +28,7 @@ import dev.frost819.newbv.data.datastore.Prefs
 /**
  * 其他设置页。
  *
- * 接口选择/交互日志开关/崩溃上报端点/查看日志/CDN 测速。
+ * 接口选择/崩溃上报端点/查看日志/CDN 测速。
  *
  * @param onNavigateToSpeedTest 跳转 CDN 测速页回调。
  * @param onNavigateToLogViewer 跳转日志查看页回调。
@@ -44,7 +43,6 @@ fun OtherSetting(
 
     var showPreferedApiDialog by remember { mutableStateOf(false) }
     var selectedApi by remember { mutableStateOf(Prefs.apiType) }
-    var interactionLog by remember { mutableStateOf(Prefs.interactionLog) }
     var crashReportEndpoint by remember { mutableStateOf(Prefs.crashReportEndpoint) }
 
     Column(
@@ -67,16 +65,6 @@ fun OtherSetting(
             onClick = { showPreferedApiDialog = true },
         )
 
-        SettingSwitchListItem(
-            title = "交互日志",
-            supportText = "记录用户交互行为用于崩溃诊断",
-            checked = interactionLog,
-            onCheckedChange = {
-                interactionLog = it
-                Prefs.interactionLog = it
-            },
-        )
-
         SettingListItem(
             title = "崩溃上报端点",
             supportText = "当前：${crashReportEndpoint.ifEmpty { "未设置" }}",
@@ -92,7 +80,7 @@ fun OtherSetting(
 
         SettingListItem(
             title = "查看日志",
-            supportText = "查看崩溃日志和交互日志，支持扫码下载",
+            supportText = "查看崩溃日志和应用日志，支持扫码下载",
             onClick = onNavigateToLogViewer,
         )
 

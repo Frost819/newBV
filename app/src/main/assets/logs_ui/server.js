@@ -16,7 +16,6 @@
     if (typeof name !== "string") return "unknown";
     if (name.startsWith("logs_manual_")) return "manual";
     if (name.startsWith("logs_crash_")) return "crash";
-    if (name.startsWith("logs_interaction_")) return "interaction";
     return "unknown";
   }
 
@@ -27,7 +26,6 @@
     var s = name;
     if (s.startsWith("logs_manual_")) s = s.substring("logs_manual_".length);
     if (s.startsWith("logs_crash_")) s = s.substring("logs_crash_".length);
-    if (s.startsWith("logs_interaction_")) s = s.substring("logs_interaction_".length);
 
     // 日期格式化：2026-02-20 -> 2026/02/20
     s = s.replace(/^(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3");
@@ -103,14 +101,12 @@
   function splitItems(items) {
     var manual = [];
     var crash = [];
-    var interaction = [];
 
     for (var i = 0; i < items.length; i++) {
       var it = items[i] || {};
       var type = it.type || inferTypeFromName(it.name);
       if (type === "manual") manual.push(it);
       else if (type === "crash") crash.push(it);
-      else if (type === "interaction") interaction.push(it);
     }
 
     manual.sort(function (a, b) {
@@ -119,30 +115,23 @@
     crash.sort(function (a, b) {
       return (b.lastModified || 0) - (a.lastModified || 0);
     });
-    interaction.sort(function (a, b) {
-      return (b.lastModified || 0) - (a.lastModified || 0);
-    });
-
-    return { manual: manual, crash: crash, interaction: interaction };
+    return { manual: manual, crash: crash };
   }
 
   var state = {
     manualListId: null,
     crashListId: null,
-    interactionListId: null,
   };
 
   async function refresh() {
     var manualEl = $(state.manualListId);
     var crashEl = $(state.crashListId);
-    var interactionEl = $(state.interactionListId);
     if (!manualEl || !crashEl) return;
 
     var items = await fetchLogList();
     var split = splitItems(items);
     renderList(manualEl, split.manual);
     renderList(crashEl, split.crash);
-    if (interactionEl) renderList(interactionEl, split.interaction);
   }
 
   async function createManualAndDownload() {
@@ -155,8 +144,6 @@
   function init(opts) {
     state.manualListId = opts && opts.manualListId ? opts.manualListId : "manualLogList";
     state.crashListId = opts && opts.crashListId ? opts.crashListId : "crashLogList";
-    state.interactionListId = opts && opts.interactionListId ? opts.interactionListId : "interactionLogList";
-
     refresh().catch(function () { });
   }
 

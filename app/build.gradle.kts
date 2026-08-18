@@ -136,10 +136,9 @@ dependencies {
     implementation(libs.akdanmaku)
     implementation(libs.androidsvg)
     implementation(libs.jsoup)
-    implementation(libs.logging)
+    implementation(libs.logging.android)
     implementation(libs.lottie)
     implementation(libs.qrcode)
-    implementation(libs.slf4j)
     debugImplementation(libs.leakcanary)
 
     // === Testing ===
@@ -169,4 +168,19 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// The Android artifact replaces the JVM artifact pulled transitively by bili-api.
+configurations.matching {
+    it.name in
+        setOf(
+            "debugCompileClasspath",
+            "debugRuntimeClasspath",
+            "debugUnitTestCompileClasspath",
+            "debugUnitTestRuntimeClasspath",
+            "debugAndroidTestCompileClasspath",
+            "debugAndroidTestRuntimeClasspath",
+        )
+}.configureEach {
+    exclude(group = "io.github.oshai", module = "kotlin-logging-jvm")
 }

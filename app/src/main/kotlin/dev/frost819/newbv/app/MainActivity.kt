@@ -19,6 +19,7 @@ import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 import dev.frost819.newbv.core.theme.BVTheme
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
+import io.github.oshai.kotlinlogging.KotlinLogging
 import javax.inject.Inject
 
 /**
@@ -34,6 +35,8 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val logger = KotlinLogging.logger("MainActivity")
 
     @Inject
     lateinit var interactionTracker: InteractionTracker
@@ -73,6 +76,7 @@ class MainActivity : ComponentActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode in DPAD_KEY_CODES) {
             interactionTracker.onDpadKey()
+            logger.info { "[INPUT] keyDown keyCode=${KeyEvent.keyCodeToString(keyCode)}" }
         }
         return super.onKeyDown(keyCode, event)
     }

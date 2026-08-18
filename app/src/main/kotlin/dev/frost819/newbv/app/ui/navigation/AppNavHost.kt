@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -19,6 +20,7 @@ import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
 import dev.frost819.newbv.app.ui.screen.user.followScreen
 import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
  * 应用 Navigation 宿主。
@@ -34,6 +36,19 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: Any = HomeRoute
 ) {
+    val logger = KotlinLogging.logger("AppNavHost")
+
+    LaunchedEffect(navController) {
+        var previousRoute: String? = null
+        navController.currentBackStackEntryFlow.collect { entry ->
+            val route = entry.destination.route?.substringAfterLast('.') ?: "unknown"
+            if (previousRoute != null && previousRoute != route) {
+                logger.info { "[NAV] from=$previousRoute to=$route" }
+            }
+            previousRoute = route
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination

@@ -21,7 +21,6 @@ class CrashHandlerTest {
 
     private lateinit var context: Context
     private lateinit var crashHandler: CrashHandler
-    private lateinit var interactionLogger: InteractionLogger
     private lateinit var logDir: File
 
     @Before
@@ -31,14 +30,8 @@ class CrashHandlerTest {
         logDir.deleteRecursively()
         logDir.mkdirs()
 
-        interactionLogger = InteractionLogger(
-            logDir = logDir,
-            ringBufferSize = 50,
-            writeDispatcher = kotlinx.coroutines.Dispatchers.Unconfined
-        )
         crashHandler = CrashHandler(
             context = context,
-            interactionLogger = interactionLogger,
             maxLogCount = 3
         )
     }
@@ -120,10 +113,6 @@ class CrashHandlerTest {
     fun handleCrash_creates_crash_log_file() {
         crashHandler.install()
 
-        // 记录一些交互日志
-        interactionLogger.log(LogCategory.PLAY, "play_video", mapOf("aid" to "123"))
-        interactionLogger.log(LogCategory.NAV, "navigate", mapOf("route" to "detail"))
-
         // 模拟崩溃
         val exception = RuntimeException("Test crash for instrumentation test")
         val thread = Thread.currentThread()
@@ -137,24 +126,6 @@ class CrashHandlerTest {
         assertThat(content).contains("Test crash for instrumentation test")
         assertThat(content).contains("Exception")
         assertThat(content).contains("======== Logcat ========")
-    }
-
-    @Test
-    fun handleCrash_includes_recent_interaction_logs() {
-        crashHandler.install()
-
-        interactionLogger.log(LogCategory.PLAY, "play_video", mapOf("aid" to "123"))
-        interactionLogger.log(LogCategory.NAV, "navigate", mapOf("route" to "detail"))
-
-        val exception = IllegalStateException("Crash with context")
-        Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exception)
-
-        val crashLogs = crashHandler.listCrashLogs()
-        assertThat(crashLogs).isNotEmpty()
-        val content = crashLogs.first().readText()
-        // 崩溃日志应包含交互记录的头部标识
-        assertThat(content).contains("play_video")
-        assertThat(content).contains("navigate")
     }
 
     @Test

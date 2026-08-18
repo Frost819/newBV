@@ -22,7 +22,7 @@ import java.io.File
  * [PrefDelegate] 与 [Prefs] 辅助方法的单元测试。
  *
  * 测试 PrefDelegate 的读写、自定义 save/restore 映射、resetToDefault，
- * 以及 Prefs 的 flow 属性（themeModeFlow / densityFlow / interactionLogFlow）
+ * 以及 Prefs 的 flow 属性（themeModeFlow / densityFlow）
  * 和错误处理路径（未初始化时访问 dataStore / clear）。
  */
 class PrefDelegateTest {
@@ -157,23 +157,6 @@ class PrefDelegateTest {
         assertThat(flow.value).isEqualTo(3.5f)
     }
 
-    @Test
-    fun `interactionLogFlow returns StateFlow with default value`() {
-        val flow = Prefs.interactionLogFlow
-        assertThat(flow.value).isTrue()
-    }
-
-    @Test
-    fun `interactionLogFlow reflects changes`() = runBlocking {
-        val flow = Prefs.interactionLogFlow
-        assertThat(flow.value).isTrue()
-
-        Prefs.interactionLog = false
-        delay(200)
-
-        assertThat(flow.value).isFalse()
-    }
-
     // ===== Prefs 错误处理 =====
 
     @Test
@@ -231,7 +214,6 @@ class PrefDelegateTest {
         Prefs.firstPersonalTopNavItem = PersonalTopNavItem.History
         Prefs.showHotword = false
         Prefs.otherCacheThreshold = 300
-        Prefs.interactionLog = false
         Prefs.shortcutToast = false
         Prefs.playerCustomShortcuts = "[{\"key\":\"test\"}]"
 

@@ -121,7 +121,6 @@
                 window.LogService.init({
                     manualListId: "manualLogList",
                     crashListId: "crashLogList",
-                    interactionListId: "interactionLogList",
                 });
             }
         });
@@ -140,7 +139,6 @@
     <mdui-tabs full-width value="tab-1">
         <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-1">手动保存</mdui-tab>
         <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-2">崩溃日志</mdui-tab>
-        <mdui-tab style="background-color:rgba(var(--mdui-color-primary-container))" value="tab-3">交互日志</mdui-tab>
 
         <mdui-tab-panel slot="panel" value="tab-1">
             <div class="panel">
@@ -154,11 +152,6 @@
             </div>
         </mdui-tab-panel>
 
-        <mdui-tab-panel slot="panel" value="tab-3">
-            <div class="panel">
-                <div id="interactionLogList" class="log-list"></div>
-            </div>
-        </mdui-tab-panel>
     </mdui-tabs>
 
     <mdui-dialog id="createLogDialog" headline="手动保存日志">

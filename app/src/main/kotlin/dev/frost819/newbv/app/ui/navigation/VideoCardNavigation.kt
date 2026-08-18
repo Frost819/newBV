@@ -3,6 +3,9 @@ package dev.frost819.newbv.app.ui.navigation
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.data.datastore.Prefs
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val logger = KotlinLogging.logger("VideoCardNavigation")
 
 /**
  * 根据用户偏好决定点击视频卡片后的导航行为。
@@ -11,6 +14,9 @@ import dev.frost819.newbv.data.datastore.Prefs
  * - `showVideoInfo = false`：直接跳转到播放器（cid 由播放器内部加载详情获取）
  */
 fun NavController.navigateFromVideoCard(data: VideoCardData) {
+    logger.info {
+        "[CARD] click aid=${data.avid}, cid=${data.cid ?: 0L}, title=${data.title.take(80)}"
+    }
     if (Prefs.showVideoInfo) {
         navigate(VideoDetailRoute(aid = data.avid, bvid = data.bvid))
     } else {

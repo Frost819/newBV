@@ -160,6 +160,7 @@ androidsvg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "a
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 ktor-jsoup = { group = "com.tfowl.ktor", name = "ktor-jsoup", version.ref = "ktor-jsoup" }
 logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "logging" }
+logging-android = { group = "io.github.oshai", name = "kotlin-logging-android", version.ref = "logging" }
 lottie = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrcode" }
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }

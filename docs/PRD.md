@@ -36,7 +36,7 @@
 | 播放器引擎 | 仅 Media3/ExoPlayer，兼容 VOD + Live 双模式（不接入 VLC） |
 | 代理功能 | **完全删除**所有代理相关功能 |
 | 崩溃监控 | 本地为主 + 可选自建上报（移除 Firebase Crashlytics） |
-| 交互日志 | 本地文件 + Ktor 网页端查看 |
+| 诊断日志 | KotlinLogging 输出 Logcat，崩溃/手动日志由 Ktor 网页端查看 |
 | minSdk | 21（Android 5.0+，与原版一致） |
 | Kotlin / KSP / Java | 2.4.10 / 2.3.10 / 17 |
 | AGP / Gradle | 9.1.1 / 9.3.1 |
@@ -62,7 +62,7 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 - 采用单 Activity + Navigation 架构，根治焦点与状态问题
 - 拆分巨型 ViewModel，建立清晰的模块分层
 - 新增直播观看、评论浏览、触屏适配等核心缺失功能
-- 建立本地为主的崩溃监控与交互日志体系，不依赖国内不可用的云端服务
+- 建立本地为主的崩溃监控与诊断日志体系，不依赖国内不可用的云端服务
 - 移除所有代理相关功能，简化产品形态
 - 支持黑夜/白天主题切换，提升用户体验
 
@@ -92,7 +92,7 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 | 直播 | 有底层 API 无 UI | 完整直播功能 |
 | 评论 | 无 | 详情页 + 播放器内 |
 | ViewModel | 巨型（播放器 1417 行） | 按职责拆分 |
-| 交互日志 | 仅错误日志 | 全交互 log + 网页端 |
+| 诊断日志 | 仅错误日志 | 关键操作与错误 + 崩溃日志网页端 |
 | CDN 策略 | 用户可配置官方 CDN 优先 | 内部自动策略（不暴露） |
 | 图片库 | Coil 2.7 | Coil 3.x |
 | Firebase | 依赖（可选） | 完全移除 |
@@ -169,7 +169,7 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 | Koin | 依赖注入 | 替换为 Hilt |
 | Geetest Sensebot | 短信登录验证码 | 短信登录降级，暂不接入（保留代码注释） |
 | compose-remember-preference | 偏好绑定 | 改用 DataStore + Compose 原生 |
-| slf4j-handroid | 日志后端 | 改用 kotlin-logging 自带 |
+| kotlin-logging-android | KotlinLogging 的 Android 原生后端 | 确保普通诊断日志可被崩溃处理器捕获 |
 
 ### 2.2 整体架构图
 
@@ -352,7 +352,7 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 
 | 原版 ViewModel | new BV 拆分 |
 |---|---|
-| `VideoPlayerV3ViewModel` (1417 行) | `PlayerViewModel`（播放控制）<br>`PlayerMenuViewModel`（菜单/设置）<br>`DanmakuViewModel`（弹幕）<br>`SubtitleViewModel`（字幕）<br>`VideoListViewModel`（分集列表）<br>`PlayerInteractionViewModel`（交互日志、快捷键） |
+| `VideoPlayerV3ViewModel` (1417 行) | `PlayerViewModel`（播放控制）<br>`PlayerMenuViewModel`（菜单/设置）<br>`DanmakuViewModel`（弹幕）<br>`SubtitleViewModel`（字幕）<br>`VideoListViewModel`（分集列表）<br>`PlayerInteractionViewModel`（快捷键） |
 | `VideoInfoViewModel` | `VideoDetailViewModel`（详情数据）<br>`VideoActionViewModel`（点赞/投币/收藏） |
 | `MainViewModel` | `HomeViewModel`、`UgcViewModel`、`PgcViewModel`、`PersonalViewModel`（各 Tab 独立） |
 
@@ -562,7 +562,7 @@ Application.onCreate()
   ├─ 初始化 Coil 图片加载
   ├─ 初始化 Ktor 本地日志服务器 [增强]
   ├─ 注册全局未捕获异常处理器 [增强]
-  └─ 初始化交互日志记录器 [新增]
+   └─ 初始化 KotlinLogging Android Logcat 后端 [新增]
        │
        ▼
 MainActivity (SplashScreen)
@@ -576,7 +576,7 @@ MainActivity (SplashScreen)
 - 移除 `BVApp.initProxy()`（代理初始化）
 - 移除 `BVApp.initDeviceInfo()` 中的代理设备信息
 - 新增全局未捕获异常处理器（写本地崩溃日志）
-- 新增交互日志记录器初始化
+- 新增统一诊断日志初始化
 
 #### 3.1.2 用户锁（启动锁）
 
@@ -1359,7 +1359,7 @@ Row
 | 音视频 | 默认画质/编码/音轨/倍速/播放结束动作/自定义快捷键/软解开关 |
 | 界面 | 启动页/首页置顶/个人页置顶/显示视频详情页/常显进度条/界面缩放/主题 [新增] |
 | 其他 | 接口选择 (Web/App)/日志查看/崩溃上报端点 [新增] |
-| 存储 | 图片缓存/其他缓存/崩溃日志/交互日志 [新增] 清理 |
+| 存储 | 图片缓存/其他缓存/崩溃日志清理 |
 | 信息 | 设备信息/编解码信息 |
 | 关于 | 版本信息/检查更新 |
 
@@ -1392,7 +1392,7 @@ Row
 **规格**：
 - 默认空（关闭上报）
 - 用户填入 URL 后启用上报
-- 崩溃发生时自动 POST 崩溃日志 + 设备信息 + 最近交互日志
+- 崩溃发生时自动 POST 崩溃日志 + 设备信息 + 崩溃前 Logcat
 - 上报失败静默忽略（不影响用户体验）
 - 明确提示"崩溃日志将发送至您配置的服务器"
 
@@ -1426,7 +1426,7 @@ Row
 **实现**：Ktor CIO HTTP 服务器（随机端口）
 - `/` — 日志管理 UI（HTML）
 - `/api/logs/list` — 日志文件列表 JSON
-- `/api/logs/{filename}` — 下载日志文件（白名单：`logs_manual_*` / `logs_crash_*` / `logs_interaction_*` [新增]）
+- `/api/logs/{filename}` — 下载日志文件（白名单：`logs_manual_*` / `logs_crash_*`）
 - `/api/logs/create-manual-and-download` — 创建并下载手动日志
 
 #### 3.14.3 CDN 测速
@@ -1833,48 +1833,46 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 - Toast 位置：屏幕底部居中
 - 设置开关：设置 → 音视频 → 快捷键触发提示（默认开）
 
-### 4.13 全交互 log 记录 [P1]
+### 4.13 诊断日志记录 [P1]
 
 #### 4.13.1 功能描述
 
-记录所有用户交互（按键/点击/导航/播放操作）到本地日志文件，便于问题定位与行为分析。
+使用 `KotlinLogging` 记录关键操作和错误到 Android Logcat，便于崩溃定位和问题排查。
 
 #### 4.13.2 功能规格
 
 **记录范围**：
-- 遥控器/触屏按键事件（keyCode + 动作描述）
+- 关键遥控器按键事件
 - 页面导航（源页面 → 目标页面）
-- 播放器操作（播放/暂停/seek/切换画质等）
-- 设置变更（设置项 + 旧值 → 新值）
-- 卡片操作（点击/长按/快捷操作）
+- 播放器操作（播放/暂停/seek/切换视频等）
+- 卡片操作（点击/相关视频操作）
+- 网络、播放器和页面加载异常
+
+设置项变更不记录为诊断日志。
 
 **日志格式**：
 ```
-[2026-07-20 10:30:45.123] [PlayerScreen] [KEY_EVENT] keyCode=DPAD_CENTER action=PlayPause
-[2026-07-20 10:30:46.456] [PlayerScreen] [PLAYBACK] action=SeekTo position=120000
-[2026-07-20 10:31:00.789] [MainScreen] [NAVIGATION] from=Home to=VideoDetail aid=12345
-[2026-07-20 10:31:05.012] [VideoDetailScreen] [CARD_ACTION] action=Like aid=12345
-[2026-07-20 10:31:10.345] [SettingsScreen] [SETTING_CHANGE] key=defaultQuality oldValue=R1080P newValue=R4K
+[MainActivity] [INPUT] keyDown keyCode=KEYCODE_DPAD_CENTER
+[VideoPlayerScreen] [PLAYBACK] seek aid=12345 cid=67890 positionMs=120000
+[AppNavHost] [NAV] from=HomeRoute to=VideoDetailRoute
+[VideoCardNavigation] [CARD] click aid=12345 cid=67890 title=示例视频
 ```
 
 **存储**：
-- 文件：`logs_interaction_YYYYMMDD.log`（按天分文件）
-- 路径：应用私有存储 `files/logs/`
-- 滚动策略：单文件最大 10MB，保留最近 7 天
-- 写入方式：异步写入（不阻塞 UI）
+- 普通日志输出到 Android Logcat
+- 崩溃发生时由 `CrashHandler` 捕获最近 Logcat 并写入 `logs_crash_*.log`
+- 用户通过“手动保存日志”主动导出最近 Logcat
 
 **查看方式**：
-- Ktor 网页端 `/api/logs/list` 列出交互日志文件
+- Ktor 网页端 `/api/logs/list` 列出崩溃日志和手动日志
 - `/api/logs/{filename}` 下载
-- 网页端 UI 增加交互日志分类
 
 **崩溃关联**：
-- 崩溃发生时，自动将最近 100 条交互日志附入崩溃报告
-- 便于从崩溃日志还原用户操作路径
+- 崩溃发生时，自动将崩溃前 Logcat 附入崩溃报告
+- 便于从日志还原用户操作路径和错误上下文
 
 **隐私**：
-- 交互日志仅记录操作类型与参数，不记录用户敏感信息（Cookie/Token 等）
-- 默认开启，可在设置中关闭
+- 诊断日志仅记录操作类型与必要参数，不记录用户敏感信息（Cookie/Token 等）
 - 日志文件仅本地存储，不上报（除非配置了崩溃上报端点）
 
 ---
@@ -1917,7 +1915,7 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 #### 5.1.4 全局异常处理
 
 - `Thread.setDefaultUncaughtExceptionHandler` 捕获未处理异常
-- 记录崩溃日志：堆栈 + 设备信息 + 最近 100 条交互日志
+- 记录崩溃日志：堆栈 + 设备信息 + 崩溃前 Logcat
 - 崩溃日志写入 `logs_crash_YYYYMMDD_HHMMSS.log`
 - 可选上报到自建端点（默认关闭）
 - 崩溃后优雅退出（非强制关闭）
@@ -2002,7 +2000,7 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 #### 5.4.3 隐私合规
 
 - 无痕模式禁用心跳上报
-- 交互日志不记录敏感信息（Cookie/Token/密码）
+- 诊断日志不记录敏感信息（Cookie/Token/密码）
 - 崩溃上报默认关闭，用户主动开启
 - 不集成任何第三方统计/广告 SDK
 
@@ -2197,7 +2195,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 |---|---|---|---|---|
 | 接口选择 | 枚举 | Web | Web/App | `api_type` |
 | 查看日志 | 动作 | — | 跳转日志页 | — |
-| 交互日志记录 [新增] | 开关 | 开 | — | `interaction_log` |
 | 崩溃上报端点 [新增] | 字符串 | "" (关闭) | URL | `crash_report_endpoint` |
 
 ### 7.6 存储设置
@@ -2207,7 +2204,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | 图片缓存大小 | 只读+清理 | — | 显示当前大小，可清理 |
 | 其他缓存大小 | 只读+清理 | — | 含更新包等 |
 | 崩溃日志 | 只读+清理 | — | 崩溃日志文件 |
-| 交互日志 [新增] | 只读+清理 | — | 交互日志文件 |
 | 图片缓存阈值 [新增] | 整数 MB | 500 | 100 - 2000 | `image_cache_threshold` |
 | 其他缓存阈值 [新增] | 整数 MB | 200 | 50 - 1000 | `other_cache_threshold` |
 
@@ -2324,7 +2320,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 |---|---|---|
 | `user` | id, uid, username, avatar, auth(JSON), lock | 多账户管理 |
 | `search_history` | id, keyword, search_date | 搜索历史 |
-| `interaction_log` [新增] | id, timestamp, screen, action, params(JSON) | 交互日志（可选缓存） |
 
 #### 8.3.2 DataStore Preferences
 
@@ -2336,7 +2331,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 |---|---|
 | `files/logs/logs_manual_*.log` | 手动日志 |
 | `files/logs/logs_crash_*.log` | 崩溃日志 |
-| `files/logs/logs_interaction_*.log` [新增] | 交互日志 |
 | `cache/image_cache/` | Coil 图片缓存 |
 | `cache/other/` | 其他缓存（更新包等） |
 

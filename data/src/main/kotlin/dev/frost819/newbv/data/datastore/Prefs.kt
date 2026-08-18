@@ -214,8 +214,6 @@ object Prefs {
         save = { it.ordinal },
         restore = { ApiType.fromOrdinal(it) }
     )
-    /** 交互日志记录开关。 */
-    var interactionLog by pref(PrefKeys.interactionLog, true)
     /** 崩溃上报端点（空字符串表示关闭）。 */
     var crashReportEndpoint by pref(PrefKeys.crashReportEndpoint, "")
 
@@ -369,13 +367,6 @@ object Prefs {
             ?.flow?.map { it as? Float ?: 2f }
             ?.stateIn(scope, SharingStarted.Eagerly, 2f)
             ?: MutableStateFlow(2f)
-
-    /** 交互日志开关 Flow（实时响应设置变更）。 */
-    val interactionLogFlow: StateFlow<Boolean>
-        get() = (delegateMap[PrefKeys.interactionLog] as? PrefDelegate<Boolean, Boolean>)
-            ?.flow?.map { it as? Boolean ?: true }
-            ?.stateIn(scope, SharingStarted.Eagerly, true)
-            ?: MutableStateFlow(true)
 
     // ===== 初始化 =====
 

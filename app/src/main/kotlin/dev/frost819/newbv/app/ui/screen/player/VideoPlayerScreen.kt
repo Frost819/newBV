@@ -52,6 +52,7 @@ import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
 import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
 import dev.frost819.newbv.player.BvVideoPlayer
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.absoluteValue
@@ -71,6 +72,7 @@ fun VideoPlayerScreen(
     videoListViewModel: VideoListViewModel = hiltViewModel(),
     commentViewModel: CommentViewModel = hiltViewModel(),
 ) {
+    val logger = KotlinLogging.logger("VideoPlayerScreen")
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -251,40 +253,53 @@ fun VideoPlayerScreen(
         videoShotCache = videoShotCache,
         uiState = mergedUiState,
         seekerState = seekerState,
-        onPlay = { playerViewModel.togglePlayPause() },
-        onPause = { playerViewModel.togglePlayPause() },
+        onPlay = {
+            logger.info { "[PLAYBACK] play aid=${uiState.aid}, cid=${uiState.cid}" }
+            playerViewModel.togglePlayPause()
+        },
+        onPause = {
+            logger.info { "[PLAYBACK] pause aid=${uiState.aid}, cid=${uiState.cid}" }
+            playerViewModel.togglePlayPause()
+        },
         onExit = {
+            logger.info { "[PLAYBACK] exit aid=${uiState.aid}, cid=${uiState.cid}" }
             navController.popBackStack()
         },
         onGoTime = { time ->
+            logger.info { "[PLAYBACK] seek aid=${uiState.aid}, cid=${uiState.cid}, positionMs=$time" }
             playerViewModel.seekToTime(time)
             danmakuViewModel.seekTo(time)
         },
         onBackToStart = { playerViewModel.backToStart() },
         onCancelSkipToNextEp = { playerViewModel.cancelPlayNext() },
         onPlayNewVideo = { item: VideoListItem ->
+            logger.info { "[PLAYBACK] switch aid=${item.aid}, cid=${item.cid}" }
             playerViewModel.playNewVideo(item)
         },
         onPlayPrevious = { playerViewModel.playPreviousNow() },
         onPlayNext = { playerViewModel.playNextNow() },
         onToggleLoop = {
+            logger.info { "[PLAYBACK] loopToggle enabled=${!isLooping}" }
             isLooping = !isLooping
             playerViewModel.toggleLoop()
         },
         onToggleSubtitle = { subtitleViewModel.toggleSubtitle() },
         onGoToUpPage = {
+            logger.info { "[NAV] playerToUp mid=${uiState.authorMid}" }
             navController.navigate(UserSpaceRoute(mid = uiState.authorMid, name = uiState.authorName))
         },
         onGoToVideoDetail = {
             navController.popBackStack()
         },
         onShowInteraction = {
+            logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
             resumeAfterInteraction = uiState.playerState == PlayerState.Playing
             playerViewModel.pausePlayback()
             danmakuViewModel.pause()
             showInteractionDialog = true
         },
         onShowComments = {
+            logger.info { "[CARD] openComments aid=${uiState.aid}" }
             resumeAfterComments = uiState.playerState == PlayerState.Playing
             playerViewModel.pausePlayback()
             danmakuViewModel.pause()
@@ -293,6 +308,7 @@ fun VideoPlayerScreen(
         onMediaProfileSettingChange = { action -> playerViewModel.updateMediaProfile(action) },
         onAspectRatioChange = { ratio -> playerViewModel.updateVideoAspectRatio(ratio) },
         onPlaySpeedChange = { speed ->
+            logger.info { "[PLAYBACK] speedChange aid=${uiState.aid}, speed=$speed" }
             playerViewModel.updatePlaySpeed(speed)
             danmakuViewModel.updateSpeed(speed)
         },
@@ -300,6 +316,7 @@ fun VideoPlayerScreen(
         onSubtitleChange = { subtitle -> subtitleViewModel.selectSubtitle(subtitle.id) },
         onSubtitleSettingChange = { action -> subtitleViewModel.updateSubtitleState(action) },
         onRelatedVideoClicked = { video: VideoCardData ->
+            logger.info { "[CARD] relatedVideo aid=${video.avid}, cid=${video.cid ?: 0L}" }
             playerViewModel.playNewVideo(
                 VideoListItem(
                     aid = video.avid,

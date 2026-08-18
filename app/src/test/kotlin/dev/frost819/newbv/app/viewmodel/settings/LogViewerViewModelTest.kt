@@ -4,7 +4,6 @@ import android.app.Application
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -22,7 +21,7 @@ import java.nio.file.Files
 /**
  * [LogViewerViewModel] 的单元测试。
  *
- * 通过 MockK 模拟 [HttpServer]、[CrashHandler]、[InteractionLogger]，
+ * 通过 MockK 模拟 [HttpServer] 和 [CrashHandler]，
  * 验证日志类型判断、URL 生成、日志刷新与手动日志创建逻辑。
  * init 块中的协程运行在 Dispatchers.IO 上，测试中使用 Thread.sleep 等待完成。
  */
@@ -31,7 +30,6 @@ class LogViewerViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var httpServer: HttpServer
     private lateinit var crashHandler: CrashHandler
-    private lateinit var interactionLogger: InteractionLogger
     private lateinit var viewModel: LogViewerViewModel
     private lateinit var tempDir: File
 
@@ -45,11 +43,8 @@ class LogViewerViewModelTest {
         crashHandler = mockk(relaxed = true)
         every { crashHandler.listManualLogs() } returns emptyList()
         every { crashHandler.listCrashLogs() } returns emptyList()
-        interactionLogger = mockk(relaxed = true)
-        every { interactionLogger.listLogFiles() } returns emptyList()
-
         val app = mockk<Application>(relaxed = true)
-        viewModel = LogViewerViewModel(app, httpServer, crashHandler, interactionLogger)
+        viewModel = LogViewerViewModel(app, httpServer, crashHandler)
 
         Thread.sleep(300)
     }
@@ -101,13 +96,6 @@ class LogViewerViewModelTest {
     }
 
     @Test
-    fun `getLogTypeDisplayName returns interaction for interaction log prefix`() {
-        val file = File("logs_interaction_20240101.log")
-
-        assertThat(viewModel.getLogTypeDisplayName(file)).isEqualTo("交互日志")
-    }
-
-    @Test
     fun `getLogTypeDisplayName returns unknown for unrecognized prefix`() {
         val file = File("random_file.log")
 
@@ -150,30 +138,22 @@ class LogViewerViewModelTest {
         val crashLog = File(tempDir, "logs_crash_2024-01-02.log")
         crashLog.writeText("crash")
         crashLog.setLastModified(2000L)
-        val interactionLog = File(tempDir, "logs_interaction_20240103.log")
-        interactionLog.writeText("interaction")
-        interactionLog.setLastModified(3000L)
-
         every { crashHandler.listManualLogs() } returns listOf(manualLog)
         every { crashHandler.listCrashLogs() } returns listOf(crashLog)
-        every { interactionLogger.listLogFiles() } returns listOf(interactionLog)
 
         viewModel.refreshLogs()
         Thread.sleep(300)
 
         val state = viewModel.uiState.value
-        assertThat(state.logFiles).hasSize(3)
-        assertThat(state.logFiles[0]).isEqualTo(interactionLog)
-        assertThat(state.logFiles[1]).isEqualTo(crashLog)
-        assertThat(state.logFiles[2]).isEqualTo(manualLog)
+        assertThat(state.logFiles).hasSize(2)
+        assertThat(state.logFiles[0]).isEqualTo(crashLog)
+        assertThat(state.logFiles[1]).isEqualTo(manualLog)
     }
 
     @Test
     fun `refreshLogs with no logs returns empty list`() {
         every { crashHandler.listManualLogs() } returns emptyList()
         every { crashHandler.listCrashLogs() } returns emptyList()
-        every { interactionLogger.listLogFiles() } returns emptyList()
-
         viewModel.refreshLogs()
         Thread.sleep(300)
 

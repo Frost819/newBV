@@ -51,7 +51,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines)
-    implementation(libs.logging)
+    implementation(libs.logging.android)
     implementation(libs.slf4j)
 
     testImplementation(libs.junit.jupiter)

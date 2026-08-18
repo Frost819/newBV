@@ -30,7 +30,6 @@ class HttpServerTest {
         // 创建测试日志文件
         logFiles.add(createLog("logs_manual_2026-01-01_10:00:00.log", "manual log content"))
         logFiles.add(createLog("logs_crash_2026-01-02_11:30:00.log", "crash log content"))
-        logFiles.add(createLog("logs_interaction_20260101.log", "interaction log content"))
 
         server = HttpServer(
             assetProvider = { path ->
@@ -139,10 +138,10 @@ class HttpServerTest {
         assertThat(status).isEqualTo(200)
 
         val items = json.decodeFromString<List<HttpServer.LogItem>>(body)
-        assertThat(items).hasSize(3)
+        assertThat(items).hasSize(2)
 
         val types = items.map { it.type }.toSet()
-        assertThat(types).containsExactly("manual", "crash", "interaction")
+        assertThat(types).containsExactly("manual", "crash")
     }
 
     @Test
@@ -151,9 +150,8 @@ class HttpServerTest {
         assertThat(status).isEqualTo(200)
 
         val items = json.decodeFromString<List<HttpServer.LogItem>>(body)
-        assertThat(items).hasSize(3)
+        assertThat(items).hasSize(2)
         assertThat(items[0].lastModified).isAtLeast(items[1].lastModified)
-        assertThat(items[1].lastModified).isAtLeast(items[2].lastModified)
     }
 
     @Test
@@ -206,13 +204,6 @@ class HttpServerTest {
         // java.net.URL 会标准化完整 `..` 路径段，所以用包含 `..` 的文件名测试
         val (status, _) = httpGet("/api/logs/logs_manual_..test.log")
         assertThat(status).isEqualTo(403)
-    }
-
-    @Test
-    fun `GET api logs interaction file downloads successfully`() {
-        val (status, body) = httpGet("/api/logs/logs_interaction_20260101.log")
-        assertThat(status).isEqualTo(200)
-        assertThat(body).contains("interaction log content")
     }
 
     // ── API: /api/logs/create-manual-and-download ─────────────────────

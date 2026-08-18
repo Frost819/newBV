@@ -12,8 +12,7 @@ import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
-import dev.frost819.newbv.core.log.LogCategory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +21,12 @@ import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
+private object AndroidLoggingSetup {
+    init {
+        System.setProperty("kotlin-logging-to-android-native", "true")
+    }
+}
+
 /**
  * new BV 应用入口。
  *
@@ -29,20 +34,19 @@ import javax.inject.Inject
  * 1. Hilt 依赖注入（由 [HiltAndroidApp] 自动处理）
  * 2. [Prefs] 偏好设置初始化（阻塞读取 DataStore 首帧）
  * 3. [CrashHandler] 全局崩溃处理（通过 Hilt 注入，构造时自动 install）
- * 4. [InteractionLogger] 交互日志（通过 Hilt 注入）
- * 5. [HttpServer] 本地日志管理服务器（通过 Hilt 注入，按需启动）
+ * 4. [HttpServer] 本地日志管理服务器（通过 Hilt 注入，按需启动）
  */
 @HiltAndroidApp
 class BVApplication : Application() {
+
+    private val loggingSetup = AndroidLoggingSetup
+    private val logger = KotlinLogging.logger("BVApplication")
 
     @Inject
     lateinit var dataStore: DataStore<Preferences>
 
     @Inject
     lateinit var crashHandler: CrashHandler
-
-    @Inject
-    lateinit var interactionLogger: InteractionLogger
 
     @Inject
     lateinit var httpServer: HttpServer
@@ -54,14 +58,6 @@ class BVApplication : Application() {
         super.onCreate()
 
         Prefs.init(dataStore)
-
-        interactionLogger.setEnabled(Prefs.interactionLog)
-
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            Prefs.interactionLogFlow.collect { enabled ->
-                interactionLogger.setEnabled(enabled)
-            }
-        }
 
         val buvid3 = Prefs.buvid3
         val deviceCookies = Prefs.deviceCookies
@@ -103,9 +99,7 @@ class BVApplication : Application() {
         @Suppress("UNUSED_EXPRESSION")
         crashHandler
 
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            interactionLogger.log(LogCategory.LIFECYCLE, "Application started")
-        }
+        logger.info { "Application started" }
 
         coil3.SingletonImageLoader.setSafe {
             ImageLoader.Builder(this)

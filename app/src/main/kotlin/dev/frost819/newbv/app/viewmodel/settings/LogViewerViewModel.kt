@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,14 +26,12 @@ import javax.inject.Inject
  * @param application 用于获取 filesDir 和 assets。
  * @param httpServer 本地 HTTP 日志服务器。
  * @param crashHandler 崩溃处理器（提供崩溃/手动日志列表）。
- * @param interactionLogger 交互日志记录器（提供交互日志列表）。
  */
 @HiltViewModel
 class LogViewerViewModel @Inject constructor(
     application: Application,
     private val httpServer: HttpServer,
     private val crashHandler: CrashHandler,
-    private val interactionLogger: InteractionLogger,
 ) : AndroidViewModel(application) {
 
     private val logger = KotlinLogging.logger("LogViewerViewModel")
@@ -68,14 +65,13 @@ class LogViewerViewModel @Inject constructor(
     /**
      * 刷新日志文件列表。
      *
-     * 合并崩溃日志、手动日志和交互日志，按最后修改时间降序排列。
+     * 合并崩溃日志和手动日志，按最后修改时间降序排列。
      */
     fun refreshLogs() {
         viewModelScope.launch(Dispatchers.IO) {
             val logs = (
                 crashHandler.listManualLogs() +
-                    crashHandler.listCrashLogs() +
-                    interactionLogger.listLogFiles()
+                    crashHandler.listCrashLogs()
                 ).sortedByDescending { it.lastModified() }
             _uiState.value = _uiState.value.copy(logFiles = logs)
         }
@@ -142,7 +138,6 @@ class LogViewerViewModel @Inject constructor(
     fun getLogTypeDisplayName(file: File): String = when {
         file.name.startsWith(CrashHandler.MANUAL_LOG_PREFIX) -> "手动日志"
         file.name.startsWith(CrashHandler.CRASH_LOG_PREFIX) -> "崩溃日志"
-        file.name.startsWith(InteractionLogger.FILE_PREFIX) -> "交互日志"
         else -> "未知"
     }
 }

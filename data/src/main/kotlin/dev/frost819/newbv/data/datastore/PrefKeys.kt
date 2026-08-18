@@ -37,7 +37,6 @@ internal object PrefKeys {
 
     // ===== 网络 & API =====
     val apiType = intPreferencesKey("api_type")
-    val interactionLog = booleanPreferencesKey("interaction_log")
     val crashReportEndpoint = stringPreferencesKey("crash_report_endpoint")
 
     // ===== 播放器 - 视频 =====

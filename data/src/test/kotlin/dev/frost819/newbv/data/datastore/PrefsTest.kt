@@ -190,11 +190,6 @@ class PrefsTest {
     }
 
     @Test
-    fun `default interactionLog is true`() {
-        assertThat(Prefs.interactionLog).isTrue()
-    }
-
-    @Test
     fun `default crashReportEndpoint is empty`() {
         assertThat(Prefs.crashReportEndpoint).isEmpty()
     }

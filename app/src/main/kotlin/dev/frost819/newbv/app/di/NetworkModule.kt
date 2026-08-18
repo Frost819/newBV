@@ -6,12 +6,13 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
-import dev.frost819.newbv.biliapi.repositories.CommentRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
+import dev.frost819.newbv.biliapi.repositories.CommentRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
 import dev.frost819.newbv.biliapi.repositories.HistoryRepository
 import dev.frost819.newbv.biliapi.repositories.LikeRepository
@@ -20,8 +21,8 @@ import dev.frost819.newbv.biliapi.repositories.LoginRepository
 import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
-import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.SearchRepository
+import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
@@ -29,17 +30,13 @@ import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
-import dev.frost819.newbv.data.datastore.BuvidGenerator
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.repository.AccountRepository
 import dev.frost819.newbv.data.repository.SearchHistoryRepository
 import dev.frost819.newbv.data.repository.SearchHistoryRepositoryImpl
-import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.timeout
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
@@ -48,24 +45,11 @@ import javax.inject.Singleton
 /**
  * 网络与基础设施 Hilt 模块。
  *
- * 提供 BiliHttpApi 初始化、AuthRepository、日志组件、HttpServer 的单例绑定。
+ * 提供 BiliHttpApi 初始化、AuthRepository、崩溃处理和 HttpServer 的单例绑定。
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    /**
-     * 提供 [InteractionLogger] 单例。
-     *
-     * 日志目录：`filesDir/interaction_logs`
-     */
-    @Provides
-    @Singleton
-    fun provideInteractionLogger(@ApplicationContext context: Context): InteractionLogger {
-        val logDir = File(context.filesDir, InteractionLogger.FILE_PREFIX)
-        logDir.mkdirs()
-        return InteractionLogger(logDir = logDir)
-    }
 
     /**
      * 提供 [CrashHandler] 单例。
@@ -75,10 +59,9 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideCrashHandler(
-        @ApplicationContext context: Context,
-        interactionLogger: InteractionLogger
+        @ApplicationContext context: Context
     ): CrashHandler {
-        return CrashHandler(context, interactionLogger).also { it.install() }
+        return CrashHandler(context).also { it.install() }
     }
 
     /**
@@ -361,10 +344,10 @@ object NetworkModule {
      * Ktor 本地日志管理服务器，在随机端口启动，提供 Web UI 和 REST API。
      * 服务于以下场景：
      * - 用户通过浏览器访问日志管理页面
-     * - 下载日志文件（手动/崩溃/交互日志）
+     * - 下载日志文件（手动/崩溃日志）
      * - 创建手动日志
      *
-     * 依赖 [CrashHandler]（日志文件读写）和 [InteractionLogger]（交互日志读写）。
+     * 依赖 [CrashHandler]（日志文件读写）。
      * 由 [dev.frost819.newbv.app.BVApplication] 在应用启动时调用 [HttpServer.start] 启动。
      */
     @Provides
@@ -372,7 +355,6 @@ object NetworkModule {
     fun provideHttpServer(
         @ApplicationContext context: Context,
         crashHandler: CrashHandler,
-        interactionLogger: InteractionLogger
     ): HttpServer {
         val assetProvider: (String) -> ByteArray? = { path ->
             runCatching {
@@ -383,7 +365,7 @@ object NetworkModule {
         }
 
         val logFileProvider: () -> List<File> = {
-            crashHandler.listManualLogs() + crashHandler.listCrashLogs() + interactionLogger.listLogFiles()
+            crashHandler.listManualLogs() + crashHandler.listCrashLogs()
         }
 
         val manualLogCreator: () -> File? = { crashHandler.createManualLog() }

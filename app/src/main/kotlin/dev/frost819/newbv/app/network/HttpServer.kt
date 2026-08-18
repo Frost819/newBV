@@ -1,7 +1,6 @@
 package dev.frost819.newbv.app.network
 
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentDisposition
 import io.ktor.http.ContentType
@@ -34,7 +33,7 @@ import java.io.File
  * 路由：
  * - `GET /` — 日志管理首页（index.html）
  * - `GET /logs_ui/{path...}` — 静态资源（CSS/JS/字体）
- * - `GET /api/logs/list` — 日志文件列表 JSON
+ * - `GET /api/logs/list` — 手动日志和崩溃日志文件列表 JSON
  * - `GET /api/logs/{filename}` — 下载指定日志文件
  * - `GET /api/logs/create-manual-and-download` — 创建手动日志并下载
  *
@@ -205,7 +204,7 @@ class HttpServer(
      * @param name 文件名
      * @param size 文件大小（字节）
      * @param lastModified 最后修改时间戳（毫秒）
-     * @param type 日志类型：`manual` / `crash` / `interaction`
+     * @param type 日志类型：`manual` / `crash`
      */
     @Serializable
     data class LogItem(
@@ -219,7 +218,6 @@ class HttpServer(
         val type = when {
             name.startsWith(CrashHandler.MANUAL_LOG_PREFIX) -> "manual"
             name.startsWith(CrashHandler.CRASH_LOG_PREFIX) -> "crash"
-            name.startsWith(InteractionLogger.FILE_PREFIX) -> "interaction"
             else -> "unknown"
         }
         return LogItem(name = name, size = length(), lastModified = lastModified(), type = type)
@@ -233,7 +231,6 @@ class HttpServer(
     private fun isAllowedLogFilename(filename: String): Boolean {
         val allowedPrefix = filename.startsWith(CrashHandler.MANUAL_LOG_PREFIX)
             || filename.startsWith(CrashHandler.CRASH_LOG_PREFIX)
-            || filename.startsWith(InteractionLogger.FILE_PREFIX)
         val allowedSuffix = filename.endsWith(".log")
         return allowedPrefix && allowedSuffix
     }

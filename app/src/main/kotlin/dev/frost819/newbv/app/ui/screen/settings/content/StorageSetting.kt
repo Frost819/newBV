@@ -29,7 +29,6 @@ import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.log.CrashHandler
-import dev.frost819.newbv.core.log.InteractionLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -50,7 +49,6 @@ fun StorageSetting(
     var imageCacheSize by remember { mutableLongStateOf(0L) }
     var updateCacheSize by remember { mutableLongStateOf(0L) }
     var crashLogsSize by remember { mutableLongStateOf(0L) }
-    var interactionLogsSize by remember { mutableLongStateOf(0L) }
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var clearFun: (() -> Unit)? by remember { mutableStateOf(null) }
@@ -61,12 +59,9 @@ fun StorageSetting(
         val imageCacheDir = File(context.cacheDir, "image_cache")
         val updateCacheDir = File(context.cacheDir, "update_downloader")
         val crashLogsDir = File(context.filesDir, CrashHandler.LOG_DIR)
-        val interactionLogsDir = File(context.filesDir, InteractionLogger.FILE_PREFIX)
-
         imageCacheSize = getFolderSize(imageCacheDir)
         updateCacheSize = getFolderSize(updateCacheDir)
         crashLogsSize = getFolderSize(crashLogsDir)
-        interactionLogsSize = getFolderSize(interactionLogsDir)
     }
 
     LaunchedEffect(Unit) {
@@ -131,20 +126,6 @@ fun StorageSetting(
                             }
                             dialogContent = "崩溃日志"
                             dialogSize = crashLogsSize
-                            showConfirmDialog = true
-                        },
-                    )
-                }
-                item {
-                    SettingListItem(
-                        title = "交互日志",
-                        supportText = if (loading) "计算中..." else "${interactionLogsSize / 1024 / 1024} MB",
-                        onClick = {
-                            clearFun = {
-                                File(context.filesDir, InteractionLogger.FILE_PREFIX).deleteRecursively()
-                            }
-                            dialogContent = "交互日志"
-                            dialogSize = interactionLogsSize
                             showConfirmDialog = true
                         },
                     )
