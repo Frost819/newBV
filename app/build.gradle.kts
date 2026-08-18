@@ -170,17 +170,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// The Android artifact replaces the JVM artifact pulled transitively by bili-api.
-configurations.matching {
-    it.name in
-        setOf(
-            "debugCompileClasspath",
-            "debugRuntimeClasspath",
-            "debugUnitTestCompileClasspath",
-            "debugUnitTestRuntimeClasspath",
-            "debugAndroidTestCompileClasspath",
-            "debugAndroidTestRuntimeClasspath",
-        )
-}.configureEach {
+// The Android artifact replaces the JVM artifact pulled transitively by bili-api
+// for every Android variant, while leaving tool configurations such as KtLint intact.
+configurations.matching { it.name.endsWith("Classpath") }.configureEach {
     exclude(group = "io.github.oshai", module = "kotlin-logging-jvm")
 }
