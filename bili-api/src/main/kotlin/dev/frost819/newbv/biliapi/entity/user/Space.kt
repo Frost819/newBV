@@ -51,6 +51,7 @@ data class SpaceVideo(
     val play: Int,
     val danmaku: Int,
     val pubTime: String?,
+    val playbackPosition: Int = 0,
 ) {
     companion object {
         fun fromSpaceVideoItem(
@@ -65,6 +66,7 @@ data class SpaceVideo(
             play = spaceVideoItem.play,
             danmaku = spaceVideoItem.videoReview,
             pubTime = spaceVideoItem.created.toSmartDate(),
+            playbackPosition = spaceVideoItem.playbackPosition,
         )
 
         fun fromSpaceVideoItem(

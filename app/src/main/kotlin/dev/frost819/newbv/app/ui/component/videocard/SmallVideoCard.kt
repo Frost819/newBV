@@ -382,7 +382,7 @@ private fun CardCover(
                     modifier = Modifier
                         .fillMaxWidth(progress.coerceIn(0f, 1f))
                         .height(3.dp)
-                        .background(MaterialTheme.colorScheme.primary),
+                        .background(MaterialTheme.colorScheme.secondary),
                 )
             }
         }

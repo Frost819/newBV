@@ -78,6 +78,7 @@ data class WebSpaceVideoData(
          * @param meta 合集信息
          * @param isAvoided
          * @param attribute
+         * @param playbackPosition 播放进度百分比（0-100），0 表示未观看
          */
         @Serializable
         data class VListItem(
@@ -115,6 +116,8 @@ data class WebSpaceVideoData(
             val isAvoided: Boolean = _isAvoided == 1,
             @SerialName("attribute")
             val attribute: Int,
+            @SerialName("playback_position")
+            val playbackPosition: Int = 0,
         ) {
             /**
              * 合集信息

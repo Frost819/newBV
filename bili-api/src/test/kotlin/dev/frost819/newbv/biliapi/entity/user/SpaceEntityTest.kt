@@ -15,8 +15,8 @@ class SpaceEntityTest {
                     dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData.SpaceVideoListItem(
                         vlist =
                             listOf(
-                                fakeVListItem(aid = 100L, title = "视频1"),
-                                fakeVListItem(aid = 200L, title = "视频2"),
+                                fakeVListItem(aid = 100L, title = "视频1", playbackPosition = 98),
+                                fakeVListItem(aid = 200L, title = "视频2", playbackPosition = 0),
                             ),
                     ),
                 page =
@@ -33,7 +33,9 @@ class SpaceEntityTest {
         assertThat(result.videos[0].aid).isEqualTo(100L)
         assertThat(result.videos[0].title).isEqualTo("视频1")
         assertThat(result.videos[0].duration).isEqualTo(180)
+        assertThat(result.videos[0].playbackPosition).isEqualTo(98)
         assertThat(result.videos[1].aid).isEqualTo(200L)
+        assertThat(result.videos[1].playbackPosition).isEqualTo(0)
         assertThat(result.page.hasNext).isTrue()
         assertThat(result.page.nextWebPageNumber).isEqualTo(2)
         assertThat(result.page.nextWebPageSize).isEqualTo(20)
@@ -135,6 +137,7 @@ class SpaceEntityTest {
     private fun fakeVListItem(
         aid: Long = 1L,
         title: String = "title",
+        playbackPosition: Int = 0,
     ) = dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData.SpaceVideoListItem.VListItem(
         aid = aid,
         bvid = "BV$aid",
@@ -159,6 +162,7 @@ class SpaceEntityTest {
         isLivePlayback = 0,
         _isAvoided = 0,
         attribute = 0,
+        playbackPosition = playbackPosition,
     )
 
     private fun fakeAppSpaceItem(

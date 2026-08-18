@@ -96,6 +96,21 @@ fun HistoryScreen(
             key = { index, _ -> index },
         ) { index, item ->
             val cardData = remember(item) {
+                val durationMs = item.duration * 1000L
+                val progressRatio = if (item.progress == -1) {
+                    1f
+                } else if (item.duration > 0) {
+                    item.progress.toFloat() / item.duration.toFloat()
+                } else {
+                    null
+                }
+                val timeString = if (item.progress == -1) {
+                    "已看完 / ${durationMs.formatHourMinSec()}"
+                } else if (item.progress > 0 && item.duration > 0) {
+                    "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
+                } else {
+                    durationMs.formatHourMinSec()
+                }
                 VideoCardData(
                     avid = item.oid,
                     cid = item.cid,
@@ -103,16 +118,10 @@ fun HistoryScreen(
                     cover = item.cover,
                     playString = "",
                     danmakuString = "",
-                    timeString = (item.duration * 1000L).formatHourMinSec(),
+                    timeString = timeString,
                     upName = item.author,
                     upMid = item.mid,
-                    progress = if (item.progress == -1) {
-                        1f
-                    } else if (item.duration > 0) {
-                        item.progress.toFloat() / item.duration.toFloat()
-                    } else {
-                        null
-                    },
+                    progress = progressRatio,
                 )
             }
             SmallVideoCard(

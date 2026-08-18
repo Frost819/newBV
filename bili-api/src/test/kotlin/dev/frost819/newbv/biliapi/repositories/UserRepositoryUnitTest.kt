@@ -1034,6 +1034,7 @@ class UserRepositoryUnitTest {
         meta = null,
         _isAvoided = 0,
         attribute = 0,
+        playbackPosition = 0,
     )
 
     private fun fakeFollowedUser(

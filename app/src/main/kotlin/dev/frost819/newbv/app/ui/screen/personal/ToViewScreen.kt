@@ -91,6 +91,17 @@ fun ToViewScreen(
             }
             itemsIndexed(items = unwatched) { _, item ->
                 val cardData = remember(item) {
+                    val durationMs = item.duration * 1000L
+                    val progressRatio = if (item.duration > 0) {
+                        item.progress.toFloat() / item.duration.toFloat()
+                    } else {
+                        null
+                    }
+                    val timeString = if (item.progress > 0 && item.duration > 0) {
+                        "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
+                    } else {
+                        durationMs.formatHourMinSec()
+                    }
                     VideoCardData(
                         avid = item.oid,
                         cid = item.cid,
@@ -98,12 +109,10 @@ fun ToViewScreen(
                         cover = item.cover,
                         playString = "",
                         danmakuString = "",
-                        timeString = (item.duration * 1000L).formatHourMinSec(),
+                        timeString = timeString,
                         upName = item.author,
                         upMid = item.mid,
-                        progress = if (item.duration > 0) {
-                            item.progress.toFloat() / item.duration.toFloat()
-                        } else null,
+                        progress = progressRatio,
                     )
                 }
                 SmallVideoCard(
@@ -130,6 +139,7 @@ fun ToViewScreen(
             }
             itemsIndexed(items = watched) { _, item ->
                 val cardData = remember(item) {
+                    val durationMs = item.duration * 1000L
                     VideoCardData(
                         avid = item.oid,
                         cid = item.cid,
@@ -137,7 +147,7 @@ fun ToViewScreen(
                         cover = item.cover,
                         playString = "",
                         danmakuString = "",
-                        timeString = (item.duration * 1000L).formatHourMinSec(),
+                        timeString = "已看完 / ${durationMs.formatHourMinSec()}",
                         upName = item.author,
                         upMid = item.mid,
                         progress = 1f,

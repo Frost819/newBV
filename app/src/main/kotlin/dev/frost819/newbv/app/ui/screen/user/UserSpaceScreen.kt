@@ -121,6 +121,12 @@ private fun UserSpaceScreen(
             key = { _, item -> item.aid },
         ) { index, video ->
             val cardData = remember(video) {
+                val durationMs = video.duration * 1000L
+                val progressRatio = if (video.playbackPosition > 0) {
+                    video.playbackPosition / 100f
+                } else {
+                    null
+                }
                 VideoCardData(
                     avid = video.aid,
                     bvid = video.bvid,
@@ -128,10 +134,11 @@ private fun UserSpaceScreen(
                     cover = video.cover,
                     playString = video.play.takeIf { it != -1 }.toWanString(),
                     danmakuString = video.danmaku.takeIf { it != -1 }.toWanString(),
-                    timeString = (video.duration * 1000L).formatHourMinSec(),
+                    timeString = durationMs.formatHourMinSec(),
                     upName = video.author,
                     upMid = mid,
                     pubTime = video.pubTime,
+                    progress = progressRatio,
                 )
             }
             SmallVideoCard(
