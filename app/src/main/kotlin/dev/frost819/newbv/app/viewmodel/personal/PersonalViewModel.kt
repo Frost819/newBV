@@ -19,7 +19,7 @@ import dev.frost819.newbv.biliapi.repositories.SeasonRepository
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -106,7 +106,7 @@ class PersonalViewModel @Inject constructor(
     private val seasonRepository: SeasonRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("PersonalViewModel")
+    private val logger = Loggers.get("PersonalViewModel")
 
     private val _effect = MutableSharedFlow<PersonalUiEffect>()
     val effect = _effect.asSharedFlow()

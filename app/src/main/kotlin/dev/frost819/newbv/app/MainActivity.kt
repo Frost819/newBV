@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
@@ -19,7 +20,7 @@ import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 import dev.frost819.newbv.core.theme.BVTheme
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import javax.inject.Inject
 
 /**
@@ -36,7 +37,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val logger = KotlinLogging.logger("MainActivity")
+    private val logger = Loggers.get("MainActivity")
 
     @Inject
     lateinit var interactionTracker: InteractionTracker
@@ -73,22 +74,12 @@ class MainActivity : ComponentActivity() {
         return super.onTouchEvent(event)
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode in DPAD_KEY_CODES) {
+    @SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
             interactionTracker.onDpadKey()
-            logger.info { "[INPUT] keyDown keyCode=${KeyEvent.keyCodeToString(keyCode)}" }
+            logger.info { "[INPUT] keyDown keyCode=${KeyEvent.keyCodeToString(event.keyCode)}" }
         }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    private companion object {
-        private val DPAD_KEY_CODES = setOf(
-            KeyEvent.KEYCODE_DPAD_UP,
-            KeyEvent.KEYCODE_DPAD_DOWN,
-            KeyEvent.KEYCODE_DPAD_LEFT,
-            KeyEvent.KEYCODE_DPAD_RIGHT,
-            KeyEvent.KEYCODE_DPAD_CENTER,
-            KeyEvent.KEYCODE_ENTER
-        )
+        return super.dispatchKeyEvent(event)
     }
 }

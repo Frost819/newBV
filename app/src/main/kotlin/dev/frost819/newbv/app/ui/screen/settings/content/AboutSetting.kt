@@ -23,7 +23,7 @@ import dev.frost819.newbv.app.network.GithubApi
 import dev.frost819.newbv.app.ui.component.settings.UpdateDialog
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.core.focus.touchClickable
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 fun AboutSetting(
     modifier: Modifier = Modifier,
 ) {
-    val logger = KotlinLogging.logger("AboutSetting")
+    val logger = Loggers.get("AboutSetting")
 
     var showUpdateDialog by remember { mutableStateOf(false) }
     var latestVersionName by remember { mutableStateOf("Loading...") }

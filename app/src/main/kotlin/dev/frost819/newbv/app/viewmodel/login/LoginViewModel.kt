@@ -7,7 +7,7 @@ import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import dev.frost819.newbv.biliapi.entity.login.QrLoginState
 import dev.frost819.newbv.biliapi.entity.login.WebCookies
 import dev.frost819.newbv.biliapi.repositories.LoginRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,7 +50,7 @@ class LoginViewModel @Inject constructor(
     private val accountRepository: AccountRepositoryImpl,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("LoginViewModel")
+    private val logger = Loggers.get("LoginViewModel")
 
     private val _uiState = MutableStateFlow(QrLoginUiState())
     val uiState: StateFlow<QrLoginUiState> = _uiState.asStateFlow()

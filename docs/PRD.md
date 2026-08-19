@@ -36,7 +36,7 @@
 | 播放器引擎 | 仅 Media3/ExoPlayer，兼容 VOD + Live 双模式（不接入 VLC） |
 | 代理功能 | **完全删除**所有代理相关功能 |
 | 崩溃监控 | 本地为主 + 可选自建上报（移除 Firebase Crashlytics） |
-| 诊断日志 | KotlinLogging 输出 Logcat，崩溃/手动日志由 Ktor 网页端查看 |
+| 诊断日志 | Core Logger 输出 Logcat，崩溃/手动日志由 Ktor 网页端查看 |
 | minSdk | 21（Android 5.0+，与原版一致） |
 | Kotlin / KSP / Java | 2.4.10 / 2.3.10 / 17 |
 | AGP / Gradle | 9.1.1 / 9.3.1 |
@@ -156,7 +156,6 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 | akdanmaku | 1.0.4 | 弹幕渲染 | 同原版（Frost819 fork） |
 | kotlinx.serialization | 1.8.1 | JSON 序列化 | 同原版 |
 | kotlinx.coroutines | 1.10.2 | 协程 | 同原版 |
-| kotlin-logging | 7.0.7 | 日志门面 | 同原版 |
 | qrcode-kotlin | 3.3.0 | 二维码生成（minSDK 23 以下限制） | 同原版 |
 | protobuf | 4.31.0 | protobuf 运行时 | 同原版 |
 | Lottie | 6.6.6 | 动画 | 同原版 |
@@ -169,7 +168,6 @@ BV 是一款基于 Jetpack Compose 开发的哔哩哔哩第三方 Android TV 应
 | Koin | 依赖注入 | 替换为 Hilt |
 | Geetest Sensebot | 短信登录验证码 | 短信登录降级，暂不接入（保留代码注释） |
 | compose-remember-preference | 偏好绑定 | 改用 DataStore + Compose 原生 |
-| kotlin-logging-android | KotlinLogging 的 Android 原生后端 | 确保普通诊断日志可被崩溃处理器捕获 |
 
 ### 2.2 整体架构图
 
@@ -562,7 +560,7 @@ Application.onCreate()
   ├─ 初始化 Coil 图片加载
   ├─ 初始化 Ktor 本地日志服务器 [增强]
   ├─ 注册全局未捕获异常处理器 [增强]
-   └─ 初始化 KotlinLogging Android Logcat 后端 [新增]
+   └─ 初始化 Core Logger Logcat 后端 [新增]
        │
        ▼
 MainActivity (SplashScreen)
@@ -1618,9 +1616,9 @@ class InteractionTracker(initial: InputMethod = InputMethod.DPad) {
 
 // Activity 驱动
 override fun onTouchEvent(event: MotionEvent) { tracker.onTouch() }
-override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-    if (isDpadKey(keyCode)) tracker.onDpadKey()
-    return super.onKeyDown(keyCode, event)
+override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    if (event.action == KeyEvent.ACTION_DOWN) tracker.onDpadKey()
+    return super.dispatchKeyEvent(event)
 }
 
 // Composable 注入
@@ -1837,12 +1835,12 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 
 #### 4.13.1 功能描述
 
-使用 `KotlinLogging` 记录关键操作和错误到 Android Logcat，便于崩溃定位和问题排查。
+使用 Core Logger 记录关键操作和错误到 Android Logcat，便于崩溃定位和问题排查。
 
 #### 4.13.2 功能规格
 
 **记录范围**：
-- 关键遥控器按键事件
+- 所有按键事件（`dispatchKeyEvent` 拦截）
 - 页面导航（源页面 → 目标页面）
 - 播放器操作（播放/暂停/seek/切换视频等）
 - 卡片操作（点击/相关视频操作）

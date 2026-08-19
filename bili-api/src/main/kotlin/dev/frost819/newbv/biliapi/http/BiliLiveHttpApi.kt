@@ -16,7 +16,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.SimplePlayUrlData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.biliapi.util.BiliLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -33,7 +33,7 @@ import kotlinx.serialization.json.Json
 object BiliLiveHttpApi {
     private var endPoint: String = ""
     private lateinit var client: HttpClient
-    private val logger = KotlinLogging.logger { }
+    private val logger = BiliLogger
 
     init {
         createClient()

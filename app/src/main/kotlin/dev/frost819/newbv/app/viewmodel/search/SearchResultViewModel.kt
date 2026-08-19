@@ -14,7 +14,7 @@ import dev.frost819.newbv.biliapi.repositories.SearchType
 import dev.frost819.newbv.biliapi.repositories.SearchTypePage
 import dev.frost819.newbv.biliapi.repositories.SearchTypeResult
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +37,7 @@ class SearchResultViewModel @Inject constructor(
     private val searchRepository: SearchRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("SearchResultViewModel")
 
     companion object {
         private const val LOAD_TIMEOUT_MS = 10_000L

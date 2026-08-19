@@ -23,7 +23,7 @@ import dev.frost819.newbv.danmaku.entity.DanmakuType as DanmakuEntityDanmakuType
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,7 +48,7 @@ class DanmakuViewModel @Inject constructor(
     private val videoPlayRepository: VideoPlayRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("DanmakuViewModel")
 
     /** 弹幕播放器实例，供 Compose `AndroidView` 绑定。 */
     var danmakuPlayer: DanmakuPlayer? by mutableStateOf(null)

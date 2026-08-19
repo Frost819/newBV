@@ -8,7 +8,7 @@ import dev.frost819.newbv.biliapi.entity.ugc.UgcTypeV2
 import dev.frost819.newbv.biliapi.entity.ugc.region.UgcFeedData
 import dev.frost819.newbv.biliapi.entity.ugc.region.UgcFeedPage
 import dev.frost819.newbv.biliapi.repositories.UgcRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +49,7 @@ class UgcViewModel @Inject constructor(
     private val ugcRepository: UgcRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("UgcViewModel")
+    private val logger = Loggers.get("UgcViewModel")
 
     private val _uiState = MutableStateFlow(UgcUiState())
     val uiState: StateFlow<UgcUiState> = _uiState.asStateFlow()

@@ -39,7 +39,7 @@ import dev.frost819.newbv.app.ui.navigation.LiveAreaRoute
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRoomItem
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +63,7 @@ class LiveAreaListViewModel @Inject constructor(
 
     private val route = savedStateHandle.toRoute<LiveAreaRoute>()
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("LiveAreaListScreen")
 
     private val _uiState = MutableStateFlow(LiveAreaListUiState())
     val uiState: StateFlow<LiveAreaListUiState> = _uiState.asStateFlow()

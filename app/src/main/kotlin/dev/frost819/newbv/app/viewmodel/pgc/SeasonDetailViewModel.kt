@@ -10,7 +10,7 @@ import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -76,7 +76,7 @@ class SeasonDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("SeasonDetailViewModel")
+    private val logger = Loggers.get("SeasonDetailViewModel")
 
     private val seasonId: Int = savedStateHandle.get<Long>("seasonId")?.toInt() ?: 0
 

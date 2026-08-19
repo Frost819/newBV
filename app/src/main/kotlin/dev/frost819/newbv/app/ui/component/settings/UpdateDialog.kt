@@ -31,7 +31,7 @@ import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.network.GithubApi
 import dev.frost819.newbv.app.network.entity.GithubRelease
 import dev.frost819.newbv.core.focus.touchClickable
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -54,7 +54,7 @@ fun UpdateDialog(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val logger = KotlinLogging.logger("UpdateDialog")
+    val logger = Loggers.get("UpdateDialog")
 
     var updateStatus by remember { mutableStateOf(UpdateStatus.UpdatingInfo) }
     var bytesSentTotal by remember { mutableLongStateOf(0L) }

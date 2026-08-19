@@ -10,7 +10,7 @@ import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.bilisubtitle.SubtitleParser
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -36,7 +36,7 @@ class SubtitleViewModel @Inject constructor(
     private val httpClient: HttpClient,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("SubtitleViewModel")
 
     private val _subtitleState = MutableStateFlow(
         SubtitleState(

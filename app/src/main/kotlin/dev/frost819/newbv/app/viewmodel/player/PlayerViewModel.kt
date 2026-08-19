@@ -35,7 +35,7 @@ import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.VideoPlayerOptions
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +89,7 @@ class PlayerViewModel @Inject constructor(
     private val oneClickTripleActionRepository: OneClickTripleActionRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("PlayerViewModel")
 
     /** 视频播放器实例，供 Compose `AndroidView` 绑定。 */
     var videoPlayer: AbstractVideoPlayer? by mutableStateOf(null)

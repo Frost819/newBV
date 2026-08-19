@@ -3,9 +3,9 @@ package dev.frost819.newbv.app.ui.navigation
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 
-private val logger = KotlinLogging.logger("VideoCardNavigation")
+private val logger = Loggers.get("VideoCardNavigation")
 
 /**
  * 根据用户偏好决定点击视频卡片后的导航行为。

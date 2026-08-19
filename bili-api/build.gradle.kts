@@ -17,8 +17,6 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.serialization.kotlinx)
-    implementation(libs.logging)
-    implementation(libs.slf4j)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test)

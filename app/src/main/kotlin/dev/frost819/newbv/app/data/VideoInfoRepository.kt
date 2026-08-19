@@ -5,7 +5,7 @@ import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -46,7 +46,7 @@ data class VideoSharedState(
 class VideoInfoRepository @Inject constructor(
     private val videoDetailRepository: VideoDetailRepository,
 ) {
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("VideoInfoRepository")
 
     private val _videoList = MutableStateFlow<List<VideoListItem>>(emptyList())
     val videoList = _videoList.asStateFlow()

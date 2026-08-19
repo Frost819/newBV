@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.comment.Comment
 import dev.frost819.newbv.biliapi.repositories.CommentRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +55,7 @@ data class CommentUiState(
 class CommentViewModel @Inject constructor(
     private val commentRepository: CommentRepository,
 ) : ViewModel() {
-    private val logger = KotlinLogging.logger("CommentViewModel")
+    private val logger = Loggers.get("CommentViewModel")
 
     private val _uiState = MutableStateFlow(CommentUiState())
     /** 当前评论弹窗状态。 */

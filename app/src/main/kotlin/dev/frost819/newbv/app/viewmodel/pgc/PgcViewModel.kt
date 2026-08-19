@@ -8,7 +8,7 @@ import dev.frost819.newbv.biliapi.entity.pgc.PgcFeedData
 import dev.frost819.newbv.biliapi.entity.pgc.PgcItem
 import dev.frost819.newbv.biliapi.entity.pgc.PgcType
 import dev.frost819.newbv.biliapi.repositories.PgcRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +54,7 @@ class PgcViewModel @Inject constructor(
     private val pgcRepository: PgcRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("PgcViewModel")
+    private val logger = Loggers.get("PgcViewModel")
 
     private val _uiState = MutableStateFlow(PgcUiState())
     val uiState: StateFlow<PgcUiState> = _uiState.asStateFlow()

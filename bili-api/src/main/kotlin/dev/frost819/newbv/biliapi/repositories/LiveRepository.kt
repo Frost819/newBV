@@ -11,7 +11,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.PlayStream
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInitData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.biliapi.util.BiliLogger
 
 /**
  * 直播数据仓库。
@@ -20,7 +20,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  * 直播功能完全使用 Web 端 API，无需 App 端接口降级。
  */
 class LiveRepository {
-    private val logger = KotlinLogging.logger { }
+    private val logger = BiliLogger
 
     /**
      * 获取直播首页模块化列表。

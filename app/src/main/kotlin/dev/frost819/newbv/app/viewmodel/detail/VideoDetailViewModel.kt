@@ -16,7 +16,7 @@ import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -100,7 +100,7 @@ class VideoDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("VideoDetailViewModel")
+    private val logger = Loggers.get("VideoDetailViewModel")
 
     private val routeAid: Long = savedStateHandle.get<Long>("aid") ?: 0L
     val aid: Long = routeAid

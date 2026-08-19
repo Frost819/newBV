@@ -10,7 +10,7 @@ import dev.frost819.newbv.biliapi.entity.user.SpaceVideoPage
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +51,7 @@ class UserSpaceViewModel @Inject constructor(
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("UserSpaceViewModel")
+    private val logger = Loggers.get("UserSpaceViewModel")
 
     private val _uiState = MutableStateFlow(UserSpaceUiState())
     val uiState: StateFlow<UserSpaceUiState> = _uiState.asStateFlow()

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.biliapi.entity.user.FollowedUser
 import dev.frost819.newbv.biliapi.repositories.UserRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +40,7 @@ class FollowViewModel @Inject constructor(
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("FollowViewModel")
+    private val logger = Loggers.get("FollowViewModel")
 
     private val _uiState = MutableStateFlow(FollowUiState())
     val uiState: StateFlow<FollowUiState> = _uiState.asStateFlow()

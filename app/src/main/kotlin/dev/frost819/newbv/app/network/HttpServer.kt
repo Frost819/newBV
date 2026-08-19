@@ -1,7 +1,7 @@
 package dev.frost819.newbv.app.network
 
 import dev.frost819.newbv.core.log.CrashHandler
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import io.ktor.http.ContentDisposition
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -46,7 +46,7 @@ class HttpServer(
     private val logFileProvider: () -> List<File>,
     private val manualLogCreator: () -> File?
 ) {
-    private val logger = KotlinLogging.logger("HttpServer")
+    private val logger = Loggers.get("HttpServer")
 
     @Volatile
     private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null

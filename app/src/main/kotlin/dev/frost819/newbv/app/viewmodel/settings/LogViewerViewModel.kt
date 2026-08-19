@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.core.log.CrashHandler
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +34,7 @@ class LogViewerViewModel @Inject constructor(
     private val crashHandler: CrashHandler,
 ) : AndroidViewModel(application) {
 
-    private val logger = KotlinLogging.logger("LogViewerViewModel")
+    private val logger = Loggers.get("LogViewerViewModel")
 
     private val _uiState = MutableStateFlow(LogViewerUiState())
     val uiState: StateFlow<LogViewerUiState> = _uiState.asStateFlow()

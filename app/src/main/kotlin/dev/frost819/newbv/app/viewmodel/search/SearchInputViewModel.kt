@@ -8,7 +8,7 @@ import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.repositories.SearchRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.repository.SearchHistoryRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -35,7 +35,7 @@ class SearchInputViewModel @Inject constructor(
     private val searchHistoryRepository: SearchHistoryRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("SearchInputViewModel")
 
     companion object {
         private const val LOAD_TIMEOUT_MS = 10_000L

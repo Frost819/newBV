@@ -22,7 +22,7 @@ import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.VideoPlayerOptions
 import dev.frost819.newbv.player.impl.exo.ExoMediaPlayer
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -76,7 +76,7 @@ class LivePlayerViewModel @Inject constructor(
     private val exoPlayerFactory: ExoPlayerFactory,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("LivePlayerViewModel")
 
     var videoPlayer: AbstractVideoPlayer? by mutableStateOf(null)
         private set

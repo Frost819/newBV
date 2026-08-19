@@ -136,7 +136,6 @@ dependencies {
     implementation(libs.akdanmaku)
     implementation(libs.androidsvg)
     implementation(libs.jsoup)
-    implementation(libs.logging.android)
     implementation(libs.lottie)
     implementation(libs.qrcode)
     debugImplementation(libs.leakcanary)
@@ -168,10 +167,4 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-}
-
-// The Android artifact replaces the JVM artifact pulled transitively by bili-api
-// for every Android variant, while leaving tool configurations such as KtLint intact.
-configurations.matching { it.name.endsWith("Classpath") }.configureEach {
-    exclude(group = "io.github.oshai", module = "kotlin-logging-jvm")
 }

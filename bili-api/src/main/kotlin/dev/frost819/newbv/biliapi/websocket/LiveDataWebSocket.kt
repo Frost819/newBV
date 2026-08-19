@@ -11,7 +11,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
 import dev.frost819.newbv.biliapi.http.util.brotliDecompress
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.biliapi.util.BiliLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.awaitClose
@@ -62,7 +62,7 @@ object LiveDataWebSocket {
     private const val OP_AUTH = 7
     private const val OP_AUTH_REPLY = 8
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = BiliLogger
 
     private val json = Json { ignoreUnknownKeys = true }
 

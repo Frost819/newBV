@@ -34,7 +34,7 @@ enum class InputMethod {
  * **使用方式**：
  * 1. 在 Activity 中创建实例，通过 [inputMethod] 观察当前状态。
  * 2. 在 `onTouchEvent` 中调用 [onTouch]。
- * 3. 在 `onKeyDown`/`onKeyUp` 中调用 [onDpadKey]（仅 D-Pad 方向键）。
+ * 3. 在 `dispatchKeyEvent` 中调用 [onDpadKey]（任意物理按键均表示遥控器/键盘使用）。
  * 4. 通过 [LocalInputMethod] 在 Composable 树中提供当前状态。
  *
  * **设计理由**：

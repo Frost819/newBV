@@ -13,7 +13,7 @@ import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.biliapi.entity.ApiType as BiliApiType
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,7 +66,7 @@ class HomeViewModel @Inject constructor(
     private val accountRepository: AccountRepositoryImpl,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("HomeViewModel")
+    private val logger = Loggers.get("HomeViewModel")
 
     /** 将 data 层 ApiType 映射为 bili-api 层 ApiType。 */
     private fun prefApiType(): BiliApiType = when (Prefs.apiType) {

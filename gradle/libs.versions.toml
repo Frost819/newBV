@@ -52,10 +52,8 @@ androidsvg = "1.4"
 brotli = "0.1.2"
 jsoup = "1.20.1"
 ktor-jsoup = "2.3.0"
-logging = "7.0.7"
 lottie = "6.6.6"
 qrcode = "3.3.0"
-slf4j = "2.0.13"
 material = "1.12.0"
 
 # === Testing ===
@@ -159,11 +157,8 @@ akdanmaku = { group = "com.github.Frost819", name = "AkDanmaku", version.ref = "
 androidsvg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "androidsvg" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 ktor-jsoup = { group = "com.tfowl.ktor", name = "ktor-jsoup", version.ref = "ktor-jsoup" }
-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "logging" }
-logging-android = { group = "io.github.oshai", name = "kotlin-logging-android", version.ref = "logging" }
 lottie = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrcode" }
-slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 brotli = { group = "org.brotli", name = "dec", version.ref = "brotli" }
 
 # === Testing ===

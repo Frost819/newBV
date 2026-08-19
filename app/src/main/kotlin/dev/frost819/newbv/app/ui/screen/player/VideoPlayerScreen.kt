@@ -52,7 +52,7 @@ import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
 import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
 import dev.frost819.newbv.player.BvVideoPlayer
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.absoluteValue
@@ -72,7 +72,7 @@ fun VideoPlayerScreen(
     videoListViewModel: VideoListViewModel = hiltViewModel(),
     commentViewModel: CommentViewModel = hiltViewModel(),
 ) {
-    val logger = KotlinLogging.logger("VideoPlayerScreen")
+    val logger = Loggers.get("VideoPlayerScreen")
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 

@@ -2,7 +2,7 @@ package dev.frost819.newbv.biliapi.entity.user
 
 import bilibili.app.dynamic.v2.DynModuleType
 import bilibili.app.dynamic.v2.ModuleDynamic
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.biliapi.util.BiliLogger
 
 data class DynamicVideoData(
     val videos: List<DynamicVideo>,
@@ -11,7 +11,7 @@ data class DynamicVideoData(
     val updateBaseline: String,
 ) {
     companion object {
-        private val logger = KotlinLogging.logger { }
+        private val logger = BiliLogger
 
         fun fromDynamicData(data: dev.frost819.newbv.biliapi.http.entity.dynamic.DynamicData) =
             DynamicVideoData(

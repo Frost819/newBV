@@ -2,7 +2,6 @@ package dev.frost819.newbv.core.log
 
 import android.content.Context
 import android.os.Build
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
@@ -29,7 +28,7 @@ class CrashHandler(
     private val context: Context,
     private val maxLogCount: Int = 10
 ) {
-    private val logger = KotlinLogging.logger("CrashHandler")
+    private val logger = Loggers.get("CrashHandler")
 
     companion object {
         const val LOG_DIR = "crash_logs"
@@ -139,7 +138,7 @@ class CrashHandler(
             val crashFile = File(logDir, createFilename(manual = false))
             crashFile.createNewFile()
 
-            // 先写入设备信息和异常，再追加 Logcat，确保 KotlinLogging 输出也被保留。
+            // 先写入设备信息和异常，再追加 Logcat，确保应用 Logger 输出也被保留。
             val deviceInfo = collectDeviceInfo()
             writeCrashContext(crashFile, deviceInfo, thread, exception)
 

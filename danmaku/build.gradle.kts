@@ -64,7 +64,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
     implementation(libs.akdanmaku)
     implementation(libs.androidsvg)
-    implementation(libs.logging)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -73,7 +72,6 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.slf4j)
 
     testImplementation(libs.robolectric)
     testImplementation("androidx.test:core:1.6.1")

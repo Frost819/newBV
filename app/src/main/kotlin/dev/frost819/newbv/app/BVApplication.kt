@@ -12,7 +12,7 @@ import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.core.log.CrashHandler
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +20,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import javax.inject.Inject
-
-private object AndroidLoggingSetup {
-    init {
-        System.setProperty("kotlin-logging-to-android-native", "true")
-    }
-}
 
 /**
  * new BV 应用入口。
@@ -39,8 +33,7 @@ private object AndroidLoggingSetup {
 @HiltAndroidApp
 class BVApplication : Application() {
 
-    private val loggingSetup = AndroidLoggingSetup
-    private val logger = KotlinLogging.logger("BVApplication")
+    private val logger = Loggers.get("BVApplication")
 
     @Inject
     lateinit var dataStore: DataStore<Preferences>

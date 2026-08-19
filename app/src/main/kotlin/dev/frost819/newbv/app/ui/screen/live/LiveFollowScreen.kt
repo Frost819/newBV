@@ -35,7 +35,7 @@ import dev.frost819.newbv.app.ui.navigation.LiveFollowRoute
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
 import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveRoom
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +60,7 @@ class LiveFollowViewModel @Inject constructor(
         private const val LOAD_TIMEOUT_MS = 10_000L
     }
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Loggers.get("LiveFollowScreen")
 
     private val _uiState = MutableStateFlow(LiveFollowUiState())
     val uiState: StateFlow<LiveFollowUiState> = _uiState.asStateFlow()

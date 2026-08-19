@@ -11,7 +11,7 @@ import dev.frost819.newbv.biliapi.entity.ApiType as BiliApiType
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -35,7 +35,7 @@ class WatchLaterViewModel @Inject constructor(
     private val toViewRepository: ToViewRepository,
 ) : ViewModel() {
 
-    private val logger = KotlinLogging.logger("WatchLaterViewModel")
+    private val logger = Loggers.get("WatchLaterViewModel")
 
     private val _effect = MutableSharedFlow<WatchLaterEffect>()
     val effect = _effect.asSharedFlow()

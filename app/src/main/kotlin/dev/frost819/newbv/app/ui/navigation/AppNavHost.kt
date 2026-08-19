@@ -20,7 +20,7 @@ import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
 import dev.frost819.newbv.app.ui.screen.user.followScreen
 import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
-import io.github.oshai.kotlinlogging.KotlinLogging
+import dev.frost819.newbv.core.log.Loggers
 
 /**
  * 应用 Navigation 宿主。
@@ -36,7 +36,7 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: Any = HomeRoute
 ) {
-    val logger = KotlinLogging.logger("AppNavHost")
+    val logger = Loggers.get("AppNavHost")
 
     LaunchedEffect(navController) {
         var previousRoute: String? = null
