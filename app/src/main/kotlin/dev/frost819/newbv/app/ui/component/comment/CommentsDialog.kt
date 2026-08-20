@@ -47,6 +47,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,8 +63,10 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.viewmodel.comment.CommentSort
+import dev.frost819.newbv.app.viewmodel.comment.CommentUiEffect
 import dev.frost819.newbv.app.viewmodel.comment.CommentUiState
 import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.biliapi.entity.comment.Comment
 import dev.frost819.newbv.core.focus.isDpadDown
 import dev.frost819.newbv.core.focus.isDpadLeft
@@ -102,11 +105,20 @@ fun CommentsDialog(
     onDismiss: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var imageViewerPictures by remember { mutableStateOf<List<String>?>(null) }
     var imageViewerIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(aid) {
         viewModel.load(aid)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is CommentUiEffect.ShowToast -> ToastUtils.show(context, effect.message)
+            }
+        }
     }
 
     Dialog(
@@ -367,7 +379,7 @@ private fun CommentItem(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     DialogActionButton(
-                        text = if (isLiking) "处理中" else "赞 ${comment.likeCount}",
+                        text = "赞 ${comment.likeCount}",
                         icon = if (comment.isLiked) Icons.Rounded.ThumbUp else Icons.Outlined.ThumbUp,
                         onClick = onToggleLike,
                         enabled = !isLiking,

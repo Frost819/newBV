@@ -9,8 +9,11 @@ import dev.frost819.newbv.biliapi.repositories.CommentRepository
 import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -43,6 +46,12 @@ data class CommentUiState(
     val likingIds: Set<Long> = emptySet(),
 )
 
+/** 评论弹窗一次性 UI 事件。 */
+sealed interface CommentUiEffect {
+    /** 显示 Toast 消息。 */
+    data class ShowToast(val message: String) : CommentUiEffect
+}
+
 /**
  * 评论弹窗 ViewModel。
  *
@@ -60,6 +69,10 @@ class CommentViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CommentUiState())
     /** 当前评论弹窗状态。 */
     val uiState: StateFlow<CommentUiState> = _uiState.asStateFlow()
+
+    private val _uiEffect = MutableSharedFlow<CommentUiEffect>(extraBufferCapacity = 1)
+    /** 评论弹窗一次性事件（如 toast）。 */
+    val uiEffect: SharedFlow<CommentUiEffect> = _uiEffect.asSharedFlow()
 
     /**
      * 加载指定视频的第一页评论。
@@ -207,6 +220,8 @@ class CommentViewModel @Inject constructor(
     /**
      * 点赞或取消点赞评论。
      *
+     * 请求成功后才更新 UI 状态，不显示中间态。失败时弹出 toast 提示。
+     *
      * @param rpid 评论 ID
      */
     fun toggleLike(rpid: Long) {
@@ -214,12 +229,6 @@ class CommentViewModel @Inject constructor(
         if (rpid in _uiState.value.likingIds) return
         val target = !comment.isLiked
         _uiState.update { it.copy(likingIds = it.likingIds + rpid) }
-        updateComment(rpid) {
-            it.copy(
-                isLiked = target,
-                likeCount = (it.likeCount + if (target) 1 else -1).coerceAtLeast(0),
-            )
-        }
         viewModelScope.launch {
             try {
                 commentRepository.toggleCommentLike(
@@ -228,15 +237,16 @@ class CommentViewModel @Inject constructor(
                     like = target,
                     preferApiType = ApiType.Web,
                 )
+                updateComment(rpid) {
+                    it.copy(
+                        isLiked = target,
+                        likeCount = (it.likeCount + if (target) 1 else -1).coerceAtLeast(0),
+                    )
+                }
             } catch (error: Throwable) {
                 rethrowCancellation(error)
                 logger.error(error) { "Failed to toggle comment like: rpid=$rpid" }
-                updateComment(rpid) {
-                    it.copy(
-                        isLiked = comment.isLiked,
-                        likeCount = comment.likeCount,
-                    )
-                }
+                _uiEffect.emit(CommentUiEffect.ShowToast("评论点赞失败: ${error.message ?: "未知错误"}"))
             } finally {
                 _uiState.update { it.copy(likingIds = it.likingIds - rpid) }
             }

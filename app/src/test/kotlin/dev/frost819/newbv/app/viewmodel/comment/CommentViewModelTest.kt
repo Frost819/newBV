@@ -1,6 +1,8 @@
 package dev.frost819.newbv.app.viewmodel.comment
 
+import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.viewmodel.comment.CommentUiEffect
 import dev.frost819.newbv.biliapi.entity.comment.Comment
 import dev.frost819.newbv.biliapi.entity.comment.CommentPage
 import dev.frost819.newbv.biliapi.repositories.CommentRepository
@@ -83,7 +85,7 @@ class CommentViewModelTest {
     }
 
     @Test
-    fun `toggle like updates comment and calls repository`() = runTest(dispatcher) {
+    fun `toggle like updates comment only after success`() = runTest(dispatcher) {
         val root = comment(rpid = 1L)
         coEvery { repository.getComments(any(), any(), any(), any()) } returns CommentPage(
             comments = listOf(root),
@@ -97,11 +99,42 @@ class CommentViewModelTest {
         advanceUntilIdle()
 
         viewModel.toggleLike(1L)
+        // 请求完成前 UI 不应变化
+        assertThat(viewModel.uiState.value.comments.single().isLiked).isFalse()
+        assertThat(viewModel.uiState.value.comments.single().likeCount).isEqualTo(0L)
+
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.comments.single().isLiked).isTrue()
         assertThat(viewModel.uiState.value.comments.single().likeCount).isEqualTo(1L)
         coVerify { repository.toggleCommentLike(100L, 1L, true, any()) }
+    }
+
+    @Test
+    fun `toggle like emits toast and keeps state on failure`() = runTest(dispatcher) {
+        val root = comment(rpid = 1L)
+        coEvery { repository.getComments(any(), any(), any(), any()) } returns CommentPage(
+            comments = listOf(root),
+            page = 1,
+            total = 1,
+            hasMore = false,
+        )
+        coEvery { repository.toggleCommentLike(any(), any(), any(), any()) } throws
+            RuntimeException("网络错误")
+        val viewModel = CommentViewModel(repository)
+        viewModel.load(100L)
+        advanceUntilIdle()
+
+        viewModel.uiEffect.test {
+            viewModel.toggleLike(1L)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.comments.single().isLiked).isFalse()
+            assertThat(viewModel.uiState.value.comments.single().likeCount).isEqualTo(0L)
+
+            val effect = awaitItem() as CommentUiEffect.ShowToast
+            assertThat(effect.message).contains("评论点赞失败")
+        }
     }
 
     private fun comment(
