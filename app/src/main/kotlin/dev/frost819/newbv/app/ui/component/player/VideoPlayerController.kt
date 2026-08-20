@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.component.player
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -120,9 +119,6 @@ fun VideoPlayerController(
     var lastSeekChangeTime by remember { mutableLongStateOf(0L) }
     var seekCountdown: Job? by remember { mutableStateOf(null) }
     var hideInfoSeekCountdown: Job? by remember { mutableStateOf(null) }
-
-    // 双击退出
-    var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     // 常显进度条
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
@@ -295,13 +291,7 @@ fun VideoPlayerController(
                     closeAllControllers()
                     return true
                 }
-                val now = System.currentTimeMillis()
-                if (now - lastBackPressTime < 3000) {
-                    onExit()
-                } else {
-                    lastBackPressTime = now
-                    Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
-                }
+                onExit()
                 return true
             }
 

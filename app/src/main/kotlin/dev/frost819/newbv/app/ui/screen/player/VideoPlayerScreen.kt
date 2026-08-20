@@ -1,7 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.player
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +28,7 @@ import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
+import dev.frost819.newbv.app.ui.component.rememberDoublePressExit
 import dev.frost819.newbv.app.ui.component.player.VideoPlayerController
 import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
 import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
@@ -38,6 +37,7 @@ import dev.frost819.newbv.app.ui.component.player.VideoProgressSeek
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.state.player.PlayerState
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
@@ -137,7 +137,7 @@ fun VideoPlayerScreen(
                     (context as? Activity)?.finish()
                 }
                 is dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    ToastUtils.show(context, effect.message)
                 }
                 dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.PlayEnded -> {
                     if (isLooping) {
@@ -234,17 +234,12 @@ fun VideoPlayerScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
     }
 
-    // 返回键由 VideoPlayerController 的 onPreviewKeyEvent 处理（TV 遥控器）
-    // BackHandler 仅作为非 TV 设备的系统返回兜底
-    var lastBackPressTime by remember { mutableLongStateOf(0L) }
-    BackHandler {
-        if (System.currentTimeMillis() - lastBackPressTime < 3000) {
-            navController.popBackStack()
-        } else {
-            lastBackPressTime = System.currentTimeMillis()
-            Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
-        }
-    }
+    // 双击退出：TV 遥控器（Controller onExit）和非 TV（BackHandler）共用同一计时器
+    val handleBack = rememberDoublePressExit(
+        onExit = { navController.popBackStack() },
+        message = "再按一次退出播放",
+    )
+    BackHandler { handleBack() }
 
     VideoPlayerController(
         modifier = Modifier.fillMaxSize(),
@@ -263,7 +258,7 @@ fun VideoPlayerScreen(
         },
         onExit = {
             logger.info { "[PLAYBACK] exit aid=${uiState.aid}, cid=${uiState.cid}" }
-            navController.popBackStack()
+            handleBack()
         },
         onGoTime = { time ->
             logger.info { "[PLAYBACK] seek aid=${uiState.aid}, cid=${uiState.cid}, positionMs=$time" }

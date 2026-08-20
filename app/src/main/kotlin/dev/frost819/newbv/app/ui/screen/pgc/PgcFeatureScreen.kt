@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.pgc
 
-import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,6 +66,7 @@ import dev.frost819.newbv.app.ui.component.LoadingTip
 import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiEffect
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
@@ -111,7 +111,7 @@ private fun SeasonDetailScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is SeasonDetailUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    ToastUtils.show(context, effect.message)
                 }
                 is SeasonDetailUiEffect.NavigateToPlayer -> {
                     navController.navigate(

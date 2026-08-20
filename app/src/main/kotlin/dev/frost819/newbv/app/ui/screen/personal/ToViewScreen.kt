@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.personal
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +26,7 @@ import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.personal.PersonalUiEffect
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
@@ -58,7 +58,7 @@ fun ToViewScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is PersonalUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    ToastUtils.show(context, effect.message)
                 }
             }
         }

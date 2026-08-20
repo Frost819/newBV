@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.main
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -17,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,6 +34,7 @@ import androidx.navigation.NavController
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.rememberDrawerState
+import dev.frost819.newbv.app.ui.component.rememberDoublePressExit
 import dev.frost819.newbv.app.ui.component.user.UserPanel
 import dev.frost819.newbv.app.ui.screen.home.HomeContent
 import dev.frost819.newbv.app.viewmodel.user.UserViewModel
@@ -63,22 +62,16 @@ fun MainScreen(
     val userUiState by userViewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showUserPanel by remember { mutableStateOf(false) }
-    var lastPressBack: Long by remember { mutableLongStateOf(0L) }
     var selectedDrawerItem by rememberSaveable { mutableStateOf(Prefs.homeLeftNavItem) }
     var focusInitialized by rememberSaveable { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val homeFocusRequester = remember { FocusRequester() }
 
-    val handleBack = {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPressBack < 1000 * 3) {
-            (context as? android.app.Activity)?.finish()
-        } else {
-            lastPressBack = currentTime
-            Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
-        }
-    }
+    val handleBack = rememberDoublePressExit(
+        onExit = { (context as? android.app.Activity)?.finish() },
+        message = "再按一次退出",
+    )
 
     val onFocusToContent: () -> Unit = {
         runCatching { homeFocusRequester.requestFocus() }

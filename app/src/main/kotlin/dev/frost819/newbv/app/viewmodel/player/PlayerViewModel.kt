@@ -330,7 +330,6 @@ class PlayerViewModel @Inject constructor(
                 }
             }.onSuccess {
                 videoInfoRepository.updateVideoActionState(aid = aid, liked = !current)
-                _uiEffect.emit(PlayerUiEffect.ShowToast(if (!current) "已点赞" else "已取消点赞"))
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
                 logger.error(error) { "Failed to toggle video like: aid=$aid" }
@@ -349,7 +348,6 @@ class PlayerViewModel @Inject constructor(
                 }
             }.onSuccess {
                 videoInfoRepository.updateVideoActionState(aid = aid, coined = true)
-                _uiEffect.emit(PlayerUiEffect.ShowToast("已投币"))
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
                 logger.error(error) { "Failed to send video coin: aid=$aid" }
@@ -390,7 +388,6 @@ class PlayerViewModel @Inject constructor(
                 }
             }.onSuccess {
                 videoInfoRepository.updateVideoActionState(aid = aid, favorited = !current)
-                _uiEffect.emit(PlayerUiEffect.ShowToast(if (current) "已取消收藏" else "已收藏"))
             }.onFailure { error ->
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
                 logger.error(error) { "Failed to toggle video favorite: aid=$aid" }

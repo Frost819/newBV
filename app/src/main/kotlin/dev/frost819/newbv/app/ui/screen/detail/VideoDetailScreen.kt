@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.detail
 
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -96,6 +95,7 @@ import dev.frost819.newbv.app.ui.navigation.SearchResultRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
@@ -155,7 +155,7 @@ private fun VideoDetailScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is VideoDetailUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    ToastUtils.show(context, effect.message)
                 }
                 is VideoDetailUiEffect.NavigateToSeason -> {
                     // TODO(实现 PGC 番剧详情页跳转)

@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.component.player
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -109,7 +107,6 @@ fun LivePlayerController(
     }
 
     var hideInfoCountdown: Job? by remember { mutableStateOf(null) }
-    var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
@@ -146,13 +143,7 @@ fun LivePlayerController(
                     closeAllControllers()
                     return true
                 }
-                val now = System.currentTimeMillis()
-                if (now - lastBackPressTime < 3000) {
-                    onBack()
-                } else {
-                    lastBackPressTime = now
-                    Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
-                }
+                onBack()
                 return true
             }
 

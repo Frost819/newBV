@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.viewmodel.common
 
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
@@ -11,6 +10,7 @@ import dev.frost819.newbv.biliapi.entity.ApiType as BiliApiType
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -105,7 +105,7 @@ fun CollectWatchLaterEffects(watchLaterViewModel: WatchLaterViewModel) {
         watchLaterViewModel.effect.collect { effect ->
             when (effect) {
                 is WatchLaterEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    ToastUtils.show(context, effect.message)
                 }
             }
         }
