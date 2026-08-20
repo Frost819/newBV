@@ -214,8 +214,8 @@ object Prefs {
         save = { it.ordinal },
         restore = { ApiType.fromOrdinal(it) }
     )
-    /** 崩溃上报端点（空字符串表示关闭）。 */
-    var crashReportEndpoint by pref(PrefKeys.crashReportEndpoint, "")
+    /** 是否启用崩溃日志上传（默认关闭）。 */
+    var crashReportEnabled by pref(PrefKeys.crashReportEnabled, false)
 
     // --- 播放器 - 视频（PRD 7.1） ---
 

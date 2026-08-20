@@ -24,6 +24,7 @@ import dev.frost819.newbv.core.focus.touchClickable
  * @param title 标题。
  * @param supportText 副文本（当前值描述）。
  * @param onClick 点击回调。
+ * @param trailingContent 尾部内容（如开关），可选。
  */
 @Composable
 fun SettingListItem(
@@ -31,6 +32,7 @@ fun SettingListItem(
     title: String,
     supportText: String,
     onClick: () -> Unit,
+    trailingContent: @Composable (() -> Unit)? = null,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
 
@@ -42,6 +44,7 @@ fun SettingListItem(
             .touchClickable(onClick = onClick),
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
+        trailingContent = trailingContent,
         onClick = onClick,
         selected = hasFocus,
     )

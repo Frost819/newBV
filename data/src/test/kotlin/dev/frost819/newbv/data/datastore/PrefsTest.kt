@@ -190,8 +190,8 @@ class PrefsTest {
     }
 
     @Test
-    fun `default crashReportEndpoint is empty`() {
-        assertThat(Prefs.crashReportEndpoint).isEmpty()
+    fun `default crashReportEnabled is false`() {
+        assertThat(Prefs.crashReportEnabled).isFalse()
     }
 
     @Test

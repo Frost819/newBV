@@ -195,7 +195,7 @@ class PrefDelegateTest {
         Prefs.refreshToken = "test_refresh"
         Prefs.buvid3FromSpi = true
         Prefs.deviceCookies = "test_cookies"
-        Prefs.crashReportEndpoint = "http://example.com"
+        Prefs.crashReportEnabled = true
         Prefs.enableSoftwareVideoDecoder = true
         Prefs.enableFfmpegAudioRenderer = true
         Prefs.defaultDanmakuScale = 2.0f

@@ -39,6 +39,14 @@ class CrashHandler(
     private var originalHandler: Thread.UncaughtExceptionHandler? = null
 
     /**
+     * 崩溃上传器。
+     *
+     * 由 app 层通过 Hilt DI 注入后设置。
+     * 为 null 表示上传功能不可用（token 未配置或未启用）。
+     */
+    var crashUploader: CrashUploader? = null
+
+    /**
      * 安装崩溃处理器。
      *
      * 清空 logcat 缓冲，设置全局异常处理器。
@@ -138,31 +146,53 @@ class CrashHandler(
             val crashFile = File(logDir, createFilename(manual = false))
             crashFile.createNewFile()
 
-            // 先写入设备信息和异常，再追加 Logcat，确保应用 Logger 输出也被保留。
             val deviceInfo = collectDeviceInfo()
+
+            // 先写入设备信息和异常，再追加 Logcat，确保应用 Logger 输出也被保留。
             writeCrashContext(crashFile, deviceInfo, thread, exception)
 
-            // 追加 logcat 输出
-            appendLogcat(crashFile)
+            // 收集 logcat 文本（用于文本日志和 JSON 上传）
+            val logcatText = collectLogcatText()
+
+            // 追加 logcat 输出到文本日志
+            appendLogcatText(crashFile, logcatText)
+
+            // best-effort 同步上传崩溃日志
+            crashUploader?.uploadCrash(deviceInfo, thread, exception, logcatText)
         }.onFailure { error ->
             logger.error(error) { "Failed to write crash log" }
         }
     }
 
-    private fun appendLogcat(file: File) {
-        runCatching {
-            val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            // 使用 append 模式，避免覆盖 writeCrashContext 已写入的内容
-            OutputStreamWriter(FileOutputStream(file, true)).use { writer ->
-                writer.appendLine("======== Logcat ========")
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    writer.appendLine(line)
-                }
-                writer.flush()
-            }
-            reader.close()
+    /**
+     * 收集 logcat 输出为文本。
+     *
+     * 读取最近 10000 行 logcat（threadtime 格式）。
+     *
+     * @return logcat 文本，失败返回空字符串。
+     */
+    private fun collectLogcatText(): String = runCatching {
+        val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        val sb = StringBuilder()
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            sb.appendLine(line)
+        }
+        reader.close()
+        sb.toString()
+    }.onFailure {
+        logger.error(it) { "Failed to collect logcat" }
+    }.getOrDefault("")
+
+    /**
+     * 将 logcat 文本追加到文件。
+     */
+    private fun appendLogcatText(file: File, logcatText: String) {
+        OutputStreamWriter(FileOutputStream(file, true)).use { writer ->
+            writer.appendLine("======== Logcat ========")
+            writer.append(logcatText)
+            writer.flush()
         }
     }
 

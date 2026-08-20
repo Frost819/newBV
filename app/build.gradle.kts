@@ -1,11 +1,21 @@
 @file:Suppress("UnstableApiUsage")
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
+}
+
+val localProperties = Properties()
+localProperties.apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -23,6 +33,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField(
+            "String",
+            "CRASH_REPORT_TOKEN",
+            "\"${localProperties.getProperty("crashReport.token", "")}\"",
+        )
     }
 
     buildTypes {

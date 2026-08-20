@@ -17,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
+import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.component.settings.displayName
@@ -43,7 +45,7 @@ fun OtherSetting(
 
     var showPreferedApiDialog by remember { mutableStateOf(false) }
     var selectedApi by remember { mutableStateOf(Prefs.apiType) }
-    var crashReportEndpoint by remember { mutableStateOf(Prefs.crashReportEndpoint) }
+    var crashReportEnabled by remember { mutableStateOf(Prefs.crashReportEnabled) }
 
     Column(
         modifier = modifier
@@ -66,17 +68,30 @@ fun OtherSetting(
         )
 
         SettingListItem(
-            title = "崩溃上报端点",
-            supportText = "当前：${crashReportEndpoint.ifEmpty { "未设置" }}",
+            title = "上传崩溃日志",
+            supportText = "崩溃时自动上传日志到开发者服务器",
+            trailingContent = {
+                Switch(
+                    checked = crashReportEnabled,
+                    onCheckedChange = {
+                        crashReportEnabled = it
+                        Prefs.crashReportEnabled = it
+                    },
+                )
+            },
             onClick = {
-                crashReportEndpoint = if (crashReportEndpoint.isEmpty()) {
-                    "https://your-endpoint.example.com/crash"
-                } else {
-                    ""
-                }
-                Prefs.crashReportEndpoint = crashReportEndpoint
+                crashReportEnabled = !crashReportEnabled
+                Prefs.crashReportEnabled = crashReportEnabled
             },
         )
+
+        if (BuildConfig.DEBUG) {
+            SettingListItem(
+                title = "触发测试崩溃",
+                supportText = "仅用于测试崩溃上传流程",
+                onClick = { throw RuntimeException("Test crash for upload verification") },
+            )
+        }
 
         SettingListItem(
             title = "查看日志",

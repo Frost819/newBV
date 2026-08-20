@@ -21,3 +21,7 @@ test.video.cid=1051761130
 
 # 测试用直播间
 test.live.roomid=21452505
+
+# 崩溃日志上传 auth token（Cloudflare Worker AUTH_TOKEN secret）
+# 为空则上传功能不可用
+crashReport.token=your-crash-worker-auth-token
