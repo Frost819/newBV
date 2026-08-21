@@ -237,11 +237,20 @@ private fun CommentsContent(
                 }
             }
             state.error && state.comments.isEmpty() -> {
+                val retryFocusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) {
+                    runCatching { retryFocusRequester.requestFocus() }
+                }
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("评论加载失败")
                         Spacer(Modifier.height(12.dp))
-                        DialogActionButton("重试", Icons.Outlined.Refresh, onRefresh)
+                        DialogActionButton(
+                            text = "重试",
+                            icon = Icons.Outlined.Refresh,
+                            onClick = onRefresh,
+                            focusRequester = retryFocusRequester,
+                        )
                     }
                 }
             }
@@ -398,11 +407,22 @@ private fun CommentItem(
 
         if (comment.isExpanded) {
             if (comment.repliesError) {
-                Text(
-                    text = "回复加载失败，请再次点击重试",
-                    color = MaterialTheme.colorScheme.error,
+                Row(
                     modifier = Modifier.padding(start = 50.dp, top = 8.dp),
-                )
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "回复加载失败",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    DialogActionButton(
+                        text = "重试",
+                        icon = Icons.Outlined.Refresh,
+                        onClick = onToggleReplies,
+                    )
+                }
             }
             comment.replies.forEach { reply ->
                 CommentItem(
@@ -454,9 +474,12 @@ private fun DialogActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
     enabled: Boolean = true,
+    focusRequester: FocusRequester? = null,
 ) {
     Surface(
-        modifier = Modifier.touchClickable(onClick = onClick),
+        modifier = Modifier
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+            .touchClickable(onClick = onClick),
         onClick = onClick,
         enabled = enabled,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),

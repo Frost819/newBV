@@ -1,16 +1,14 @@
 package dev.frost819.newbv.app.ui.screen.login
 
-import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -21,23 +19,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.tv.material3.Border
+import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.viewmodel.login.LoginViewModel
 import dev.frost819.newbv.biliapi.entity.login.QrLoginState
+import dev.frost819.newbv.core.focus.touchClickable
 import io.github.g0dkar.qrcode.QRCode
 
 /**
@@ -78,24 +75,7 @@ fun QrLoginContent(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Box(
-            modifier = modifier
-                .focusable()
-                .fillMaxSize()
-                .clickable {
-                    if (uiState.state == QrLoginState.Expired || uiState.state == QrLoginState.Error) {
-                        viewModel.requestAppQrCode()
-                    }
-                }
-                .onKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyUp && event.key == Key.DirectionCenter) {
-                        if (uiState.state == QrLoginState.Expired || uiState.state == QrLoginState.Error) {
-                            viewModel.requestAppQrCode()
-                        }
-                        true
-                    } else {
-                        false
-                    }
-                },
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -138,12 +118,36 @@ fun QrLoginContent(
                         visible = uiState.state == QrLoginState.Expired ||
                             uiState.state == QrLoginState.Error,
                     ) {
-                        Text(
-                            text = stringResource(R.string.login_retry),
-                            style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 26.sp,
-                        )
+                        val retryFocusRequester = remember { FocusRequester() }
+                        LaunchedEffect(Unit) {
+                            runCatching { retryFocusRequester.requestFocus() }
+                        }
+                        Surface(
+                            modifier = Modifier
+                                .focusRequester(retryFocusRequester)
+                                .touchClickable(onClick = { viewModel.requestAppQrCode() }),
+                            onClick = { viewModel.requestAppQrCode() },
+                            shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
+                            border = ClickableSurfaceDefaults.border(
+                                focusedBorder = Border(
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        2.dp,
+                                        MaterialTheme.colorScheme.border,
+                                    ),
+                                    shape = MaterialTheme.shapes.medium,
+                                ),
+                            ),
+                            colors = ClickableSurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                                text = stringResource(R.string.login_retry),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

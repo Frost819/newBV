@@ -8,7 +8,7 @@
     <string name="login_expired">二维码已过期</string>
     <string name="login_success">登录成功</string>
     <string name="login_error">登录失败</string>
-    <string name="login_retry">按确认键重试</string>
+    <string name="login_retry">重试</string>
     <string name="login_title">登录</string>
 
     <!-- User Switch -->
