@@ -374,6 +374,9 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 │  ┌────────────────┬────────────────┐ │
 │  │   Web HTTP     │   App gRPC     │ │
 │  │ (Ktor + SESSDATA)│(grpc + access_key)│
+│  │                ├────────────────┤ │
+│  │                │   App HTTP     │ │
+│  │                │(access_key+sign)│ │
 │  └────────────────┴────────────────┘ │
 │  ┌──────────────────────────────────┐│
 │  │      Web/App 显式接口选择           ││
@@ -382,7 +385,7 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 └──────────────────────────────────────┘
                │
                ▼
-      api.bilibili.com / grpc.biliapi.net
+       api.bilibili.com / grpc.biliapi.net / app.bilibili.com
 ```
 
 **移除的内容**：
@@ -399,38 +402,52 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 用户选择 Web / App
      │
      ├─ Web ──▶ Web HTTP + SESSDATA + WBI
-     └─ App ──▶ App gRPC + access_key + device metadata
+     └─ App ──▶ App gRPC（access_key + device metadata）
+              或 App HTTP（access_key + appkey + sign）
 ```
 
 - 不实现 Web ↔ App 自动 fallback。
 - 不实现 UA 轮换池。
-- App 模式优先使用对应 App gRPC；不存在可用 RPC 的功能建立 Web-only 清单。
+- App 模式优先使用 App gRPC；无 gRPC 等价接口时使用 App HTTP（独立端点或共享端点 + `access_key`）；均不存在时标记为 Web-only。
 - Web-only 功能直接调用 Web API，不通过 `ApiType` 在 Web/App 间分流。
 - 接口错误直接返回，由上层按未登录、鉴权失败、风控、网络错误和业务错误分类提示。
 - App gRPC 接入优先参考原版 BV，缺失接口再查 API 文档；无可靠实现时不伪造 RPC。
 
 #### 2.6.2 接口类型对照
 
-| 功能 | Web HTTP | App gRPC |
+| 功能 | Web HTTP | App 实现 |
 |---|---|---|
-| 推荐视频 | `/x/web-interface/wbi/index/top/feed/rcmd` | `Popular.Index` |
-| 热门视频 | `/x/web-interface/popular` | `Popular.Index` |
-| 视频详情 | `/x/web-interface/wbi/view/detail` | `View.View` |
-| 播放地址 (UGC) | `/x/player/playurl` (fnval=4048, qn=127) | `Player.PlayViewUnite` |
-| 播放地址 (PGC) | `/pgc/player/web/v2/playurl` | `PlayURL.PlayView` |
-| 弹幕 | `/x/v1/dm/list.so` (XML) | `DM.DmView` (元数据) |
-| 字幕 | `/x/player/wbi/v2` | `DM.DmView` |
-| 搜索 | `/x/web-interface/wbi/search/...` | `Search.SearchByType` |
-| 历史 | `/x/web-interface/history/cursor` | `History.CursorV2` |
-| 动态 | `/x/polymer/web-dynamic/v1/feed/all` | `Dynamic.DynVideo` |
-| 稍后再看 | `/x/v2/history/toview` | (同 Web) |
-| 收藏 | `/x/v3/fav/...` | (同 Web) |
-| 点赞/投币 | `/x/web-interface/archive/...` | (同 Web) |
-| 直播 [新增] | `api.live.bilibili.com/...` | (同 Web) |
+| 推荐视频 | `/x/web-interface/wbi/index/top/feed/rcmd` | App HTTP `app.bilibili.com/x/v2/feed/index` |
+| 热门视频 | `/x/web-interface/popular` | gRPC `Popular.Index` |
+| 视频详情 | `/x/web-interface/wbi/view/detail` | gRPC `View.View` |
+| 播放地址 (UGC) | `/x/player/playurl` (fnval=4048, qn=127) | gRPC `Player.PlayViewUnite` |
+| 播放地址 (PGC) | `/pgc/player/web/v2/playurl` | gRPC `PlayURL.PlayView` |
+| 弹幕 | `/x/v1/dm/list.so` (XML) | gRPC `DM.DmView`（元数据） |
+| 字幕 | `/x/player/wbi/v2` | gRPC `DM.DmView` |
+| 搜索（全量/分类/建议） | `/x/web-interface/wbi/search/...` | gRPC `Search.SearchAll` / `SearchByType` / `Suggest3` |
+| 历史 | `/x/web-interface/history/cursor` | gRPC `History.CursorV2` |
+| 动态 | `/x/polymer/web-dynamic/v1/feed/all` | gRPC `Dynamic.DynVideo` |
+| 评论/楼中楼 | `/x/v2/reply` / `/x/v2/reply/reply` | gRPC `Reply.MainList` / `DetailList` |
+| 稍后再看 | `/x/v2/history/toview` | App HTTP（同端点 + `access_key`） |
+| 收藏 | `/x/v3/fav/...` | App HTTP（同端点 + `access_key`） |
+| 点赞/投币/三连 | `/x/web-interface/archive/...` | App HTTP（`app.bilibili.com/x/v2/view/...`） |
+| 播放心跳 | `/x/click-interface/web/heartbeat` | App HTTP `/x/v2/history/report` |
+| 视频截图 | `/x/player/videoshot` | App HTTP `app.bilibili.com/x/v2/view/video/shot` |
+| PGC 番剧详情 | `/pgc/view/web/season` | App HTTP `/pgc/view/v2/app/season` |
+| 追番/取消 | `/pgc/web/follow/{add,del}` | App HTTP `/pgc/app/follow/{add,del}` |
+| 追番列表 | `/x/space/bangumi/follow/list` | App HTTP `/pgc/app/follow/v2/{type}` |
+| 番剧时间表 | `/pgc/web/timeline` | App HTTP `/pgc/app/timeline` |
+| 用户空间视频 | `/x/space/wbi/arc/search` | App HTTP `app.bilibili.com/x/v2/space/archive/cursor` |
+| 关注/取关 | `/x/relation/modify` | App HTTP（同端点 + `access_key`） |
+| 直播 [新增] | `api.live.bilibili.com/...` | （同 Web，无 App 接口） |
+| 用户信息 | `/x/space/wbi/acc/info` | （同 Web，无 App 接口） |
+
+> 完整接口清单见 §8.2。
 
 **鉴权方式**：
 - Web API：`SESSDATA` Cookie + WBI 签名 + buvid3 Cookie
 - App gRPC：`access_key`（gRPC metadata `authorization`）+ 设备信息 metadata
+- App HTTP：`access_key` 参数 + `appkey` + `sign` MD5 签名（不注入 Cookie）
 
 ### 2.7 播放器引擎抽象
 
@@ -731,7 +748,7 @@ ChooseUser (选择用户) ──选中──▶ InputPassword (输入密码)
 
 **数据流**：
 - Web API：`/x/web-interface/wbi/index/top/feed/rcmd`
-- App gRPC：`Popular.Index`
+- App HTTP：`app.bilibili.com/x/v2/feed/index`（`access_key` 鉴权）
 - 滚动至末尾 20 项内触发加载更多
 - 列表末尾显示"没有更多了"提示
 
@@ -739,7 +756,9 @@ ChooseUser (选择用户) ──选中──▶ InputPassword (输入密码)
 
 **功能描述**：4 列网格展示热门视频，无限滚动。
 
-**数据流**：Web API `/x/web-interface/popular`
+**数据流**：
+- Web API：`/x/web-interface/popular`
+- App gRPC：`Popular.Index`
 
 #### 3.4.4 动态页
 
@@ -1307,7 +1326,9 @@ Row
 - 卡片长按快捷操作：添加/删除稍后再看
 - 卡片 `delToView=true`：稍后再看图标变为删除图标
 
-**数据流**：`/x/v2/history/toview`
+**数据流**：
+- Web：`/x/v2/history/toview`（Cookie `csrf` 鉴权）
+- App HTTP：同端点 + `access_key`
 
 #### 3.11.3 历史
 
@@ -1325,7 +1346,9 @@ Row
 
 **布局**：顶部 `TabRow`（收藏夹切换）+ 4 列网格（视频列表）
 
-**数据流**：`/x/v3/fav/resource/list`
+**数据流**：
+- Web：`/x/v3/fav/resource/list`
+- App HTTP：同端点 + `access_key`
 
 #### 3.11.5 追番
 
@@ -2287,28 +2310,95 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | 直播流地址 [新增] | `api.live.bilibili.com/xlive/web-room/v1/playUrl/playUrl` | SESSDATA | 直播流 |
 | 直播弹幕信息 [新增] | `api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo` | SESSDATA | 弹幕 token |
 
-### 8.2 App gRPC API 清单
+### 8.2 App 接口清单
 
-| 功能 | Service | RPC | 用途 |
+App 模式下接口分三种实现方式：**App gRPC**（grpc.biliapi.net）、**App HTTP**（独立端点 `app.bilibili.com` / `/pgc/app/*` 或共享端点 + `access_key`）、**Web-only**（无 App 等价接口）。Repository 方法通过 `preferApiType: ApiType` 参数选择实现；无 App 实现的方法不接收该参数。
+
+#### 8.2.1 App gRPC 接口
+
+| 功能 | Service | RPC | Repository | 方法 |
+|---|---|---|---|---|
+| UGC 播放地址 | `Player` | `PlayViewUnite` | VideoPlayRepository | `getPlayData()` |
+| PGC 播放地址 | `PlayURL` | `PlayView` | VideoPlayRepository | `getPgcPlayData()` |
+| 弹幕元数据（字幕+蒙版） | `DM` | `DmView` | VideoPlayRepository | `getSubtitle()`, `getDanmakuMask()` |
+| 视频详情 | `View` | `View` | VideoDetailRepository | `getVideoDetail()`, `getUgcPages()` |
+| 热门视频 | `Popular` | `Index` | RecommendVideoRepository | `getPopularVideos()` |
+| 观看历史 | `History` | `CursorV2` | HistoryRepository | `getHistories()` |
+| 搜索建议 | `Search` | `Suggest3` | SearchRepository | `getSearchSuggest()` |
+| 全量搜索 | `Search` | `SearchAll` | SearchRepository | `searchAll()` |
+| 分类搜索 | `Search` | `SearchByType` | SearchRepository | `searchType()` |
+| 动态视频 | `Dynamic` | `DynVideo` | UserRepository | `getDynamicVideos()` |
+| 评论主列表 | `Reply` | `MainList` | CommentRepository | `getComments()` |
+| 楼中楼回复 | `Reply` | `DetailList` | CommentRepository | `getReplies()` |
+
+> **未实现的 gRPC**：`DM.DmSegMobile`（弹幕分段，延后至功能增强阶段，需配套弹幕分段缓存改造）。
+
+#### 8.2.2 App HTTP 接口（独立端点）
+
+这些接口使用 `app.bilibili.com` 或 `/pgc/app/*` 独立 URL，通过 `access_key` + App 签名（`appkey` + `sign` MD5）鉴权，与 Web 端点完全分离。
+
+| 功能 | Repository | 方法 | App 端点 |
 |---|---|---|---|
-| UGC 播放地址 | `Player` | `PlayViewUnite` | UGC 流地址 |
-| PGC 播放地址 | `PlayURL` | `PlayView` | PGC 流地址 |
-| 弹幕元数据 | `DM` | `DmView` | 弹幕/字幕/蒙版 |
-| 弹幕分段 | `DM` | `DmSegMobile` | 弹幕分段 |
-| 视频详情 | `View` | `View` | 视频信息 |
-| 热门 | `Popular` | `Index` | 热门视频 |
-| 历史 | `History` | `CursorV2` | 观看历史 |
-| 搜索建议 | `Search` | `Suggest3` | 搜索建议 |
-| 类型搜索 | `Search` | `SearchByType` | 分类搜索 |
-| 全量搜索 | `Search` | `SearchAll` | 全量搜索 |
-| 动态 | `Dynamic` | `DynVideo` | 动态视频 |
+| 播放心跳 | VideoPlayRepository | `sendHeartbeat()` | `POST /x/v2/history/report` |
+| 视频点赞 | LikeRepository | `updateVideoLiked()` | `POST app.bilibili.com/x/v2/view/like` |
+| 视频投币 | CoinRepository | `sendVideoCoin()` | `POST app.bilibili.com/x/v2/view/coin/add` |
+| 一键三连 | OneClickTripleActionRepository | `sendVideoOneClickTripleAction()` | `POST app.bilibili.com/x/v2/view/like/triple` |
+| 推荐视频 | RecommendVideoRepository | `getRecommendVideos()` | `GET app.bilibili.com/x/v2/feed/index` |
+| 用户空间视频 | UserRepository | `getSpaceVideos()` | `GET app.bilibili.com/x/v2/space/archive/cursor` |
+| 视频截图 | VideoPlayRepository | `getVideoShot()` | `GET app.bilibili.com/x/v2/view/video/shot` |
+| PGC 番剧详情 | VideoDetailRepository | `getPgcVideoDetail()` | `GET /pgc/view/v2/app/season` |
+| 番剧追番/取消 | UserRepository | `addSeasonFollow()` / `delSeasonFollow()` | `POST /pgc/app/follow/{add,del}` |
+| 追番列表 | SeasonRepository | `getFollowingSeasons()` | `GET /pgc/app/follow/v2/{type}` |
+| 番剧时间表 | SeasonRepository | `getTimeline()` | `GET /pgc/app/timeline` |
+| 搜索热搜词 | SearchRepository | `getSearchHotwords()` | `GET app.bilibili.com/x/v2/search/trending/ranking` |
+| 稍后再看增删 | ToViewRepository | `addToView()` / `delToView()` | `POST /x/v2/history/toview/{add,del}` |
+| 稍后再看列表 | ToViewRepository | `getToView()` | `GET /x/v2/history/toview` |
+| App TV QR 登录 | LoginRepository | `requestAppQrLogin()` / `checkAppQrLoginState()` | `POST /x/passport-tv-login/qrcode/*` |
 
-**gRPC Metadata**：
+#### 8.2.3 App HTTP 接口（共享端点 + access_key）
+
+这些接口与 Web 使用相同 URL，App 模式下附加 `access_key` 参数鉴权（替代 Cookie `csrf`）。
+
+| 功能 | Repository | 方法 | 端点 |
+|---|---|---|---|
+| 检查点赞状态 | LikeRepository | `checkVideoLiked()` | `GET /x/web-interface/archive/has/like` |
+| 检查投币状态 | CoinRepository | `checkVideoCoined()` | `GET /x/web-interface/archive/coins` |
+| 检查收藏状态 | FavoriteRepository | `checkVideoFavoured()` | `GET /x/v2/fav/video/favoured` |
+| 收藏/取消收藏 | FavoriteRepository | `updateVideoToFavoriteFolder()` | `POST /x/v3/fav/resource/deal` |
+| 收藏夹列表 | FavoriteRepository | `getAllFavoriteFolderMetadataList()` | `GET /x/v3/fav/folder/created/list-all` |
+| 收藏夹内容 | FavoriteRepository | `getFavoriteFolderData()` | `GET /x/v3/fav/resource/list` |
+| 关注/取关用户 | UserRepository | `followUser()` / `unfollowUser()` | `POST /x/relation/modify` |
+| 关注列表 | UserRepository | `getFollowedUsers()` | `GET /x/relation/followings` |
+| 粉丝数/关注数 | UserRepository | `getFollowingUpCount()` | `GET x/relation/stat` |
+| 评论点赞 | CommentRepository | `toggleCommentLike()` | `POST /x/v2/reply/action` |
+
+#### 8.2.4 Web-only 接口（无 App 等价实现）
+
+以下接口在 proto 和 App HTTP 中均无对应实现，仅走 Web HTTP。
+
+| 功能 | Repository | 方法 | 说明 |
+|---|---|---|---|
+| 用户信息 | UserRepository | `getUserInfo()` | Web WBI 签名 `/x/space/wbi/acc/info` |
+| 检查关注状态 | UserRepository | `checkIsFollowing()` | Web WBI `/x/space/wbi/acc/relation`（App 端历史返回 -663） |
+| PGC 轮播图 | PgcRepository | `getCarousel()` | Web HTML 抓取 |
+| PGC Feed | PgcRepository | `getFeed()` | Web `/pgc/page/web/{v3/}feed` |
+| PGC 索引 | PgcRepository | `getPgcIndex()` | Web `/pgc/season/index/result` |
+| 分区推荐 | UgcRepository | `getRegionFeedRcmd()` | Web `/x/web-interface/region/feed/rcmd` |
+| 直播全部接口 | LiveRepository | 全部方法 | Web `api.live.bilibili.com`（直播无 App 接口） |
+| Web QR 登录 | LoginRepository | `requestWebQrLogin()` 等 | Web `/x/passport-login/web/qrcode/*` |
+| 短信登录 | LoginRepository | `requestSms()` / `loginWithSms()` | Web `/x/passport-login/sms/*` |
+
+**gRPC Metadata**（所有 App gRPC 请求）：
 - `authorization`: `identify_v1 {accessKey}`
 - `x-bili-metadata-bin`: protobuf（accessKey, mobiApp, device, build, channel, buvid, platform）
 - `x-bili-device-bin`: protobuf（appId, mobiApp, device, build, channel, buvid, platform）
 - `x-bili-local-bin`: protobuf（timezone）
 - `x-bili-network-bin`: protobuf（network type）
+
+**App HTTP 签名**（所有 App HTTP 请求）：
+- `access_key`：用户 access_token
+- `appkey` + `sign`：MD5 签名（`APP_KEY = "dfca71928277209b"`）
+- Cookie 注入跳过（App 请求不用 Cookie）
 
 ### 8.3 本地持久化清单
 

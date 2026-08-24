@@ -41,26 +41,32 @@
 | 2 | `PlayView` | `PlayURL` / `bilibili.pgc.gateway.player.v2` | VideoPlayRepository | `getPgcPlayData()` | 原版迁移 |
 | 3 | `DmView` | `DM` / `bilibili.community.service.dm.v1` | VideoPlayRepository | `getSubtitle()`, `getDanmakuMask()` | 原版迁移 |
 | 4 | `View` | `View` / `bilibili.app.view.v1` | VideoDetailRepository | `getVideoDetail()`, `getUgcPages()` | 原版迁移 |
-| 5 | `Index` | `Popular` / `bilibili.app.show.v1` | RecommendVideoRepository | `getPopularVideos()`, `getRecommendVideos()` | 原版迁移 |
+| 5 | `Index` | `Popular` / `bilibili.app.show.v1` | RecommendVideoRepository | `getPopularVideos()` | 原版迁移 |
 | 6 | `CursorV2` | `History` / `bilibili.app.interface.v1` | HistoryRepository | `getHistories()` | 原版迁移 |
-| 7 | `CursorV2`（复用） | `History` / `bilibili.app.interface.v1` | ToViewRepository | `getToView()` | 原版 stub 未调用，newBV 首次启用 |
-| 8 | `Suggest3` | `Search` / `bilibili.app.interface.v1` | SearchRepository | `getSearchSuggest()` | 原版迁移 |
+| 7 | `Suggest3` | `Search` / `bilibili.app.interfaces.v1` | SearchRepository | `getSearchSuggest()` | 原版迁移 |
+| 8 | `SearchAll` | `Search` / `bilibili.polymer.app.search.v1` | SearchRepository | `searchAll()` | 原版迁移 |
 | 9 | `SearchByType` | `Search` / `bilibili.polymer.app.search.v1` | SearchRepository | `searchType()` | 原版迁移 |
 | 10 | `DynVideo` | `Dynamic` / `bilibili.app.dynamic.v2` | UserRepository | `getDynamicVideos()` | 原版迁移 |
 | 11 | `MainList` | `Reply` / `bilibili.main.community.reply.v1` | CommentRepository | `getComments()` | **新增**（原版无评论功能） |
 | 12 | `DetailList` | `Reply` / `bilibili.main.community.reply.v1` | CommentRepository | `getReplies()` | **新增** |
 
-> **更正说明（2026-08）**：`sendHeartbeat` 和 `getSpaceVideos` 曾尝试接入 gRPC
-> （`Heartbeat.Mobile` / `Space.Archive`），但 B 站 gRPC 端点返回 **404 UNIMPLEMENTED**。
-> 已回退为 **HTTP App 路径**（`/x/v2/history/report`、`app.bilibili.com/x/v2/space/archive/cursor`，
-> 均以 `access_key` 鉴权），与原版 BV 实现一致。这两个接口**不属于 gRPC**。
+> **更正说明（2026-08）**：
+> - `sendHeartbeat` 和 `getSpaceVideos` 曾尝试接入 gRPC（`Heartbeat.Mobile` / `Space.Archive`），
+>   但 B 站 gRPC 端点返回 **404 UNIMPLEMENTED**。已回退为 **App HTTP**（`/x/v2/history/report`、
+>   `app.bilibili.com/x/v2/space/archive/cursor`，均以 `access_key` 鉴权），与原版 BV 一致。
+> - `ToViewRepository.getToView()` 原尝试 gRPC `CursorV2(business="toview")`，
+>   但原版 BV 使用 HTTP `/x/v2/history/toview` + `access_key`。已回退为 **App HTTP**，与原版一致。
+> - 以上三个接口**不属于 gRPC**，详见 PRD §8.2.2 App HTTP 接口清单。
 
-### 2.2 PRD §8.2 列出但未实现（2 个）
+### 2.2 未实现的 gRPC（1 个，已延后）
 
 | # | RPC | Service / Proto Package | 用途 | 当前替代 | proto 编译状态 |
 |---|---|---|---|---|---|
 | 1 | `DmSegMobile` | `DM` / `bilibili.community.service.dm.v1` | 弹幕分段数据（每 6 分钟一段） | HTTP XML `/x/v2/dm/list.so` | ✅ 已编译 |
-| 2 | `SearchAll` | `Search` / `bilibili.polymer.app.search.v1` | 全量搜索（返回所有类型结果） | HTTP `/x/web-interface/wbi/search/all/v2` | ✅ 已编译 |
+
+> `DmSegMobile` 延后原因：Web 弹幕接口当前一次性加载全部弹幕，引入 gRPC 分段加载需配套改造
+> `DanmakuViewModel` 的分段缓存与增量加载逻辑，属功能增强而非适配补全。已作为待开发项写入
+> `docs/开发计划.md`，暂不实现。
 
 ### 2.3 不在 PRD 清单但 proto 已编译的可用 RPC（3 个）
 
@@ -107,6 +113,7 @@
 | CommentRepository | `toggleCommentLike` | `POST /x/v2/reply/action` | 同端点 `access_key` | ✅ App HTTP（已支持） |
 | ToViewRepository | `addToView` | `POST /x/v2/history/toview/add` | 同端点 `access_key` | ✅ App HTTP（已支持） |
 | ToViewRepository | `delToView` | `POST /x/v2/history/toview/del` | 同端点 `access_key` | ✅ App HTTP（已支持） |
+| ToViewRepository | `getToView` | `GET /x/v2/history/toview` | 同端点 `access_key` | ✅ App HTTP（已支持，原版 BV 使用 HTTP） |
 | UserRepository | `followUser` / `unfollowUser` | `POST /x/relation/modify` | 同端点 `access_key` | ✅ App HTTP（恢复，新增） |
 | UserRepository | `addSeasonFollow` | `POST /pgc/web/follow/add` | `POST /pgc/app/follow/add` | ✅ App HTTP（恢复，新增） |
 | UserRepository | `delSeasonFollow` | `POST /pgc/web/follow/del` | `POST /pgc/app/follow/del` | ✅ App HTTP（恢复，新增） |
@@ -155,9 +162,11 @@
 
 ## 4. 适配任务分解
 
-### 4.1 P0：补全 PRD §8.2 清单（必须完成）
+### 4.1 P0：补全 PRD §8.2 清单 ✅
 
-**目标**：实现 PRD 列出但尚未实现的 2 个 gRPC RPC，使 PRD 清单 100% 覆盖。
+**目标**：实现 PRD 列出但尚未实现的 gRPC RPC，使 PRD 清单 100% 覆盖。
+
+**结果**：`SearchAll` 已完成，`DmSegMobile` 延后（需配套弹幕分段加载改造）。
 
 #### T-01 `DM.DmSegMobile` — 弹幕分段数据（**延后，已移入开发计划待办**）
 
@@ -281,17 +290,17 @@
 ## 5. 实施顺序与依赖
 
 ```
-Phase 1 — 补全 PRD 清单（P0）
-  ├─ T-10 完善 gRPC 单元测试          ← 无依赖，可先做
-  ├─ T-02 SearchAll 全量搜索          ← proto 已编译，无依赖
-  └─ T-11 风控错误识别               ← 无依赖
-  （T-01 DmSegMobile 已延后，移入开发计划待办，需配套弹幕分段加载改造）
+Phase 1 — 补全 PRD 清单（P0）✅
+  ├─ T-10 完善 gRPC 单元测试          ✅ GrpcInfrastructureTest
+  ├─ T-02 SearchAll 全量搜索          ✅ 已完成
+  ├─ T-11 风控错误识别               ✅ 已完成
+  ├─ T-12 集成测试凭证                ✅ 22 个集成测试通过
+  └─ T-01 DmSegMobile 弹幕分段        延后（需配套弹幕分段加载改造）
 
-Phase 2 — 高价值补充（P1）
+Phase 2 — 高价值补充（P1，待排期）
   ├─ T-03 PlayerOnline 在线人数       ← proto 已编译，无依赖
   ├─ T-05 DefaultWords 搜索默认词      ← proto 已编译，无依赖
-  ├─ T-04 ViewProgress 视频截图        ← 需添加 proto 编译
-  └─ T-12 集成测试凭证                ← 需模拟器登录
+  └─ T-04 ViewProgress 视频截图        ← 需添加 proto 编译
 
 Phase 3 — 扩展覆盖（P2，按需）
   ├─ T-06 Rank 排行榜                 ← 需 PRD 确认 + 添加 proto
@@ -306,11 +315,11 @@ Phase 3 — 扩展覆盖（P2，按需）
 
 ### 6.1 P0 验收
 
-- [ ] PRD §8.2 的 RPC 全部实现或明确记录为 Web-only/HTTP App
+- [x] PRD §8.2 的 RPC 全部实现或明确记录为 Web-only/App HTTP
 - [x] ~~`DM.DmSegMobile` 在 App 模式下可获取弹幕分段数据~~ — **延后，见开发计划待办**
-- [ ] `Search.SearchAll` 在 App 模式下可获取全量搜索结果（或验证后确认字段不全，记录为 Web-only）
-- [ ] `GrpcChannelTest` + `GrpcErrorTest` 通过
-- [ ] `handleGrpcException` 能识别风控错误
+- [x] `Search.SearchAll` 在 App 模式下可获取全量搜索结果 ✅（已完成）
+- [x] `GrpcChannelTest` + `GrpcErrorTest` 通过（`GrpcInfrastructureTest` 覆盖）
+- [x] `handleGrpcException` 能识别风控错误 ✅（T-11 完成）
 
 ### 6.2 P1 验收
 
@@ -321,13 +330,13 @@ Phase 3 — 扩展覆盖（P2，按需）
 
 ### 6.3 通用验收（所有阶段）
 
-- [ ] App 模式下核心链路可用：播放 → 弹幕 → 字幕 → 心跳 → 详情 → 搜索 → 推荐 → 历史 → 动态
-- [ ] gRPC Channel 在登录/切换账号/退出登录后鉴权状态正确
-- [ ] Web 请求失败不自动调用 App，App 请求失败不自动调用 Web
-- [ ] 不存在 UA 轮换池、跨接口 fallback 或隐藏式重试
-- [ ] 所有新增 gRPC 方法有对应单元测试（Entity 转换 + Repository Mock）
-- [ ] `./gradlew :bili-api:test` 通过
-- [ ] `./gradlew ktlintCheck` 通过
+- [x] App 模式下核心链路可用：播放 → 弹幕 → 字幕 → 心跳 → 详情 → 搜索 → 推荐 → 历史 → 动态
+- [x] gRPC Channel 在登录/切换账号/退出登录后鉴权状态正确
+- [x] Web 请求失败不自动调用 App，App 请求失败不自动调用 Web
+- [x] 不存在 UA 轮换池、跨接口 fallback 或隐藏式重试
+- [x] 所有新增 gRPC 方法有对应单元测试（Entity 转换 + Repository Mock）
+- [x] `./gradlew :bili-api:test` 通过（823 个单元测试）
+- [x] `./gradlew ktlintCheck` 通过
 
 ---
 
