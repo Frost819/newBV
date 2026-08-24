@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.data
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.db.entity.UserEntity
@@ -31,6 +32,7 @@ import javax.inject.Singleton
 class AccountRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val authRepository: AuthRepository,
+    private val channelRepository: ChannelRepository,
 ) : AccountRepository {
 
     /** UI 状态：当前登录用户信息。 */
@@ -94,6 +96,11 @@ class AccountRepositoryImpl @Inject constructor(
         BiliHttpApi.biliJct = biliJct
         BiliHttpApi.mid = uid
         BiliHttpApi.accessToken = accessToken
+        if (accessToken.isNotBlank() && Prefs.buvid.isNotBlank()) {
+            channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
+        } else {
+            channelRepository.close()
+        }
     }
 
     override suspend fun getAllUsers(): List<UserEntity> = userDao.getAll()
@@ -246,6 +253,7 @@ class AccountRepositoryImpl @Inject constructor(
             biliJct = null
             accessToken = null
         }
+        channelRepository.close()
         _uiState.value = AccountUiState()
     }
 

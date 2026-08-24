@@ -1,33 +1,53 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 
 class CoinRepository(private val authRepository: AuthRepository) {
     suspend fun checkVideoCoined(
         aid: Long,
+        preferApiType: ApiType = ApiType.Web,
         bvid: String? = null,
     ): Boolean {
-        val like =
-            BiliHttpApi.checkVideoSentCoin(
-                avid = aid,
-                bvid = bvid,
-            )
-        return like
+        return when (preferApiType) {
+            ApiType.Web ->
+                BiliHttpApi.checkVideoSentCoin(
+                    avid = aid,
+                    bvid = bvid,
+                )
+
+            ApiType.App ->
+                BiliHttpApi.checkVideoSentCoin(
+                    avid = aid,
+                    bvid = bvid,
+                    accessKey = authRepository.accessToken,
+                )
+        }
     }
 
     suspend fun sendVideoCoin(
         aid: Long,
-        bvid: String? = null,
         multiply: Int = 1,
+        preferApiType: ApiType = ApiType.Web,
+        bvid: String? = null,
     ) {
-        val csrf = authRepository.biliJct ?: ""
         val (success, message) =
-            BiliHttpApi.sendVideoCoin(
-                avid = aid,
-                bvid = bvid,
-                multiply = multiply,
-                csrf = csrf,
-            )
+            when (preferApiType) {
+                ApiType.Web ->
+                    BiliHttpApi.sendVideoCoin(
+                        avid = aid,
+                        bvid = bvid,
+                        multiply = multiply,
+                        csrf = authRepository.biliJct ?: "",
+                    )
+
+                ApiType.App ->
+                    BiliHttpApi.sendVideoCoinApp(
+                        avid = aid,
+                        multiply = multiply,
+                        accessKey = authRepository.accessToken ?: "",
+                    )
+            }
         if (!success) throw Exception(message)
     }
 }

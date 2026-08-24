@@ -109,6 +109,9 @@ class VideoDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(VideoDetailUiState())
     val uiState: StateFlow<VideoDetailUiState> = _uiState.asStateFlow()
 
+    private fun prefApiType(): ApiType =
+        if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
+
     private val _uiEffect = MutableSharedFlow<VideoDetailUiEffect>()
     val uiEffect: SharedFlow<VideoDetailUiEffect> = _uiEffect.asSharedFlow()
 
@@ -222,7 +225,6 @@ class VideoDetailViewModel @Inject constructor(
             favoriteRepository.getAllFavoriteFolderMetadataList(
                 mid = Prefs.uid,
                 rid = aid,
-                preferApiType = ApiType.Web,
             )
         }.onSuccess { folders ->
             val folderIds = folders.filter { it.videoInThisFav }.map { it.id }.toSet()
@@ -256,12 +258,13 @@ class VideoDetailViewModel @Inject constructor(
     fun toggleFollow() {
         val currentDetail = _uiState.value.detail ?: return
         val isFollowing = _uiState.value.isFollowing
+        val preferApiType = prefApiType()
         viewModelScope.launch {
             runCatching {
                 if (isFollowing) {
-                    userRepository.unfollowUser(mid = currentDetail.author.mid)
+                    userRepository.unfollowUser(mid = currentDetail.author.mid, preferApiType = preferApiType)
                 } else {
-                    userRepository.followUser(mid = currentDetail.author.mid)
+                    userRepository.followUser(mid = currentDetail.author.mid, preferApiType = preferApiType)
                 }
             }.onSuccess {
                 _uiState.update { it.copy(isFollowing = !isFollowing) }
@@ -289,6 +292,7 @@ class VideoDetailViewModel @Inject constructor(
                     aid = currentDetail.aid,
                     bvid = currentDetail.bvid,
                     like = like,
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess {
                 _uiState.update { it.copy(isLiked = like) }
@@ -316,6 +320,7 @@ class VideoDetailViewModel @Inject constructor(
                 coinRepository.sendVideoCoin(
                     aid = currentDetail.aid,
                     bvid = currentDetail.bvid,
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess {
                 _uiState.update { it.copy(isCoined = true) }
@@ -343,7 +348,6 @@ class VideoDetailViewModel @Inject constructor(
                     aid = currentDetail.aid,
                     addMediaIds = folderIds,
                     delMediaIds = currentFolders.map { it.id } - folderIds.toSet(),
-                    preferApiType = ApiType.Web,
                 )
             }.onSuccess {
                 _uiState.update {
@@ -401,6 +405,7 @@ class VideoDetailViewModel @Inject constructor(
                 oneClickTripleActionRepository.sendVideoOneClickTripleAction(
                     aid = currentDetail.aid,
                     bvid = currentDetail.bvid,
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess { data ->
                 if (data != null) {

@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /**
  * [RecommendVideoRepository] 的单元测试。
@@ -209,85 +210,19 @@ class RecommendVideoRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `getRecommendVideos App returns mapped items with correct nextPage`() =
+    fun `getRecommendVideos App does not fallback to HTTP when channel is unavailable`() =
         runTest {
-            val rcmdIndexData =
-                RcmdIndexData(
-                    config =
-                        RcmdIndexData.Config(
-                            autoRefreshTime = 0,
-                            autoRefreshTimeByActive = 0,
-                            autoRefreshTimeByAppear = 0,
-                            autoplayCard = 0,
-                            cardDensityExp = 0,
-                            column = 1,
-                            enableRcmdGuide = false,
-                            feedCleanAbtest = 0,
-                            homeTransferTest = 0,
-                            inlineSound = 0,
-                            isBackToHomepage = false,
-                            showInlineDanmaku = 0,
-                            storyModeV2GuideExp = 0,
-                            toast = kotlinx.serialization.json.JsonObject(emptyMap()),
-                            visibleArea = 0,
-                        ),
-                    items = listOf(fakeAppRcmdItem(idx = 10), fakeAppRcmdItem(idx = 20)),
-                )
-            coEvery { BiliHttpApi.getFeedIndex(any(), any()) } returns
-                BiliResponse(code = 0, message = "", data = rcmdIndexData)
-
-            val result =
-                repository.getRecommendVideos(
-                    page = RecommendPage(nextAppIdx = 0),
-                    preferApiType = ApiType.App,
-                )
-
-            assertThat(result.items).hasSize(2)
-            assertThat(result.items[0].aid).isEqualTo(100L)
-            assertThat(result.items[1].aid).isEqualTo(200L)
-            assertThat(result.nextPage.nextAppIdx).isEqualTo(11)
+            assertThrows<IllegalStateException> {
+                repository.getRecommendVideos(page = RecommendPage(), preferApiType = ApiType.App)
+            }
         }
 
     @Test
-    fun `getRecommendVideos App filters out non-av cards`() =
+    fun `getRecommendVideos App does not call HTTP`() =
         runTest {
-            val rcmdIndexData =
-                RcmdIndexData(
-                    config =
-                        RcmdIndexData.Config(
-                            autoRefreshTime = 0,
-                            autoRefreshTimeByActive = 0,
-                            autoRefreshTimeByAppear = 0,
-                            autoplayCard = 0,
-                            cardDensityExp = 0,
-                            column = 1,
-                            enableRcmdGuide = false,
-                            feedCleanAbtest = 0,
-                            homeTransferTest = 0,
-                            inlineSound = 0,
-                            isBackToHomepage = false,
-                            showInlineDanmaku = 0,
-                            storyModeV2GuideExp = 0,
-                            toast = kotlinx.serialization.json.JsonObject(emptyMap()),
-                            visibleArea = 0,
-                        ),
-                    items =
-                        listOf(
-                            fakeAppRcmdItem(idx = 10),
-                            fakeAppRcmdItem(idx = 20).copy(cardGoto = "banner"),
-                        ),
-                )
-            coEvery { BiliHttpApi.getFeedIndex(any(), any()) } returns
-                BiliResponse(code = 0, message = "", data = rcmdIndexData)
-
-            val result =
-                repository.getRecommendVideos(
-                    page = RecommendPage(nextAppIdx = 0),
-                    preferApiType = ApiType.App,
-                )
-
-            assertThat(result.items).hasSize(1)
-            assertThat(result.items[0].aid).isEqualTo(100L)
+            assertThrows<IllegalStateException> {
+                repository.getRecommendVideos(page = RecommendPage(), preferApiType = ApiType.App)
+            }
         }
 
     // ------------------------------------------------------------------

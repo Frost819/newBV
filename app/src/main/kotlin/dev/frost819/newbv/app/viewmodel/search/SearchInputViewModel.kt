@@ -111,7 +111,6 @@ class SearchInputViewModel @Inject constructor(
                 withTimeout(LOAD_TIMEOUT_MS) {
                     searchRepository.getSearchHotwords(
                         limit = 50,
-                        preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
                     )
                 }
             }.onSuccess { hotwords ->

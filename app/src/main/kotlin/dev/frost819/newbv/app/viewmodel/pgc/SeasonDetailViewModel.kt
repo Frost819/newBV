@@ -83,6 +83,9 @@ class SeasonDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SeasonDetailUiState())
     val uiState: StateFlow<SeasonDetailUiState> = _uiState.asStateFlow()
 
+    private fun prefApiType(): ApiType =
+        if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
+
     private val _uiEffect = MutableSharedFlow<SeasonDetailUiEffect>()
     val uiEffect: SharedFlow<SeasonDetailUiEffect> = _uiEffect.asSharedFlow()
 
@@ -106,7 +109,6 @@ class SeasonDetailViewModel @Inject constructor(
                 withTimeout(LOAD_TIMEOUT_MS) {
                     val detail = videoDetailRepository.getPgcVideoDetail(
                         seasonId = seasonId,
-                        preferApiType = ApiType.Web,
                     )
                     _uiState.update {
                         it.copy(
@@ -138,17 +140,18 @@ class SeasonDetailViewModel @Inject constructor(
     fun toggleFollow() {
         val currentDetail = _uiState.value.seasonDetail ?: return
         val isFollowing = _uiState.value.isFollowing
+        val preferApiType = prefApiType()
         viewModelScope.launch {
             runCatching {
                 if (isFollowing) {
                     userRepository.delSeasonFollow(
                         seasonId = currentDetail.seasonId,
-                        preferApiType = ApiType.Web,
+                        preferApiType = preferApiType,
                     )
                 } else {
                     userRepository.addSeasonFollow(
                         seasonId = currentDetail.seasonId,
-                        preferApiType = ApiType.Web,
+                        preferApiType = preferApiType,
                     )
                 }
             }.onSuccess { toast ->
@@ -210,7 +213,6 @@ class SeasonDetailViewModel @Inject constructor(
                 withTimeout(LOAD_TIMEOUT_MS) {
                     val detail = videoDetailRepository.getPgcVideoDetail(
                         seasonId = targetSeasonId,
-                        preferApiType = ApiType.Web,
                     )
                     _uiState.update {
                         it.copy(

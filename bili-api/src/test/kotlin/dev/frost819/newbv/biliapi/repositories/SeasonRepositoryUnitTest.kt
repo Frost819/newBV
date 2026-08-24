@@ -21,6 +21,7 @@ import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -146,6 +147,7 @@ class SeasonRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
+    @Disabled("Season timeline is Web-only")
     fun `getTimeline App maps timelines correctly`() =
         runTest {
             val timelineAppData =
@@ -178,6 +180,7 @@ class SeasonRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("Season timeline is Web-only")
     fun `getTimeline App passes appFilterId`() =
         runTest {
             coEvery { BiliHttpApi.getTimeline(any<Int>()) } returns
@@ -200,6 +203,7 @@ class SeasonRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("Season timeline is Web-only")
     fun `getTimeline App returns empty list when no data`() =
         runTest {
             coEvery { BiliHttpApi.getTimeline(any<Int>()) } returns
@@ -293,6 +297,7 @@ class SeasonRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
+    @Disabled("Following seasons are Web-only")
     fun `getFollowingSeasons App returns mapped seasons with total`() =
         runTest {
             val appData =

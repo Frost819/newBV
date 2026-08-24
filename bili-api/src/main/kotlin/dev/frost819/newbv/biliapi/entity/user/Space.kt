@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.entity.user
 
+import bilibili.app.space.v1.BiliSpaceVideo
 import dev.frost819.newbv.biliapi.http.util.smartDate
 import dev.frost819.newbv.biliapi.http.util.toSmartDate
 
@@ -38,6 +39,15 @@ data class SpaceVideoData(
                         lastAvid = appSpaceVideoData.item.lastOrNull()?.param?.toLong() ?: 0,
                     ),
             )
+
+        /** 将 App gRPC `Space.Archive` 响应转换为用户空间视频数据。 */
+        fun fromGrpcSpaceVideoData(
+            items: List<BiliSpaceVideo>,
+            page: SpaceVideoPage,
+        ) = SpaceVideoData(
+            videos = items.map { SpaceVideo.fromGrpcSpaceVideoItem(it) },
+            page = page,
+        )
     }
 }
 
@@ -68,6 +78,20 @@ data class SpaceVideo(
             pubTime = spaceVideoItem.created.toSmartDate(),
             playbackPosition = spaceVideoItem.playbackPosition,
         )
+
+        /** 将 App gRPC 用户空间视频转换为领域模型。 */
+        fun fromGrpcSpaceVideoItem(item: BiliSpaceVideo) =
+            SpaceVideo(
+                aid = item.param.toLongOrNull() ?: 0L,
+                bvid = item.bvid,
+                title = item.title,
+                cover = item.cover,
+                author = "",
+                duration = item.duration.toInt(),
+                play = item.play,
+                danmaku = item.danmaku.toInt(),
+                pubTime = item.ctime.toInt().smartDate,
+            )
 
         fun fromSpaceVideoItem(
             spaceVideoItem: dev.frost819.newbv.biliapi.http.entity.user.AppSpaceVideoData.SpaceVideoItem,

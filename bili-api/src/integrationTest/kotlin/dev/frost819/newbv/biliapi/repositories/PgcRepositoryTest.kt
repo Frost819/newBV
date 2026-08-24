@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.pgc.PgcType
 import dev.frost819.newbv.biliapi.entity.pgc.index.Area
 import dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
@@ -22,7 +23,6 @@ import java.nio.file.Paths
 import java.util.Properties
 import kotlin.test.Test
 
-@org.junit.jupiter.api.Tag("integration")
 class PgcRepositoryTest {
     companion object {
         private val localProperties =
@@ -32,21 +32,31 @@ class PgcRepositoryTest {
             }
         val BUVID: String =
             runCatching { localProperties.getProperty("test.buvid") }.getOrNull() ?: ""
+        val SESSDATA: String =
+            runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
+        val BILI_JCT: String =
+            runCatching { localProperties.getProperty("test.bili_jct") }.getOrNull() ?: ""
+        val UID: Long =
+            runCatching { localProperties.getProperty("test.uid") }.getOrNull()?.toLongOrNull() ?: 2
+        val ACCESS_TOKEN: String =
+            runCatching { localProperties.getProperty("test.access_token") }.getOrNull() ?: ""
     }
 
     private val pgcRepository: PgcRepository = PgcRepository()
 
     init {
-        BiliHttpApi.init(BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
     }
 
     @Test
     fun `get pgc carousel data`() {
         runBlocking {
+            // 查询类：断言每个分类返回轮播数据
             PgcType.entries.forEach { pgcType ->
                 println("pgcType: $pgcType")
                 val data = pgcRepository.getCarousel(pgcType)
-                println(data)
+                println("carousel items: ${data.items.size}")
+                assertThat(data.items).isNotEmpty()
             }
         }
     }
@@ -54,6 +64,7 @@ class PgcRepositoryTest {
     @Test
     fun `get pgc feed data`() {
         runBlocking {
+            // 查询类：断言每个分类返回 feed 数据（部分分类 feed 可能为空，断言结构正常）
             PgcType.entries.forEach { pgcType ->
                 println("pgcType: $pgcType")
                 val data =
@@ -61,7 +72,8 @@ class PgcRepositoryTest {
                         pgcType = pgcType,
                         cursor = 0,
                     )
-                println(data)
+                println("feed items: ${data.items.size}")
+                assertThat(data.items).isNotNull()
             }
         }
     }
@@ -69,6 +81,7 @@ class PgcRepositoryTest {
     @Test
     fun `get pgc index`() {
         runBlocking {
+            // 查询类：断言每个分类返回索引数据
             PgcType.entries.forEach { pgcType ->
                 println("pgcType: $pgcType")
                 val data =
@@ -89,7 +102,8 @@ class PgcRepositoryTest {
                         style = Style.All,
                         page = PgcIndexData.PgcIndexPage(),
                     )
-                println(data)
+                println("index items: ${data.list.size}")
+                assertThat(data.list).isNotEmpty()
             }
         }
     }

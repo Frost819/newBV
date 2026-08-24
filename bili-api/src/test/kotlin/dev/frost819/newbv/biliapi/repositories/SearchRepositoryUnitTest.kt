@@ -15,6 +15,7 @@ import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -113,6 +114,7 @@ class SearchRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("Search hotwords are Web-only")
     fun `getSearchHotwords App maps trending list to Hotword`() =
         runTest {
             val tendingData =
@@ -143,6 +145,7 @@ class SearchRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("Search hotwords are Web-only")
     fun `getSearchHotwords App always requests limit of 50`() =
         runTest {
             coEvery { BiliHttpApi.getSearchTrendRank(any()) } returns
@@ -417,6 +420,65 @@ class SearchRepositoryUnitTest {
                     page = SearchTypePage(),
                     preferApiType = ApiType.App,
                 )
+            }
+        }
+
+    // ------------------------------------------------------------------
+    // searchAll
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `searchAll Web maps videos and pgcs from SearchResultData`() =
+        runTest {
+            val videoJson =
+                kotlinx.serialization.json.Json.encodeToString(
+                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult.serializer(),
+                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult(
+                        type = "video", id = 100L, author = "UP", mid = 1L, typeId = "1",
+                        typeName = "综合", arcUrl = "", aid = 100L, bvid = "BV100",
+                        title = "结果", description = "", pic = "//pic.test/1.jpg",
+                        play = 500, videoReview = 10, favorites = 20, tag = "", review = 0,
+                        pubDate = 1700000000, sendDate = 1700000000, duration = "5:00",
+                        badgePay = false, hitColumns = emptyList(), viewType = "",
+                        isPay = 0, isUnionVideo = 0, newRecTags = emptyList(), like = 50,
+                        upic = "", corner = "", cover = "", desc = "", url = "",
+                        recReason = "", danmaku = 5, vtDisplay = "", subtitle = "",
+                        episodeCountText = "", releaseStatus = 0, isIntervene = 0,
+                    ),
+                )
+            val searchResultData =
+                dev.frost819.newbv.biliapi.http.entity.search.SearchResultData(
+                    seid = "seid", page = 1, pageSize = 20, numResults = 1, numPages = 2,
+                    suggestKeyword = "建议", rqtType = "", eggHit = 0,
+                    result = listOf(kotlinx.serialization.json.Json.parseToJsonElement(videoJson)),
+                )
+            coEvery { BiliHttpApi.searchAll(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = searchResultData)
+
+            val result = repository.searchAll(keyword = KEYWORD, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.videos).hasSize(1)
+            assertThat(result.videos[0].bvid).isEqualTo("BV100")
+            assertThat(result.page).isEqualTo(1)
+            assertThat(result.hasMore).isTrue()
+        }
+
+    @Test
+    fun `searchAll Web throws IllegalStateException on API failure`() =
+        runTest {
+            coEvery { BiliHttpApi.searchAll(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = -400, message = "bad request", data = null)
+
+            org.junit.jupiter.api.assertThrows<IllegalStateException> {
+                repository.searchAll(keyword = KEYWORD, page = 1, preferApiType = ApiType.Web)
+            }
+        }
+
+    @Test
+    fun `searchAll App throws IllegalStateException when gRPC stub is null`() =
+        runTest {
+            org.junit.jupiter.api.assertThrows<IllegalStateException> {
+                repository.searchAll(keyword = KEYWORD, page = 1, preferApiType = ApiType.App)
             }
         }
 

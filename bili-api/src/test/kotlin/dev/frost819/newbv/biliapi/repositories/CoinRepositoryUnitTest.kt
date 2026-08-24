@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.Test
  * 通过 MockK 模拟 [BiliHttpApi] 单例，验证投币查询与投币操作的参数传递、
  * 成功路径与失败路径。不依赖真实网络。
  */
-class CoinRepositoryTest {
+class CoinRepositoryUnitTest {
     private lateinit var repository: CoinRepository
     private lateinit var authRepository: AuthRepository
 
@@ -27,6 +28,7 @@ class CoinRepositoryTest {
         private const val AID = 993403941L
         private const val BVID = "BV1xx411c7mD"
         private const val CSRF = "test-bili-jct-token"
+        private const val ACCESS_TOKEN = "test-access-token"
     }
 
     @BeforeEach
@@ -34,6 +36,7 @@ class CoinRepositoryTest {
         mockkObject(BiliHttpApi)
         authRepository = AuthRepository()
         authRepository.biliJct = CSRF
+        authRepository.accessToken = ACCESS_TOKEN
         repository = CoinRepository(authRepository)
     }
 
@@ -217,5 +220,53 @@ class CoinRepositoryTest {
             coVerify {
                 BiliHttpApi.sendVideoCoin(eq(AID), isNull(), eq(1), any(), eq(CSRF))
             }
+        }
+
+    // ------------------------------------------------------------------
+    // App 路径
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `checkVideoCoined App passes accessKey`() =
+        runTest {
+            coEvery { BiliHttpApi.checkVideoSentCoin(any(), any(), any()) } returns true
+
+            repository.checkVideoCoined(aid = AID, preferApiType = ApiType.App, bvid = BVID)
+
+            coVerify { BiliHttpApi.checkVideoSentCoin(eq(AID), eq(BVID), eq(ACCESS_TOKEN)) }
+        }
+
+    @Test
+    fun `sendVideoCoin App calls App API`() =
+        runTest {
+            coEvery { BiliHttpApi.sendVideoCoinApp(any(), any(), any(), any()) } returns Pair(true, "")
+
+            repository.sendVideoCoin(aid = AID, multiply = 2, preferApiType = ApiType.App)
+
+            coVerify { BiliHttpApi.sendVideoCoinApp(eq(AID), eq(2), eq(false), eq(ACCESS_TOKEN)) }
+        }
+
+    @Test
+    fun `sendVideoCoin App throws on failure`() =
+        runTest {
+            coEvery { BiliHttpApi.sendVideoCoinApp(any(), any(), any(), any()) } returns Pair(false, "app-coin-error")
+
+            val exception =
+                assertThrows(Exception::class.java) {
+                    runBlocking { repository.sendVideoCoin(aid = AID, preferApiType = ApiType.App) }
+                }
+
+            assertThat(exception.message).isEqualTo("app-coin-error")
+        }
+
+    @Test
+    fun `sendVideoCoin App uses empty accessKey when null`() =
+        runTest {
+            authRepository.accessToken = null
+            coEvery { BiliHttpApi.sendVideoCoinApp(any(), any(), any(), any()) } returns Pair(true, "")
+
+            repository.sendVideoCoin(aid = AID, preferApiType = ApiType.App)
+
+            coVerify { BiliHttpApi.sendVideoCoinApp(eq(AID), any(), any(), eq("")) }
         }
 }

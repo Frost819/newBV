@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
@@ -8,7 +9,12 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
-@org.junit.jupiter.api.Tag("integration")
+/**
+ * [HistoryRepository] 的集成测试。
+ *
+ * 验证历史记录获取（Web HTTP + App gRPC）。查询类接口断言正常返回数据。
+ * 依赖真实 B 站凭证和网络。
+ */
 class HistoryRepositoryTest {
     companion object {
         private val localProperties =
@@ -34,25 +40,27 @@ class HistoryRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(
-            FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID,
+            ACCESS_TOKEN,
+            BUVID,
         )
-        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
 
-        authRepository.sessionData = FavoriteRepositoryTest.SESSDATA
-        authRepository.accessToken = FavoriteRepositoryTest.ACCESS_TOKEN
-        authRepository.biliJct = FavoriteRepositoryTest.BILI_JCT
+        authRepository.sessionData = SESSDATA
+        authRepository.accessToken = ACCESS_TOKEN
+        authRepository.biliJct = BILI_JCT
     }
 
     @Test
     fun `get histories with web api`() =
         runBlocking {
+            // 查询类：历史记录不应为空（测试账号有观看历史；若为空说明接口异常或风控）
             val result =
                 historyRepository.getHistories(
                     cursor = 0,
                     preferApiType = ApiType.Web,
                 )
-            println(result)
+            println("web histories: ${result.data.size}")
+            assertThat(result.data).isNotEmpty()
         }
 
     @Test
@@ -63,6 +71,7 @@ class HistoryRepositoryTest {
                     cursor = 1688955898,
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            println("app histories: ${result.data.size}")
+            assertThat(result.data).isNotEmpty()
         }
 }

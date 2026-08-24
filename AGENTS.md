@@ -1267,59 +1267,66 @@ if (sessData.isEmpty()) {
 
 ### 11.9 bili-api 集成测试与单元测试分离
 
-#### 11.9.1 @Tag("integration") 机制
+#### 11.9.1 Source Set 目录分离机制
 
-**问题**：bili-api 模块有需要真实网络和 B 站凭证的集成测试，也有纯单元测试。最初用 Gradle `filter { excludeTestsMatching("*RepositoryTest") }` 分离，但 Gradle filter 匹配方法全限定名，与 JUnit 5 反引号测试名（含空格）不兼容，导致集成测试无法被发现。
+**问题**：bili-api 模块有需要真实网络和 B 站凭证的集成测试，也有纯单元测试。最初用 JUnit 5 `@Tag("integration")` 机制分离，但存在两个痛点：
+1. Android Studio 右键运行单个集成测试时，`--tests` 过滤器与 `includeTags`/`excludeTags` 冲突，报 `No tests found`
+2. 集成测试和单元测试混在同一个 `src/test/` 目录中，靠 `@Tag` 注解区分不直观
 
-**解决方案**：改用 JUnit 5 `@Tag` 机制：
+**解决方案**：改用 Gradle 自定义 source set，按物理目录分离：
+
+```
+bili-api/src/
+├── main/kotlin/             ← 正式代码
+├── test/kotlin/              ← 纯单元测试（MockK，无网络）
+└── integrationTest/kotlin/   ← 集成测试（真实网络 + 凭证）
+```
 
 ```kotlin
 // bili-api/build.gradle.kts
-tasks.named<Test>("test") {
-    useJUnitPlatform {
-        excludeTags("integration")
+sourceSets {
+    create("integrationTest") {
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        kotlin.srcDir("src/integrationTest/kotlin")
+        resources.srcDir("src/integrationTest/resources")
     }
+}
+
+configurations {
+    named("integrationTestImplementation") { extendsFrom(testImplementation.get()) }
+    named("integrationTestRuntimeOnly") { extendsFrom(testRuntimeOnly.get()) }
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 val integrationTest = tasks.register<Test>("integrationTest") {
-    useJUnitPlatform {
-        includeTags("integration")
-    }
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.getByName("integrationTest").output.classesDirs
+    classpath = sourceSets.getByName("integrationTest").runtimeClasspath
+    maxParallelForks = 1
+    forkEvery = 1
 }
 ```
 
-所有集成测试类必须标注 `@org.junit.jupiter.api.Tag("integration")`：
+**关键设计点**：
 
-```kotlin
-@org.junit.jupiter.api.Tag("integration")
-class VideoPlayRepositoryTest {
-    // ...
-}
-```
+1. **`extendsFrom(testImplementation)`**：让 `integrationTestImplementation` 自动继承所有测试依赖（JUnit、MockK、Truth 等），无需重复声明
+2. **`compileClasspath += sourceSets.test.get().output`**：集成测试可以访问单元测试中的 helper/夹具代码
+3. **`forkEvery = 1`**：每个测试类单独 fork JVM，避免 `BiliHttpApi` 单例状态污染
+4. **不需要 `@Tag` 注解**：目录分离后，`test` task 天然只跑 `src/test/`，`integrationTest` task 天然只跑 `src/integrationTest/`
 
 **运行命令**：
-- `./gradlew :bili-api:test` — 只跑单元测试（DanmakuMaskTest 等）
+- `./gradlew :bili-api:test` — 只跑单元测试
 - `./gradlew :bili-api:integrationTest` — 只跑集成测试（需要凭证 + 网络）
+- `./gradlew :bili-api:integrationTest --tests "*CoinRepositoryTest*"` — 跑指定集成测试类
+- Android Studio 右键 → Run — IDE 自动识别 source set，`--tests` 过滤器正常工作
 
-#### 11.9.2 integrationTest task 配置要点
+#### 11.9.2 @Test 方法不要用表达式体
 
-**问题**：`tasks.withType<Test>` 会匹配所有 Test 类型 task（包括自定义的 `integrationTest`），导致 `excludeTags` 和 `includeTags` 同时生效。
-
-**解决方案**：用 `tasks.named<Test>("test")` 只配置默认 `test` task，不用 `tasks.withType<Test>`：
-
-```kotlin
-// ✅ 正确：只配置 test task
-tasks.named<Test>("test") {
-    useJUnitPlatform { excludeTags("integration") }
-}
-
-// ❌ 错误：withType<Test> 会匹配 integrationTest，导致 tag 同时被 include 和 exclude
-tasks.withType<Test> {
-    useJUnitPlatform { excludeTags("integration") }
-}
-```
+⚠️ **注意**：`@Test` 方法不要写成表达式体（`fun \`x\`() = runBlocking { ... }`）。表达式体若以 `kotlin.Result`（如 `runCatching{...}.onFailure{...}`）收尾，方法会被编译成 `Object` 返回的 mangled 名，Gradle `--tests` 发现不到而报 `No tests found`。应写成块体（`fun \`x\`() { runBlocking { ... } }`）让方法编译回干净的 `void`。
 
 #### 11.9.3 BiliHttpApiTest 参数迁移
 

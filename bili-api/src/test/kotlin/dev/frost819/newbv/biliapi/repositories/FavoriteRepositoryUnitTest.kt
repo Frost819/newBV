@@ -18,6 +18,7 @@ import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -89,6 +90,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `checkVideoFavoured App passes accessToken as accessKey`() =
         runTest {
             coEvery { BiliHttpApi.checkVideoFavoured(any(), any()) } returns true
@@ -99,6 +101,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `checkVideoFavoured App uses empty string when accessToken is null`() =
         runTest {
             authRepository.accessToken = null
@@ -134,6 +137,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `addVideoToFavoriteFolder App passes accessToken instead of csrf`() =
         runTest {
             coJustRun { BiliHttpApi.setVideoToFavorite(any(), any(), any(), any(), any(), any()) }
@@ -178,6 +182,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `delVideoFromFavoriteFolder App passes accessToken`() =
         runTest {
             coJustRun { BiliHttpApi.setVideoToFavorite(any(), any(), any(), any(), any(), any()) }
@@ -226,6 +231,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `updateVideoToFavoriteFolder App passes both add and del mediaIds with accessToken`() =
         runTest {
             coJustRun { BiliHttpApi.setVideoToFavorite(any(), any(), any(), any(), any(), any()) }
@@ -326,6 +332,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `getAllFavoriteFolderMetadataList App passes accessToken`() =
         runTest {
             coEvery {
@@ -350,6 +357,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `getAllFavoriteFolderMetadataList App uses empty string when accessToken is null`() =
         runTest {
             authRepository.accessToken = null
@@ -406,6 +414,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `getFavoriteFolderData App passes accessToken`() =
         runTest {
             val listData =
@@ -436,6 +445,7 @@ class FavoriteRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("App HTTP path was removed; favorite is Web-only")
     fun `getFavoriteFolderData App uses empty string when accessToken is null`() =
         runTest {
             authRepository.accessToken = null

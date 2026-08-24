@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.home.RecommendPage
 import dev.frost819.newbv.biliapi.entity.rank.PopularVideoPage
@@ -10,7 +11,6 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
-@org.junit.jupiter.api.Tag("integration")
 class RecommendVideoRepositoryTest {
     companion object {
         private val localProperties =
@@ -37,10 +37,10 @@ class RecommendVideoRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(
-            FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID,
+            ACCESS_TOKEN,
+            BUVID,
         )
-        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
 
         authRepository.sessionData = SeasonRepositoryTest.SESSDATA
         authRepository.accessToken = SeasonRepositoryTest.ACCESS_TOKEN
@@ -51,12 +51,14 @@ class RecommendVideoRepositoryTest {
     @Test
     fun getPopularVideos() =
         runBlocking {
+            // 查询类：断言返回热门视频数据
             val result =
                 recommendVideoRepository.getPopularVideos(
                     page = PopularVideoPage(),
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            println("popular videos: ${result.list.size}")
+            assertThat(result.list).isNotEmpty()
         }
 
     @Test
@@ -75,6 +77,7 @@ class RecommendVideoRepositoryTest {
         pageCount: Int,
         preferApiType: ApiType,
     ) = runBlocking {
+        // 查询类：断言每页返回热门视频数据
         var nextPage = PopularVideoPage()
         for (i in 0..pageCount) {
             val result =
@@ -83,7 +86,8 @@ class RecommendVideoRepositoryTest {
                     preferApiType = preferApiType,
                 )
             nextPage = result.nextPage
-            println(result.list.map { it.title })
+            println("popular page $i: ${result.list.size} items")
+            assertThat(result.list).isNotEmpty()
         }
     }
 
@@ -103,6 +107,7 @@ class RecommendVideoRepositoryTest {
         pageCount: Int,
         preferApiType: ApiType,
     ) = runBlocking {
+        // 查询类：断言每页返回推荐视频数据
         var nextPage = RecommendPage()
         for (i in 0..pageCount) {
             println("page: $nextPage")
@@ -112,7 +117,8 @@ class RecommendVideoRepositoryTest {
                     preferApiType = preferApiType,
                 )
             nextPage = result.nextPage
-            println(result.items.map { it.title })
+            println("recommend page $i: ${result.items.size} items")
+            assertThat(result.items).isNotEmpty()
         }
     }
 }

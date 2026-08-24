@@ -2,10 +2,10 @@ package dev.frost819.newbv.biliapi.http
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-@org.junit.jupiter.api.Tag("integration")
 class BiliPassportHttpApiTest {
     @Test
     fun `get web qr login url`() {
@@ -15,6 +15,7 @@ class BiliPassportHttpApiTest {
         assertEquals(0, response.code)
     }
 
+    @Disabled("交互式 QR 登录测试，需手动扫码，不在 CI 中运行")
     @Test
     fun `request web qr login result`() {
         val qrUrlResponse = runBlocking { BiliPassportHttpApi.getWebQRUrl() }
@@ -68,6 +69,7 @@ class BiliPassportHttpApiTest {
         assertEquals(0, response.code)
     }
 
+    @Disabled("交互式 QR 登录测试，需手动扫码，不在 CI 中运行")
     @Test
     fun `request app qr login result`() {
         val qrUrlResponse =
@@ -122,7 +124,10 @@ class BiliPassportHttpApiTest {
     @Test
     fun `get captcha`() =
         runBlocking {
-            println(BiliPassportHttpApi.getCaptcha())
+            // 查询类：断言返回验证码数据
+            val response = BiliPassportHttpApi.getCaptcha()
+            println("captcha token: ${response.data?.token}")
+            assertEquals(0, response.code)
         }
 
     // this is a random phone number

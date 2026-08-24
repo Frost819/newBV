@@ -235,7 +235,6 @@ class CommentViewModel @Inject constructor(
                     aid = _uiState.value.aid,
                     rpid = rpid,
                     like = target,
-                    preferApiType = ApiType.Web,
                 )
                 updateComment(rpid) {
                     it.copy(

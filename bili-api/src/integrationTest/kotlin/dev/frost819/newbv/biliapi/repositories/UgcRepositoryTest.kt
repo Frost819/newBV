@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ugc.UgcType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
@@ -8,7 +9,6 @@ import java.nio.file.Paths
 import java.util.Properties
 import kotlin.test.Test
 
-@org.junit.jupiter.api.Tag("integration")
 class UgcRepositoryTest {
     companion object {
         private val localProperties =
@@ -32,7 +32,7 @@ class UgcRepositoryTest {
     private val ugcRepository: UgcRepository = UgcRepository(authRepository)
 
     init {
-        BiliHttpApi.init(BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN
         authRepository.biliJct = BILI_JCT
@@ -41,12 +41,14 @@ class UgcRepositoryTest {
     @Test
     fun `get region data`() =
         runBlocking {
+            // 查询类：断言每个分区返回视频数据
             UgcType.entries
                 .filter { it.locId != -1 }
                 .forEach { ugcType ->
                     println("ugcType: $ugcType")
                     val result = ugcRepository.getRegionData(ugcType)
-                    println(result)
+                    println("region items: ${result.items.size}")
+                    assertThat(result.items).isNotEmpty()
                 }
         }
 
@@ -58,7 +60,8 @@ class UgcRepositoryTest {
                 .forEach { ugcType ->
                     println("ugcType: $ugcType")
                     val result = ugcRepository.getRegionMoreData(ugcType)
-                    println(result)
+                    println("region list items: ${result.items.size}")
+                    assertThat(result.items).isNotEmpty()
                 }
         }
 }

@@ -3,6 +3,21 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    idea
+}
+
+sourceSets {
+    create("integrationTest") {
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        kotlin.srcDir("src/integrationTest/kotlin")
+        resources.srcDir("src/integrationTest/resources")
+    }
+}
+
+configurations {
+    named("integrationTestImplementation") { extendsFrom(testImplementation.get()) }
+    named("integrationTestRuntimeOnly") { extendsFrom(testRuntimeOnly.get()) }
 }
 
 dependencies {
@@ -27,16 +42,14 @@ dependencies {
 }
 
 tasks.named<Test>("test") {
-    useJUnitPlatform {
-        excludeTags("integration")
-    }
+    useJUnitPlatform()
 }
 
 val integrationTest =
     tasks.register<Test>("integrationTest") {
-        useJUnitPlatform {
-            includeTags("integration")
-        }
-        testClassesDirs = sourceSets.test.get().output.classesDirs
-        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        testClassesDirs = sourceSets.getByName("integrationTest").output.classesDirs
+        classpath = sourceSets.getByName("integrationTest").runtimeClasspath
+        maxParallelForks = 1
+        forkEvery = 1
     }

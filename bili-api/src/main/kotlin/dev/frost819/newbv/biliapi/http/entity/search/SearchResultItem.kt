@@ -433,7 +433,7 @@ data class SearchVideoResult(
     @SerialName("rec_tags")
     val recTags: JsonElement? = null,
     @SerialName("new_rec_tags")
-    val newRecTags: List<JsonElement>,
+    val newRecTags: List<JsonElement>? = null,
     @SerialName("rank_score")
     val rankScore: Int? = null,
     val like: Int,

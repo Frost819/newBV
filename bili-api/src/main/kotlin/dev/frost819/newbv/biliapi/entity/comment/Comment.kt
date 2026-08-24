@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.entity.comment
 
+import bilibili.main.community.reply.v1.ReplyInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -90,6 +91,31 @@ data class Comment(
                         control?.get("is_up_top")?.jsonPrimitive?.booleanOrNull == true,
             )
         }
+
+        /** 将 App gRPC 评论模型转换为统一评论模型。 */
+        fun fromGrpc(
+            reply: ReplyInfo,
+            oid: Long,
+            defaultType: Int = 1,
+        ): Comment =
+            Comment(
+                rpid = reply.id,
+                oid = if (reply.oid != 0L) reply.oid else oid,
+                type = if (reply.type != 0L) reply.type.toInt() else defaultType,
+                mid = reply.mid,
+                rootRpid = reply.root,
+                parentRpid = reply.parent,
+                userName = reply.member.name,
+                avatar = reply.member.face,
+                level = reply.member.level.toInt(),
+                message = reply.content.message,
+                pictures = reply.content.picturesList.map { it.imgSrc },
+                ctime = reply.ctime,
+                likeCount = reply.like,
+                replyCount = reply.count.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                isLiked = reply.replyControl.action == 1L,
+                isUp = reply.replyControl.upLike || reply.replyControl.isUpTop,
+            )
     }
 }
 

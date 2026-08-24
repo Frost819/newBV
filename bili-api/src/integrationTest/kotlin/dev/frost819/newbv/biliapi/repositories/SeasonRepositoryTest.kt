@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonType
 import dev.frost819.newbv.biliapi.entity.season.TimelineFilter
@@ -10,7 +11,13 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
-@org.junit.jupiter.api.Tag("integration")
+/**
+ * [SeasonRepository] 的集成测试。
+ *
+ * 验证追番列表与放送时间表获取（Web + App HTTP）。查询类接口断言正常返回数据；
+ * 追番列表可能为空（账号未追番），仅断言接口正常返回。
+ * 依赖真实 B 站凭证和网络。
+ */
 class SeasonRepositoryTest {
     companion object {
         private val localProperties =
@@ -36,10 +43,10 @@ class SeasonRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(
-            FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID,
+            ACCESS_TOKEN,
+            BUVID,
         )
-        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
 
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN
@@ -50,6 +57,7 @@ class SeasonRepositoryTest {
     @Test
     fun `get following seasons with web api`() =
         runBlocking {
+            // 查询类：追番列表可能为空（账号未追番），断言接口正常返回结构化数据
             val bangumiResult =
                 seasonRepository.getFollowingSeasons(
                     type = FollowingSeasonType.Bangumi,
@@ -60,8 +68,9 @@ class SeasonRepositoryTest {
                     type = FollowingSeasonType.Cinema,
                     preferApiType = ApiType.Web,
                 )
-            println("bangumiResult: $bangumiResult")
-            println("cinemaResult: $cinemaResult")
+            println("web bangumi: ${bangumiResult.list.size}, cinema: ${cinemaResult.list.size}")
+            assertThat(bangumiResult.total).isAtLeast(0)
+            assertThat(cinemaResult.total).isAtLeast(0)
         }
 
     @Test
@@ -77,20 +86,23 @@ class SeasonRepositoryTest {
                     type = FollowingSeasonType.Cinema,
                     preferApiType = ApiType.App,
                 )
-            println("bangumiResult: $bangumiResult")
-            println("cinemaResult: $cinemaResult")
+            println("app bangumi: ${bangumiResult.list.size}, cinema: ${cinemaResult.list.size}")
+            assertThat(bangumiResult.total).isAtLeast(0)
+            assertThat(cinemaResult.total).isAtLeast(0)
         }
 
     @Test
     fun `get timeline with web api`() =
         runBlocking {
+            // 查询类：时间表固定返回一周数据，断言非空
             TimelineFilter.webFilters.forEach { filter ->
                 val result =
                     seasonRepository.getTimeline(
                         filter = filter,
                         preferApiType = ApiType.Web,
                     )
-                println("filter: $filter, result: $result")
+                println("web filter: $filter, days: ${result.size}")
+                assertThat(result).isNotEmpty()
             }
         }
 
@@ -103,7 +115,8 @@ class SeasonRepositoryTest {
                         filter = filter,
                         preferApiType = ApiType.App,
                     )
-                println("filter: $filter, result: $result")
+                println("app filter: $filter, days: ${result.size}")
+                assertThat(result).isNotEmpty()
             }
         }
 }

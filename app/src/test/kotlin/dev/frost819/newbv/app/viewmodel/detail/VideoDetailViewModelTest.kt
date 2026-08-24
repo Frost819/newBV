@@ -161,7 +161,7 @@ class VideoDetailViewModelTest {
             userActions = UserActions(like = false, coin = false, favorite = false),
         )
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { likeRepository.updateVideoLiked(any(), any(), any()) } returns Unit
+        coEvery { likeRepository.updateVideoLiked(any(), any(), any(), any()) } returns Unit
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -178,7 +178,7 @@ class VideoDetailViewModelTest {
     fun `toggleLike emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { likeRepository.updateVideoLiked(any(), any(), any()) } throws Exception("already liked")
+        coEvery { likeRepository.updateVideoLiked(any(), any(), any(), any()) } throws Exception("already liked")
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -199,7 +199,7 @@ class VideoDetailViewModelTest {
             userActions = UserActions(coin = false),
         )
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { coinRepository.sendVideoCoin(any(), any(), any()) } returns Unit
+        coEvery { coinRepository.sendVideoCoin(any(), any(), any(), any()) } returns Unit
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -216,7 +216,7 @@ class VideoDetailViewModelTest {
     fun `sendCoin emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { coinRepository.sendVideoCoin(any(), any(), any()) } throws Exception("no coins")
+        coEvery { coinRepository.sendVideoCoin(any(), any(), any(), any()) } throws Exception("no coins")
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -414,7 +414,7 @@ class VideoDetailViewModelTest {
     fun `oneClickTripleAction updates all states on success`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any()) } returns
+        coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any(), any()) } returns
             OneClickTripleAction(like = true, coin = true, fav = true)
 
         viewModel = createViewModel()
@@ -438,7 +438,7 @@ class VideoDetailViewModelTest {
     fun `oneClickTripleAction emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
         coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any()) } throws RuntimeException("triple error")
+        coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any(), any()) } throws RuntimeException("triple error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -463,7 +463,7 @@ class VideoDetailViewModelTest {
         viewModel.oneClickTripleAction()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any()) }
+        coVerify(exactly = 0) { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any(), any()) }
     }
 
     @Test
@@ -576,7 +576,7 @@ class VideoDetailViewModelTest {
         viewModel.toggleLike(true)
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { likeRepository.updateVideoLiked(any(), any(), any()) }
+        coVerify(exactly = 0) { likeRepository.updateVideoLiked(any(), any(), any(), any()) }
     }
 
     @Test
@@ -589,7 +589,7 @@ class VideoDetailViewModelTest {
         viewModel.sendCoin()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { coinRepository.sendVideoCoin(any(), any(), any()) }
+        coVerify(exactly = 0) { coinRepository.sendVideoCoin(any(), any(), any(), any()) }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.video.OneClickTripleAction
 import io.mockk.coEvery
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test
  * 通过 MockK 模拟 [BiliHttpApi] 单例，验证一键三连操作的参数传递、
  * 成功路径与失败路径。不依赖真实网络。
  */
-class OneClickTripleActionRepositoryTest {
+class OneClickTripleActionRepositoryUnitTest {
     private lateinit var repository: OneClickTripleActionRepository
     private lateinit var authRepository: AuthRepository
 
@@ -28,6 +29,7 @@ class OneClickTripleActionRepositoryTest {
         private const val AID = 993403941L
         private const val BVID = "BV1xx411c7mD"
         private const val CSRF = "test-bili-jct-token"
+        private const val ACCESS_TOKEN = "test-access-token"
     }
 
     @BeforeEach
@@ -35,6 +37,7 @@ class OneClickTripleActionRepositoryTest {
         mockkObject(BiliHttpApi)
         authRepository = AuthRepository()
         authRepository.biliJct = CSRF
+        authRepository.accessToken = ACCESS_TOKEN
         repository = OneClickTripleActionRepository(authRepository)
     }
 
@@ -158,5 +161,50 @@ class OneClickTripleActionRepositoryTest {
             coVerify {
                 BiliHttpApi.sendVideoOneClickTripleAction(eq(AID), isNull(), eq(CSRF))
             }
+        }
+
+    // ------------------------------------------------------------------
+    // App 路径
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `App calls App API`() =
+        runTest {
+            val expected = OneClickTripleAction(like = true, coin = true, fav = true)
+            coEvery { BiliHttpApi.sendVideoOneClickTripleActionApp(any(), any()) } returns
+                Triple(true, "", expected)
+
+            val result = repository.sendVideoOneClickTripleAction(aid = AID, preferApiType = ApiType.App)
+
+            assertThat(result).isEqualTo(expected)
+            coVerify { BiliHttpApi.sendVideoOneClickTripleActionApp(eq(AID), eq(ACCESS_TOKEN)) }
+        }
+
+    @Test
+    fun `App throws on failure`() =
+        runTest {
+            coEvery { BiliHttpApi.sendVideoOneClickTripleActionApp(any(), any()) } returns
+                Triple(false, "app-triple-error", null)
+
+            val exception =
+                assertThrows(Exception::class.java) {
+                    runBlocking {
+                        repository.sendVideoOneClickTripleAction(aid = AID, preferApiType = ApiType.App)
+                    }
+                }
+
+            assertThat(exception.message).isEqualTo("app-triple-error")
+        }
+
+    @Test
+    fun `App uses empty accessKey when null`() =
+        runTest {
+            authRepository.accessToken = null
+            coEvery { BiliHttpApi.sendVideoOneClickTripleActionApp(any(), any()) } returns
+                Triple(true, "", null)
+
+            repository.sendVideoOneClickTripleAction(aid = AID, preferApiType = ApiType.App)
+
+            coVerify { BiliHttpApi.sendVideoOneClickTripleActionApp(eq(AID), eq("")) }
         }
 }

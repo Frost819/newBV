@@ -8,6 +8,7 @@ import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 import dev.frost819.newbv.biliapi.grpc.utils.handleGrpcException
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.http.util.BiliAppConf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -23,7 +24,7 @@ class VideoDetailRepository(
     private val viewStub
         get() =
             runCatching {
-                ViewGrpcKt.ViewCoroutineStub(channelRepository.defaultChannel!!)
+                ViewGrpcKt.ViewCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     suspend fun getVideoDetail(
@@ -51,7 +52,6 @@ class VideoDetailRepository(
                             runCatching {
                                 favoriteRepository.checkVideoFavoured(
                                     aid = aid,
-                                    preferApiType = ApiType.Web,
                                 )
                             }.onFailure {
                             }.getOrDefault(false)
@@ -165,7 +165,7 @@ class VideoDetailRepository(
         seasonId: Int? = null,
         preferApiType: ApiType = ApiType.Web,
     ): SeasonDetail {
-        when (preferApiType) {
+        return when (preferApiType) {
             ApiType.Web -> {
                 val webSeasonData =
                     BiliHttpApi.getWebSeasonInfo(
@@ -187,18 +187,18 @@ class VideoDetailRepository(
                     }.onFailure {
                     }.getOrDefault(null)
                 seasonDetail.playerIcon = playerIcon
-                return seasonDetail
+                seasonDetail
             }
 
             ApiType.App -> {
                 val appSeasonData =
                     BiliHttpApi.getAppSeasonInfo(
-                        epId = epid,
                         seasonId = seasonId,
-                        mobiApp = "android_hd",
+                        epId = epid,
+                        mobiApp = BiliAppConf.MOBI_APP,
                         accessKey = authRepository.accessToken ?: "",
                     ).getResponseData()
-                return SeasonDetail.fromSeasonData(appSeasonData)
+                SeasonDetail.fromSeasonData(appSeasonData)
             }
         }
     }

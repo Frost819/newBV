@@ -7,6 +7,7 @@
 /captures/
 .externalNativeBuild/
 .cxx/
+/app/release/
 
 # Gradle
 .gradle/

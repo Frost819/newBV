@@ -13,18 +13,10 @@ class FavoriteRepository(
         aid: Long,
         preferApiType: ApiType = ApiType.Web,
     ): Boolean {
-        return when (preferApiType) {
-            ApiType.Web ->
-                BiliHttpApi.checkVideoFavoured(
-                    avid = aid,
-                )
-
-            ApiType.App ->
-                BiliHttpApi.checkVideoFavoured(
-                    avid = aid,
-                    accessKey = authRepository.accessToken ?: "",
-                )
-        }
+        return BiliHttpApi.checkVideoFavoured(
+            avid = aid,
+            accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+        )
     }
 
     suspend fun addVideoToFavoriteFolder(
@@ -32,23 +24,13 @@ class FavoriteRepository(
         addMediaIds: List<Long>,
         preferApiType: ApiType = ApiType.Web,
     ) {
-        when (preferApiType) {
-            ApiType.Web ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    addMediaIds = addMediaIds,
-                    csrf = authRepository.biliJct,
-                )
-
-            ApiType.App ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    addMediaIds = addMediaIds,
-                    accessKey = authRepository.accessToken,
-                )
-        }
+        BiliHttpApi.setVideoToFavorite(
+            avid = aid,
+            type = FavoriteItemType.Video.value,
+            addMediaIds = addMediaIds,
+            csrf = authRepository.biliJct.takeIf { preferApiType == ApiType.Web },
+            accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+        )
     }
 
     suspend fun delVideoFromFavoriteFolder(
@@ -56,23 +38,13 @@ class FavoriteRepository(
         delMediaIds: List<Long>,
         preferApiType: ApiType = ApiType.Web,
     ) {
-        when (preferApiType) {
-            ApiType.Web ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    delMediaIds = delMediaIds,
-                    csrf = authRepository.biliJct,
-                )
-
-            ApiType.App ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    delMediaIds = delMediaIds,
-                    accessKey = authRepository.accessToken,
-                )
-        }
+        BiliHttpApi.setVideoToFavorite(
+            avid = aid,
+            type = FavoriteItemType.Video.value,
+            delMediaIds = delMediaIds,
+            csrf = authRepository.biliJct.takeIf { preferApiType == ApiType.Web },
+            accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+        )
     }
 
     suspend fun updateVideoToFavoriteFolder(
@@ -81,25 +53,14 @@ class FavoriteRepository(
         delMediaIds: List<Long>,
         preferApiType: ApiType = ApiType.Web,
     ) {
-        when (preferApiType) {
-            ApiType.Web ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    addMediaIds = addMediaIds,
-                    delMediaIds = delMediaIds,
-                    csrf = authRepository.biliJct,
-                )
-
-            ApiType.App ->
-                BiliHttpApi.setVideoToFavorite(
-                    avid = aid,
-                    type = FavoriteItemType.Video.value,
-                    addMediaIds = addMediaIds,
-                    delMediaIds = delMediaIds,
-                    accessKey = authRepository.accessToken,
-                )
-        }
+        BiliHttpApi.setVideoToFavorite(
+            avid = aid,
+            type = FavoriteItemType.Video.value,
+            addMediaIds = addMediaIds,
+            delMediaIds = delMediaIds,
+            csrf = authRepository.biliJct.takeIf { preferApiType == ApiType.Web },
+            accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+        )
     }
 
     suspend fun getAllFavoriteFolderMetadataList(
@@ -109,22 +70,12 @@ class FavoriteRepository(
         preferApiType: ApiType = ApiType.Web,
     ): List<FavoriteFolderMetadata> {
         val userFavoriteFoldersData =
-            when (preferApiType) {
-                ApiType.Web ->
-                    BiliHttpApi.getAllFavoriteFoldersInfo(
-                        mid = mid,
-                        type = type.value,
-                        rid = rid,
-                    )
-
-                ApiType.App ->
-                    BiliHttpApi.getAllFavoriteFoldersInfo(
-                        mid = mid,
-                        type = type.value,
-                        rid = rid,
-                        accessKey = authRepository.accessToken ?: "",
-                    )
-            }.getResponseData()
+            BiliHttpApi.getAllFavoriteFoldersInfo(
+                mid = mid,
+                type = type.value,
+                rid = rid,
+                accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+            ).getResponseData()
         return userFavoriteFoldersData.list.map {
             FavoriteFolderMetadata.fromHttpUserFavoriteFolder(it)
         }
@@ -137,22 +88,12 @@ class FavoriteRepository(
         preferApiType: ApiType = ApiType.Web,
     ): FavoriteFolderData {
         val favoriteFolderListData =
-            when (preferApiType) {
-                ApiType.Web ->
-                    BiliHttpApi.getFavoriteList(
-                        mediaId = mediaId,
-                        pageSize = pageSize,
-                        pageNumber = pageNumber,
-                    )
-
-                ApiType.App ->
-                    BiliHttpApi.getFavoriteList(
-                        mediaId = mediaId,
-                        pageSize = pageSize,
-                        pageNumber = pageNumber,
-                        accessKey = authRepository.accessToken ?: "",
-                    )
-            }.getResponseData()
+            BiliHttpApi.getFavoriteList(
+                mediaId = mediaId,
+                pageSize = pageSize,
+                pageNumber = pageNumber,
+                accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+            ).getResponseData()
         return FavoriteFolderData.fromHttpFavoriteFolderInfoListData(favoriteFolderListData)
     }
 }

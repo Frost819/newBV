@@ -376,8 +376,8 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 │  │ (Ktor + SESSDATA)│(grpc + access_key)│
 │  └────────────────┴────────────────┘ │
 │  ┌──────────────────────────────────┐│
-│  │      风控降级 / 自动切换           ││
-│  │  (失败自动 fallback, UA 轮换)     ││
+│  │      Web/App 显式接口选择           ││
+│  │  (按功能选择，不做自动 fallback)    ││
 │  └──────────────────────────────────┘│
 └──────────────────────────────────────┘
                │
@@ -393,20 +393,21 @@ Composable (UI) ──事件──▶ ViewModel (State Holder)
 - `preferOfficialCdn` 设置项与相关 CDN 过滤逻辑
 - 所有 `proxyHttpServer` / `proxyGRPCServer` 配置
 
-**风控降级策略**（新增，替代原版手动代理）：
+**接口选择策略**：
 
 ```
-请求失败/风控码触发
+用户选择 Web / App
      │
-     ├─ -352 (风控) ──▶ 自动切换 Web ↔ App 接口
-     ├─ -101 (未登录) ──▶ 提示重新登录
-     ├─ 网络超时 ──▶ 重试 + UA 轮换
-     └─ 403/Request banned ──▶ UA 轮换 + 重试
+     ├─ Web ──▶ Web HTTP + SESSDATA + WBI
+     └─ App ──▶ App gRPC + access_key + device metadata
 ```
 
-- UA 轮换池：维护多个 Web UA 与 App UA，请求失败时轮换
-- 接口降级：Web 接口失败自动尝试 App gRPC，反之亦然
-- 降级过程对用户透明，仅在连续失败时提示
+- 不实现 Web ↔ App 自动 fallback。
+- 不实现 UA 轮换池。
+- App 模式优先使用对应 App gRPC；不存在可用 RPC 的功能建立 Web-only 清单。
+- Web-only 功能直接调用 Web API，不通过 `ApiType` 在 Web/App 间分流。
+- 接口错误直接返回，由上层按未登录、鉴权失败、风控、网络错误和业务错误分类提示。
+- App gRPC 接入优先参考原版 BV，缺失接口再查 API 文档；无可靠实现时不伪造 RPC。
 
 #### 2.6.2 接口类型对照
 
@@ -1987,12 +1988,13 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 - Room 数据库不导出（`android:allowBackup` 谨慎配置）
 - 未来考虑加密存储（EncryptedSharedPreferences / SQLCipher）
 
-#### 5.4.2 风控规避
+#### 5.4.2 接口与风控边界
 
-- UA 轮换池（Web UA + App UA 多个）
+- Web 与 App 接口显式分离，按用户设置和功能能力选择
 - buvid 本地生成（MAC 地址 MD5），避免设备指纹固定
-- 请求失败自动降级 Web ↔ App 接口
 - WBI 签名正确实现（mixin key 置换 + w_rid MD5）
+- App gRPC 正确设置 access_key 和设备 metadata
+- 不做 UA 轮换和跨接口自动降级，避免隐藏请求行为
 - 不暴露代理配置给用户（移除代理功能简化风控面）
 
 #### 5.4.3 隐私合规
@@ -2408,7 +2410,7 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 
 | 风险 | 影响 | 概率 | 对策 |
 |---|---|---|---|
-| B 站接口风控加强 | 接口不可用 | 高 | UA 轮换 + Web/App 接口自动降级 + buvid 生成优化 |
+| B 站接口风控加强 | 接口不可用 | 高 | Web/App 接口显式分离、正确签名与 metadata、buvid 生成优化；不做自动降级 |
 | gRPC 接口变更 | App 接口不可用 | 中 | proto 文件版本管理，及时跟进更新 |
 | Compose TV 组件不稳定 | UI 异常 | 中 | 关注 androidx.tv 版本更新，必要时降级稳定版 |
 | akdanmaku 库维护停滞 | 弹幕渲染问题 | 中 | 保留 fork 能力，必要时自行修复 |

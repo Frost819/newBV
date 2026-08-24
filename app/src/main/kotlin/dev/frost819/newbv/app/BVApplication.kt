@@ -11,6 +11,7 @@ import dagger.hilt.android.HiltAndroidApp
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.core.log.CrashHandler
 import dev.frost819.newbv.core.log.CrashUploader
 import dev.frost819.newbv.core.log.Loggers
@@ -51,6 +52,9 @@ class BVApplication : Application() {
     @Inject
     lateinit var authRepository: AuthRepository
 
+    @Inject
+    lateinit var channelRepository: ChannelRepository
+
     override fun onCreate() {
         super.onCreate()
 
@@ -77,6 +81,9 @@ class BVApplication : Application() {
             mid = mid,
             accessToken = accessToken,
         )
+        if (accessToken.isNotBlank() && Prefs.buvid.isNotBlank()) {
+            channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
+        }
 
         if (!Prefs.buvid3FromSpi) {
             CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {

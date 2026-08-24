@@ -9,6 +9,7 @@ import dev.frost819.newbv.biliapi.http.entity.BiliResponse
 import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.http.entity.user.LevelInfo
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
+import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.db.entity.UserEntity
@@ -92,7 +93,7 @@ class AccountRepositoryImplTest {
         )
         coEvery { BiliHttpApi.getUserSelfInfo() } returns mockResponse
 
-        repository = AccountRepositoryImpl(userDao, authRepository)
+        repository = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
     }
 
     @AfterEach
@@ -292,7 +293,7 @@ class AccountRepositoryImplTest {
         Prefs.biliJct = "test-jct"
         Prefs.accessToken = "test-token"
 
-        val newRepo = AccountRepositoryImpl(userDao, authRepository)
+        val newRepo = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
 
         assertThat(authRepository.mid).isEqualTo(300L)
         assertThat(authRepository.sessionData).isEqualTo("test-sess")
@@ -306,7 +307,7 @@ class AccountRepositoryImplTest {
     fun `initFromPrefs does nothing when not logged in`() {
         Prefs.isLogin = false
 
-        val newRepo = AccountRepositoryImpl(userDao, authRepository)
+        val newRepo = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
 
         assertThat(authRepository.mid).isNull()
         assertThat(newRepo.uiState.value.isLogin).isFalse()

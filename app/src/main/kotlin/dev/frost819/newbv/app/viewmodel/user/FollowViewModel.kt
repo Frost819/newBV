@@ -3,9 +3,11 @@ package dev.frost819.newbv.app.viewmodel.user
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.user.FollowedUser
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.core.log.Loggers
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +44,9 @@ class FollowViewModel @Inject constructor(
 
     private val logger = Loggers.get("FollowViewModel")
 
+    private fun prefApiType(): ApiType =
+        if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
+
     private val _uiState = MutableStateFlow(FollowUiState())
     val uiState: StateFlow<FollowUiState> = _uiState.asStateFlow()
 
@@ -60,7 +65,7 @@ class FollowViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 withTimeout(LOAD_TIMEOUT_MS) {
-                    userRepository.getFollowedUsers(mid)
+                    userRepository.getFollowedUsers(mid, preferApiType = prefApiType())
                 }
             }.onSuccess { users ->
                 _uiState.update {

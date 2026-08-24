@@ -28,33 +28,31 @@ class UserRepository(
     private val dynamicStub
         get() =
             runCatching {
-                DynamicGrpcKt.DynamicCoroutineStub(channelRepository.defaultChannel!!)
+                DynamicGrpcKt.DynamicCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     private suspend fun modifyFollow(
         mid: Long,
         action: FollowAction,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): Boolean {
         val response =
             when (preferApiType) {
-                ApiType.Web -> {
+                ApiType.Web ->
                     BiliHttpApi.modifyFollow(
                         mid = mid,
                         action = action,
                         actionSource = FollowActionSource.Space,
                         csrf = authRepository.biliJct,
                     )
-                }
 
-                ApiType.App -> {
+                ApiType.App ->
                     BiliHttpApi.modifyFollow(
                         mid = mid,
                         action = action,
                         actionSource = FollowActionSource.Space,
                         accessKey = authRepository.accessToken,
                     )
-                }
             }
         return response.code == 0
     }
@@ -69,28 +67,10 @@ class UserRepository(
         preferApiType: ApiType = ApiType.Web,
     ): Boolean = modifyFollow(mid, FollowAction.DelFollow, preferApiType)
 
-    suspend fun checkIsFollowing(
-        mid: Long,
-        preferApiType: ApiType = ApiType.Web,
-    ): Boolean? {
+    suspend fun checkIsFollowing(mid: Long): Boolean? {
         if (authRepository.sessionData == null && authRepository.accessToken == null) return null
         return runCatching {
-            val response =
-                when (preferApiType) {
-                    ApiType.Web -> {
-                        BiliHttpApi.getRelations(
-                            mid = mid,
-                        )
-                    }
-
-                    ApiType.App -> {
-                        BiliHttpApi.getRelations(
-                            mid = mid,
-                            // 移动端貌似并没有使用这个接口，目前该接口返回-663鉴权失败，直接改用sessdata获取
-                            // accessKey = authRepository.accessToken
-                        )
-                    }
-                }.getResponseData()
+            val response = BiliHttpApi.getRelations(mid = mid).getResponseData()
             listOf(
                 RelationType.Followed,
                 RelationType.FollowedQuietly,
@@ -101,27 +81,21 @@ class UserRepository(
         }.getOrNull()
     }
 
-    // TODO 改成返回 关注数，粉丝数，黑名单数
     suspend fun getFollowingUpCount(
         mid: Long,
-        preferApiType: ApiType,
+        preferApiType: ApiType = ApiType.Web,
     ): Int {
         if (authRepository.sessionData == null && authRepository.accessToken == null) return 0
         return runCatching {
             val response =
                 when (preferApiType) {
-                    ApiType.Web -> {
-                        BiliHttpApi.getRelationStat(
-                            mid = mid,
-                        )
-                    }
-
-                    ApiType.App -> {
+                    ApiType.Web ->
+                        BiliHttpApi.getRelationStat(mid = mid)
+                    ApiType.App ->
                         BiliHttpApi.getRelationStat(
                             mid = mid,
                             accessKey = authRepository.accessToken,
                         )
-                    }
                 }.getResponseData()
             response.following
         }.onFailure {
@@ -132,40 +106,38 @@ class UserRepository(
     suspend fun addSeasonFollow(
         seasonId: Int,
         preferApiType: ApiType = ApiType.Web,
-    ): String {
-        return when (preferApiType) {
+    ): String =
+        when (preferApiType) {
             ApiType.Web ->
                 BiliHttpApi.addSeasonFollow(
                     seasonId = seasonId,
                     csrf = authRepository.biliJct!!,
-                )
+                ).getResponseData().toast
 
             ApiType.App ->
                 BiliHttpApi.addSeasonFollowApp(
                     seasonId = seasonId,
-                    accessKey = authRepository.accessToken!!,
-                )
-        }.getResponseData().toast
-    }
+                    accessKey = authRepository.accessToken ?: "",
+                ).getResponseData().toast
+        }
 
     suspend fun delSeasonFollow(
         seasonId: Int,
         preferApiType: ApiType = ApiType.Web,
-    ): String {
-        return when (preferApiType) {
+    ): String =
+        when (preferApiType) {
             ApiType.Web ->
                 BiliHttpApi.delSeasonFollow(
                     seasonId = seasonId,
                     csrf = authRepository.biliJct!!,
-                )
+                ).getResponseData().toast
 
             ApiType.App ->
                 BiliHttpApi.delSeasonFollowApp(
                     seasonId = seasonId,
-                    accessKey = authRepository.accessToken!!,
-                )
-        }.getResponseData().toast
-    }
+                    accessKey = authRepository.accessToken ?: "",
+                ).getResponseData().toast
+        }
 
     /**
      * 获取用户空间信息（昵称、头像、签名、等级、关注状态等）。
@@ -283,7 +255,7 @@ class UserRepository(
                 val firstResponse =
                     BiliHttpApi.getUserFollow(
                         mid = mid,
-                        accessKey = authRepository.accessToken!!,
+                        accessKey = authRepository.accessToken,
                     ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
@@ -294,7 +266,7 @@ class UserRepository(
                             BiliHttpApi.getUserFollow(
                                 mid = mid,
                                 pageNumber = pageNumber,
-                                accessKey = authRepository.accessToken!!,
+                                accessKey = authRepository.accessToken,
                             ).getResponseData()
                         }
                     }.awaitAll().forEach { userFollowData ->

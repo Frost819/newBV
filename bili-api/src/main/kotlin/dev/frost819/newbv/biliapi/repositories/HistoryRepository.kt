@@ -14,7 +14,7 @@ class HistoryRepository(
     private val historyStub
         get() =
             runCatching {
-                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.defaultChannel!!)
+                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     suspend fun getHistories(

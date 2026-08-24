@@ -29,17 +29,17 @@ class VideoPlayRepository(
     private val playerStub
         get() =
             runCatching {
-                PlayerGrpcKt.PlayerCoroutineStub(channelRepository.defaultChannel!!)
+                PlayerGrpcKt.PlayerCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
     private val pgcPlayUrlStub
         get() =
             runCatching {
-                PgcPlayURLGrpcKt.PlayURLCoroutineStub(channelRepository.defaultChannel!!)
+                PgcPlayURLGrpcKt.PlayURLCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
     private val danmakuStub
         get() =
             runCatching {
-                DMGrpcKt.DMCoroutineStub(channelRepository.defaultChannel!!)
+                DMGrpcKt.DMCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     suspend fun getPlayData(
@@ -263,7 +263,8 @@ class VideoPlayRepository(
                         subType = subType,
                         epid = epid,
                         sid = seasonId,
-                        accessKey = authRepository.accessToken ?: "",
+                        mid = authRepository.mid,
+                        accessKey = authRepository.accessToken,
                     )
             }
         println("send heartbeat result: $result")

@@ -12,7 +12,7 @@ class ToViewRepository(
     private val historyStub
         get() =
             runCatching {
-                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.defaultChannel!!)
+                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     private fun requireCsrf(): String =
@@ -37,12 +37,15 @@ class ToViewRepository(
             }
 
             ApiType.App -> {
-                val data =
-                    BiliHttpApi.getToView(
-                        // viewAt = cursor,
-                        accessKey = requireAccessToken(),
-                    ).getResponseData()
-                ToViewData.fromToViewResponse(data)
+                requireAccessToken()
+                val reply =
+                    historyStub?.cursorV2(
+                        bilibili.app.interfaces.v1.cursorV2Req {
+                            this.cursor = bilibili.app.interfaces.v1.cursor { max = cursor }
+                            business = "toview"
+                        },
+                    ) ?: throw IllegalStateException("App gRPC history stub is not initialized")
+                ToViewData.fromToViewResponse(reply)
             }
         }
     }
@@ -50,17 +53,12 @@ class ToViewRepository(
     suspend fun addToView(
         aid: Long,
         bvid: String? = null,
-        preferApiType: ApiType,
+        preferApiType: ApiType = ApiType.Web,
     ) {
         val (success, message) =
             when (preferApiType) {
                 ApiType.Web ->
-                    BiliHttpApi.addToView(
-                        avid = aid,
-                        bvid = bvid,
-                        csrf = requireCsrf(),
-                    )
-
+                    BiliHttpApi.addToView(avid = aid, bvid = bvid, csrf = requireCsrf())
                 ApiType.App ->
                     BiliHttpApi.addToViewWithAccessKey(
                         avid = aid,
@@ -74,17 +72,12 @@ class ToViewRepository(
     suspend fun delToView(
         aid: Long,
         viewed: Boolean = false,
-        preferApiType: ApiType,
+        preferApiType: ApiType = ApiType.Web,
     ) {
         val (success, message) =
             when (preferApiType) {
                 ApiType.Web ->
-                    BiliHttpApi.delToView(
-                        viewed = viewed,
-                        avid = aid,
-                        csrf = requireCsrf(),
-                    )
-
+                    BiliHttpApi.delToView(viewed = viewed, avid = aid, csrf = requireCsrf())
                 ApiType.App ->
                     BiliHttpApi.delToViewWithAccessKey(
                         viewed = viewed,

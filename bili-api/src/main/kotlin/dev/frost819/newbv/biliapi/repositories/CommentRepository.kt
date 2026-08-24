@@ -1,5 +1,9 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import bilibili.main.community.reply.v1.ReplyGrpcKt
+import bilibili.main.community.reply.v1.cursorReq
+import bilibili.main.community.reply.v1.detailListReq
+import bilibili.main.community.reply.v1.mainListReq
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.comment.Comment
 import dev.frost819.newbv.biliapi.entity.comment.CommentPage
@@ -17,7 +21,14 @@ import kotlinx.serialization.json.JsonObject
  */
 class CommentRepository(
     private val authRepository: AuthRepository,
+    private val channelRepository: ChannelRepository,
 ) {
+    private val replyStub
+        get() =
+            runCatching {
+                ReplyGrpcKt.ReplyCoroutineStub(channelRepository.requireDefaultChannel())
+            }.getOrNull()
+
     /**
      * 获取主评论分页。
      *
@@ -32,19 +43,39 @@ class CommentRepository(
         page: Int = 1,
         preferApiType: ApiType = ApiType.Web,
     ): CommentPage {
-        val data =
-            BiliHttpApi.getVideoComments(
-                aid = aid,
-                sort = sort,
-                page = page,
-                accessKey = accessKey(preferApiType),
-            ).getResponseData()
-        return parsePage(
-            data,
-            aid = aid,
-            page = page,
-            defaultType = 1,
-        )
+        return when (preferApiType) {
+            ApiType.Web -> {
+                val data =
+                    BiliHttpApi.getVideoComments(aid, sort, page, accessKey = null).getResponseData()
+                parsePage(data, aid = aid, page = page, defaultType = 1)
+            }
+
+            ApiType.App -> {
+                val reply =
+                    replyStub?.mainList(
+                        mainListReq {
+                            oid = aid
+                            type = 1
+                            cursor =
+                                cursorReq {
+                                    next = if (page <= 1) 0 else page.toLong()
+                                    mode =
+                                        if (sort == 0) {
+                                            bilibili.main.community.reply.v1.Mode.MAIN_LIST_TIME
+                                        } else {
+                                            bilibili.main.community.reply.v1.Mode.MAIN_LIST_HOT
+                                        }
+                                }
+                        },
+                    ) ?: throw IllegalStateException("App gRPC reply stub is not initialized")
+                CommentPage(
+                    comments = reply.repliesList.map { Comment.fromGrpc(it, aid) },
+                    page = page,
+                    total = 0,
+                    hasMore = !reply.cursor.isEnd,
+                )
+            }
+        }
     }
 
     /**
@@ -61,19 +92,38 @@ class CommentRepository(
         page: Int = 1,
         preferApiType: ApiType = ApiType.Web,
     ): CommentPage {
-        val data =
-            BiliHttpApi.getVideoCommentReplies(
-                aid = aid,
-                rootRpid = rootRpid,
-                page = page,
-                accessKey = accessKey(preferApiType),
-            ).getResponseData()
-        return parsePage(
-            data,
-            aid = aid,
-            page = page,
-            defaultType = 1,
-        )
+        return when (preferApiType) {
+            ApiType.Web -> {
+                val data =
+                    BiliHttpApi.getVideoCommentReplies(
+                        aid = aid,
+                        rootRpid = rootRpid,
+                        page = page,
+                        accessKey = null,
+                    ).getResponseData()
+                parsePage(data, aid = aid, page = page, defaultType = 1)
+            }
+
+            ApiType.App -> {
+                val reply =
+                    replyStub?.detailList(
+                        detailListReq {
+                            oid = aid
+                            type = 1
+                            root = rootRpid
+                            rpid = rootRpid
+                            cursor = cursorReq { next = if (page <= 1) 0 else page.toLong() }
+                        },
+                    ) ?: throw IllegalStateException("App gRPC reply stub is not initialized")
+                val root = reply.root
+                CommentPage(
+                    comments = root.repliesList.map { Comment.fromGrpc(it, aid) },
+                    page = page,
+                    total = 0,
+                    hasMore = !reply.cursor.isEnd,
+                )
+            }
+        }
     }
 
     /**
@@ -97,7 +147,7 @@ class CommentRepository(
                 rpid = rpid,
                 like = like,
                 csrf = authRepository.biliJct.takeIf { preferApiType == ApiType.Web },
-                accessKey = accessKey(preferApiType),
+                accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
             )
         check(successMessage.first) { successMessage.second.ifBlank { "评论点赞失败" } }
     }

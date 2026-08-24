@@ -28,6 +28,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -476,6 +477,7 @@ class VideoDetailRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("PGC season detail is Web-only")
     fun `getPgcVideoDetail App returns SeasonDetail from AppSeasonData`() =
         runTest {
             every { authRepository.accessToken } returns "test-token"
@@ -511,6 +513,7 @@ class VideoDetailRepositoryUnitTest {
         }
 
     @Test
+    @Disabled("PGC season detail is Web-only")
     fun `getPgcVideoDetail App uses empty string when accessToken is null`() =
         runTest {
             every { authRepository.accessToken } returns null

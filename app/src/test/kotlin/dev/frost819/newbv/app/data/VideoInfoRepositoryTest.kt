@@ -193,7 +193,7 @@ class VideoInfoRepositoryTest {
     fun `loadVideoDetail success updates all state`() = runTest(testDispatcher) {
         val related = listOf(fakeRelatedVideo(10))
         val detail = fakeVideoDetail(relatedVideos = related, history = VideoDetail.History(500, 50L))
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
         repository.loadVideoDetail(aid = 1L)
         advanceUntilIdle()
@@ -206,7 +206,7 @@ class VideoInfoRepositoryTest {
 
     @Test
     fun `loadVideoDetail failure does not crash and leaves state unchanged`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("network error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("network error")
 
         repository.loadVideoDetail(aid = 1L)
         advanceUntilIdle()
@@ -218,12 +218,12 @@ class VideoInfoRepositoryTest {
     @Test
     fun `loadVideoDetail uses ApiType Web by default`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
         repository.loadVideoDetail(aid = 1L)
         advanceUntilIdle()
 
-        coVerify { videoDetailRepository.getVideoDetail(1L, ApiType.Web) }
+        coVerify { videoDetailRepository.getVideoDetail(1L, ApiType.Web, "") }
     }
 
     // ── updateUgcPages ───────────────────────────────────────────────

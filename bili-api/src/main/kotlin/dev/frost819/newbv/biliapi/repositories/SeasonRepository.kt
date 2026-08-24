@@ -17,10 +17,9 @@ class SeasonRepository(
      * 获取追番/追剧列表
      *
      * @param type 追番/追剧类型
-     * @param status 追剧状态 当 [preferApiType] == [ApiType.App] 时，不可使用 [FollowingSeasonStatus.All]
+     * @param status 追剧状态
      * @param pageNumber 页码
      * @param pageSize 每页数量
-     * @param preferApiType 优先使用的 API 类型
      */
     suspend fun getFollowingSeasons(
         type: FollowingSeasonType = FollowingSeasonType.Bangumi,
@@ -30,7 +29,7 @@ class SeasonRepository(
         preferApiType: ApiType = ApiType.Web,
     ): FollowingSeasonData {
         return when (preferApiType) {
-            ApiType.Web ->
+            ApiType.Web -> {
                 BiliHttpApi.getFollowingSeasons(
                     type = type.id,
                     status = status.id,
@@ -44,15 +43,16 @@ class SeasonRepository(
                             total = responseData.total,
                         )
                     }
+            }
 
-            ApiType.App ->
+            ApiType.App -> {
                 BiliHttpApi.getFollowingSeasons(
                     type = type.paramName,
                     status = status.id,
                     pageNumber = pageNumber,
                     pageSize = pageSize,
                     build = BiliAppConf.APP_BUILD_CODE,
-                    accessKey = authRepository.accessToken!!,
+                    accessKey = authRepository.accessToken ?: "",
                 ).getResponseData()
                     .let { responseData ->
                         FollowingSeasonData(
@@ -60,6 +60,7 @@ class SeasonRepository(
                             total = responseData.total,
                         )
                     }
+            }
         }
     }
 
@@ -68,17 +69,19 @@ class SeasonRepository(
         preferApiType: ApiType = ApiType.Web,
     ): List<Timeline> {
         return when (preferApiType) {
-            ApiType.Web ->
+            ApiType.Web -> {
                 BiliHttpApi.getTimeline(
                     type = filter.webFilterId,
                     before = 7,
                     after = 7,
                 ).getResponseData().map { Timeline.fromTimeline(it) }
+            }
 
-            ApiType.App ->
+            ApiType.App -> {
                 BiliHttpApi.getTimeline(
                     filterType = filter.appFilterId,
                 ).getResponseData().data.map { Timeline.fromTimeline(it) }
+            }
         }
     }
 }

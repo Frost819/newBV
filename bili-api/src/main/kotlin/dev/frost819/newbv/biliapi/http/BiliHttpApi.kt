@@ -911,17 +911,52 @@ object BiliHttpApi {
     }
 
     /**
+     * 为视频[avid]点赞或取消赞（App 端）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/action.md §点赞视频（APP端）
+     * 鉴权：access_key
+     *
+     * @param avid 稿件 avid
+     * @param like true 点赞 / false 取消赞
+     * @param accessKey App access_key
+     */
+    suspend fun sendVideoLikeApp(
+        avid: Long,
+        like: Boolean,
+        accessKey: String,
+    ): Pair<Boolean, String> {
+        val response =
+            client.post("https://app.bilibili.com/x/v2/view/like") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("access_key", accessKey)
+                            append("aid", "$avid")
+                            append("like", "${if (like) 0 else 1}")
+                        },
+                    ),
+                )
+            }.body<BiliResponseWithoutData>()
+        return Pair(response.code == 0, response.message)
+    }
+
+    /**
      * 检查视频[avid]或[bvid]是否已点赞
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/action.md §判断视频近期是否被点赞（双端）
+     * 鉴权：Cookie(SESSDATA) 或 APP(access_key)
      */
     suspend fun checkVideoLiked(
         avid: Long? = null,
         bvid: String? = null,
+        accessKey: String? = null,
     ): Boolean {
         val response =
             client.get("/x/web-interface/archive/has/like") {
                 require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
                 avid?.let { parameter("aid", it) }
                 bvid?.let { parameter("bvid", it) }
+                accessKey?.let { parameter("access_key", it) }
             }.body<BiliResponse<Int>>()
         return runCatching {
             response.getResponseData() == 1
@@ -968,20 +1003,58 @@ object BiliHttpApi {
 
     /**
      * 检查视频[avid]或[bvid]是否已投币
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/action.md §判断视频是否被投币（双端）
+     * 鉴权：Cookie(SESSDATA) 或 APP(access_key)
      */
     suspend fun checkVideoSentCoin(
         avid: Long? = null,
         bvid: String? = null,
+        accessKey: String? = null,
     ): Boolean {
         val response =
             client.get("/x/web-interface/archive/coins") {
                 require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
                 avid?.let { parameter("aid", it) }
                 bvid?.let { parameter("bvid", it) }
+                accessKey?.let { parameter("access_key", it) }
             }.body<BiliResponse<CheckSentCoin>>()
         return runCatching {
             response.getResponseData().multiply != 0
         }.getOrDefault(false)
+    }
+
+    /**
+     * 为视频[avid]投币（App 端）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/action.md §投币视频（APP端）
+     * 鉴权：access_key
+     *
+     * @param avid 稿件 avid
+     * @param multiply 投币数量（1-2）
+     * @param like 是否同时点赞
+     * @param accessKey App access_key
+     */
+    suspend fun sendVideoCoinApp(
+        avid: Long,
+        multiply: Int = 1,
+        like: Boolean = false,
+        accessKey: String,
+    ): Pair<Boolean, String> {
+        val response =
+            client.post("https://app.bilibili.com/x/v2/view/coin/add") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("access_key", accessKey)
+                            append("aid", "$avid")
+                            append("multiply", "$multiply")
+                            append("select_like", "${if (like) 1 else 0}")
+                        },
+                    ),
+                )
+            }.body<BiliResponse<AddCoin>>()
+        return Pair(response.code == 0, response.message)
     }
 
     /**
@@ -1060,6 +1133,33 @@ object BiliHttpApi {
                     ),
                 )
                 header("referer", "https://www.bilibili.com")
+            }.body<BiliResponse<OneClickTripleAction>>()
+        return Triple(response.code == 0, response.message, response.data)
+    }
+
+    /**
+     * 为视频[avid]一键三连（App 端）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/action.md §一键三连（APP端）
+     * 同时点赞投币收藏视频，收藏于默认收藏夹中。鉴权：access_key
+     *
+     * @param avid 稿件 avid
+     * @param accessKey App access_key
+     */
+    suspend fun sendVideoOneClickTripleActionApp(
+        avid: Long,
+        accessKey: String,
+    ): Triple<Boolean, String, OneClickTripleAction?> {
+        val response =
+            client.post("https://app.bilibili.com/x/v2/view/like/triple") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("access_key", accessKey)
+                            append("aid", "$avid")
+                        },
+                    ),
+                )
             }.body<BiliResponse<OneClickTripleAction>>()
         return Triple(response.code == 0, response.message, response.data)
     }

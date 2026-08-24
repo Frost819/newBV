@@ -1,5 +1,10 @@
 package dev.frost819.newbv.biliapi.entity.comment
 
+import bilibili.main.community.reply.v1.content
+import bilibili.main.community.reply.v1.member
+import bilibili.main.community.reply.v1.picture
+import bilibili.main.community.reply.v1.replyControl
+import bilibili.main.community.reply.v1.replyInfo
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.Test
@@ -61,5 +66,49 @@ class CommentTest {
         assertEquals("", comment.message)
         assertFalse(comment.isLiked)
         assertEquals(0, comment.replyCount)
+    }
+
+    @Test
+    fun `fromGrpc maps reply info into unified comment`() {
+        val comment =
+            Comment.fromGrpc(
+                replyInfo {
+                    id = 123L
+                    oid = 456L
+                    type = 1L
+                    mid = 789L
+                    root = 10L
+                    parent = 11L
+                    like = 12L
+                    count = 3L
+                    ctime = 1700000000L
+                    member =
+                        member {
+                            name = "测试用户"
+                            face = "https://example.com/avatar.png"
+                            level = 6L
+                        }
+                    content =
+                        content {
+                            message = "测试评论"
+                            pictures += picture { imgSrc = "https://example.com/picture.png" }
+                        }
+                    replyControl =
+                        replyControl {
+                            action = 1L
+                            upLike = true
+                        }
+                },
+                oid = 456L,
+            )
+
+        assertEquals(123L, comment.rpid)
+        assertEquals(789L, comment.mid)
+        assertEquals(10L, comment.rootRpid)
+        assertEquals("测试用户", comment.userName)
+        assertEquals("测试评论", comment.message)
+        assertEquals(6, comment.level)
+        assertTrue(comment.isLiked)
+        assertTrue(comment.isUp)
     }
 }

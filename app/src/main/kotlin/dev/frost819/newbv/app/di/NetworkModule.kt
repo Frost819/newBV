@@ -135,12 +135,14 @@ object NetworkModule {
     /**
      * 提供 [CommentRepository] 单例。
      *
-     * 封装主评论、楼中楼与评论点赞接口（Web/App HTTP）。
+     * 封装主评论、楼中楼与评论点赞接口（评论读取支持 Web HTTP/App gRPC）。
      */
     @Provides
     @Singleton
-    fun provideCommentRepository(authRepository: AuthRepository): CommentRepository =
-        CommentRepository(authRepository)
+    fun provideCommentRepository(
+        authRepository: AuthRepository,
+        channelRepository: ChannelRepository,
+    ): CommentRepository = CommentRepository(authRepository, channelRepository)
 
     /**
      * 提供 [RecommendVideoRepository] 单例。
@@ -305,7 +307,8 @@ object NetworkModule {
     fun provideAccountRepository(
         userDao: UserDao,
         authRepository: AuthRepository,
-    ): AccountRepository = AccountRepositoryImpl(userDao, authRepository)
+        channelRepository: ChannelRepository,
+    ): AccountRepository = AccountRepositoryImpl(userDao, authRepository, channelRepository)
 
     /**
      * 提供 [SearchRepository] 单例。

@@ -1,32 +1,53 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 
 class LikeRepository(private val authRepository: AuthRepository) {
     suspend fun checkVideoLiked(
         aid: Long,
+        preferApiType: ApiType = ApiType.Web,
         bvid: String? = null,
     ): Boolean {
-        val like =
-            BiliHttpApi.checkVideoLiked(
-                avid = aid,
-                bvid = bvid,
-            )
-        return like
+        return when (preferApiType) {
+            ApiType.Web ->
+                BiliHttpApi.checkVideoLiked(
+                    avid = aid,
+                    bvid = bvid,
+                )
+
+            ApiType.App ->
+                BiliHttpApi.checkVideoLiked(
+                    avid = aid,
+                    bvid = bvid,
+                    accessKey = authRepository.accessToken,
+                )
+        }
     }
 
     suspend fun updateVideoLiked(
         aid: Long,
-        bvid: String? = null,
         like: Boolean,
+        preferApiType: ApiType = ApiType.Web,
+        bvid: String? = null,
     ) {
         val (success, message) =
-            BiliHttpApi.sendVideoLike(
-                avid = aid,
-                bvid = bvid,
-                like = like,
-                csrf = authRepository.biliJct ?: "",
-            )
+            when (preferApiType) {
+                ApiType.Web ->
+                    BiliHttpApi.sendVideoLike(
+                        avid = aid,
+                        bvid = bvid,
+                        like = like,
+                        csrf = authRepository.biliJct ?: "",
+                    )
+
+                ApiType.App ->
+                    BiliHttpApi.sendVideoLikeApp(
+                        avid = aid,
+                        like = like,
+                        accessKey = authRepository.accessToken ?: "",
+                    )
+            }
         if (!success) {
             throw Exception(message)
         }

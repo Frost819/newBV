@@ -8,7 +8,6 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 
-@org.junit.jupiter.api.Tag("integration")
 class BiliLiveHttpApiTest {
     companion object {
         private const val ROOM_ID = 1718159119
@@ -22,15 +21,23 @@ class BiliLiveHttpApiTest {
             runCatching { localProperties.getProperty("test.buvid") }.getOrNull() ?: ""
         val SESSDATA: String =
             runCatching { localProperties.getProperty("test.sessdata") }.getOrNull() ?: ""
+        val BILI_JCT: String =
+            runCatching { localProperties.getProperty("test.bili_jct") }.getOrNull() ?: ""
         val UID: Long =
             runCatching { localProperties.getProperty("test.uid") }.getOrNull()?.toLongOrNull() ?: 2
+        val ACCESS_TOKEN: String =
+            runCatching { localProperties.getProperty("test.access_token") }.getOrNull() ?: ""
 
         @JvmStatic
         @BeforeAll
         fun setup() {
-            BiliHttpApi.init(BUVID)
-            BiliHttpApi.sessData = SESSDATA
-            BiliHttpApi.mid = UID
+            BiliHttpApi.init(
+                buvid3 = BUVID,
+                sessData = SESSDATA,
+                biliJct = BILI_JCT,
+                mid = UID,
+                accessToken = ACCESS_TOKEN,
+            )
             runBlocking {
                 runCatching { BiliHttpApi.fetchBuvid3FromSpi() }
             }
@@ -143,6 +150,53 @@ class BiliLiveHttpApiTest {
             val page2Ids = page2.data!!.map { it.roomId }.toSet()
             val overlap = page1Ids.intersect(page2Ids)
             Assertions.assertTrue(overlap.size < 5, "page1 and page2 should have minimal overlap, got: $overlap")
+        }
+    }
+
+    @Test
+    fun `get live list returns modules`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getLiveList()
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data) { "data should not be null" }
+        }
+    }
+
+    @Test
+    fun `get live recommend returns list`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getLiveRecommend()
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertTrue(data.list.isNotEmpty(), "live recommend list should not be empty")
+        }
+    }
+
+    @Test
+    fun `get follow live returns response`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getFollowLive()
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+        }
+    }
+
+    @Test
+    fun `get live area list returns categories`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getLiveAreaList()
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertTrue(data.isNotEmpty(), "area list should not be empty")
+        }
+    }
+
+    @Test
+    fun `get room info returns details`() {
+        runBlocking {
+            val response = BiliLiveHttpApi.getRoomInfo(ROOM_ID)
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertEquals(ROOM_ID, data.roomId, "room_id should match")
         }
     }
 }

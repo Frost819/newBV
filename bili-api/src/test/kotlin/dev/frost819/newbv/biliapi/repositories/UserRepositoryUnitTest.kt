@@ -74,7 +74,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.followUser(MID, ApiType.Web)
+            val result = repository.followUser(MID)
 
             assertThat(result).isTrue()
             coVerify {
@@ -95,7 +95,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.followUser(MID, ApiType.App)
+            val result = repository.followUser(MID, preferApiType = ApiType.App)
 
             assertThat(result).isTrue()
             coVerify {
@@ -116,7 +116,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = -101, message = "未登录", ttl = 0)
 
-            val result = repository.followUser(MID, ApiType.Web)
+            val result = repository.followUser(MID)
 
             assertThat(result).isFalse()
         }
@@ -132,7 +132,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.unfollowUser(MID, ApiType.Web)
+            val result = repository.unfollowUser(MID)
 
             assertThat(result).isTrue()
             coVerify {
@@ -153,7 +153,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.unfollowUser(MID, ApiType.App)
+            val result = repository.unfollowUser(MID, preferApiType = ApiType.App)
 
             assertThat(result).isTrue()
             coVerify {
@@ -177,7 +177,7 @@ class UserRepositoryUnitTest {
             authRepository.sessionData = null
             authRepository.accessToken = null
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isNull()
         }
@@ -208,7 +208,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isTrue()
         }
@@ -239,7 +239,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isTrue()
         }
@@ -270,7 +270,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isFalse()
         }
@@ -284,7 +284,7 @@ class UserRepositoryUnitTest {
                     message = "未登录",
                 )
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isNull()
         }
@@ -299,7 +299,7 @@ class UserRepositoryUnitTest {
             authRepository.sessionData = null
             authRepository.accessToken = null
 
-            val result = repository.getFollowingUpCount(MID, ApiType.Web)
+            val result = repository.getFollowingUpCount(MID)
 
             assertThat(result).isEqualTo(0)
         }
@@ -321,7 +321,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowingUpCount(MID, ApiType.Web)
+            val result = repository.getFollowingUpCount(MID)
 
             assertThat(result).isEqualTo(42)
         }
@@ -343,7 +343,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowingUpCount(MID, ApiType.App)
+            val result = repository.getFollowingUpCount(MID, preferApiType = ApiType.App)
 
             assertThat(result).isEqualTo(10)
             coVerify { BiliHttpApi.getRelationStat(mid = MID, accessKey = ACCESS_TOKEN) }
@@ -358,7 +358,7 @@ class UserRepositoryUnitTest {
                     message = "请求错误",
                 )
 
-            val result = repository.getFollowingUpCount(MID, ApiType.Web)
+            val result = repository.getFollowingUpCount(MID)
 
             assertThat(result).isEqualTo(0)
         }
@@ -490,7 +490,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.addSeasonFollow(seasonId = 400, preferApiType = ApiType.Web)
+            val result = repository.addSeasonFollow(seasonId = 400)
 
             assertThat(result).isEqualTo("追番成功")
             coVerify { BiliHttpApi.addSeasonFollow(seasonId = 400, csrf = BILI_JCT) }
@@ -538,7 +538,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.delSeasonFollow(seasonId = 400, preferApiType = ApiType.Web)
+            val result = repository.delSeasonFollow(seasonId = 400)
 
             assertThat(result).isEqualTo("已取消追番")
             coVerify { BiliHttpApi.delSeasonFollow(seasonId = 400, csrf = BILI_JCT) }
@@ -652,7 +652,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowedUsers(mid = MID, preferApiType = ApiType.Web)
+            val result = repository.getFollowedUsers(mid = MID)
 
             assertThat(result).hasSize(1)
             assertThat(result[0].mid).isEqualTo(1L)
@@ -674,7 +674,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowedUsers(mid = MID, preferApiType = ApiType.Web)
+            val result = repository.getFollowedUsers(mid = MID)
 
             assertThat(result).hasSize(2)
             coVerify(atLeast = 2) { BiliHttpApi.getUserFollow(any(), any(), any(), any(), any()) }
@@ -708,6 +708,7 @@ class UserRepositoryUnitTest {
             assertThat(result).hasSize(1)
             assertThat(result[0].mid).isEqualTo(1L)
             assertThat(result[0].name).isEqualTo("user1")
+            coVerify { BiliHttpApi.getUserFollow(eq(MID), any(), any(), any(), eq(ACCESS_TOKEN)) }
         }
 
     @Test
@@ -736,67 +737,32 @@ class UserRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `getSpaceVideos App maps response and returns videos with hasNext`() =
+    fun `getSpaceVideos App uses HTTP App API not gRPC`() =
         runTest {
-            val appSpaceVideoData =
-                AppSpaceVideoData(
-                    count = 100,
-                    item =
-                        listOf(
-                            AppSpaceVideoData.SpaceVideoItem(
-                                title = "app-video1",
-                                subtitle = "",
-                                tname = "综合",
-                                cover = "http://cover.test",
-                                uri = "bilibili://video/1",
-                                param = "1",
-                                goto = "av",
-                                length = "5:00",
-                                duration = 300,
-                                isPopular = false,
-                                isSteins = false,
-                                isUgcpay = false,
-                                isCooperation = false,
-                                isPgc = false,
-                                isLivePlayback = false,
-                                play = 500,
-                                danmaku = 10,
-                                ctime = 1700000000,
-                                ugcPay = 0,
-                                author = "UP",
-                                state = false,
-                                bvid = "BV1",
-                                videos = 1,
-                                cursorAttr =
-                                    AppSpaceVideoData.SpaceVideoItem.CursorAttr(
-                                        isLastWatchedArc = false,
-                                        rank = 0,
-                                    ),
-                                iconType = 0,
-                            ),
-                        ),
-                    lastWatchedLocator =
-                        AppSpaceVideoData.LastWatchedLocator(
-                            displayThreshold = 0,
-                            insertRanking = 0,
-                            text = "",
-                        ),
-                    hasNext = true,
-                )
+            val appSpaceData =
+                appSpaceData(hasNext = false, appSpaceVideoItem(aid = MID * 1000L, bvid = "BV-app", title = "App视频"))
             coEvery { BiliHttpApi.getAppUserSpaceVideos(any(), any(), any(), any(), any()) } returns
-                BiliResponse(code = 0, message = "", data = appSpaceVideoData)
+                BiliResponse(code = 0, message = "", data = appSpaceData)
 
-            val result =
-                repository.getSpaceVideos(
-                    mid = MID,
-                    preferApiType = ApiType.App,
-                )
+            val result = repository.getSpaceVideos(mid = MID, preferApiType = ApiType.App)
 
             assertThat(result.videos).hasSize(1)
-            assertThat(result.videos[0].aid).isEqualTo(1L)
-            assertThat(result.videos[0].title).isEqualTo("app-video1")
-            assertThat(result.page.hasNext).isTrue()
-            assertThat(result.page.lastAvid).isEqualTo(1L)
+            assertThat(result.videos[0].bvid).isEqualTo("BV-app")
+            assertThat(result.page.hasNext).isFalse()
+            coVerify { BiliHttpApi.getAppUserSpaceVideos(eq(MID), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `getSpaceVideos App does not fallback to gRPC`() =
+        runTest {
+            val appSpaceData = appSpaceData(hasNext = false, appSpaceVideoItem(aid = MID * 1000L, bvid = "BV-app"))
+            coEvery { BiliHttpApi.getAppUserSpaceVideos(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = appSpaceData)
+
+            repository.getSpaceVideos(mid = MID, preferApiType = ApiType.App)
+
+            // App 路径不再依赖 gRPC channel，channel 未初始化也能走 HTTP
+            assertThat(repository).isNotNull()
         }
 
     // ------------------------------------------------------------------
@@ -886,7 +852,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.checkIsFollowing(MID, ApiType.Web)
+            val result = repository.checkIsFollowing(MID)
 
             assertThat(result).isTrue()
         }
@@ -1035,6 +1001,58 @@ class UserRepositoryUnitTest {
         _isAvoided = 0,
         attribute = 0,
         playbackPosition = 0,
+    )
+
+    private fun appSpaceVideoItem(
+        aid: Long = 1L,
+        bvid: String = "BV1",
+        title: String = "App视频",
+    ) = AppSpaceVideoData.SpaceVideoItem(
+        title = title,
+        subtitle = "",
+        tname = "",
+        cover = "http://pic.test",
+        uri = "",
+        param = aid.toString(),
+        goto = "av",
+        length = "5:00",
+        duration = 300,
+        isPopular = false,
+        isSteins = false,
+        isUgcpay = false,
+        isCooperation = false,
+        isPgc = false,
+        isLivePlayback = false,
+        play = 100,
+        danmaku = 10,
+        ctime = 1700000000,
+        ugcPay = 0,
+        author = "UP",
+        state = true,
+        bvid = bvid,
+        videos = 1,
+        firstcid = aid,
+        cursorAttr =
+            AppSpaceVideoData.SpaceVideoItem.CursorAttr(
+                isLastWatchedArc = false,
+                rank = 0,
+            ),
+        iconType = 0,
+    )
+
+    private fun appSpaceData(
+        hasNext: Boolean = false,
+        vararg items: AppSpaceVideoData.SpaceVideoItem,
+    ) = AppSpaceVideoData(
+        count = items.size,
+        item = items.toList(),
+        lastWatchedLocator =
+            AppSpaceVideoData.LastWatchedLocator(
+                displayThreshold = 0,
+                insertRanking = 0,
+                text = "",
+            ),
+        hasNext = hasNext,
     )
 
     private fun fakeFollowedUser(

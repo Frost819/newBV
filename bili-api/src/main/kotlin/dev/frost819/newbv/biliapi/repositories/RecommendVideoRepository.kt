@@ -17,7 +17,7 @@ class RecommendVideoRepository(
     private val popularStub
         get() =
             runCatching {
-                PopularGrpcKt.PopularCoroutineStub(channelRepository.defaultChannel!!)
+                PopularGrpcKt.PopularCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     suspend fun getPopularVideos(
@@ -83,13 +83,14 @@ class RecommendVideoRepository(
                         .map { UgcItem.fromRcmdItem(it) }
 
                 ApiType.App ->
-                    BiliHttpApi.getFeedIndex(
-                        idx = page.nextAppIdx,
-                        accessKey = authRepository.accessToken,
-                    )
-                        .getResponseData().items
-                        .filter { it.cardGoto == "av" }
-                        .map { UgcItem.fromRcmdItem(it) }
+                    popularStub?.index(
+                        popularResultReq { idx = page.nextAppIdx.toLong() },
+                    )?.itemsList
+                        ?.filter {
+                            it.itemCase == bilibili.app.card.v1.Card.ItemCase.SMALL_COVER_V5
+                        }
+                        ?.map { UgcItem.fromSmallCoverV5(it.smallCoverV5) }
+                        ?: throw IllegalStateException("App gRPC popular stub is not initialized")
             }
         val nextPage =
             when (preferApiType) {
@@ -100,7 +101,7 @@ class RecommendVideoRepository(
 
                 ApiType.App ->
                     RecommendPage(
-                        nextAppIdx = items.first().idx + 1,
+                        nextAppIdx = items.lastOrNull()?.idx?.toInt()?.plus(1) ?: page.nextAppIdx,
                     )
             }
         return RecommendData(

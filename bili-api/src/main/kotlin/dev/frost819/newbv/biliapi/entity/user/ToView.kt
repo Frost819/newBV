@@ -18,12 +18,22 @@ data class ToViewData(
                         .map { ToViewItem.fromToViewItem(it) },
             )
 
-        // fun fromToViewResponse(data: bilibili.app.interfaces.v1.CursorV2Reply) = ToViewData(
-        //     cursor = data.cursor.max,
-        //     data = data.itemsList
-        //         .filter { it.cardItemCase == CursorItem.CardItemCase.CARD_UGC || it.cardItemCase == CursorItem.CardItemCase.CARD_OGV }
-        //         .map { ToViewItem.fromToViewItem(it) }
-        // )
+        /**
+         * 将 App gRPC `History.CursorV2` 响应转换为稍后再看领域模型。
+         *
+         * App 接口复用历史游标响应，业务字段位于 `CursorItem` 的 UGC/OGV card 中。
+         */
+        fun fromToViewResponse(data: bilibili.app.interfaces.v1.CursorV2Reply) =
+            ToViewData(
+                cursor = data.cursor.max,
+                data =
+                    data.itemsList
+                        .filter {
+                            it.cardItemCase == CursorItem.CardItemCase.CARD_UGC ||
+                                it.cardItemCase == CursorItem.CardItemCase.CARD_OGV
+                        }
+                        .map { ToViewItem.fromToViewItem(it) },
+            )
     }
 }
 

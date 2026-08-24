@@ -2,7 +2,10 @@ package dev.frost819.newbv.biliapi.repositories
 
 import bilibili.app.interfaces.v1.suggestionResult3Req
 import bilibili.pagination.pagination
+import bilibili.polymer.app.search.v1.Item
+import bilibili.polymer.app.search.v1.SearchAllResponse
 import bilibili.polymer.app.search.v1.SearchByTypeRequest
+import bilibili.polymer.app.search.v1.searchAllRequest
 import bilibili.polymer.app.search.v1.searchByTypeRequest
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.search.Hotword
@@ -17,13 +20,15 @@ class SearchRepository(
     private val searchSuggestStub
         get() =
             runCatching {
-                bilibili.app.interfaces.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
+                bilibili.app.interfaces.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     private val searchResultStub
         get() =
             runCatching {
-                bilibili.polymer.app.search.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.defaultChannel!!)
+                bilibili.polymer.app.search.v1.SearchGrpcKt.SearchCoroutineStub(
+                    channelRepository.requireDefaultChannel(),
+                )
             }.getOrNull()
 
     /*private val searchStub
@@ -69,17 +74,54 @@ class SearchRepository(
                     .getResponseData().trending.list
                     .map { Hotword.fromHttpWebHotword(it) }
 
-            /*ApiType.App -> BiliHttpApi.getAppSearchSquare(limit = limit)
-                .getResponseData()
-                .firstOrNull { it.type == "trending" }
-                ?.data?.list
-                ?.map { Hotword.fromHttpAppSquareDataItem(it) }
-                ?: emptyList()*/
-
             ApiType.App ->
-                BiliHttpApi.getSearchTrendRank(limit = 50)
+                BiliHttpApi.getSearchTrendRank(limit = limit)
                     .getResponseData().list
                     .map { Hotword.fromHttpAppSearchTrendingHotword(it) }
+        }
+    }
+
+    /**
+     * 全量搜索（返回所有类型结果）。
+     *
+     * Web 走 HTTP `/x/web-interface/wbi/search/all/v2`；App 走 gRPC `Search.SearchAll`。
+     * 主要映射视频、番剧/影视、用户、直播间四类结果，其余卡片类型忽略。
+     *
+     * @param keyword 搜索关键词
+     * @param page 页码（从 1 开始）
+     * @param preferApiType 首选接口类型
+     * @throws IllegalStateException 当 App 模式返回异常或所需类型卡片缺失时
+     */
+    suspend fun searchAll(
+        keyword: String,
+        page: Int = 1,
+        preferApiType: ApiType = ApiType.Web,
+    ): SearchAllResult {
+        return when (preferApiType) {
+            ApiType.Web -> {
+                val data =
+                    BiliHttpApi.searchAll(
+                        keyword = keyword,
+                        page = page,
+                    ).getResponseData()
+                SearchAllResult.fromWeb(data)
+            }
+
+            ApiType.App -> {
+                val reply =
+                    runCatching {
+                        searchResultStub?.searchAll(
+                            searchAllRequest {
+                                this.keyword = keyword
+                                pagination =
+                                    pagination {
+                                        next = page.toString()
+                                    }
+                            },
+                        ) ?: throw IllegalStateException("App gRPC search stub is not initialized")
+                    }.onFailure { handleGrpcException(it) }.getOrThrow()
+                SearchAllResult.fromGrpc(reply)
+            }
         }
     }
 
@@ -463,4 +505,83 @@ private fun convertStringTimeToSeconds(time: String): Int {
     val minutes = parts[parts.size - 2].toInt()
     val seconds = parts[parts.size - 1].toInt()
     return (hours * 3600) + (minutes * 60) + seconds
+}
+
+/**
+ * 全量搜索（`Search.SearchAll` / HTTP `/search/all/v2`）的结果。
+ *
+ * 聚合视频、番剧/影视、用户、直播间四类主要结果，忽略其余卡片类型。
+ *
+ * @property keyword 搜索关键词
+ * @property videos 视频结果
+ * @property pgcs 番剧/影视结果
+ * @property users 用户结果
+ * @property liveRooms 直播间结果
+ * @property page 当前页码
+ * @property pages 总页数
+ * @property hasMore 是否还有更多
+ */
+data class SearchAllResult(
+    val keyword: String = "",
+    val videos: List<SearchTypeResult.Video> = emptyList(),
+    val pgcs: List<SearchTypeResult.Pgc> = emptyList(),
+    val users: List<SearchTypeResult.User> = emptyList(),
+    val liveRooms: List<SearchTypeResult.LiveRoom> = emptyList(),
+    val page: Int = 1,
+    val pages: Int = 0,
+    val hasMore: Boolean = false,
+) {
+    companion object {
+        /** 从 Web HTTP `/search/all/v2` 响应转换。 */
+        fun fromWeb(data: dev.frost819.newbv.biliapi.http.entity.search.SearchResultData): SearchAllResult {
+            val videos = mutableListOf<SearchTypeResult.Video>()
+            val pgcs = mutableListOf<SearchTypeResult.Pgc>()
+            data.searchTypeResults.forEach {
+                when (it) {
+                    is dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult ->
+                        videos.add(SearchTypeResult.Video.fromSearchVideoResult(it))
+                    is dev.frost819.newbv.biliapi.http.entity.search.SearchMediaResult ->
+                        pgcs.add(SearchTypeResult.Pgc.fromSearchPgcResult(it))
+                    else -> Unit
+                }
+            }
+            return SearchAllResult(
+                keyword = data.suggestKeyword,
+                videos = videos,
+                pgcs = pgcs,
+                page = data.page,
+                pages = data.numPages,
+                hasMore = data.page < data.numPages,
+            )
+        }
+
+        /** 从 App gRPC `Search.SearchAll` 响应转换。 */
+        fun fromGrpc(reply: SearchAllResponse): SearchAllResult {
+            val videos = mutableListOf<SearchTypeResult.Video>()
+            val pgcs = mutableListOf<SearchTypeResult.Pgc>()
+            val users = mutableListOf<SearchTypeResult.User>()
+            val liveRooms = mutableListOf<SearchTypeResult.LiveRoom>()
+            reply.itemList.forEach { item ->
+                when (item.cardItemCase) {
+                    Item.CardItemCase.AV ->
+                        videos.add(SearchTypeResult.Video.fromSearchVideoCard(item))
+                    Item.CardItemCase.BANGUMI ->
+                        pgcs.add(SearchTypeResult.Pgc.fromSearchPgcCard(item))
+                    Item.CardItemCase.AUTHOR ->
+                        users.add(SearchTypeResult.User.fromSearchUserCard(item))
+                    else -> Unit
+                }
+            }
+            val totalPages = reply.pagination.next.toIntOrNull() ?: 0
+            return SearchAllResult(
+                keyword = reply.keyword,
+                videos = videos,
+                pgcs = pgcs,
+                users = users,
+                liveRooms = liveRooms,
+                page = totalPages.coerceAtLeast(1),
+                hasMore = totalPages > 0,
+            )
+        }
+    }
 }

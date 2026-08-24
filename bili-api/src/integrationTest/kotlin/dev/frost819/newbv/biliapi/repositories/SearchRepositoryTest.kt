@@ -10,7 +10,6 @@ import java.nio.file.Paths
 import java.util.Properties
 import java.util.UUID
 
-@org.junit.jupiter.api.Tag("integration")
 class SearchRepositoryTest {
     companion object {
         private val localProperties =
@@ -36,26 +35,28 @@ class SearchRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(
-            FavoriteRepositoryTest.ACCESS_TOKEN,
-            FavoriteRepositoryTest.BUVID,
+            ACCESS_TOKEN,
+            BUVID,
         )
-        BiliHttpApi.init(FavoriteRepositoryTest.BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
 
-        authRepository.sessionData = FavoriteRepositoryTest.SESSDATA
-        authRepository.accessToken = FavoriteRepositoryTest.ACCESS_TOKEN
-        authRepository.biliJct = FavoriteRepositoryTest.BILI_JCT
+        authRepository.sessionData = SESSDATA
+        authRepository.accessToken = ACCESS_TOKEN
+        authRepository.biliJct = BILI_JCT
         authRepository.buvid3 = "${UUID.randomUUID()}${(0..9).random()}infoc"
     }
 
     @Test
     fun `get search hot words with web api`() =
         runBlocking {
+            // 查询类：断言返回热搜词
             val result =
                 searchRepository.getSearchHotwords(
                     limit = 50,
                     preferApiType = ApiType.Web,
                 )
-            println(result)
+            println("web hotwords: ${result.size}")
+            assertThat(result).isNotEmpty()
         }
 
     @Test
@@ -66,18 +67,21 @@ class SearchRepositoryTest {
                     limit = 50,
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            println("app hotwords: ${result.size}")
+            assertThat(result).isNotEmpty()
         }
 
     @Test
     fun `get search suggest with web api`() =
         runBlocking {
+            // 查询类：断言返回搜索建议
             val result =
                 searchRepository.getSearchSuggest(
                     keyword = "00",
                     preferApiType = ApiType.Web,
                 )
-            println(result)
+            println("web suggests: $result")
+            assertThat(result).isNotEmpty()
         }
 
     @Test
@@ -88,12 +92,14 @@ class SearchRepositoryTest {
                     keyword = "00",
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            println("app suggests: $result")
+            assertThat(result).isNotEmpty()
         }
 
     @Test
     fun `search type test`() =
         runBlocking {
+            // 查询类：搜索视频断言返回视频结果（fate 有大量视频）
             val reply =
                 searchRepository.searchType(
                     keyword = "fate",
@@ -104,7 +110,8 @@ class SearchRepositoryTest {
                     duration = SearchFilterDuration.All,
                     preferApiType = ApiType.App,
                 )
-            println(reply)
+            println("app video results: ${reply.videos.size}")
+            assertThat(reply.videos).isNotEmpty()
         }
 
     @Test
@@ -137,5 +144,33 @@ class SearchRepositoryTest {
                     preferApiType = ApiType.Web,
                 )
             assertThat(reply.pgcs).isNotEmpty()
+        }
+
+    @Test
+    fun `search all with web api`() =
+        runBlocking {
+            // 查询类：搜索"奥特曼"应返回视频结果（若为空说明接口异常或风控）
+            val result =
+                searchRepository.searchAll(
+                    keyword = "奥特曼",
+                    page = 1,
+                    preferApiType = ApiType.Web,
+                )
+            println("web searchAll videos: ${result.videos.size}, pgcs: ${result.pgcs.size}")
+            assertThat(result.videos).isNotEmpty()
+        }
+
+    @Test
+    fun `search all with gRPC api`() =
+        runBlocking {
+            // 查询类：gRPC SearchAll 应返回视频结果（若为空说明接口异常或风控）
+            val result =
+                searchRepository.searchAll(
+                    keyword = "奥特曼",
+                    page = 1,
+                    preferApiType = ApiType.App,
+                )
+            println("gRPC searchAll videos: ${result.videos.size}, pgcs: ${result.pgcs.size}")
+            assertThat(result.videos).isNotEmpty()
         }
 }

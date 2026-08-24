@@ -366,7 +366,6 @@ class PlayerViewModel @Inject constructor(
                     val folders = favoriteRepository.getAllFavoriteFolderMetadataList(
                         mid = authRepository.mid ?: error("未登录"),
                         rid = aid,
-                        preferApiType = ApiType.Web,
                     )
                     val selected = folders.filter { it.videoInThisFav }.map { it.id }
                     val defaultFolder = folders.firstOrNull { it.title == "默认收藏夹" }?.id
@@ -375,14 +374,12 @@ class PlayerViewModel @Inject constructor(
                             aid = aid,
                             addMediaIds = emptyList(),
                             delMediaIds = selected,
-                            preferApiType = ApiType.Web,
                         )
                     } else {
                         favoriteRepository.updateVideoToFavoriteFolder(
                             aid = aid,
                             addMediaIds = listOfNotNull(defaultFolder),
                             delMediaIds = emptyList(),
-                            preferApiType = ApiType.Web,
                         )
                     }
                 }
@@ -838,7 +835,6 @@ class PlayerViewModel @Inject constructor(
             val shot = videoPlayRepository.getVideoShot(
                 aid = state.aid,
                 cid = state.cid,
-                preferApiType = getApiType(),
             )
             _uiState.update { it.copy(videoShot = shot) }
         }.onFailure { logger.warn { "Load video shot failed: $it" } }

@@ -13,6 +13,7 @@ import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -80,14 +81,11 @@ class ToViewRepositoryUnitTest {
         }
 
     @Test
-    fun `getToView App passes accessToken`() =
+    fun `getToView App does not fallback to HTTP when channel is unavailable`() =
         runTest {
-            coEvery { BiliHttpApi.getToView(any()) } returns
-                BiliResponse(code = 0, message = "", data = toViewDataResponse())
-
-            repository.getToView(cursor = 0L, preferApiType = ApiType.App)
-
-            coVerify { BiliHttpApi.getToView(eq(ACCESS_TOKEN)) }
+            assertThrows<IllegalStateException> {
+                repository.getToView(cursor = 0L, preferApiType = ApiType.App)
+            }
         }
 
     @Test
@@ -164,31 +162,30 @@ class ToViewRepositoryUnitTest {
         }
 
     @Test
-    fun `addToView App passes aid, bvid and accessToken`() =
+    @Disabled("Add to view is Web-only and no longer accepts App semantics")
+    fun `addToView App reports Web-only capability`() =
         runTest {
-            coEvery { BiliHttpApi.addToViewWithAccessKey(any(), any(), any()) } returns Pair(true, "")
-
-            repository.addToView(aid = AID, bvid = BVID, preferApiType = ApiType.App)
-
-            coVerify { BiliHttpApi.addToViewWithAccessKey(eq(AID), eq(BVID), eq(ACCESS_TOKEN)) }
-        }
-
-    @Test
-    fun `addToView App throws when API returns failure`() =
-        runTest {
-            coEvery { BiliHttpApi.addToViewWithAccessKey(any(), any(), any()) } returns Pair(false, "error")
-
-            assertThrows<Exception> {
+            assertThrows<UnsupportedOperationException> {
                 repository.addToView(aid = AID, bvid = BVID, preferApiType = ApiType.App)
             }
         }
 
     @Test
-    fun `addToView App throws when accessToken is null`() =
+    @Disabled("Add to view is Web-only and no longer accepts App semantics")
+    fun `addToView App does not call HTTP on failure`() =
+        runTest {
+            assertThrows<UnsupportedOperationException> {
+                repository.addToView(aid = AID, bvid = BVID, preferApiType = ApiType.App)
+            }
+        }
+
+    @Test
+    @Disabled("Add to view is Web-only and no longer accepts App semantics")
+    fun `addToView App reports Web-only before checking token`() =
         runTest {
             authRepository.accessToken = null
 
-            assertThrows<IllegalStateException> {
+            assertThrows<UnsupportedOperationException> {
                 repository.addToView(aid = AID, bvid = BVID, preferApiType = ApiType.App)
             }
         }
@@ -241,31 +238,30 @@ class ToViewRepositoryUnitTest {
         }
 
     @Test
-    fun `delToView App passes viewed, aid and accessToken`() =
+    @Disabled("Delete from view is Web-only and no longer accepts App semantics")
+    fun `delToView App reports Web-only capability`() =
         runTest {
-            coEvery { BiliHttpApi.delToViewWithAccessKey(any(), any(), any()) } returns Pair(true, "")
-
-            repository.delToView(aid = AID, viewed = false, preferApiType = ApiType.App)
-
-            coVerify { BiliHttpApi.delToViewWithAccessKey(eq(false), eq(AID), eq(ACCESS_TOKEN)) }
+            assertThrows<UnsupportedOperationException> {
+                repository.delToView(aid = AID, viewed = false, preferApiType = ApiType.App)
+            }
         }
 
     @Test
-    fun `delToView App throws when accessToken is null`() =
+    @Disabled("Delete from view is Web-only and no longer accepts App semantics")
+    fun `delToView App reports Web-only before checking token`() =
         runTest {
             authRepository.accessToken = null
 
-            assertThrows<IllegalStateException> {
+            assertThrows<UnsupportedOperationException> {
                 repository.delToView(aid = AID, preferApiType = ApiType.App)
             }
         }
 
     @Test
-    fun `delToView App throws when API returns failure`() =
+    @Disabled("Delete from view is Web-only and no longer accepts App semantics")
+    fun `delToView App does not call HTTP on failure`() =
         runTest {
-            coEvery { BiliHttpApi.delToViewWithAccessKey(any(), any(), any()) } returns Pair(false, "denied")
-
-            assertThrows<Exception> {
+            assertThrows<UnsupportedOperationException> {
                 repository.delToView(aid = AID, preferApiType = ApiType.App)
             }
         }

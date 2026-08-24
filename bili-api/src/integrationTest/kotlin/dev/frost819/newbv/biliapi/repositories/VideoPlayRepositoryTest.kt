@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import bilibili.rpc.Status
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.grpc.utils.getDetail
@@ -14,7 +15,13 @@ import java.util.Properties
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-@org.junit.jupiter.api.Tag("integration")
+/**
+ * [VideoPlayRepository] 的集成测试。
+ *
+ * 验证播放地址、PGC 播放、字幕、心跳、缩略图等（Web + App）。
+ * 查询类接口断言正常返回数据（视频流非空等）；心跳为互动类操作仅断言接口返回正常。
+ * 依赖真实 B 站凭证和网络。
+ */
 class VideoPlayRepositoryTest {
     companion object {
         private val localProperties =
@@ -40,79 +47,70 @@ class VideoPlayRepositoryTest {
 
     init {
         channelRepository.initDefaultChannel(ACCESS_TOKEN, BUVID)
-        BiliHttpApi.init(BUVID)
+        BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN
         authRepository.biliJct = BILI_JCT
     }
 
-    @Test
-    fun `get flac video with grpc`() {
-        runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPlayData(
-                        aid = 993403941,
-                        cid = 1051761130,
-                        preferApiType = ApiType.App,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
-        }
+    /** 查询类断言：播放数据包含视频流（dash 或 durl）。 */
+    private fun assertPlayData(
+        data: dev.frost819.newbv.biliapi.entity.PlayData,
+        aid: Long,
+    ) {
+        println(
+            "aid=$aid dashVideos=${data.dashVideos.size} dashAudios=${data.dashAudios.size} needPay=${data.needPay}",
+        )
+        assertThat(data.dashVideos).isNotEmpty()
     }
 
     @Test
-    fun `get flac video with http`() {
+    fun `get flac video with grpc`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPlayData(
-                        aid = 993403941,
-                        cid = 1051761130,
-                        preferApiType = ApiType.Web,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 993403941,
+                    cid = 1051761130,
+                    preferApiType = ApiType.App,
+                )
+            assertPlayData(result, 993403941)
         }
-    }
 
     @Test
-    fun `get 8k video with grpc`() {
+    fun `get flac video with http`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPlayData(
-                        aid = 934637444,
-                        cid = 455439756,
-                        preferApiType = ApiType.App,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 993403941,
+                    cid = 1051761130,
+                    preferApiType = ApiType.Web,
+                )
+            assertPlayData(result, 993403941)
         }
-    }
 
     @Test
-    fun `get 8k video with http`() {
+    fun `get 8k video with grpc`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPlayData(
-                        aid = 934637444,
-                        cid = 455439756,
-                        preferApiType = ApiType.Web,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 934637444,
+                    cid = 455439756,
+                    preferApiType = ApiType.App,
+                )
+            assertPlayData(result, 934637444)
         }
-    }
+
+    @Test
+    fun `get 8k video with http`() =
+        runBlocking {
+            val result =
+                videoPlayRepository.getPlayData(
+                    aid = 934637444,
+                    cid = 455439756,
+                    preferApiType = ApiType.Web,
+                )
+            assertPlayData(result, 934637444)
+        }
 
     @Test
     fun `get multi part video with http`() =
@@ -123,7 +121,7 @@ class VideoPlayRepositoryTest {
                     cid = 1215693,
                     preferApiType = ApiType.Web,
                 )
-            println(result)
+            assertPlayData(result, 836207)
         }
 
     @Test
@@ -135,101 +133,85 @@ class VideoPlayRepositoryTest {
                     cid = 1215693,
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            assertPlayData(result, 836207)
         }
 
     @OptIn(ExperimentalEncodingApi::class)
     @Test
     fun `parse error status`() {
+        // 纯解析测试：断言能解析出业务状态码 -400
         val errorBin =
             "CAISBC00MDQaRAondHlwZS5nb29nbGVhcGlzLmNvbS9iaWxpYmlsaS5ycGMuU3RhdHVzEhkI7Pz/////////ARIM5ZWl6YO95pyo5pyJ"
         val errorData = Base64.decode(errorBin)
         val status = Status.parseFrom(errorData).getDetail()
         println(status)
+        assertThat(status).isNotNull()
     }
 
     @Test
-    fun `get pgc video with grpc`() {
+    fun `get pgc video with grpc`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPgcPlayData(
-                        aid = 210680503,
-                        cid = 486114279,
-                        epid = 469110,
-                        preferApiType = ApiType.App,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPgcPlayData(
+                    aid = 210680503,
+                    cid = 486114279,
+                    epid = 469110,
+                    preferApiType = ApiType.App,
+                )
+            assertPlayData(result, 210680503)
         }
-    }
 
     @Test
-    fun `get pgc video with http`() {
+    fun `get pgc video with http`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPgcPlayData(
-                        aid = 210680503,
-                        cid = 486114279,
-                        epid = 469110,
-                        preferApiType = ApiType.Web,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPgcPlayData(
+                    aid = 210680503,
+                    cid = 486114279,
+                    epid = 469110,
+                    preferApiType = ApiType.Web,
+                )
+            assertPlayData(result, 210680503)
         }
-    }
 
     @Test
-    fun `get paid pgc video with grpc`() {
+    fun `get paid pgc video with grpc`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPgcPlayData(
-                        aid = 741219885,
-                        cid = 1132332811,
-                        epid = 750015,
-                        preferApiType = ApiType.App,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPgcPlayData(
+                    aid = 741219885,
+                    cid = 1132332811,
+                    epid = 750015,
+                    preferApiType = ApiType.App,
+                )
+            assertPlayData(result, 741219885)
         }
-    }
 
     @Test
-    fun `get paid pgc video with http`() {
+    fun `get paid pgc video with http`() =
         runBlocking {
-            runCatching {
-                val result =
-                    videoPlayRepository.getPgcPlayData(
-                        aid = 741219885,
-                        cid = 1132332811,
-                        epid = 750015,
-                        preferApiType = ApiType.Web,
-                    )
-                println(result)
-            }.onFailure {
-                it.printStackTrace()
-            }
+            val result =
+                videoPlayRepository.getPgcPlayData(
+                    aid = 741219885,
+                    cid = 1132332811,
+                    epid = 750015,
+                    preferApiType = ApiType.Web,
+                )
+            assertPlayData(result, 741219885)
         }
-    }
 
     @Test
     fun `get subtitle with web api`() =
         runBlocking {
+            // 查询类：字幕可能为空（视频无字幕），断言接口正常返回结构
             val result =
                 videoPlayRepository.getSubtitle(
                     aid = 913498989,
                     cid = 1203020250,
                     preferApiType = ApiType.Web,
                 )
-            println(result)
+            println("web subtitles: ${result.size}")
+            assertThat(result).isNotNull()
         }
 
     @Test
@@ -241,12 +223,14 @@ class VideoPlayRepositoryTest {
                     cid = 1203020250,
                     preferApiType = ApiType.App,
                 )
-            println(result)
+            println("app subtitles: ${result.size}")
+            assertThat(result).isNotNull()
         }
 
     @Test
     fun `send heartbeat with web api`() =
         runBlocking {
+            // 互动类：repository 失败会抛异常，正常返回即接口成功
             val randomTime = (0..100).random()
             println("random time: $randomTime")
             videoPlayRepository.sendHeartbeat(
@@ -293,6 +277,7 @@ class VideoPlayRepositoryTest {
     @Test
     fun `get play url domain`() =
         runBlocking {
+            // 查询类：断言每个接口类型返回视频流且 URL 可解析域名
             val getUrlDomain: (String) -> String = {
                 val url = URL(it)
                 "${url.protocol}://${url.host}"
@@ -304,8 +289,8 @@ class VideoPlayRepositoryTest {
                         cid = 455439756,
                         preferApiType = apiType,
                     )
-                println("api type: $apiType")
-
+                println("api type: $apiType, videos: ${result.dashVideos.size}")
+                assertThat(result.dashVideos).isNotEmpty()
                 result.dashVideos.forEach { video ->
                     println("video quality: ${video.quality}")
                     val videoUrls = mutableListOf<String>()
@@ -319,6 +304,7 @@ class VideoPlayRepositoryTest {
     @Test
     fun `get video shots`() =
         runBlocking {
+            // 查询类：断言缩略图数据非空
             ApiType.entries.forEach { apiType ->
                 val result =
                     videoPlayRepository.getVideoShot(
@@ -326,14 +312,16 @@ class VideoPlayRepositoryTest {
                         cid = 279786,
                         preferApiType = apiType,
                     )
-                println("api type: $apiType")
-                println(result)
+                println("api type: $apiType, shots: ${result?.times?.size ?: 0}")
+                assertThat(result).isNotNull()
+                assertThat(result?.times).isNotEmpty()
             }
         }
 
     @Test
     fun `play video three times without risk control`() =
         runBlocking {
+            // 查询类：连续 3 次获取播放地址均成功
             val bvid = "BV1fuuc6tEhW"
             val info = BiliHttpApi.getVideoInfo(bv = bvid).getResponseData()
             println("aid=${info.aid}, cid=${info.cid}, title=${info.title}")
@@ -346,7 +334,30 @@ class VideoPlayRepositoryTest {
                         preferApiType = ApiType.Web,
                     )
                 println("  success: ${result.dashVideos.size} video streams")
-                assert(result.dashVideos.isNotEmpty()) { "Attempt ${i + 1}: no video streams returned" }
+                assertThat(result.dashVideos).isNotEmpty()
             }
+        }
+
+    @Test
+    fun `get danmaku mask with web api`() =
+        runBlocking {
+            // BV14CeDzREjj 确定有弹幕蒙版
+            val videoInfo = BiliHttpApi.getVideoInfo(bv = "BV14CeDzREjj").getResponseData()
+            val aid = videoInfo.aid
+            val cid = videoInfo.cid
+            val result = videoPlayRepository.getDanmakuMask(aid = aid, cid = cid, preferApiType = ApiType.Web)
+            assertThat(result).isNotNull()
+            assertThat(result!!.segmentCount).isGreaterThan(0)
+        }
+
+    @Test
+    fun `get danmaku mask with app api`() =
+        runBlocking {
+            val videoInfo = BiliHttpApi.getVideoInfo(bv = "BV14CeDzREjj").getResponseData()
+            val aid = videoInfo.aid
+            val cid = videoInfo.cid
+            val result = videoPlayRepository.getDanmakuMask(aid = aid, cid = cid, preferApiType = ApiType.App)
+            assertThat(result).isNotNull()
+            assertThat(result!!.segmentCount).isGreaterThan(0)
         }
 }

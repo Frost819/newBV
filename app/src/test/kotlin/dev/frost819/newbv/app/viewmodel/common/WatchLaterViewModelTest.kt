@@ -132,11 +132,11 @@ class WatchLaterViewModelTest {
     }
 
     @Test
-    fun `addToView uses App apiType when Prefs apiType is App`() = runTest(testDispatcher) {
+    fun `addToView uses Web implementation when Prefs apiType is App`() = runTest(testDispatcher) {
         every { Prefs.apiType } returns DataApiType.App
 
         coEvery {
-            toViewRepository.addToView(aid = 1L, bvid = null, preferApiType = BiliApiType.App)
+            toViewRepository.addToView(aid = 1L, bvid = null, preferApiType = BiliApiType.Web)
         } returns Unit
 
         viewModel = createViewModel()
@@ -149,7 +149,7 @@ class WatchLaterViewModelTest {
         }
 
         coVerify {
-            toViewRepository.addToView(aid = 1L, bvid = null, preferApiType = BiliApiType.App)
+            toViewRepository.addToView(aid = 1L, bvid = null, preferApiType = BiliApiType.Web)
         }
     }
 }

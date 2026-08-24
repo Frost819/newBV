@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-@org.junit.jupiter.api.Tag("integration")
 internal class LiveDataWebSocketTest {
     @Test
     fun `connects to configured room and receives a live event`() {
