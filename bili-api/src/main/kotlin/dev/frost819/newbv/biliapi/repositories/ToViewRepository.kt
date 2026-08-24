@@ -1,20 +1,12 @@
 package dev.frost819.newbv.biliapi.repositories
 
-import bilibili.app.interfaces.v1.HistoryGrpcKt
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.user.ToViewData
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 
 class ToViewRepository(
     private val authRepository: AuthRepository,
-    private val channelRepository: ChannelRepository,
 ) {
-    private val historyStub
-        get() =
-            runCatching {
-                HistoryGrpcKt.HistoryCoroutineStub(channelRepository.requireDefaultChannel())
-            }.getOrNull()
-
     private fun requireCsrf(): String =
         authRepository.biliJct?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("bili_jct is empty")
@@ -37,15 +29,11 @@ class ToViewRepository(
             }
 
             ApiType.App -> {
-                requireAccessToken()
-                val reply =
-                    historyStub?.cursorV2(
-                        bilibili.app.interfaces.v1.cursorV2Req {
-                            this.cursor = bilibili.app.interfaces.v1.cursor { max = cursor }
-                            business = "toview"
-                        },
-                    ) ?: throw IllegalStateException("App gRPC history stub is not initialized")
-                ToViewData.fromToViewResponse(reply)
+                val data =
+                    BiliHttpApi.getToView(
+                        accessKey = requireAccessToken(),
+                    ).getResponseData()
+                ToViewData.fromToViewResponse(data)
             }
         }
     }
@@ -53,7 +41,7 @@ class ToViewRepository(
     suspend fun addToView(
         aid: Long,
         bvid: String? = null,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         val (success, message) =
             when (preferApiType) {
@@ -72,7 +60,7 @@ class ToViewRepository(
     suspend fun delToView(
         aid: Long,
         viewed: Boolean = false,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         val (success, message) =
             when (preferApiType) {

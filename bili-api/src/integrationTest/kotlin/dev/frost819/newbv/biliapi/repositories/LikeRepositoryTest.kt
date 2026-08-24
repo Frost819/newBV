@@ -51,7 +51,7 @@ class LikeRepositoryTest {
     fun `check video liked`() =
         runBlocking {
             // 查询类：正常返回布尔结果即视为数据有效
-            val result = likeRepository.checkVideoLiked(aid = TEST_AID, bvid = TEST_BVID)
+            val result = likeRepository.checkVideoLiked(aid = TEST_AID, bvid = TEST_BVID, preferApiType = ApiType.Web)
             println("video $TEST_BVID liked: $result")
         }
 
@@ -59,13 +59,18 @@ class LikeRepositoryTest {
     fun `update video liked`() =
         runBlocking {
             // 互动类：先赞后取消还原状态，repository 失败会抛异常
-            likeRepository.updateVideoLiked(aid = TEST_AID, bvid = TEST_BVID, like = true)
+            likeRepository.updateVideoLiked(aid = TEST_AID, bvid = TEST_BVID, like = true, preferApiType = ApiType.Web)
             println("liked $TEST_BVID successfully")
 
-            val afterLike = likeRepository.checkVideoLiked(aid = TEST_AID, bvid = TEST_BVID)
+            val afterLike =
+                likeRepository.checkVideoLiked(
+                    aid = TEST_AID,
+                    bvid = TEST_BVID,
+                    preferApiType = ApiType.Web,
+                )
             println("after like, liked state: $afterLike")
 
-            likeRepository.updateVideoLiked(aid = TEST_AID, bvid = TEST_BVID, like = false)
+            likeRepository.updateVideoLiked(aid = TEST_AID, bvid = TEST_BVID, like = false, preferApiType = ApiType.Web)
             println("unliked $TEST_BVID successfully")
         }
 

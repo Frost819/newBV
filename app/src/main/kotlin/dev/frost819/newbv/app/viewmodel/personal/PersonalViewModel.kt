@@ -181,6 +181,7 @@ class PersonalViewModel @Inject constructor(
                 toViewRepository.delToView(
                     aid = aid,
                     viewed = viewed,
+                    preferApiType = prefApiType(),
                 )
                 toViewItems.removeAll { it.oid == aid }
                 _effect.emit(PersonalUiEffect.ShowToast("已移除稍后再看"))
@@ -277,6 +278,7 @@ class PersonalViewModel @Inject constructor(
                     val mid = Prefs.uid
                     val folders = favoriteRepository.getAllFavoriteFolderMetadataList(
                         mid = mid,
+                        preferApiType = prefApiType(),
                     )
                     _uiState.update { it.copy(favoriteFolders = folders) }
                     if (folders.isNotEmpty()) {
@@ -329,6 +331,7 @@ class PersonalViewModel @Inject constructor(
                     val data: FavoriteFolderData = favoriteRepository.getFavoriteFolderData(
                         mediaId = folderId,
                         pageNumber = favoritePageNumber,
+                        preferApiType = prefApiType(),
                     )
                     favoritePageNumber++
                     val videoItems = data.medias.filter { it.type == dev.frost819.newbv.biliapi.entity.FavoriteItemType.Video }
@@ -389,6 +392,7 @@ class PersonalViewModel @Inject constructor(
                         type = current.followingType,
                         status = current.followingStatus,
                         pageNumber = followingPageNumber,
+                        preferApiType = prefApiType(),
                     )
                     followingPageNumber++
                     followingTotal = data.total

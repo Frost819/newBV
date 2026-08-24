@@ -6,9 +6,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
 import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.core.log.Loggers
+import dev.frost819.newbv.data.datastore.ApiType as DataApiType
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -34,6 +37,9 @@ class WatchLaterViewModel @Inject constructor(
 
     private val logger = Loggers.get("WatchLaterViewModel")
 
+    private fun prefApiType(): ApiType =
+        if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web
+
     private val _effect = MutableSharedFlow<WatchLaterEffect>()
     val effect = _effect.asSharedFlow()
 
@@ -49,6 +55,7 @@ class WatchLaterViewModel @Inject constructor(
                 toViewRepository.addToView(
                     aid = aid,
                     bvid = bvid,
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess {
                 _effect.emit(WatchLaterEffect.ShowToast("已添加到稍后再看"))
@@ -71,6 +78,7 @@ class WatchLaterViewModel @Inject constructor(
                 toViewRepository.delToView(
                     aid = aid,
                     viewed = false,
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess {
                 _effect.emit(WatchLaterEffect.ShowToast("已移除稍后再看"))

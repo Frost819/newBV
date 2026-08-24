@@ -6,7 +6,7 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi
 class LikeRepository(private val authRepository: AuthRepository) {
     suspend fun checkVideoLiked(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String? = null,
     ): Boolean {
         return when (preferApiType) {
@@ -28,7 +28,7 @@ class LikeRepository(private val authRepository: AuthRepository) {
     suspend fun updateVideoLiked(
         aid: Long,
         like: Boolean,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String? = null,
     ) {
         val (success, message) =

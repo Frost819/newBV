@@ -56,6 +56,7 @@ class OneClickTripleActionRepositoryTest {
                 tripleActionRepository.sendVideoOneClickTripleAction(
                     aid = TEST_AID,
                     bvid = TEST_BVID,
+                    preferApiType = ApiType.Web,
                 )
             println("triple action result: like=${result?.like}, coin=${result?.coin}, fav=${result?.fav}")
             assertThat(result).isNotNull()

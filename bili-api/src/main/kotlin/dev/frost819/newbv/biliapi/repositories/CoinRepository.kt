@@ -6,7 +6,7 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi
 class CoinRepository(private val authRepository: AuthRepository) {
     suspend fun checkVideoCoined(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String? = null,
     ): Boolean {
         return when (preferApiType) {
@@ -28,7 +28,7 @@ class CoinRepository(private val authRepository: AuthRepository) {
     suspend fun sendVideoCoin(
         aid: Long,
         multiply: Int = 1,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String? = null,
     ) {
         val (success, message) =

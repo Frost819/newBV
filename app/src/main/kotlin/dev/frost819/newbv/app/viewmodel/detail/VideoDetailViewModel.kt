@@ -225,6 +225,7 @@ class VideoDetailViewModel @Inject constructor(
             favoriteRepository.getAllFavoriteFolderMetadataList(
                 mid = Prefs.uid,
                 rid = aid,
+                preferApiType = prefApiType(),
             )
         }.onSuccess { folders ->
             val folderIds = folders.filter { it.videoInThisFav }.map { it.id }.toSet()
@@ -348,6 +349,7 @@ class VideoDetailViewModel @Inject constructor(
                     aid = currentDetail.aid,
                     addMediaIds = folderIds,
                     delMediaIds = currentFolders.map { it.id } - folderIds.toSet(),
+                    preferApiType = prefApiType(),
                 )
             }.onSuccess {
                 _uiState.update {

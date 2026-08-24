@@ -7,7 +7,7 @@ import dev.frost819.newbv.biliapi.http.entity.video.OneClickTripleAction
 class OneClickTripleActionRepository(private val authRepository: AuthRepository) {
     suspend fun sendVideoOneClickTripleAction(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String? = null,
     ): OneClickTripleAction? {
         val (success, message, data) =

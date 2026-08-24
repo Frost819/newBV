@@ -81,8 +81,8 @@ class VideoDetailRepositoryUnitTest {
             coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = fakeVideoMoreInfo())
             coEvery { favoriteRepository.checkVideoFavoured(any(), any()) } returns true
-            coEvery { likeRepository.checkVideoLiked(any()) } returns false
-            coEvery { coinRepository.checkVideoCoined(any()) } returns true
+            coEvery { likeRepository.checkVideoLiked(any(), any()) } returns false
+            coEvery { coinRepository.checkVideoCoined(any(), any()) } returns true
 
             val result = repository.getVideoDetail(aid = AID, preferApiType = ApiType.Web)
 
@@ -107,8 +107,8 @@ class VideoDetailRepositoryUnitTest {
             coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = fakeVideoMoreInfo())
             coEvery { favoriteRepository.checkVideoFavoured(any(), any()) } returns false
-            coEvery { likeRepository.checkVideoLiked(any()) } returns false
-            coEvery { coinRepository.checkVideoCoined(any()) } returns false
+            coEvery { likeRepository.checkVideoLiked(any(), any()) } returns false
+            coEvery { coinRepository.checkVideoCoined(any(), any()) } returns false
 
             repository.getVideoDetail(aid = AID, preferApiType = ApiType.Web)
 
@@ -122,8 +122,8 @@ class VideoDetailRepositoryUnitTest {
                 BiliResponse(code = 0, message = "", data = fakeHttpVideoDetail())
             coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } throws RuntimeException("network error")
             coEvery { favoriteRepository.checkVideoFavoured(any(), any()) } returns false
-            coEvery { likeRepository.checkVideoLiked(any()) } returns false
-            coEvery { coinRepository.checkVideoCoined(any()) } returns false
+            coEvery { likeRepository.checkVideoLiked(any(), any()) } returns false
+            coEvery { coinRepository.checkVideoCoined(any(), any()) } returns false
 
             val result = repository.getVideoDetail(aid = AID, preferApiType = ApiType.Web)
 
@@ -139,8 +139,8 @@ class VideoDetailRepositoryUnitTest {
             coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = fakeVideoMoreInfo())
             coEvery { favoriteRepository.checkVideoFavoured(any(), any()) } throws RuntimeException("err")
-            coEvery { likeRepository.checkVideoLiked(any()) } throws RuntimeException("err")
-            coEvery { coinRepository.checkVideoCoined(any()) } throws RuntimeException("err")
+            coEvery { likeRepository.checkVideoLiked(any(), any()) } throws RuntimeException("err")
+            coEvery { coinRepository.checkVideoCoined(any(), any()) } throws RuntimeException("err")
 
             val result = repository.getVideoDetail(aid = AID, preferApiType = ApiType.Web)
 

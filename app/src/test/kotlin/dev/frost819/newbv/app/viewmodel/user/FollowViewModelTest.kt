@@ -62,7 +62,7 @@ class FollowViewModelTest {
     @Test
     fun `init loads followed users successfully`() = runTest(testDispatcher) {
         val users = fakeUsers(3)
-        coEvery { userRepository.getFollowedUsers(1L) } returns users
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns users
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -78,7 +78,7 @@ class FollowViewModelTest {
 
     @Test
     fun `init loads empty list successfully`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } returns emptyList()
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns emptyList()
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -92,7 +92,7 @@ class FollowViewModelTest {
 
     @Test
     fun `init is idempotent when same mid and users already loaded`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } returns fakeUsers(2)
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns fakeUsers(2)
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -101,13 +101,13 @@ class FollowViewModelTest {
         viewModel.init(1L)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { userRepository.getFollowedUsers(1L) }
+        coVerify(exactly = 1) { userRepository.getFollowedUsers(1L, any()) }
     }
 
     @Test
     fun `init reloads when mid changes`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } returns fakeUsers(2)
-        coEvery { userRepository.getFollowedUsers(2L) } returns fakeUsers(3)
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns fakeUsers(2)
+        coEvery { userRepository.getFollowedUsers(2L, any()) } returns fakeUsers(3)
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -116,15 +116,15 @@ class FollowViewModelTest {
         viewModel.init(2L)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { userRepository.getFollowedUsers(1L) }
-        coVerify(exactly = 1) { userRepository.getFollowedUsers(2L) }
+        coVerify(exactly = 1) { userRepository.getFollowedUsers(1L, any()) }
+        coVerify(exactly = 1) { userRepository.getFollowedUsers(2L, any()) }
         assertThat(viewModel.uiState.value.users).hasSize(3)
     }
 
     @Test
     fun `init is not idempotent when users list is empty`() = runTest(testDispatcher) {
         // When users is empty, init should reload even for the same mid
-        coEvery { userRepository.getFollowedUsers(1L) } returns emptyList()
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns emptyList()
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -133,7 +133,7 @@ class FollowViewModelTest {
         viewModel.init(1L)
         advanceUntilIdle()
 
-        coVerify(exactly = 2) { userRepository.getFollowedUsers(1L) }
+        coVerify(exactly = 2) { userRepository.getFollowedUsers(1L, any()) }
     }
 
     // ------------------------------------------------------------------
@@ -144,7 +144,7 @@ class FollowViewModelTest {
     fun `refresh clears and reloads`() = runTest(testDispatcher) {
         val firstLoad = fakeUsers(2)
         val secondLoad = fakeUsers(4)
-        coEvery { userRepository.getFollowedUsers(1L) } returnsMany listOf(firstLoad, secondLoad)
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returnsMany listOf(firstLoad, secondLoad)
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -155,7 +155,7 @@ class FollowViewModelTest {
         viewModel.refresh(1L)
         advanceUntilIdle()
 
-        coVerify(exactly = 2) { userRepository.getFollowedUsers(1L) }
+        coVerify(exactly = 2) { userRepository.getFollowedUsers(1L, any()) }
         assertThat(viewModel.uiState.value.users).hasSize(4)
         assertThat(viewModel.uiState.value.loading).isFalse()
         assertThat(viewModel.uiState.value.error).isFalse()
@@ -163,8 +163,8 @@ class FollowViewModelTest {
 
     @Test
     fun `refresh sets mid even when different from current`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } returns fakeUsers(2)
-        coEvery { userRepository.getFollowedUsers(2L) } returns fakeUsers(3)
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns fakeUsers(2)
+        coEvery { userRepository.getFollowedUsers(2L, any()) } returns fakeUsers(3)
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -183,7 +183,7 @@ class FollowViewModelTest {
 
     @Test
     fun `init sets error on network failure`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } throws IOException("network error")
+        coEvery { userRepository.getFollowedUsers(1L, any()) } throws IOException("network error")
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -197,7 +197,7 @@ class FollowViewModelTest {
 
     @Test
     fun `refresh sets error on network failure`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(1L) } returns fakeUsers(2) andThenThrows IOException("network error")
+        coEvery { userRepository.getFollowedUsers(1L, any()) } returns fakeUsers(2) andThenThrows IOException("network error")
 
         viewModel = createViewModel()
         viewModel.init(1L)
@@ -218,7 +218,7 @@ class FollowViewModelTest {
 
     @Test
     fun `init sets error on timeout`() = runTest(testDispatcher) {
-        coEvery { userRepository.getFollowedUsers(any()) } coAnswers {
+        coEvery { userRepository.getFollowedUsers(any(), any()) } coAnswers {
             delay(31_000)
             fakeUsers(2)
         }

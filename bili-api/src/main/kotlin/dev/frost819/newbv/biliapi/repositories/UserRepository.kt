@@ -59,12 +59,12 @@ class UserRepository(
 
     suspend fun followUser(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): Boolean = modifyFollow(mid, FollowAction.AddFollow, preferApiType)
 
     suspend fun unfollowUser(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): Boolean = modifyFollow(mid, FollowAction.DelFollow, preferApiType)
 
     suspend fun checkIsFollowing(mid: Long): Boolean? {
@@ -83,7 +83,7 @@ class UserRepository(
 
     suspend fun getFollowingUpCount(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): Int {
         if (authRepository.sessionData == null && authRepository.accessToken == null) return 0
         return runCatching {
@@ -105,7 +105,7 @@ class UserRepository(
 
     suspend fun addSeasonFollow(
         seasonId: Int,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): String =
         when (preferApiType) {
             ApiType.Web ->
@@ -123,7 +123,7 @@ class UserRepository(
 
     suspend fun delSeasonFollow(
         seasonId: Int,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): String =
         when (preferApiType) {
             ApiType.Web ->
@@ -153,7 +153,7 @@ class UserRepository(
         mid: Long,
         order: SpaceVideoOrder = SpaceVideoOrder.PubDate,
         page: SpaceVideoPage = SpaceVideoPage(),
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): SpaceVideoData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -185,7 +185,7 @@ class UserRepository(
         page: Int,
         offset: String,
         updateBaseline: String,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): DynamicVideoData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -223,7 +223,7 @@ class UserRepository(
 
     suspend fun getFollowedUsers(
         mid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<FollowedUser> {
         return when (preferApiType) {
             ApiType.Web -> {

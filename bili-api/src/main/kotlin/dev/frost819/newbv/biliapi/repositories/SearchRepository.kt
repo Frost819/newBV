@@ -40,7 +40,7 @@ class SearchRepository(
         keyword: String,
         page: Int = 1,
         pageSize: Int = 20,
-        preferApiType: ApiType = ApiType.Web
+        preferApiType: ApiType
     ): SearchData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -66,7 +66,7 @@ class SearchRepository(
 
     suspend fun getSearchHotwords(
         limit: Int = 30,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<Hotword> {
         return when (preferApiType) {
             ApiType.Web ->
@@ -95,7 +95,7 @@ class SearchRepository(
     suspend fun searchAll(
         keyword: String,
         page: Int = 1,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): SearchAllResult {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -127,7 +127,7 @@ class SearchRepository(
 
     suspend fun getSearchSuggest(
         keyword: String,
-        preferApiType: ApiType = ApiType.App,
+        preferApiType: ApiType,
     ): List<String> {
         return when (preferApiType) {
             ApiType.Web ->
@@ -158,7 +158,7 @@ class SearchRepository(
         order: SearchFilterOrderType,
         duration: SearchFilterDuration,
         page: SearchTypePage,
-        preferApiType: ApiType = ApiType.App,
+        preferApiType: ApiType,
     ): SearchTypeResult {
         return when (preferApiType) {
             ApiType.Web -> {

@@ -26,7 +26,7 @@ class SeasonRepository(
         status: FollowingSeasonStatus = FollowingSeasonStatus.All,
         pageNumber: Int = 1,
         pageSize: Int = 30,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): FollowingSeasonData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -66,7 +66,7 @@ class SeasonRepository(
 
     suspend fun getTimeline(
         filter: TimelineFilter = TimelineFilter.All,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<Timeline> {
         return when (preferApiType) {
             ApiType.Web -> {

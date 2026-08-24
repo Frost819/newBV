@@ -45,7 +45,7 @@ class VideoPlayRepository(
     suspend fun getPlayData(
         aid: Long,
         cid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): PlayData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -120,7 +120,7 @@ class VideoPlayRepository(
         cid: Long?,
         epid: Int,
         preferCodec: CodeType = CodeType.NoCode,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): PlayData {
         println(
             "get pgc play data: " +
@@ -198,7 +198,7 @@ class VideoPlayRepository(
     suspend fun getSubtitle(
         aid: Long,
         cid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<Subtitle> {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -238,7 +238,7 @@ class VideoPlayRepository(
         subType: Int? = null,
         epid: Int? = null,
         seasonId: Int? = null,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         val result =
             when (preferApiType) {
@@ -273,7 +273,7 @@ class VideoPlayRepository(
     suspend fun getDanmakuMask(
         aid: Long,
         cid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): DanmakuMask? {
         val danmakuMaskUrl =
             when (preferApiType) {
@@ -319,7 +319,7 @@ class VideoPlayRepository(
     suspend fun getVideoShot(
         aid: Long,
         cid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): VideoShot? {
         val videoShortResponse =
             when (preferApiType) {

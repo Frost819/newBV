@@ -11,7 +11,7 @@ class FavoriteRepository(
 ) {
     suspend fun checkVideoFavoured(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): Boolean {
         return BiliHttpApi.checkVideoFavoured(
             avid = aid,
@@ -22,7 +22,7 @@ class FavoriteRepository(
     suspend fun addVideoToFavoriteFolder(
         aid: Long,
         addMediaIds: List<Long>,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         BiliHttpApi.setVideoToFavorite(
             avid = aid,
@@ -36,7 +36,7 @@ class FavoriteRepository(
     suspend fun delVideoFromFavoriteFolder(
         aid: Long,
         delMediaIds: List<Long>,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         BiliHttpApi.setVideoToFavorite(
             avid = aid,
@@ -51,7 +51,7 @@ class FavoriteRepository(
         aid: Long,
         addMediaIds: List<Long>,
         delMediaIds: List<Long>,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         BiliHttpApi.setVideoToFavorite(
             avid = aid,
@@ -67,7 +67,7 @@ class FavoriteRepository(
         mid: Long,
         type: FavoriteItemType = FavoriteItemType.Video,
         rid: Long? = null,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<FavoriteFolderMetadata> {
         val userFavoriteFoldersData =
             BiliHttpApi.getAllFavoriteFoldersInfo(
@@ -85,7 +85,7 @@ class FavoriteRepository(
         mediaId: Long,
         pageSize: Int = 20,
         pageNumber: Int = 1,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): FavoriteFolderData {
         val favoriteFolderListData =
             BiliHttpApi.getFavoriteList(

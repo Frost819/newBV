@@ -27,7 +27,6 @@ import org.junit.jupiter.api.assertThrows
 class ToViewRepositoryUnitTest {
     private lateinit var repository: ToViewRepository
     private lateinit var authRepository: AuthRepository
-    private lateinit var channelRepository: ChannelRepository
 
     companion object {
         private const val AID = 993403941L
@@ -42,8 +41,7 @@ class ToViewRepositoryUnitTest {
         authRepository = AuthRepository()
         authRepository.biliJct = BILI_JCT
         authRepository.accessToken = ACCESS_TOKEN
-        channelRepository = ChannelRepository()
-        repository = ToViewRepository(authRepository, channelRepository)
+        repository = ToViewRepository(authRepository)
     }
 
     @AfterEach
@@ -81,11 +79,15 @@ class ToViewRepositoryUnitTest {
         }
 
     @Test
-    fun `getToView App does not fallback to HTTP when channel is unavailable`() =
+    fun `getToView App passes accessKey and returns mapped ToViewData`() =
         runTest {
-            assertThrows<IllegalStateException> {
-                repository.getToView(cursor = 0L, preferApiType = ApiType.App)
-            }
+            val toViewData = toViewDataResponse()
+            coEvery { BiliHttpApi.getToView(any()) } returns BiliResponse(code = 0, message = "", data = toViewData)
+
+            val result = repository.getToView(cursor = 0L, preferApiType = ApiType.App)
+
+            assertThat(result.data).hasSize(2)
+            coVerify { BiliHttpApi.getToView(eq(ACCESS_TOKEN)) }
         }
 
     @Test

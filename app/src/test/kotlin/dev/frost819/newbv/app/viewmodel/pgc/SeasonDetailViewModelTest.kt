@@ -126,7 +126,7 @@ class SeasonDetailViewModelTest {
     @Test
     fun `init loads season detail successfully`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(follow = true)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -141,7 +141,7 @@ class SeasonDetailViewModelTest {
 
     @Test
     fun `init sets error on network failure`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("network error")
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } throws IOException("network error")
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -155,8 +155,8 @@ class SeasonDetailViewModelTest {
     @Test
     fun `toggleFollow calls addSeasonFollow when not following`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(follow = false)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.addSeasonFollow(any()) } returns "追番成功"
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.addSeasonFollow(any(), any()) } returns "追番成功"
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -164,15 +164,15 @@ class SeasonDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify { userRepository.addSeasonFollow(seasonId = 100) }
+        coVerify { userRepository.addSeasonFollow(seasonId = 100, any()) }
         assertThat(viewModel.uiState.value.isFollowing).isTrue()
     }
 
     @Test
     fun `toggleFollow calls delSeasonFollow when following`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(follow = true)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.delSeasonFollow(any()) } returns "取消追番成功"
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.delSeasonFollow(any(), any()) } returns "取消追番成功"
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -180,14 +180,14 @@ class SeasonDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify { userRepository.delSeasonFollow(seasonId = 100) }
+        coVerify { userRepository.delSeasonFollow(seasonId = 100, any()) }
         assertThat(viewModel.uiState.value.isFollowing).isFalse()
     }
 
     @Test
     fun `onPlay emits NavigateToPlayer with first episode when no progress`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(progress = null)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -214,7 +214,7 @@ class SeasonDetailViewModelTest {
                 lastTime = 300,
             ),
         )
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -254,8 +254,8 @@ class SeasonDetailViewModelTest {
     @Test
     fun `toggleFollow emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(follow = false)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.addSeasonFollow(any()) } throws RuntimeException("follow error")
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.addSeasonFollow(any(), any()) } throws RuntimeException("follow error")
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -272,7 +272,7 @@ class SeasonDetailViewModelTest {
 
     @Test
     fun `toggleFollow is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("error")
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } throws IOException("error")
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -280,15 +280,15 @@ class SeasonDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { userRepository.addSeasonFollow(any()) }
-        coVerify(exactly = 0) { userRepository.delSeasonFollow(any()) }
+        coVerify(exactly = 0) { userRepository.addSeasonFollow(any(), any()) }
+        coVerify(exactly = 0) { userRepository.delSeasonFollow(any(), any()) }
     }
 
     @Test
     fun `toggleFollow with toast message emits ShowToast`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(follow = false)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.addSeasonFollow(any()) } returns "追番成功！"
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.addSeasonFollow(any(), any()) } returns "追番成功！"
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -306,7 +306,7 @@ class SeasonDetailViewModelTest {
     @Test
     fun `onPlayEpisode emits NavigateToPlayer`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail()
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -332,7 +332,7 @@ class SeasonDetailViewModelTest {
                 lastTime = 300,
             ),
         )
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -350,7 +350,7 @@ class SeasonDetailViewModelTest {
     @Test
     fun `onPlay with no episodes does nothing`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail().copy(episodes = emptyList())
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -365,7 +365,7 @@ class SeasonDetailViewModelTest {
 
     @Test
     fun `onPlay is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("error")
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } throws IOException("error")
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
@@ -381,12 +381,12 @@ class SeasonDetailViewModelTest {
     @Test
     fun `onSwitchSeason error sets error state`() = runTest(testDispatcher) {
         val detail = fakeSeasonDetail(seasonId = 100, follow = true)
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()
 
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } throws IOException("switch error")
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } throws IOException("switch error")
         viewModel.onSwitchSeason(200)
         advanceUntilIdle()
 
@@ -406,7 +406,7 @@ class SeasonDetailViewModelTest {
                 Section(id = 1, title = "特别篇", episodes = listOf(sectionEpisode)),
             ),
         )
-        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(seasonId = 100L)
         advanceUntilIdle()

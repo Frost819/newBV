@@ -41,7 +41,7 @@ class CommentRepository(
         aid: Long,
         sort: Int = 1,
         page: Int = 1,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): CommentPage {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -90,7 +90,7 @@ class CommentRepository(
         aid: Long,
         rootRpid: Long,
         page: Int = 1,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): CommentPage {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -139,7 +139,7 @@ class CommentRepository(
         aid: Long,
         rpid: Long,
         like: Boolean,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ) {
         val successMessage =
             BiliHttpApi.updateCommentLiked(

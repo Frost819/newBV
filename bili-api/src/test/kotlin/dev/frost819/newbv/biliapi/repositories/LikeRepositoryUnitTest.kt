@@ -56,7 +56,7 @@ class LikeRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoLiked(any(), any()) } returns true
 
             // When
-            val result = repository.checkVideoLiked(aid = AID, bvid = BVID)
+            val result = repository.checkVideoLiked(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isTrue()
@@ -69,7 +69,7 @@ class LikeRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoLiked(any(), any()) } returns false
 
             // When
-            val result = repository.checkVideoLiked(aid = AID, bvid = BVID)
+            val result = repository.checkVideoLiked(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isFalse()
@@ -82,7 +82,7 @@ class LikeRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoLiked(any(), any()) } returns true
 
             // When
-            repository.checkVideoLiked(aid = AID, bvid = BVID)
+            repository.checkVideoLiked(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.checkVideoLiked(eq(AID), eq(BVID)) }
@@ -95,7 +95,7 @@ class LikeRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoLiked(any(), any()) } returns false
 
             // When
-            repository.checkVideoLiked(aid = AID, bvid = null)
+            repository.checkVideoLiked(aid = AID, bvid = null, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.checkVideoLiked(eq(AID), isNull()) }
@@ -113,7 +113,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When — should not throw
-            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true)
+            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true, preferApiType = ApiType.Web)
 
             // Then — verify all parameters forwarded correctly
             coVerify { BiliHttpApi.sendVideoLike(eq(AID), eq(BVID), eq(true), eq(CSRF)) }
@@ -130,7 +130,14 @@ class LikeRepositoryUnitTest {
             // When
             val exception =
                 assertThrows(Exception::class.java) {
-                    runBlocking { repository.updateVideoLiked(aid = AID, bvid = BVID, like = true) }
+                    runBlocking {
+                        repository.updateVideoLiked(
+                            aid = AID,
+                            bvid = BVID,
+                            like = true,
+                            preferApiType = ApiType.Web,
+                        )
+                    }
                 }
 
             // Then
@@ -145,7 +152,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true)
+            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.sendVideoLike(eq(AID), eq(BVID), eq(true), eq(CSRF)) }
@@ -159,7 +166,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.updateVideoLiked(aid = AID, bvid = BVID, like = false)
+            repository.updateVideoLiked(aid = AID, bvid = BVID, like = false, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.sendVideoLike(eq(AID), eq(BVID), eq(false), eq(CSRF)) }
@@ -173,7 +180,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true)
+            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.sendVideoLike(any(), any(), any(), eq(CSRF)) }
@@ -188,7 +195,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true)
+            repository.updateVideoLiked(aid = AID, bvid = BVID, like = true, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.sendVideoLike(eq(AID), eq(BVID), eq(true), eq("")) }
@@ -202,7 +209,7 @@ class LikeRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.updateVideoLiked(aid = AID, bvid = null, like = true)
+            repository.updateVideoLiked(aid = AID, bvid = null, like = true, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.sendVideoLike(eq(AID), isNull(), eq(true), eq(CSRF)) }

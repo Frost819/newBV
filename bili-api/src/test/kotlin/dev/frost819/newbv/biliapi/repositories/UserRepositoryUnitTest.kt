@@ -74,7 +74,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.followUser(MID)
+            val result = repository.followUser(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isTrue()
             coVerify {
@@ -116,7 +116,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = -101, message = "未登录", ttl = 0)
 
-            val result = repository.followUser(MID)
+            val result = repository.followUser(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isFalse()
         }
@@ -132,7 +132,7 @@ class UserRepositoryUnitTest {
                 BiliHttpApi.modifyFollow(any(), any(), any(), any(), any())
             } returns BiliResponseWithoutData(code = 0, message = "", ttl = 0)
 
-            val result = repository.unfollowUser(MID)
+            val result = repository.unfollowUser(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isTrue()
             coVerify {
@@ -299,7 +299,7 @@ class UserRepositoryUnitTest {
             authRepository.sessionData = null
             authRepository.accessToken = null
 
-            val result = repository.getFollowingUpCount(MID)
+            val result = repository.getFollowingUpCount(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isEqualTo(0)
         }
@@ -321,7 +321,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowingUpCount(MID)
+            val result = repository.getFollowingUpCount(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isEqualTo(42)
         }
@@ -358,7 +358,7 @@ class UserRepositoryUnitTest {
                     message = "请求错误",
                 )
 
-            val result = repository.getFollowingUpCount(MID)
+            val result = repository.getFollowingUpCount(MID, preferApiType = ApiType.Web)
 
             assertThat(result).isEqualTo(0)
         }
@@ -490,7 +490,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.addSeasonFollow(seasonId = 400)
+            val result = repository.addSeasonFollow(seasonId = 400, preferApiType = ApiType.Web)
 
             assertThat(result).isEqualTo("追番成功")
             coVerify { BiliHttpApi.addSeasonFollow(seasonId = 400, csrf = BILI_JCT) }
@@ -538,7 +538,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.delSeasonFollow(seasonId = 400)
+            val result = repository.delSeasonFollow(seasonId = 400, preferApiType = ApiType.Web)
 
             assertThat(result).isEqualTo("已取消追番")
             coVerify { BiliHttpApi.delSeasonFollow(seasonId = 400, csrf = BILI_JCT) }
@@ -652,7 +652,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowedUsers(mid = MID)
+            val result = repository.getFollowedUsers(mid = MID, preferApiType = ApiType.Web)
 
             assertThat(result).hasSize(1)
             assertThat(result[0].mid).isEqualTo(1L)
@@ -674,7 +674,7 @@ class UserRepositoryUnitTest {
                         ),
                 )
 
-            val result = repository.getFollowedUsers(mid = MID)
+            val result = repository.getFollowedUsers(mid = MID, preferApiType = ApiType.Web)
 
             assertThat(result).hasSize(2)
             coVerify(atLeast = 2) { BiliHttpApi.getUserFollow(any(), any(), any(), any(), any()) }

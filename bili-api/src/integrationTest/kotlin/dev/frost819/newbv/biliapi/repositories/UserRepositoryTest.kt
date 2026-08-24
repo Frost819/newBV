@@ -137,6 +137,7 @@ class UserRepositoryTest {
             val result =
                 userRepository.getFollowedUsers(
                     mid = UID,
+                    preferApiType = ApiType.Web,
                 )
             println("web following users: ${result.size}")
             assertThat(result).isNotNull()

@@ -12,7 +12,7 @@ import java.util.Properties
 /**
  * [ToViewRepository] 的集成测试。
  *
- * 验证稍后再看列表获取（Web HTTP + App gRPC）以及添加/删除操作。
+ * 验证稍后再看列表获取（Web HTTP + App HTTP access_key）以及添加/删除操作。
  * 查询类接口断言正常返回数据；添加/删除为互动类操作仅断言接口返回正常。
  * 依赖真实 B 站凭证和网络。
  */
@@ -39,11 +39,9 @@ class ToViewRepositoryTest {
     }
 
     private val authRepository = AuthRepository()
-    private val channelRepository = ChannelRepository()
-    private val toViewRepository = ToViewRepository(authRepository, channelRepository)
+    private val toViewRepository = ToViewRepository(authRepository)
 
     init {
-        channelRepository.initDefaultChannel(ACCESS_TOKEN, BUVID)
         BiliHttpApi.init(buvid3 = BUVID, sessData = SESSDATA, biliJct = BILI_JCT, mid = UID, accessToken = ACCESS_TOKEN)
         authRepository.sessionData = SESSDATA
         authRepository.accessToken = ACCESS_TOKEN

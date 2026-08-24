@@ -326,7 +326,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
-                    likeRepository.updateVideoLiked(aid = aid, like = !current)
+                    likeRepository.updateVideoLiked(aid = aid, like = !current, preferApiType = getApiType())
                 }
             }.onSuccess {
                 videoInfoRepository.updateVideoActionState(aid = aid, liked = !current)
@@ -344,7 +344,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
-                    coinRepository.sendVideoCoin(aid = aid)
+                    coinRepository.sendVideoCoin(aid = aid, preferApiType = getApiType())
                 }
             }.onSuccess {
                 videoInfoRepository.updateVideoActionState(aid = aid, coined = true)
@@ -366,6 +366,7 @@ class PlayerViewModel @Inject constructor(
                     val folders = favoriteRepository.getAllFavoriteFolderMetadataList(
                         mid = authRepository.mid ?: error("未登录"),
                         rid = aid,
+                        preferApiType = getApiType(),
                     )
                     val selected = folders.filter { it.videoInThisFav }.map { it.id }
                     val defaultFolder = folders.firstOrNull { it.title == "默认收藏夹" }?.id
@@ -374,12 +375,14 @@ class PlayerViewModel @Inject constructor(
                             aid = aid,
                             addMediaIds = emptyList(),
                             delMediaIds = selected,
+                            preferApiType = getApiType(),
                         )
                     } else {
                         favoriteRepository.updateVideoToFavoriteFolder(
                             aid = aid,
                             addMediaIds = listOfNotNull(defaultFolder),
                             delMediaIds = emptyList(),
+                            preferApiType = getApiType(),
                         )
                     }
                 }
@@ -403,6 +406,7 @@ class PlayerViewModel @Inject constructor(
                     oneClickTripleActionRepository.sendVideoOneClickTripleAction(
                         aid = aid,
                         bvid = bvid,
+                        preferApiType = getApiType(),
                     )
                 }
             }.onSuccess { result ->
@@ -835,6 +839,7 @@ class PlayerViewModel @Inject constructor(
             val shot = videoPlayRepository.getVideoShot(
                 aid = state.aid,
                 cid = state.cid,
+                preferApiType = getApiType(),
             )
             _uiState.update { it.copy(videoShot = shot) }
         }.onFailure { logger.warn { "Load video shot failed: $it" } }

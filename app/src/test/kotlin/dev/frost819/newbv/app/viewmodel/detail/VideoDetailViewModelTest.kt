@@ -129,7 +129,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `init loads video detail successfully`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -143,7 +143,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `init sets error on network failure`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws IOException("network error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws IOException("network error")
 
         viewModel = createViewModel(aid = 1L)
         advanceUntilIdle()
@@ -160,7 +160,7 @@ class VideoDetailViewModelTest {
         val detail = fakeVideoDetail().copy(
             userActions = UserActions(like = false, coin = false, favorite = false),
         )
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { likeRepository.updateVideoLiked(any(), any(), any(), any()) } returns Unit
 
         viewModel = createViewModel(aid = 1L)
@@ -177,7 +177,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `toggleLike emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { likeRepository.updateVideoLiked(any(), any(), any(), any()) } throws Exception("already liked")
 
         viewModel = createViewModel(aid = 1L)
@@ -198,7 +198,7 @@ class VideoDetailViewModelTest {
         val detail = fakeVideoDetail().copy(
             userActions = UserActions(coin = false),
         )
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { coinRepository.sendVideoCoin(any(), any(), any(), any()) } returns Unit
 
         viewModel = createViewModel(aid = 1L)
@@ -215,7 +215,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `sendCoin emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { coinRepository.sendVideoCoin(any(), any(), any(), any()) } throws Exception("no coins")
 
         viewModel = createViewModel(aid = 1L)
@@ -233,20 +233,20 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `aid property matches route parameter`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns fakeVideoDetail()
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns fakeVideoDetail()
 
         viewModel = createViewModel(aid = 999L)
         advanceUntilIdle()
 
         assertThat(viewModel.aid).isEqualTo(999L)
-        coVerify { videoDetailRepository.getVideoDetail(aid = 999L, any()) }
+        coVerify { videoDetailRepository.getVideoDetail(aid = 999L, any(), any()) }
     }
 
     @Test
     fun `toggleFollow follows UP on success`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.followUser(any()) } returns true
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.followUser(any(), any()) } returns true
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -254,17 +254,17 @@ class VideoDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify { userRepository.followUser(mid = 999L) }
+        coVerify { userRepository.followUser(mid = 999L, any()) }
         assertThat(viewModel.uiState.value.isFollowing).isTrue()
     }
 
     @Test
     fun `toggleFollow unfollows UP on success`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { Prefs.isLogin } returns true
         coEvery { userRepository.checkIsFollowing(any()) } returns true
-        coEvery { userRepository.unfollowUser(any()) } returns true
+        coEvery { userRepository.unfollowUser(any(), any()) } returns true
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -274,15 +274,15 @@ class VideoDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify { userRepository.unfollowUser(mid = 999L) }
+        coVerify { userRepository.unfollowUser(mid = 999L, any()) }
         assertThat(viewModel.uiState.value.isFollowing).isFalse()
     }
 
     @Test
     fun `toggleFollow emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
-        coEvery { userRepository.followUser(any()) } throws RuntimeException("already followed")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
+        coEvery { userRepository.followUser(any(), any()) } throws RuntimeException("already followed")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -299,7 +299,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `toggleFollow is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -307,14 +307,14 @@ class VideoDetailViewModelTest {
         viewModel.toggleFollow()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { userRepository.followUser(any()) }
-        coVerify(exactly = 0) { userRepository.unfollowUser(any()) }
+        coVerify(exactly = 0) { userRepository.followUser(any(), any()) }
+        coVerify(exactly = 0) { userRepository.unfollowUser(any(), any()) }
     }
 
     @Test
     fun `updateFavorite updates favorite state on success`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { favoriteRepository.updateVideoToFavoriteFolder(any(), any(), any(), any()) } returns Unit
 
         viewModel = createViewModel()
@@ -330,7 +330,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `updateFavorite emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { favoriteRepository.updateVideoToFavoriteFolder(any(), any(), any(), any()) } throws RuntimeException("fav error")
 
         viewModel = createViewModel()
@@ -349,7 +349,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `toggleFavorite with default folder adds to favorite`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { Prefs.isLogin } returns true
         coEvery { favoriteRepository.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns listOf(
             FavoriteFolderMetadata(id = 10, fid = 10, mid = 1L, title = "默认收藏夹", cover = null, videoInThisFav = false, mediaCount = 5),
@@ -368,7 +368,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `toggleFavorite without default folder emits toast`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { Prefs.isLogin } returns true
         coEvery { favoriteRepository.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns listOf(
             FavoriteFolderMetadata(id = 10, fid = 10, mid = 1L, title = "其他收藏夹", cover = null, videoInThisFav = false, mediaCount = 5),
@@ -392,7 +392,7 @@ class VideoDetailViewModelTest {
         val detail = fakeVideoDetail().copy(
             userActions = UserActions(favorite = true),
         )
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { Prefs.isLogin } returns true
         coEvery { favoriteRepository.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns listOf(
             FavoriteFolderMetadata(id = 10, fid = 10, mid = 1L, title = "默认收藏夹", cover = null, videoInThisFav = true, mediaCount = 5),
@@ -413,7 +413,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `oneClickTripleAction updates all states on success`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any(), any()) } returns
             OneClickTripleAction(like = true, coin = true, fav = true)
 
@@ -437,7 +437,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `oneClickTripleAction emits toast on failure`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { oneClickTripleActionRepository.sendVideoOneClickTripleAction(any(), any(), any()) } throws RuntimeException("triple error")
 
         viewModel = createViewModel()
@@ -455,7 +455,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `oneClickTripleAction is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -468,7 +468,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `updateVideoList single video calls repository`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns fakeVideoDetail()
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns fakeVideoDetail()
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -505,7 +505,7 @@ class VideoDetailViewModelTest {
             ),
         )
         val detail = fakeVideoDetail().copy(ugcSeason = ugcSeason)
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -518,7 +518,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `updateVideoList sectionIndex with null ugcSeason does nothing`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns fakeVideoDetail()
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns fakeVideoDetail()
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -532,7 +532,7 @@ class VideoDetailViewModelTest {
     @Test
     fun `loadVideoDetail when logged in fetches favorite folders and following`() = runTest(testDispatcher) {
         val detail = fakeVideoDetail()
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns detail
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
         coEvery { Prefs.isLogin } returns true
         coEvery { Prefs.uid } returns 123L
         coEvery { favoriteRepository.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns listOf(
@@ -550,14 +550,14 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `loadVideoDetail retry after error succeeds`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("first error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("first error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.error).isTrue()
 
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } returns fakeVideoDetail()
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns fakeVideoDetail()
 
         viewModel.loadVideoDetail()
         advanceUntilIdle()
@@ -568,7 +568,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `toggleLike is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -581,7 +581,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `sendCoin is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("error")
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -594,7 +594,7 @@ class VideoDetailViewModelTest {
 
     @Test
     fun `updateFavorite is no-op when detail is null`() = runTest(testDispatcher) {
-        coEvery { videoDetailRepository.getVideoDetail(any(), any()) } throws RuntimeException("error")
+        coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("error")
 
         viewModel = createViewModel()
         advanceUntilIdle()

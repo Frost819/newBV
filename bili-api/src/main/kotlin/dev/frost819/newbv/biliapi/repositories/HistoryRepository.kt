@@ -19,7 +19,7 @@ class HistoryRepository(
 
     suspend fun getHistories(
         cursor: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): HistoryData {
         return when (preferApiType) {
             ApiType.Web -> {

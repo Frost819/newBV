@@ -89,7 +89,7 @@ class VideoInfoRepository @Inject constructor(
      * @param aid 视频 AV 号
      * @param preferApiType 接口类型
      */
-    suspend fun loadVideoDetail(aid: Long, preferApiType: ApiType = ApiType.Web, bvid: String = "") {
+    suspend fun loadVideoDetail(aid: Long, preferApiType: ApiType, bvid: String = "") {
         runCatching {
             val detail = videoDetailRepository.getVideoDetail(aid = aid, preferApiType = preferApiType, bvid = bvid)
             _videoDetail.update { detail }
@@ -126,7 +126,7 @@ class VideoInfoRepository @Inject constructor(
      *
      * @param preferApiType 接口类型
      */
-    suspend fun updateUgcPages(preferApiType: ApiType = ApiType.Web) {
+    suspend fun updateUgcPages(preferApiType: ApiType) {
         _videoList.update { oldList ->
             oldList.map { item ->
                 runCatching {

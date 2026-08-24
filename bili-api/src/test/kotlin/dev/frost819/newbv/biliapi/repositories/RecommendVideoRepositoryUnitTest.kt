@@ -210,19 +210,35 @@ class RecommendVideoRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `getRecommendVideos App does not fallback to HTTP when channel is unavailable`() =
+    fun `getRecommendVideos App calls getFeedIndex with accessKey`() =
         runTest {
-            assertThrows<IllegalStateException> {
-                repository.getRecommendVideos(page = RecommendPage(), preferApiType = ApiType.App)
-            }
+            authRepository.accessToken = "test-access-token"
+            coEvery { BiliHttpApi.getFeedIndex(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = fakeRcmdIndexData(emptyList()))
+
+            repository.getRecommendVideos(page = RecommendPage(), preferApiType = ApiType.App)
+
+            coVerify { BiliHttpApi.getFeedIndex(any(), eq("test-access-token")) }
         }
 
     @Test
-    fun `getRecommendVideos App does not call HTTP`() =
+    fun `getRecommendVideos App maps items and advances nextPage`() =
         runTest {
-            assertThrows<IllegalStateException> {
-                repository.getRecommendVideos(page = RecommendPage(), preferApiType = ApiType.App)
-            }
+            authRepository.accessToken = "test-access-token"
+            val rcmdData = fakeRcmdIndexData(listOf(fakeAppRcmdItem(idx = 1), fakeAppRcmdItem(idx = 2)))
+            coEvery { BiliHttpApi.getFeedIndex(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = rcmdData)
+
+            val result =
+                repository.getRecommendVideos(
+                    page = RecommendPage(nextAppIdx = 1),
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result.items).hasSize(2)
+            assertThat(result.items[0].title).isEqualTo("app-rcmd-1")
+            assertThat(result.items[1].title).isEqualTo("app-rcmd-2")
+            assertThat(result.nextPage.nextAppIdx).isEqualTo(3)
         }
 
     // ------------------------------------------------------------------
@@ -261,6 +277,29 @@ class RecommendVideoRepositoryUnitTest {
             mid = 1L,
             preloadExposePct = 0.0,
             preloadFloorExposePct = 0.0,
+        )
+
+    private fun fakeRcmdIndexData(items: List<RcmdIndexData.RcmdItem>) =
+        RcmdIndexData(
+            config =
+                RcmdIndexData.Config(
+                    autoRefreshTime = 0,
+                    autoRefreshTimeByActive = 0,
+                    autoRefreshTimeByAppear = 0,
+                    autoplayCard = 0,
+                    cardDensityExp = 0,
+                    column = 0,
+                    enableRcmdGuide = false,
+                    feedCleanAbtest = 0,
+                    homeTransferTest = 0,
+                    inlineSound = 0,
+                    isBackToHomepage = false,
+                    showInlineDanmaku = 0,
+                    storyModeV2GuideExp = 0,
+                    toast = kotlinx.serialization.json.JsonNull,
+                    visibleArea = 0,
+                ),
+            items = items,
         )
 
     private fun fakeAppRcmdItem(idx: Int = 1) =

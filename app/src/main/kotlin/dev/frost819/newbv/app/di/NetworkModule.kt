@@ -241,14 +241,13 @@ object NetworkModule {
     /**
      * 提供 [ToViewRepository] 单例。
      *
-     * 封装稍后再看列表查询、添加、删除（Web HTTP + App gRPC）。
+     * 封装稍后再看列表查询、添加、删除（Web HTTP + App HTTP access_key）。
      */
     @Provides
     @Singleton
     fun provideToViewRepository(
         authRepository: AuthRepository,
-        channelRepository: ChannelRepository,
-    ): ToViewRepository = ToViewRepository(authRepository, channelRepository)
+    ): ToViewRepository = ToViewRepository(authRepository)
 
     /**
      * 提供 [HistoryRepository] 单例。

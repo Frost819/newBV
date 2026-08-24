@@ -195,7 +195,7 @@ class VideoInfoRepositoryTest {
         val detail = fakeVideoDetail(relatedVideos = related, history = VideoDetail.History(500, 50L))
         coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
-        repository.loadVideoDetail(aid = 1L)
+        repository.loadVideoDetail(aid = 1L, preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         assertThat(repository.videoDetail.value).isEqualTo(detail)
@@ -208,7 +208,7 @@ class VideoInfoRepositoryTest {
     fun `loadVideoDetail failure does not crash and leaves state unchanged`() = runTest(testDispatcher) {
         coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws RuntimeException("network error")
 
-        repository.loadVideoDetail(aid = 1L)
+        repository.loadVideoDetail(aid = 1L, preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         assertThat(repository.videoDetail.value).isNull()
@@ -220,7 +220,7 @@ class VideoInfoRepositoryTest {
         val detail = fakeVideoDetail()
         coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } returns detail
 
-        repository.loadVideoDetail(aid = 1L)
+        repository.loadVideoDetail(aid = 1L, preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         coVerify { videoDetailRepository.getVideoDetail(1L, ApiType.Web, "") }
@@ -240,7 +240,7 @@ class VideoInfoRepositoryTest {
         )
         coEvery { videoDetailRepository.getUgcPages(any(), any()) } returns pages
 
-        repository.updateUgcPages()
+        repository.updateUgcPages(preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         val updated = repository.videoList.value
@@ -259,7 +259,7 @@ class VideoInfoRepositoryTest {
         )
         coEvery { videoDetailRepository.getUgcPages(any(), any()) } returns singlePage
 
-        repository.updateUgcPages()
+        repository.updateUgcPages(preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         assertThat(repository.videoList.value[0].ugcPages).isNull()
@@ -273,7 +273,7 @@ class VideoInfoRepositoryTest {
 
         coEvery { videoDetailRepository.getUgcPages(any(), any()) } throws RuntimeException("error")
 
-        repository.updateUgcPages()
+        repository.updateUgcPages(preferApiType = ApiType.Web)
         advanceUntilIdle()
 
         assertThat(repository.videoList.value[0].ugcPages).isNull()

@@ -22,7 +22,7 @@ class RecommendVideoRepository(
 
     suspend fun getPopularVideos(
         page: PopularVideoPage,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): PopularVideoData {
         return when (preferApiType) {
             ApiType.Web -> {
@@ -71,7 +71,7 @@ class RecommendVideoRepository(
 
     suspend fun getRecommendVideos(
         page: RecommendPage = RecommendPage(),
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): RecommendData {
         val items =
             when (preferApiType) {
@@ -82,15 +82,16 @@ class RecommendVideoRepository(
                         .getResponseData().item
                         .map { UgcItem.fromRcmdItem(it) }
 
+                // 推荐流没有对应 RPC，与原版一致走 App HTTP feed/index；
+                // 不能复用 Popular.Index，否则推荐和热门内容相同
                 ApiType.App ->
-                    popularStub?.index(
-                        popularResultReq { idx = page.nextAppIdx.toLong() },
-                    )?.itemsList
-                        ?.filter {
-                            it.itemCase == bilibili.app.card.v1.Card.ItemCase.SMALL_COVER_V5
-                        }
-                        ?.map { UgcItem.fromSmallCoverV5(it.smallCoverV5) }
-                        ?: throw IllegalStateException("App gRPC popular stub is not initialized")
+                    BiliHttpApi.getFeedIndex(
+                        idx = page.nextAppIdx,
+                        accessKey = authRepository.accessToken,
+                    )
+                        .getResponseData().items
+                        .filter { it.cardGoto == "av" }
+                        .map { UgcItem.fromRcmdItem(it) }
             }
         val nextPage =
             when (preferApiType) {
@@ -101,7 +102,7 @@ class RecommendVideoRepository(
 
                 ApiType.App ->
                     RecommendPage(
-                        nextAppIdx = items.lastOrNull()?.idx?.toInt()?.plus(1) ?: page.nextAppIdx,
+                        nextAppIdx = items.lastOrNull()?.idx?.plus(1) ?: page.nextAppIdx,
                     )
             }
         return RecommendData(

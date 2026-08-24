@@ -29,7 +29,7 @@ class VideoDetailRepository(
 
     suspend fun getVideoDetail(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
         bvid: String = "",
     ): VideoDetail {
         return when (preferApiType) {
@@ -52,6 +52,7 @@ class VideoDetailRepository(
                             runCatching {
                                 favoriteRepository.checkVideoFavoured(
                                     aid = aid,
+                                    preferApiType = ApiType.Web,
                                 )
                             }.onFailure {
                             }.getOrDefault(false)
@@ -62,6 +63,7 @@ class VideoDetailRepository(
                             runCatching {
                                 likeRepository.checkVideoLiked(
                                     aid = aid,
+                                    preferApiType = ApiType.Web,
                                 )
                             }.onFailure {
                             }.getOrDefault(false)
@@ -72,6 +74,7 @@ class VideoDetailRepository(
                             runCatching {
                                 coinRepository.checkVideoCoined(
                                     aid = aid,
+                                    preferApiType = ApiType.Web,
                                 )
                             }.onFailure {
                             }.getOrDefault(false)
@@ -127,7 +130,7 @@ class VideoDetailRepository(
 
     suspend fun getUgcPages(
         aid: Long,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): List<VideoPage> {
         return try {
             when (preferApiType) {
@@ -163,7 +166,7 @@ class VideoDetailRepository(
     suspend fun getPgcVideoDetail(
         epid: Int? = null,
         seasonId: Int? = null,
-        preferApiType: ApiType = ApiType.Web,
+        preferApiType: ApiType,
     ): SeasonDetail {
         return when (preferApiType) {
             ApiType.Web -> {

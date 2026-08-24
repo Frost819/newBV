@@ -51,7 +51,7 @@ class CoinRepositoryTest {
     fun `check video coined`() =
         runBlocking {
             // 查询类：正常返回布尔结果即视为数据有效
-            val result = coinRepository.checkVideoCoined(aid = TEST_AID, bvid = TEST_BVID)
+            val result = coinRepository.checkVideoCoined(aid = TEST_AID, bvid = TEST_BVID, preferApiType = ApiType.Web)
             println("video $TEST_BVID coined: $result")
         }
 
@@ -59,7 +59,7 @@ class CoinRepositoryTest {
     fun `send video coin`() =
         runBlocking {
             // 互动类：repository 失败会抛异常，走到这里即接口返回正常
-            coinRepository.sendVideoCoin(aid = TEST_AID, bvid = TEST_BVID, multiply = 1)
+            coinRepository.sendVideoCoin(aid = TEST_AID, bvid = TEST_BVID, multiply = 1, preferApiType = ApiType.Web)
             println("coined $TEST_BVID successfully")
         }
 

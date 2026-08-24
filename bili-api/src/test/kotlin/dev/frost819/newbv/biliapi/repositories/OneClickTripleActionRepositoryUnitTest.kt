@@ -55,7 +55,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", expected)
 
             // When
-            val result = repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+            val result = repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isEqualTo(expected)
@@ -76,7 +76,7 @@ class OneClickTripleActionRepositoryUnitTest {
             val exception =
                 assertThrows(Exception::class.java) {
                     runBlocking {
-                        repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+                        repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
                     }
                 }
 
@@ -92,7 +92,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", null)
 
             // When
-            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -108,7 +108,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", null)
 
             // When
-            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -125,7 +125,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", null)
 
             // When
-            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+            repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -141,7 +141,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", null)
 
             // When
-            val result = repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID)
+            val result = repository.sendVideoOneClickTripleAction(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isNull()
@@ -155,7 +155,7 @@ class OneClickTripleActionRepositoryUnitTest {
                 Triple(true, "", null)
 
             // When
-            repository.sendVideoOneClickTripleAction(aid = AID, bvid = null)
+            repository.sendVideoOneClickTripleAction(aid = AID, bvid = null, preferApiType = ApiType.Web)
 
             // Then
             coVerify {

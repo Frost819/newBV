@@ -109,6 +109,7 @@ class SeasonDetailViewModel @Inject constructor(
                 withTimeout(LOAD_TIMEOUT_MS) {
                     val detail = videoDetailRepository.getPgcVideoDetail(
                         seasonId = seasonId,
+                        preferApiType = prefApiType(),
                     )
                     _uiState.update {
                         it.copy(
@@ -213,6 +214,7 @@ class SeasonDetailViewModel @Inject constructor(
                 withTimeout(LOAD_TIMEOUT_MS) {
                     val detail = videoDetailRepository.getPgcVideoDetail(
                         seasonId = targetSeasonId,
+                        preferApiType = prefApiType(),
                     )
                     _uiState.update {
                         it.copy(

@@ -56,7 +56,7 @@ class CoinRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoSentCoin(any(), any()) } returns true
 
             // When
-            val result = repository.checkVideoCoined(aid = AID, bvid = BVID)
+            val result = repository.checkVideoCoined(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isTrue()
@@ -69,7 +69,7 @@ class CoinRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoSentCoin(any(), any()) } returns false
 
             // When
-            val result = repository.checkVideoCoined(aid = AID, bvid = BVID)
+            val result = repository.checkVideoCoined(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             assertThat(result).isFalse()
@@ -82,7 +82,7 @@ class CoinRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoSentCoin(any(), any()) } returns true
 
             // When
-            repository.checkVideoCoined(aid = AID, bvid = BVID)
+            repository.checkVideoCoined(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.checkVideoSentCoin(eq(AID), eq(BVID)) }
@@ -95,7 +95,7 @@ class CoinRepositoryUnitTest {
             coEvery { BiliHttpApi.checkVideoSentCoin(any(), any()) } returns false
 
             // When
-            repository.checkVideoCoined(aid = AID, bvid = null)
+            repository.checkVideoCoined(aid = AID, bvid = null, preferApiType = ApiType.Web)
 
             // Then
             coVerify { BiliHttpApi.checkVideoSentCoin(eq(AID), isNull()) }
@@ -113,7 +113,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When — should not throw
-            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1)
+            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1, preferApiType = ApiType.Web)
 
             // Then — verify all parameters forwarded correctly.
             // BiliHttpApi.sendVideoCoin signature: (avid, bvid, multiply, like, csrf).
@@ -134,7 +134,14 @@ class CoinRepositoryUnitTest {
             // When
             val exception =
                 assertThrows(Exception::class.java) {
-                    runBlocking { repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1) }
+                    runBlocking {
+                        repository.sendVideoCoin(
+                            aid = AID,
+                            bvid = BVID,
+                            multiply = 1,
+                            preferApiType = ApiType.Web,
+                        )
+                    }
                 }
 
             // Then
@@ -149,7 +156,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 2)
+            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 2, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -165,7 +172,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When — multiply not specified, defaults to 1
-            repository.sendVideoCoin(aid = AID, bvid = BVID)
+            repository.sendVideoCoin(aid = AID, bvid = BVID, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -181,7 +188,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1)
+            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -198,7 +205,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1)
+            repository.sendVideoCoin(aid = AID, bvid = BVID, multiply = 1, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
@@ -214,7 +221,7 @@ class CoinRepositoryUnitTest {
                 Pair(true, "")
 
             // When
-            repository.sendVideoCoin(aid = AID, bvid = null, multiply = 1)
+            repository.sendVideoCoin(aid = AID, bvid = null, multiply = 1, preferApiType = ApiType.Web)
 
             // Then
             coVerify {
