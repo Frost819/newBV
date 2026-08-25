@@ -5,10 +5,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,44 +31,52 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
+import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
+import dev.frost819.newbv.app.ui.component.settings.SettingsMenuSelectItem
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
+import dev.frost819.newbv.app.util.CacheManager
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.log.CrashHandler
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
+/** 缓存阈值可选项（MB），0 表示不限制。 */
+private val CACHE_THRESHOLD_OPTIONS = listOf(50, 100, 200, 500, CacheManager.THRESHOLD_UNLIMITED)
+
 /**
  * 存储设置页。
  *
- * 图片缓存/其他缓存/崩溃日志 大小显示与清理。
+ * 缓存阈值设置（超限自动 LRU 清理）/ 手动清理缓存 / 自动清空开关；
+ * 崩溃日志大小显示与清理。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StorageSetting(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val cacheManager = remember { CacheManager(context) }
 
     var loading by remember { mutableStateOf(false) }
-    var imageCacheSize by remember { mutableLongStateOf(0L) }
-    var updateCacheSize by remember { mutableLongStateOf(0L) }
+    var cacheSize by remember { mutableLongStateOf(0L) }
     var crashLogsSize by remember { mutableLongStateOf(0L) }
+    var cacheThreshold by remember { mutableStateOf(Prefs.cacheThreshold) }
+    var autoCleanEnabled by remember { mutableStateOf(Prefs.cacheAutoClean) }
 
-    var showConfirmDialog by remember { mutableStateOf(false) }
-    var clearFun: (() -> Unit)? by remember { mutableStateOf(null) }
-    var dialogContent by remember { mutableStateOf("") }
-    var dialogSize by remember { mutableLongStateOf(0L) }
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showClearLogsDialog by remember { mutableStateOf(false) }
+    var showThresholdDialog by remember { mutableStateOf(false) }
 
     val calSize = {
-        val imageCacheDir = File(context.cacheDir, "image_cache")
-        val updateCacheDir = File(context.cacheDir, "update_downloader")
-        val crashLogsDir = File(context.filesDir, CrashHandler.LOG_DIR)
-        imageCacheSize = getFolderSize(imageCacheDir)
-        updateCacheSize = getFolderSize(updateCacheDir)
-        crashLogsSize = getFolderSize(crashLogsDir)
+        cacheSize = cacheManager.cacheSize()
+        crashLogsSize = CacheManager.folderSize(
+            File(context.filesDir, CrashHandler.LOG_DIR)
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -90,83 +105,181 @@ fun StorageSetting(
             ) {
                 item {
                     SettingListItem(
-                        title = "图片缓存",
-                        supportText = if (loading) "计算中..." else "${imageCacheSize / 1024 / 1024} MB",
+                        title = "缓存上限",
+                        supportText = "当前：" +
+                            if (cacheThreshold == CacheManager.THRESHOLD_UNLIMITED) {
+                                "无限制"
+                            } else {
+                                "$cacheThreshold MB"
+                            },
+                        onClick = { showThresholdDialog = true },
+                    )
+                }
+                item {
+                    SettingListItem(
+                        title = "自动清空缓存",
+                        supportText = "开启后缓存超过阈值时自动清理",
+                        trailingContent = {
+                            Switch(
+                                checked = autoCleanEnabled,
+                                onCheckedChange = {
+                                    autoCleanEnabled = it
+                                    Prefs.cacheAutoClean = it
+                                },
+                            )
+                        },
                         onClick = {
-                            clearFun = {
-                                File(context.cacheDir, "image_cache").deleteRecursively()
-                            }
-                            dialogContent = "图片缓存"
-                            dialogSize = imageCacheSize
-                            showConfirmDialog = true
+                            autoCleanEnabled = !autoCleanEnabled
+                            Prefs.cacheAutoClean = autoCleanEnabled
                         },
                     )
                 }
                 item {
                     SettingListItem(
-                        title = "其他缓存",
-                        supportText = if (loading) "计算中..." else "${updateCacheSize / 1024 / 1024} MB",
-                        onClick = {
-                            clearFun = {
-                                File(context.cacheDir, "update_downloader").deleteRecursively()
-                            }
-                            dialogContent = "其他缓存"
-                            dialogSize = updateCacheSize
-                            showConfirmDialog = true
-                        },
+                        title = "清理缓存",
+                        supportText = if (loading) "计算中..." else "当前：${cacheSize / CacheManager.BYTES_PER_MB} MB",
+                        onClick = { showClearDialog = true },
                     )
                 }
                 item {
                     SettingListItem(
-                        title = "崩溃日志",
-                        supportText = if (loading) "计算中..." else "${crashLogsSize / 1024 / 1024} MB",
-                        onClick = {
-                            clearFun = {
-                                File(context.filesDir, CrashHandler.LOG_DIR).deleteRecursively()
-                            }
-                            dialogContent = "崩溃日志"
-                            dialogSize = crashLogsSize
-                            showConfirmDialog = true
-                        },
+                        title = "清理日志",
+                        supportText = if (loading) "计算中..." else "当前：${crashLogsSize / CacheManager.BYTES_PER_MB} MB",
+                        onClick = { showClearLogsDialog = true },
                     )
                 }
             }
         }
     }
 
-    if (showConfirmDialog) {
-        ConfirmDeleteDialog(
-            content = dialogContent,
-            size = dialogSize,
+    if (showClearDialog) {
+        ConfirmClearDialog(
+            title = "清空缓存",
+            size = cacheSize,
             onConfirm = {
-                clearFun?.invoke()
-                calSize()
-                showConfirmDialog = false
+                scope.launch(Dispatchers.IO) {
+                    cacheManager.clearAll()
+                    calSize()
+                }
+                showClearDialog = false
             },
-            onDismiss = { showConfirmDialog = false },
+            onDismiss = { showClearDialog = false },
+        )
+    }
+
+    if (showClearLogsDialog) {
+        ConfirmClearDialog(
+            title = "清理日志",
+            size = crashLogsSize,
+            onConfirm = {
+                scope.launch(Dispatchers.IO) {
+                    File(context.filesDir, CrashHandler.LOG_DIR).deleteRecursively()
+                    calSize()
+                }
+                showClearLogsDialog = false
+            },
+            onDismiss = { showClearLogsDialog = false },
+        )
+    }
+
+    if (showThresholdDialog) {
+        ThresholdOptionDialog(
+            options = CACHE_THRESHOLD_OPTIONS,
+            selected = cacheThreshold,
+            onDismiss = { showThresholdDialog = false },
+            onSelect = { threshold ->
+                cacheThreshold = threshold
+                Prefs.cacheThreshold = threshold
+                // 阈值调低时立即生效（清理 + 刷新大小显示）
+                scope.launch(Dispatchers.IO) {
+                    cacheManager.checkCache()
+                    calSize()
+                }
+            },
         )
     }
 }
 
-private fun getFolderSize(f: File): Long {
-    if (!f.exists()) return 0
-    if (f.isDirectory) {
-        return f.listFiles()?.sumOf { getFolderSize(it) } ?: 0
+/**
+ * 缓存阈值选择弹窗。
+ *
+ * 列出预设阈值（MB，0 显示为"不限制"），当前选中项高亮，选中后触发回调并关闭。
+ *
+ * @param options 预设阈值列表（MB，0 = 不限制）。
+ * @param selected 当前阈值。
+ * @param onDismiss 关闭回调。
+ * @param onSelect 选中回调。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThresholdOptionDialog(
+    options: List<Int>,
+    selected: Int,
+    onDismiss: () -> Unit,
+    onSelect: (Int) -> Unit,
+) {
+    BasicAlertDialog(
+        modifier = Modifier.padding(vertical = 24.dp),
+        onDismissRequest = onDismiss,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 4.dp,
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .heightIn(max = 360.dp)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    Text(
+                        text = "缓存阈值",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
+                items(options.size) { index ->
+                    val option = options[index]
+                    SettingsMenuSelectItem(
+                        text = if (option == CacheManager.THRESHOLD_UNLIMITED) "无限制" else "$option MB",
+                        selected = option == selected,
+                        onClick = {
+                            onSelect(option)
+                            onDismiss()
+                        },
+                    )
+                }
+            }
+        }
     }
-    return f.length()
 }
 
+/**
+ * 清理确认弹窗（清空缓存/清理日志共用，样式一致）。
+ *
+ * @param title 弹窗标题。
+ * @param size 将释放的空间大小（字节）。
+ * @param onConfirm 确认清理回调。
+ * @param onDismiss 取消回调。
+ */
 @Composable
-private fun ConfirmDeleteDialog(
-    content: String,
+private fun ConfirmClearDialog(
+    title: String,
     size: Long,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "清除$content") },
-        text = { Text(text = "${size / 1024 / 1024} MB") },
+        title = { Text(text = title) },
+        text = { Text(text = "将释放 ${size / CacheManager.BYTES_PER_MB} MB 空间") },
         confirmButton = {
             Button(
                 onClick = onConfirm,

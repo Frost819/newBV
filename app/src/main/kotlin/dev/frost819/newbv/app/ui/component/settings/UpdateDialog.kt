@@ -30,6 +30,7 @@ import androidx.tv.material3.Text
 import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.network.GithubApi
 import dev.frost819.newbv.app.network.entity.GithubRelease
+import dev.frost819.newbv.app.util.CacheManager
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.Dispatchers
@@ -134,6 +135,8 @@ fun UpdateDialog(
                         0f
                     }
                 }
+                // 缓存写入后检查阈值，保留刚下载的 APK 待安装
+                CacheManager(context).checkCache(preserve = tempFile)
                 if (show) installUpdate(tempFile)
             }.onFailure {
                 logger.error(it) { "Failed to download update" }

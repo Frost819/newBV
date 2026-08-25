@@ -68,8 +68,8 @@ val ActionAfterPlay.displayName: String
 /** 接口类型显示名称。 */
 val ApiType.displayName: String
     get() = when (this) {
-        ApiType.Web -> "Web API"
-        ApiType.App -> "App gRPC"
+        ApiType.Web -> "Web"
+        ApiType.App -> "App"
     }
 
 /** 主题模式显示名称。 */

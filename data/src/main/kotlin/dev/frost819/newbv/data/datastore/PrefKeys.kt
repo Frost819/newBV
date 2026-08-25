@@ -80,6 +80,6 @@ internal object PrefKeys {
     val themeMode = intPreferencesKey("theme_mode")
 
     // ===== 存储设置 =====
-    val imageCacheThreshold = intPreferencesKey("image_cache_threshold")
-    val otherCacheThreshold = intPreferencesKey("other_cache_threshold")
+    val cacheThreshold = intPreferencesKey("cache_threshold")
+    val cacheAutoClean = booleanPreferencesKey("cache_auto_clean")
 }

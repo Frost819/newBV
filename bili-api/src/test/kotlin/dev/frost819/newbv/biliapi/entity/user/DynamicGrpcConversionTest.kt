@@ -1,11 +1,9 @@
 package dev.frost819.newbv.biliapi.entity.user
 
 import bilibili.app.dynamic.v2.DynModuleType
-import bilibili.app.dynamic.v2.DynamicItem
-import bilibili.app.dynamic.v2.ModuleDynamic
 import bilibili.app.dynamic.v2.cardVideoDynList
-import bilibili.app.dynamic.v2.dynamicItem
 import bilibili.app.dynamic.v2.dynVideoReply
+import bilibili.app.dynamic.v2.dynamicItem
 import bilibili.app.dynamic.v2.mdlDynArchive
 import bilibili.app.dynamic.v2.mdlDynPGC
 import bilibili.app.dynamic.v2.module
@@ -88,7 +86,11 @@ class DynamicGrpcConversionTest {
                         moduleAuthor =
                             moduleAuthor {
                                 ptimeLabelText = "动态视频 2024-01-01"
-                                author = userInfo { mid = 1L; name = "UP" }
+                                author =
+                                    userInfo {
+                                        mid = 1L
+                                        name = "UP"
+                                    }
                             }
                     }
                 modules +=
@@ -128,7 +130,11 @@ class DynamicGrpcConversionTest {
                         moduleAuthor =
                             moduleAuthor {
                                 ptimeLabelText = "2024-03-15"
-                                author = userInfo { mid = 888L; name = "番剧UP" }
+                                author =
+                                    userInfo {
+                                        mid = 888L
+                                        name = "番剧UP"
+                                    }
                             }
                     }
                 modules +=
@@ -180,7 +186,11 @@ class DynamicGrpcConversionTest {
                         moduleAuthor =
                             moduleAuthor {
                                 ptimeLabelText = "2024-01-01"
-                                author = userInfo { mid = 1L; name = "UP" }
+                                author =
+                                    userInfo {
+                                        mid = 1L
+                                        name = "UP"
+                                    }
                             }
                     }
                 modules +=
@@ -266,7 +276,11 @@ class DynamicGrpcConversionTest {
                 moduleAuthor =
                     moduleAuthor {
                         ptimeLabelText = "2024-01-01 12:00"
-                        author = userInfo { mid = 1L; name = "UP" }
+                        author =
+                            userInfo {
+                                mid = 1L
+                                name = "UP"
+                            }
                     }
             }
         modules +=
@@ -286,20 +300,25 @@ class DynamicGrpcConversionTest {
             }
     }
 
-    private fun fakeUnknownDynamicItem() = dynamicItem {
-        modules +=
-            module {
-                moduleType = DynModuleType.module_author
-                moduleAuthor =
-                    moduleAuthor {
-                        ptimeLabelText = "2024-01-01"
-                        author = userInfo { mid = 1L; name = "UP" }
-                    }
-            }
-        modules +=
-            module {
-                moduleType = DynModuleType.module_dynamic
-                moduleDynamic = moduleDynamic {}
-            }
-    }
+    private fun fakeUnknownDynamicItem() =
+        dynamicItem {
+            modules +=
+                module {
+                    moduleType = DynModuleType.module_author
+                    moduleAuthor =
+                        moduleAuthor {
+                            ptimeLabelText = "2024-01-01"
+                            author =
+                                userInfo {
+                                    mid = 1L
+                                    name = "UP"
+                                }
+                        }
+                }
+            modules +=
+                module {
+                    moduleType = DynModuleType.module_dynamic
+                    moduleDynamic = moduleDynamic {}
+                }
+        }
 }

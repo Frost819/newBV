@@ -347,10 +347,10 @@ object Prefs {
 
     // --- 存储设置（PRD 7.6） ---
 
-    /** 图片缓存阈值（MB）。 */
-    var imageCacheThreshold by pref(PrefKeys.imageCacheThreshold, 500)
-    /** 其他缓存阈值（MB）。 */
-    var otherCacheThreshold by pref(PrefKeys.otherCacheThreshold, 200)
+    /** 缓存阈值（MB，0 = 无限制，默认无限制）。 */
+    var cacheThreshold by pref(PrefKeys.cacheThreshold, 0)
+    /** 缓存自动清空开关（关闭后不自动清理）。 */
+    var cacheAutoClean by pref(PrefKeys.cacheAutoClean, true)
 
     // ===== Flow 属性（用于 Compose collectAsState 实时观察） =====
 

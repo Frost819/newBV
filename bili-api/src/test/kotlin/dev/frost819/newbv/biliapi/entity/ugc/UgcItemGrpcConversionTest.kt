@@ -1,8 +1,8 @@
 package dev.frost819.newbv.biliapi.entity.ugc
 
+import bilibili.app.card.v1.base
 import bilibili.app.card.v1.smallCoverV5
 import bilibili.app.card.v1.up
-import bilibili.app.card.v1.base
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.http.entity.home.RcmdIndexData
 import org.junit.jupiter.api.Test
@@ -151,7 +151,13 @@ class UgcItemGrpcConversionTest {
     fun `fromSmallCoverV5 parses yi suffix play count`() {
         val card =
             smallCoverV5 {
-                base = base { param = "1"; title = "test"; cover = ""; idx = 1L }
+                base =
+                    base {
+                        param = "1"
+                        title = "test"
+                        cover = ""
+                        idx = 1L
+                    }
                 rightDesc2 = "2.5亿观看 · 1天前"
             }
         val item = UgcItem.fromSmallCoverV5(card)
@@ -162,7 +168,13 @@ class UgcItemGrpcConversionTest {
     fun `fromSmallCoverV5 parses plain number play count`() {
         val card =
             smallCoverV5 {
-                base = base { param = "1"; title = "test"; cover = ""; idx = 1L }
+                base =
+                    base {
+                        param = "1"
+                        title = "test"
+                        cover = ""
+                        idx = 1L
+                    }
                 rightDesc2 = "8000观看 · 1天前"
             }
         val item = UgcItem.fromSmallCoverV5(card)
@@ -173,7 +185,13 @@ class UgcItemGrpcConversionTest {
     fun `fromSmallCoverV5 returns minus one for blank play count`() {
         val card =
             smallCoverV5 {
-                base = base { param = "1"; title = "test"; cover = ""; idx = 1L }
+                base =
+                    base {
+                        param = "1"
+                        title = "test"
+                        cover = ""
+                        idx = 1L
+                    }
                 rightDesc2 = " · 1天前"
             }
         val item = UgcItem.fromSmallCoverV5(card)
@@ -184,7 +202,13 @@ class UgcItemGrpcConversionTest {
     fun `fromSmallCoverV5 handles hours minutes seconds duration`() {
         val card =
             smallCoverV5 {
-                base = base { param = "1"; title = "test"; cover = ""; idx = 1L }
+                base =
+                    base {
+                        param = "1"
+                        title = "test"
+                        cover = ""
+                        idx = 1L
+                    }
                 coverRightText1 = "1:30:45"
                 rightDesc2 = "100观看"
             }
@@ -196,7 +220,13 @@ class UgcItemGrpcConversionTest {
     fun `fromSmallCoverV5 handles pubTime extraction`() {
         val card =
             smallCoverV5 {
-                base = base { param = "1"; title = "test"; cover = ""; idx = 1L }
+                base =
+                    base {
+                        param = "1"
+                        title = "test"
+                        cover = ""
+                        idx = 1L
+                    }
                 rightDesc2 = "100观看 · 3天前"
             }
         val item = UgcItem.fromSmallCoverV5(card)

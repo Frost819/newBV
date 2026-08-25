@@ -9,7 +9,6 @@ import dev.frost819.newbv.biliapi.http.entity.user.FollowActionSource
 import dev.frost819.newbv.biliapi.http.entity.user.garb.EquipPart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -1073,7 +1072,13 @@ internal class BiliHttpApiTest {
     @Test
     fun `send video coin with app api`() =
         runBlocking {
-            val result = BiliHttpApi.sendVideoCoinApp(avid = 170001, multiply = 1, like = false, accessKey = ACCESS_TOKEN)
+            val result =
+                BiliHttpApi.sendVideoCoinApp(
+                    avid = 170001,
+                    multiply = 1,
+                    like = false,
+                    accessKey = ACCESS_TOKEN,
+                )
             // 超过投币上限算正常（每天有上限），只验证接口能正常调用返回结果
             assertThat(result.second).isNotEmpty()
         }
@@ -1109,7 +1114,13 @@ internal class BiliHttpApiTest {
     @Test
     fun `send heartbeat with app api`() =
         runBlocking {
-            val result = BiliHttpApi.sendHeartbeatApp(avid = 170001, cid = 280468, playedTime = 10, accessKey = ACCESS_TOKEN)
+            val result =
+                BiliHttpApi.sendHeartbeatApp(
+                    avid = 170001,
+                    cid = 280468,
+                    playedTime = 10,
+                    accessKey = ACCESS_TOKEN,
+                )
             println(result)
             assertThat(result).isNotEmpty()
         }
@@ -1152,7 +1163,13 @@ internal class BiliHttpApiTest {
             val likeResult = BiliHttpApi.updateCommentLiked(aid = 170001, rpid = rootRpid, like = true, csrf = BILI_JCT)
             println("like: $likeResult")
             assertThat(likeResult.first).isTrue()
-            val unlikeResult = BiliHttpApi.updateCommentLiked(aid = 170001, rpid = rootRpid, like = false, csrf = BILI_JCT)
+            val unlikeResult =
+                BiliHttpApi.updateCommentLiked(
+                    aid = 170001,
+                    rpid = rootRpid,
+                    like = false,
+                    csrf = BILI_JCT,
+                )
             println("unlike: $unlikeResult")
             assertThat(unlikeResult.first).isTrue()
         }
