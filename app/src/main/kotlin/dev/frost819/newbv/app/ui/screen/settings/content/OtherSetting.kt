@@ -20,6 +20,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import dev.frost819.newbv.BuildConfig
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.component.settings.displayName
@@ -40,6 +42,7 @@ fun OtherSetting(
     modifier: Modifier = Modifier,
     onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
+    screenFocusSaver: ScreenFocusSaver? = null,
 ) {
     val scrollState = rememberScrollState()
 
@@ -94,12 +97,14 @@ fun OtherSetting(
         }
 
         SettingListItem(
+            modifier = screenFocusSaver?.let { Modifier.focusSaverItem(it, "content_log_viewer") } ?: Modifier,
             title = "查看日志",
             supportText = "查看崩溃日志和应用日志，支持扫码下载",
             onClick = onNavigateToLogViewer,
         )
 
         SettingListItem(
+            modifier = screenFocusSaver?.let { Modifier.focusSaverItem(it, "content_speed_test") } ?: Modifier,
             title = "CDN 测速",
             supportText = "B 站 CDN 测速工具",
             onClick = onNavigateToSpeedTest,

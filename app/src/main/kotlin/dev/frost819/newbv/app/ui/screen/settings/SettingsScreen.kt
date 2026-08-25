@@ -18,8 +18,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -60,8 +64,12 @@ fun SettingsScreen(
     onNavigateToLogViewer: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
-    var currentMenu by remember { mutableStateOf(SettingsMenuNavItem.AudioVideo) }
+    var currentMenu by rememberSaveable { mutableStateOf(SettingsMenuNavItem.AudioVideo) }
     var focusInNav by remember { mutableStateOf(false) }
+
+    val screenFocusSaver = rememberScreenFocusSaver()
+
+    screenFocusSaver.RestoreFocus()
 
     BackHandler(onBack = onBack)
 
@@ -94,6 +102,7 @@ fun SettingsScreen(
                 currentMenu = currentMenu,
                 onMenuChanged = { currentMenu = it },
                 isFocusing = focusInNav,
+                screenFocusSaver = screenFocusSaver,
             )
             SettingContent(
                 modifier = Modifier
@@ -104,6 +113,7 @@ fun SettingsScreen(
                 onNavigateToMediaCodec = onNavigateToMediaCodec,
                 onNavigateToSpeedTest = onNavigateToSpeedTest,
                 onNavigateToLogViewer = onNavigateToLogViewer,
+                screenFocusSaver = screenFocusSaver,
             )
         }
     }
@@ -118,6 +128,7 @@ private fun SettingsNav(
     currentMenu: SettingsMenuNavItem,
     onMenuChanged: (SettingsMenuNavItem) -> Unit,
     isFocusing: Boolean,
+    screenFocusSaver: ScreenFocusSaver,
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -128,7 +139,9 @@ private fun SettingsNav(
     }
 
     LaunchedEffect(Unit) {
-        runCatching { focusRequester.requestFocus() }
+        if (screenFocusSaver.savedKeyValue().isEmpty()) {
+            runCatching { focusRequester.requestFocus() }
+        }
     }
 
     LazyColumn(
@@ -140,9 +153,12 @@ private fun SettingsNav(
             val buttonModifier = if (currentMenu == item) {
                 Modifier
                     .focusRequester(focusRequester)
+                    .focusSaverItem(screenFocusSaver, "nav_${item.name}")
                     .fillMaxWidth()
             } else {
-                Modifier.fillMaxWidth()
+                Modifier
+                    .focusSaverItem(screenFocusSaver, "nav_${item.name}")
+                    .fillMaxWidth()
             }
             item {
                 SettingsMenuButton(
@@ -169,6 +185,7 @@ private fun SettingContent(
     onNavigateToMediaCodec: () -> Unit = {},
     onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
+    screenFocusSaver: ScreenFocusSaver,
 ) {
     Box(
         modifier = modifier.padding(24.dp),
@@ -183,10 +200,12 @@ private fun SettingContent(
                 SettingsMenuNavItem.Other -> OtherSetting(
                     onNavigateToSpeedTest = onNavigateToSpeedTest,
                     onNavigateToLogViewer = onNavigateToLogViewer,
+                    screenFocusSaver = screenFocusSaver,
                 )
                 SettingsMenuNavItem.Storage -> StorageSetting()
                 SettingsMenuNavItem.Info -> InfoSetting(
                     onOpenMediaCodec = onNavigateToMediaCodec,
+                    screenFocusSaver = screenFocusSaver,
                 )
                 SettingsMenuNavItem.About -> AboutSetting()
             }

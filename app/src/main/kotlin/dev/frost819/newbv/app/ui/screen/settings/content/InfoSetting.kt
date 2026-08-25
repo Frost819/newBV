@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.core.focus.touchClickable
 import java.text.DecimalFormat
@@ -41,6 +43,7 @@ import kotlin.math.pow
 fun InfoSetting(
     modifier: Modifier = Modifier,
     onOpenMediaCodec: () -> Unit = {},
+    screenFocusSaver: ScreenFocusSaver? = null,
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -107,9 +110,10 @@ fun InfoSetting(
             Text(text = "内存：可用 ${memoryInfo.first} / 总共 ${memoryInfo.second}")
             Text(text = "存储：可用 ${storageInfo.first} / 总共 ${storageInfo.second}")
         }
+        val buttonModifier = screenFocusSaver?.let { Modifier.focusSaverItem(it, "content_media_codec") } ?: Modifier
         Button(
             onClick = onOpenMediaCodec,
-            modifier = Modifier.touchClickable(onClick = onOpenMediaCodec),
+            modifier = buttonModifier.touchClickable(onClick = onOpenMediaCodec),
         ) {
             Text(text = "编解码信息")
         }

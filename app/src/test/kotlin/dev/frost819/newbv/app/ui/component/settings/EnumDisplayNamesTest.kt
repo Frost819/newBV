@@ -98,8 +98,8 @@ class EnumDisplayNamesTest {
 
     @Test
     fun apiType_displayNames_knownValues() {
-        assertThat(ApiType.Web.displayName).isEqualTo("Web API")
-        assertThat(ApiType.App.displayName).isEqualTo("App gRPC")
+        assertThat(ApiType.Web.displayName).isEqualTo("Web")
+        assertThat(ApiType.App.displayName).isEqualTo("App")
     }
 
     @Test
