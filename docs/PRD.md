@@ -1830,17 +1830,25 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 
 **点播视频**：
 - 显示"xxx 人正在看"
-- 数据来源：视频详情接口的 `stat` 或独立接口
-- 更新频率：播放期间定期刷新（如每 60 秒）
+- 数据来源：独立在线人数接口（详情 `stat` 不含实时在线数）
+- 更新频率：cid 变化即时拉取 + 播放期间每 60 秒刷新
 
 **直播**：
-- 显示"xxx 人在线"
-- 数据来源：直播间信息接口 + WebSocket 实时更新
+- 显示"人气 xxx"
+- 数据来源：直播间信息接口 + WebSocket 实时更新（`ONLINE_RANK_COUNT`）
 - 实时刷新
 
 **显示位置**：
-- 播放器信息控制器（`ControllerVideoInfo`）顶部栏，与时钟并列
-- 直播信息控制器（`LiveInfoController`）[新增]
+- 点播/直播播放器顶部信息栏，标题正下方 meta 行（双人形图标 + 小字），空值隐藏
+- 直播与点播复用同一图标与样式
+
+#### 4.11.3 实现说明
+
+| 项 | 说明 |
+|---|---|
+| Web 接口 | `/x/player/online/total`，无需 WBI 签名/登录；响应含 UP 主展示开关 `show_switch`，关闭时返回 null 隐藏 |
+| App 接口 | `app.bilibili.com/x/v2/view/video/online`（appkey+sign 自动签名）；返回预格式化 `total_text`，客户端剥离"人在看"后缀统一契约 |
+| 触发机制 | ViewModel 监听 `uiState.cid` 变化即时拉取（覆盖直进、详情返回、切集），60s 周期兜底刷新；失败保留旧文案静默降级 |
 
 ### 4.12 自定义快捷键触发时 Toast 提示 [P2]
 

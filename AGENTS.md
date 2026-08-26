@@ -1113,6 +1113,18 @@ Prefs 是全局单例，测试时需注意：
 - `SmallVideoCard` 等组件测试需包裹 `TvMaterialTheme` + `Box(Modifier.width(300.dp))` 提供尺寸约束
 - TV Material3 的 alpha 限制导致点击/长按交互在插桩测试中不稳定，暂不纳入断言
 
+#### 11.5.4 ViewModel 内无限循环任务会拖垮 advanceUntilIdle
+
+**问题**：ViewModel 中 `while(isActive) { ...; delay(N) }` 形式的轮询任务（如时钟更新、在线人数刷新）一旦在测试中被启动，任何 `advanceUntilIdle()` 都会沿虚拟时间无限推进（每次 delay 到期又调度下一轮），导致测试 JVM 满负荷自旋直至 OOM（实测单个测试类耗时 287s 后内存耗尽）。
+
+**原因**：`advanceUntilIdle` 会执行队列中所有任务包括未来调度的；周期性 delay 任务让队列永不为空。MockK 的 `coAnswers { awaitCancellation() }` 兜底桩也不可靠——MockK 可能吞掉取消异常返回默认值，循环照样存活。
+
+**解决方案**：
+1. 轮询类逻辑改为**响应式 Flow 监听**（如 `_uiState.map { it.cid }.distinctUntilChanged().collectLatest { ... }`），由状态变化驱动而非定时 tick，天然可测
+2. 测试用例只用**有界虚拟时间**（`runCurrent()` / `advanceTimeBy(固定值)` + `runCurrent()`），绝不 `advanceUntilIdle`；测试结尾显式 `viewModelScope.cancel()` 清理
+3. 需要挂起 mock 时用 `coAnswers { CompletableDeferred<T>().await() }`（永久挂起且不调度虚拟时间任务），不要用 `awaitCancellation()`
+4. 含无限任务的入口函数（如 `init()`）在测试中避免与 `advanceUntilIdle` 同用；断言同步状态变更的用例可不进 `runTest`
+
 ### 11.6 构建与部署
 
 #### 11.6.1 ADB 安装降级
