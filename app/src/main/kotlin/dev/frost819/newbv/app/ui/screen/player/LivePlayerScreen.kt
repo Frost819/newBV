@@ -77,7 +77,6 @@ fun LivePlayerScreen(
         isError = uiState.playerState == LivePlayerState.Error,
         errorMessage = uiState.errorMessage,
         title = uiState.title,
-        uname = uiState.uname,
         areaName = uiState.areaName,
         onlineCount = uiState.onlineCount,
         clock = getClock(),

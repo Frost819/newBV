@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,12 +55,11 @@ import kotlinx.coroutines.delay
 /**
  * 直播播放器控制器信息层。
  *
- * 包含顶部标题+人气+时钟和底部操作按钮两部分。
+ * 包含顶部标题+人气 meta 行+时钟和底部操作按钮两部分。
  * 通过 [AnimatedVisibility] 控制进出场动画。
  *
  * @param show 是否显示
  * @param title 直播间标题
- * @param uname 主播名
  * @param areaName 分区名
  * @param onlineCount 人气值
  * @param clock 时钟（hour, minute）
@@ -75,7 +75,6 @@ fun LiveControllerInfo(
     modifier: Modifier = Modifier,
     show: Boolean,
     title: String,
-    uname: String,
     areaName: String,
     onlineCount: String,
     clock: Pair<Int, Int>,
@@ -97,7 +96,6 @@ fun LiveControllerInfo(
             LiveControllerInfoTop(
                 modifier = Modifier.align(Alignment.TopCenter),
                 title = title,
-                uname = uname,
                 areaName = areaName,
                 onlineCount = onlineCount,
                 clock = clock,
@@ -124,13 +122,15 @@ fun LiveControllerInfo(
 }
 
 /**
- * 直播控制器顶部信息（标题 + 人气 + 时钟）。
+ * 直播控制器顶部信息（标题 + 人气 meta 行 + 时钟）。
+ *
+ * 人气显示与点播 [ControllerVideoInfoTop] 的同时观看人数保持一致：
+ * 标题正下方 meta 行，双人形图标 + 小字文案。
  */
 @Composable
 private fun LiveControllerInfoTop(
     modifier: Modifier = Modifier,
     title: String,
-    uname: String,
     areaName: String,
     onlineCount: String,
     clock: Pair<Int, Int>,
@@ -178,21 +178,29 @@ private fun LiveControllerInfoTop(
                     modifier = Modifier.padding(end = 16.dp),
                 )
             }
-            Text(
-                text = "人气 $onlineCount",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White.copy(alpha = 0.8f),
-                modifier = Modifier.padding(end = 16.dp),
-            )
             Clock(hour = clock.first, minute = clock.second)
         }
-        if (uname.isNotBlank()) {
-            Text(
+        // 人气 meta 行：与点播的同时观看人数样式一致（标题下方小字）
+        if (onlineCount.isNotBlank()) {
+            Row(
                 modifier = Modifier.padding(top = 4.dp),
-                text = uname,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.7f),
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_player_watching),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.85f),
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = "人气 $onlineCount",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                    ),
+                    color = Color.White.copy(alpha = 0.85f),
+                )
+            }
         }
     }
 }

@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
  * @param isError 是否出错
  * @param errorMessage 错误信息
  * @param title 直播间标题
- * @param uname 主播名
  * @param areaName 分区名
  * @param onlineCount 人气值
  * @param clock 时钟（hour, minute）
@@ -80,7 +79,6 @@ fun LivePlayerController(
     isError: Boolean,
     errorMessage: String?,
     title: String,
-    uname: String,
     areaName: String,
     onlineCount: String,
     clock: Pair<Int, Int>,
@@ -286,7 +284,6 @@ fun LivePlayerController(
         LiveControllerInfo(
             show = showInfoController && !showMenuController,
             title = title,
-            uname = uname,
             areaName = areaName,
             onlineCount = onlineCount,
             clock = clock,

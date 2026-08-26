@@ -184,6 +184,9 @@ object BiliLiveHttpApi {
      *
      * 端点: `GET /room/v1/Room/get_info`
      *
+     * 注意: 该接口已不再返回 uname/face 字段（实测缺失），
+     * 如需主播昵称需另行调用 `/live_user/v1/Master/info?uid=` 查询。
+     *
      * @param roomId 真实房间号（长号，需先通过 [getRoomInit] 转换）
      */
     suspend fun getRoomInfo(roomId: Int): BiliResponse<RoomInfoData> =

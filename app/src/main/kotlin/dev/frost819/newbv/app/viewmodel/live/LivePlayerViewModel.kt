@@ -48,7 +48,6 @@ enum class LivePlayerState {
  */
 data class LivePlayerUiState(
     val title: String = "",
-    val uname: String = "",
     val cover: String = "",
     val roomId: Long = 0,
     val realRoomId: Int = 0,
@@ -199,7 +198,6 @@ class LivePlayerViewModel @Inject constructor(
                 _uiState.update {
                     val newState = it.copy(
                         title = roomInfo.title.ifBlank { _uiState.value.title },
-                        uname = roomInfo.uname,
                         cover = roomInfo.cover.ifBlank { roomInfo.keyframe },
                         areaName = roomInfo.areaV2Name,
                         onlineCount = formatOnlineCount(roomInfo.online),
