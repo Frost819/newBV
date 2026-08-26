@@ -119,6 +119,38 @@ internal class BiliHttpApiTest {
     }
 
     @Test
+    fun `get video online total`() {
+        val aid = localProperties.getProperty("test.video.aid")?.toLongOrNull() ?: 993403941L
+        val cid = localProperties.getProperty("test.video.cid")?.toLongOrNull() ?: 1051761130L
+        assertDoesNotThrow {
+            runBlocking {
+                val response = BiliHttpApi.getVideoOnlineTotal(avid = aid, cid = cid)
+                println(response)
+                assertThat(response.code).isEqualTo(0)
+                val data = response.data
+                assertThat(data).isNotNull()
+                // total 或 count 至少有一个可展示（除非 UP 主关闭了全部开关）
+                println("online total display text: ${data!!.displayText()}")
+            }
+        }
+    }
+
+    @Test
+    fun `get app video online total`() {
+        val aid = localProperties.getProperty("test.video.aid")?.toLongOrNull() ?: 993403941L
+        val cid = localProperties.getProperty("test.video.cid")?.toLongOrNull() ?: 1051761130L
+        assertDoesNotThrow {
+            runBlocking {
+                val response = BiliHttpApi.getAppVideoOnlineTotal(aid = aid, cid = cid)
+                println(response)
+                assertThat(response.code).isEqualTo(0)
+                assertThat(response.data).isNotNull()
+                println("app online total text: ${response.data!!.online.totalText}")
+            }
+        }
+    }
+
+    @Test
     fun `get pgc video play url`() {
         runBlocking {
             val response =

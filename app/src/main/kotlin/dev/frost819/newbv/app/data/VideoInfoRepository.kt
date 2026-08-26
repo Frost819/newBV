@@ -111,6 +111,33 @@ class VideoInfoRepository @Inject constructor(
     }
 
     /**
+     * 获取视频同时观看人数文案。
+     *
+     * 按 [preferApiType] 选择 Web/App 接口。
+     * 任何失败（网络错误、接口错误、UP 主关闭展示开关）均返回 null，
+     * 调用方应保持现有文案不变，绝不影响播放。
+     *
+     * @param aid 视频 AV 号
+     * @param cid 分 P CID
+     * @param preferApiType 接口类型
+     * @return 可展示的人数文本；不展示或失败时为 null
+     */
+    suspend fun getOnlineWatchingText(
+        aid: Long,
+        cid: Long,
+        preferApiType: ApiType,
+    ): String? =
+        runCatching {
+            videoDetailRepository.getOnlineTotalText(
+                aid = aid,
+                cid = cid,
+                preferApiType = preferApiType,
+            )
+        }.onFailure { e ->
+            logger.error(e) { "Failed to get online total: aid=$aid, cid=$cid" }
+        }.getOrNull()
+
+    /**
      * 更新视频列表。
      *
      * @param items 新的视频列表

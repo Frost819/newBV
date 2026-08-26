@@ -28,6 +28,7 @@ import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -38,8 +39,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -324,6 +327,150 @@ class PlayerViewModelTest {
         viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
 
         verify { mockPlayer.pause() }
+    }
+
+    // ── online watching polling tests ────────────────────────
+
+    /**
+     * 初始化 ViewModel 并进入播放会话（会启动时钟与在线人数观察者任务）。
+     */
+    private fun initSession(aid: Long, cid: Long) {
+        viewModel.init(
+            aid = aid,
+            cid = cid,
+            epid = null,
+            title = "Video",
+            lastPlayed = 0,
+            fromSeason = false,
+            subType = 0,
+            seasonId = 0,
+            authorMid = 1L,
+            authorName = "UP",
+        )
+    }
+
+    @Test
+    fun `init fetches online watching immediately when cid ready`() = runTest(testDispatcher) {
+        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } returns "9.4万+"
+
+        initSession(aid = 10, cid = 20)
+        runCurrent()
+
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+        viewModel.viewModelScope.cancel()
+    }
+
+    @Test
+    fun `online watching refreshes periodically every 60s`() = runTest(testDispatcher) {
+        var calls = 0
+        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+            calls++
+            "count$calls"
+        }
+
+        initSession(aid = 10, cid = 20)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
+
+        advanceTimeBy(60_000L)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
+
+        advanceTimeBy(60_000L)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count3")
+        viewModel.viewModelScope.cancel()
+    }
+
+    @Test
+    fun `online watching keeps previous text on refresh failure`() = runTest(testDispatcher) {
+        var calls = 0
+        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+            calls++
+            if (calls == 1) "9.4万+" else throw RuntimeException("network error")
+        }
+
+        initSession(aid = 10, cid = 20)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+
+        advanceTimeBy(60_000L)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+        viewModel.viewModelScope.cancel()
+    }
+
+    @Test
+    fun `playNewVideo clears online watching then refetches for new cid instantly`() = runTest(testDispatcher) {
+        coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+            delay(Long.MAX_VALUE)
+            error("unreachable")
+        }
+        var calls = 0
+        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+            calls++
+            "count$calls"
+        }
+
+        initSession(aid = 10, cid = 20)
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
+
+        // 切集时同步清空旧文案；cid 变化触发观察者立即拉取，无需等待刷新周期
+        viewModel.playNewVideo(VideoListItem(aid = 11, cid = 21, title = "Second"))
+        assertThat(viewModel.uiState.value.onlineWatching).isEmpty()
+
+        runCurrent()
+        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
+
+        // 验证第二次请求使用的是新视频的 aid/cid
+        coVerify {
+            videoInfoRepository.getOnlineWatchingText(aid = 11L, cid = 21L, preferApiType = any())
+        }
+        viewModel.viewModelScope.cancel()
+    }
+
+    @Test
+    fun `online watching skips fetch while cid not ready and fetches once it becomes valid`() =
+        runTest(testDispatcher) {
+            var calls = 0
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+                calls++
+                "text$calls"
+            }
+
+            initSession(aid = 10, cid = 0)
+            runCurrent()
+            advanceTimeBy(6_000L)
+            runCurrent()
+            assertThat(calls).isEqualTo(0)
+
+            // 详情返回、cid 就绪 → 立即拉取（无固定等待）
+            updateUiState { it.copy(cid = 20L) }
+            runCurrent()
+
+            assertThat(calls).isEqualTo(1)
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("text1")
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `online watching does not refetch when unrelated state changes`() = runTest(testDispatcher) {
+        var calls = 0
+        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+            calls++
+            ""
+        }
+
+        initSession(aid = 10, cid = 20)
+        runCurrent()
+        assertThat(calls).isEqualTo(1)
+
+        // 标题等无关字段变化不影响 cid 去重，不应重新拉取
+        updateUiState { it.copy(title = "Changed") }
+        runCurrent()
+        assertThat(calls).isEqualTo(1)
+        viewModel.viewModelScope.cancel()
     }
 
     // ── updatePlaySpeed tests ────────────────────────────────

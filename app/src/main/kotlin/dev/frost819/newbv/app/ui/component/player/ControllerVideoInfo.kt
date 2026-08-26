@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -77,6 +78,7 @@ import kotlinx.coroutines.delay
  * @param seekerState 进度条状态
  * @param title 视频标题
  * @param clock 时钟（hour, minute）
+ * @param onlineWatching 同时观看人数文案（空串时不显示）
  * @param videoShot 缩略图数据（为 null 时不显示预览）
  * @param videoShotCache 缩略图缓存
  * @param fromSeason 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
@@ -105,6 +107,7 @@ fun ControllerVideoInfo(
     seekerState: SeekerState,
     title: String,
     clock: Pair<Int, Int>,
+    onlineWatching: String,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
     fromSeason: Boolean,
@@ -136,6 +139,7 @@ fun ControllerVideoInfo(
                 modifier = Modifier.align(Alignment.TopCenter),
                 title = title,
                 clock = clock,
+                onlineWatching = onlineWatching,
             )
         }
         AnimatedVisibility(
@@ -174,13 +178,16 @@ fun ControllerVideoInfo(
 }
 
 /**
- * 控制器顶部信息（标题 + 时钟）。
+ * 控制器顶部信息（标题 + 同时观看人数 + 时钟）。
+ *
+ * @param onlineWatching 同时观看人数文案（服务端预格式化，如 "9.4万+"），空串时不显示
  */
 @Composable
 fun ControllerVideoInfoTop(
     modifier: Modifier = Modifier,
     title: String,
     clock: Pair<Int, Int>,
+    onlineWatching: String,
 ) {
     Column(
         modifier = modifier
@@ -219,6 +226,28 @@ fun ControllerVideoInfoTop(
                 overflow = TextOverflow.Ellipsis,
             )
             Clock(hour = clock.first, minute = clock.second)
+        }
+        if (onlineWatching.isNotEmpty()) {
+            // 同时观看人数 meta 行（标题下方小字，参考 Web 端样式）
+            Row(
+                modifier = Modifier.padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_player_watching),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.85f),
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = "${onlineWatching}人正在看",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                    ),
+                    color = Color.White.copy(alpha = 0.85f),
+                )
+            }
         }
     }
 }
@@ -505,6 +534,7 @@ private fun ControllerVideoInfoPreview() {
             ),
             title = "示例视频标题",
             clock = Pair(14, 30),
+            onlineWatching = "9.4万+",
             videoShot = null,
             videoShotCache = VideoShotImageCache(),
             fromSeason = false,

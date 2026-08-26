@@ -52,6 +52,8 @@ import dev.frost819.newbv.biliapi.http.entity.video.AddCoin
 import dev.frost819.newbv.biliapi.http.entity.video.CheckSentCoin
 import dev.frost819.newbv.biliapi.http.entity.video.CheckVideoFavoured
 import dev.frost819.newbv.biliapi.http.entity.video.OneClickTripleAction
+import dev.frost819.newbv.biliapi.http.entity.video.OnlineTotal
+import dev.frost819.newbv.biliapi.http.entity.video.OnlineTotalApp
 import dev.frost819.newbv.biliapi.http.entity.video.PlayUrlData
 import dev.frost819.newbv.biliapi.http.entity.video.PlayUrlV2Data
 import dev.frost819.newbv.biliapi.http.entity.video.PopularVideoData
@@ -877,6 +879,47 @@ object BiliHttpApi {
         client.get("/x/player/wbi/v2") {
             parameter("aid", avid)
             parameter("cid", cid)
+        }.body()
+
+    /**
+     * 获取视频同时观看人数（在线人数）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/online.md
+     * 鉴权：无需登录，无需 WBI 签名（路径不含 wbi，签名拦截器不会处理）
+     *
+     * @param avid 稿件 avid，与 [bvid] 至少提供一个
+     * @param bvid 稿件 bvid，与 [avid] 至少提供一个
+     * @param cid 视频 CID，用于选择目标分 P
+     */
+    suspend fun getVideoOnlineTotal(
+        avid: Long? = null,
+        bvid: String? = null,
+        cid: Long,
+    ): BiliResponse<OnlineTotal> =
+        client.get("/x/player/online/total") {
+            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+            parameter("aid", avid)
+            parameter("bvid", bvid)
+            parameter("cid", cid)
+        }.body()
+
+    /**
+     * 获取视频同时观看人数（在线人数）— App 端。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/video/online.md
+     * 鉴权：appkey + sign（host 为 app.bilibili.com，签名拦截器自动追加）
+     *
+     * @param aid 稿件 avid
+     * @param cid 视频 CID，用于选择目标分 P
+     */
+    suspend fun getAppVideoOnlineTotal(
+        aid: Long,
+        cid: Long,
+    ): BiliResponse<OnlineTotalApp> =
+        client.get("https://app.bilibili.com/x/v2/view/video/online") {
+            parameter("aid", aid)
+            parameter("cid", cid)
+            parameter("ts", 0)
         }.body()
 
     /**

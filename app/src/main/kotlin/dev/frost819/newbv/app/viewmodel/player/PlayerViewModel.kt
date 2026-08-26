@@ -48,6 +48,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -58,6 +62,9 @@ import java.util.Calendar
 import javax.inject.Inject
 
 private const val PLAYER_ACTION_TIMEOUT_MS = 10_000L
+
+/** 同时观看人数刷新间隔（cid 就绪后周期轮询）。 */
+private const val ONLINE_WATCH_REFRESH_MS = 60_000L
 
 /**
  * 播放器主 ViewModel。
@@ -128,6 +135,7 @@ class PlayerViewModel @Inject constructor(
     private var backToStartCountdownJob: Job? = null
     private var playNextCountdownJob: Job? = null
     private var previewTipCountdownJob: Job? = null
+    private var onlineWatchJob: Job? = null
 
     /**
      * 切换视频事件。
@@ -229,6 +237,8 @@ class PlayerViewModel @Inject constructor(
         }
 
         startClockUpdater()
+        // 同时观看人数观察者：监听 cid 变化即时拉取，就绪后周期刷新
+        startOnlineWatchingObserver()
     }
 
     /**
@@ -259,6 +269,63 @@ class PlayerViewModel @Inject constructor(
         if (historyCid == _uiState.value.cid && historyTime > 0) {
             _uiState.update { it.copy(lastPlayed = historyTime) }
         }
+    }
+
+    /**
+     * 启动同时观看人数观察者（[init] 时启动，随播放器会话存续）。
+     *
+     * 响应式监听 uiState 的 cid 变化：cid 就绪（直进时详情返回、
+     * init 携带有效 cid、播放器内切集）时立即拉取，之后按
+     * [ONLINE_WATCH_REFRESH_MS] 周期刷新。
+     * [collectLatest] 保证切集瞬间取消旧 cid 的在途请求与等待。
+     * 每轮循环读取实时 uiState，防御 cid 中途失效的边界情况。
+     * 请求失败静默忽略（保留现有文案），绝不影响播放（参考 blbl 降级策略）。
+     */
+    private fun startOnlineWatchingObserver() {
+        onlineWatchJob?.cancel()
+        onlineWatchJob = viewModelScope.launch {
+            _uiState
+                .map { it.cid }
+                .filter { it > 0L }
+                .distinctUntilChanged()
+                .collectLatest {
+                    while (isActive) {
+                        val state = _uiState.value
+                        if (state.cid > 0L && state.aid > 0L) {
+                            fetchOnlineWatching(state)
+                        }
+                        delay(ONLINE_WATCH_REFRESH_MS)
+                    }
+                }
+        }
+    }
+
+    /**
+     * 拉取一次同时观看人数并更新 uiState。
+     *
+     * @param state 当前 UI 状态（提供 aid/cid）
+     */
+    private suspend fun fetchOnlineWatching(state: PlayerUiState) {
+        runCatching {
+            withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                videoInfoRepository.getOnlineWatchingText(
+                    aid = state.aid,
+                    cid = state.cid,
+                    preferApiType = getApiType(),
+                )
+            }
+        }.onSuccess { text ->
+            if (text != null) _uiState.update { it.copy(onlineWatching = text) }
+        }.onFailure { error ->
+            if (error is CancellationException && error !is TimeoutCancellationException) throw error
+            logger.error(error) { "Failed to fetch online watching count" }
+        }
+    }
+
+    /** 停止同时观看人数观察者。 */
+    private fun stopOnlineWatchingPolling() {
+        onlineWatchJob?.cancel()
+        onlineWatchJob = null
     }
 
     /**
@@ -296,6 +363,7 @@ class PlayerViewModel @Inject constructor(
         videoPlayer = null
         stopSeekerUpdater()
         stopDebugInfoUpdater()
+        stopOnlineWatchingPolling()
         clockUpdateJob?.cancel()
     }
 
@@ -534,6 +602,7 @@ class PlayerViewModel @Inject constructor(
                 availableQuality = emptyMap(),
                 availableVideoCodec = emptyList(),
                 availableAudio = emptyList(),
+                onlineWatching = "",
                 showPreviewTip = false,
                 showSkipToNextEp = false,
                 showBackToStart = false,

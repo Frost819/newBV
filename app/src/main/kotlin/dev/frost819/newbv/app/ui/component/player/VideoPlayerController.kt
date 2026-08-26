@@ -520,6 +520,7 @@ fun VideoPlayerController(
             seekerState = seekerState.value,
             title = uiState.title,
             clock = uiState.clock,
+            onlineWatching = uiState.onlineWatching,
             videoShot = uiState.videoShot,
             videoShotCache = videoShotCache,
             fromSeason = fromSeason,

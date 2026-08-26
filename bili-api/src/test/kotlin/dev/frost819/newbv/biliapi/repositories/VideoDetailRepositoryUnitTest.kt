@@ -11,6 +11,8 @@ import dev.frost819.newbv.biliapi.http.entity.season.Publish
 import dev.frost819.newbv.biliapi.http.entity.season.SeasonRights
 import dev.frost819.newbv.biliapi.http.entity.season.WebSeasonData
 import dev.frost819.newbv.biliapi.http.entity.video.Dimension
+import dev.frost819.newbv.biliapi.http.entity.video.OnlineTotal
+import dev.frost819.newbv.biliapi.http.entity.video.OnlineTotalApp
 import dev.frost819.newbv.biliapi.http.entity.video.RelatedVideoInfo
 import dev.frost819.newbv.biliapi.http.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.http.entity.video.VideoMoreInfo
@@ -47,6 +49,7 @@ class VideoDetailRepositoryUnitTest {
 
     companion object {
         private const val AID = 993403941L
+        private const val CID = 1051761130L
     }
 
     @BeforeEach
@@ -147,6 +150,158 @@ class VideoDetailRepositoryUnitTest {
             assertThat(result.userActions.favorite).isFalse()
             assertThat(result.userActions.like).isFalse()
             assertThat(result.userActions.coin).isFalse()
+        }
+
+    @Test
+    fun `getOnlineTotalText Web prefers total by show_switch`() =
+        runTest {
+            val onlineTotal =
+                OnlineTotal(
+                    total = "9.4万+",
+                    count = "50953",
+                    showSwitch = OnlineTotal.ShowSwitch(total = true, count = true),
+                )
+            coEvery { BiliHttpApi.getVideoOnlineTotal(any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = onlineTotal)
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.Web,
+                )
+
+            assertThat(result).isEqualTo("9.4万+")
+            coVerify { BiliHttpApi.getVideoOnlineTotal(eq(AID), isNull(), eq(CID)) }
+        }
+
+    @Test
+    fun `getOnlineTotalText Web returns null when switches disabled`() =
+        runTest {
+            val onlineTotal =
+                OnlineTotal(
+                    total = "9.4万+",
+                    count = "50953",
+                    showSwitch = OnlineTotal.ShowSwitch(total = false, count = false),
+                )
+            coEvery { BiliHttpApi.getVideoOnlineTotal(any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = onlineTotal)
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.Web,
+                )
+
+            assertThat(result).isNull()
+        }
+
+    @Test
+    fun `getOnlineTotalText Web passes bvid when provided`() =
+        runTest {
+            coEvery { BiliHttpApi.getVideoOnlineTotal(any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = OnlineTotal(count = "10"))
+
+            repository.getOnlineTotalText(
+                aid = 0L,
+                cid = CID,
+                preferApiType = ApiType.Web,
+                bvid = "BV1xx",
+            )
+
+            coVerify { BiliHttpApi.getVideoOnlineTotal(eq(0L), eq("BV1xx"), eq(CID)) }
+        }
+
+    @Test
+    fun `getOnlineTotalText Web throws on non-zero code`() =
+        runTest {
+            coEvery { BiliHttpApi.getVideoOnlineTotal(any(), any(), any()) } returns
+                BiliResponse<OnlineTotal>(code = -404, message = "无视频")
+
+            val error =
+                runCatching {
+                    repository.getOnlineTotalText(aid = AID, cid = CID, preferApiType = ApiType.Web)
+                }.exceptionOrNull()
+
+            assertThat(error).isInstanceOf(IllegalStateException::class.java)
+        }
+
+    @Test
+    fun `getOnlineTotalText App returns total_text`() =
+        runTest {
+            coEvery { BiliHttpApi.getAppVideoOnlineTotal(any(), any()) } returns
+                BiliResponse(
+                    code = 0,
+                    message = "",
+                    data = OnlineTotalApp(online = OnlineTotalApp.Online(totalText = "8.8万+人在看")),
+                )
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result).isEqualTo("8.8万+")
+            coVerify { BiliHttpApi.getAppVideoOnlineTotal(eq(AID), eq(CID)) }
+        }
+
+    @Test
+    fun `getOnlineTotalText App strips suffix and keeps bare number`() =
+        runTest {
+            coEvery { BiliHttpApi.getAppVideoOnlineTotal(any(), any()) } returns
+                BiliResponse(
+                    code = 0,
+                    message = "",
+                    data = OnlineTotalApp(online = OnlineTotalApp.Online(totalText = "1000+人在看")),
+                )
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result).isEqualTo("1000+")
+        }
+
+    @Test
+    fun `getOnlineTotalText App keeps text without suffix`() =
+        runTest {
+            coEvery { BiliHttpApi.getAppVideoOnlineTotal(any(), any()) } returns
+                BiliResponse(
+                    code = 0,
+                    message = "",
+                    data = OnlineTotalApp(online = OnlineTotalApp.Online(totalText = "9.4万+")),
+                )
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result).isEqualTo("9.4万+")
+        }
+
+    @Test
+    fun `getOnlineTotalText App returns null when total_text blank`() =
+        runTest {
+            coEvery { BiliHttpApi.getAppVideoOnlineTotal(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = OnlineTotalApp())
+
+            val result =
+                repository.getOnlineTotalText(
+                    aid = AID,
+                    cid = CID,
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result).isNull()
         }
 
     private fun fakeHttpVideoDetail(): VideoDetail {

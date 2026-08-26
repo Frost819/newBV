@@ -29,6 +29,7 @@ data class PlayerUiState(
     val authorMid: Long = 0,
     val authorName: String = "",
     val title: String = "",
+    val onlineWatching: String = "",
     val videoHeight: Int = 0,
     val videoWidth: Int = 0,
     val lastPlayed: Int = 0,
