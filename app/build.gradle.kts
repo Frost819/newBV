@@ -55,6 +55,29 @@ android {
         }
     }
 
+    androidComponents {
+        onVariants { variant ->
+            val variantName = variant.name
+            val packageTaskName = "package" + variantName.replaceFirstChar { it.uppercase() }
+            tasks.configureEach {
+                if (name != packageTaskName) return@configureEach
+                doLast {
+                    val apkDirectory = layout.buildDirectory.dir("outputs/apk/$variantName").get().asFile
+                    apkDirectory.listFiles()
+                        ?.filter { it.extension == "apk" }
+                        ?.forEach { apkFile ->
+                            val renamedFile = apkFile.resolveSibling(
+                                "newBV_${AppConfiguration.versionName}_$variantName.apk",
+                            )
+                            if (apkFile != renamedFile) {
+                                apkFile.renameTo(renamedFile)
+                            }
+                        }
+                }
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
