@@ -320,8 +320,9 @@ fun VideoPlayerScreen(
                 ),
             )
         },
-        onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
-    ) {
+         onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
+         onShowShortcutTip = { text -> playerViewModel.showShortcutTip(text) },
+     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,

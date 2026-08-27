@@ -45,7 +45,6 @@ internal object PrefKeys {
     val enableSoftwareVideoDecoder = booleanPreferencesKey("enable_software_video_decoder")
     val actionAfterPlay = intPreferencesKey("action_after_play")
     val playerCustomShortcuts = stringPreferencesKey("player_custom_shortcuts")
-    val shortcutToast = booleanPreferencesKey("shortcut_toast")
 
     // ===== 播放器 - 音频 =====
     val defaultAudio = intPreferencesKey("da")

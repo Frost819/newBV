@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.settings.content
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +16,14 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
@@ -231,6 +235,12 @@ private fun CaptureKeyStage(
     onDismiss: () -> Unit,
     onCaptured: (keyCode: Int) -> Unit,
 ) {
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        runCatching { focusRequester.requestFocus() }
+    }
+
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier.fillMaxWidth(0.6f),
@@ -241,21 +251,23 @@ private fun CaptureKeyStage(
             Box(
                 modifier = Modifier
                     .padding(32.dp)
+                    .focusRequester(focusRequester)
+                    .focusable()
                     .onPreviewKeyEvent { keyEvent ->
-                        if (keyEvent.type == KeyEventType.KeyDown) {
-                            val keyCode = keyEvent.key.nativeKeyCode
-                            if (PlayerCustomShortcutKeys.isCancelKeyCode(keyCode)) {
+                        if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent true
+                        if (keyEvent.nativeKeyEvent.repeatCount != 0) return@onPreviewKeyEvent true
+
+                        val keyCode = keyEvent.key.nativeKeyCode
+                        when {
+                            PlayerCustomShortcutKeys.isCancelKeyCode(keyCode) -> {
                                 onDismiss()
-                                true
-                            } else if (PlayerCustomShortcutKeys.isAllowedKeyCode(keyCode)) {
-                                onCaptured(keyCode)
-                                true
-                            } else {
-                                false
                             }
-                        } else {
-                            false
+
+                            PlayerCustomShortcutKeys.isAllowedKeyCode(keyCode) -> {
+                                onCaptured(keyCode)
+                            }
                         }
+                        true
                     },
             ) {
                 Text(

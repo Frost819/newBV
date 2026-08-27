@@ -213,8 +213,7 @@ class PrefDelegateTest {
         Prefs.firstHomeTopNavItem = HomeTopNavItem.Recommend
         Prefs.firstPersonalTopNavItem = PersonalTopNavItem.History
         Prefs.showHotword = false
-        Prefs.otherCacheThreshold = 300
-        Prefs.shortcutToast = false
+        Prefs.cacheThreshold = 300
         Prefs.playerCustomShortcuts = "[{\"key\":\"test\"}]"
 
         delay(200)

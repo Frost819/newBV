@@ -62,7 +62,6 @@ import java.util.Calendar
 import javax.inject.Inject
 
 private const val PLAYER_ACTION_TIMEOUT_MS = 10_000L
-
 /** 同时观看人数刷新间隔（cid 就绪后周期轮询）。 */
 private const val ONLINE_WATCH_REFRESH_MS = 60_000L
 
@@ -134,6 +133,7 @@ class PlayerViewModel @Inject constructor(
     private var loadVideoJob: Job? = null
     private var backToStartCountdownJob: Job? = null
     private var playNextCountdownJob: Job? = null
+    private var shortcutTipJob: Job? = null
     private var previewTipCountdownJob: Job? = null
     private var onlineWatchJob: Job? = null
 
@@ -512,14 +512,34 @@ class PlayerViewModel @Inject constructor(
     fun playNextNow() {
         playNextCountdownJob?.cancel()
         _uiState.update { it.copy(showSkipToNextEp = false) }
-        findNextPlayTarget()?.let { playNextTarget(it) }
+        val target = findNextPlayTarget()
+        if (target != null) {
+            playNextTarget(target)
+        } else {
+            showShortcutTip("没有下一集")
+        }
     }
 
     /** 立即播放上一集。 */
     fun playPreviousNow() {
         playNextCountdownJob?.cancel()
         _uiState.update { it.copy(showSkipToNextEp = false) }
-        findPreviousPlayTarget()?.let { playNextTarget(it) }
+        val target = findPreviousPlayTarget()
+        if (target != null) {
+            playNextTarget(target)
+        } else {
+            showShortcutTip("没有上一集")
+        }
+    }
+
+    /** 显示快捷键提示；新的提示会覆盖旧提示并重新计时。 */
+    fun showShortcutTip(text: String) {
+        shortcutTipJob?.cancel()
+        _uiState.update { it.copy(shortcutTipText = text) }
+        shortcutTipJob = viewModelScope.launch {
+            delay(PlayerConstants.PLAYER_TIP_DURATION_MS)
+            _uiState.update { it.copy(shortcutTipText = null) }
+        }
     }
 
     /** 取消自动播放下一集。 */
@@ -606,6 +626,7 @@ class PlayerViewModel @Inject constructor(
                 showPreviewTip = false,
                 showSkipToNextEp = false,
                 showBackToStart = false,
+                shortcutTipText = null,
             )
         }
 

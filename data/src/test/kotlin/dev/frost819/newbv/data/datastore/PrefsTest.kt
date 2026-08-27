@@ -180,23 +180,18 @@ class PrefsTest {
     }
 
     @Test
-    fun `default imageCacheThreshold is 500`() {
-        assertThat(Prefs.imageCacheThreshold).isEqualTo(500)
+    fun `default cacheThreshold is 0`() {
+        assertThat(Prefs.cacheThreshold).isEqualTo(0)
     }
 
     @Test
-    fun `default otherCacheThreshold is 200`() {
-        assertThat(Prefs.otherCacheThreshold).isEqualTo(200)
+    fun `default cacheAutoClean is true`() {
+        assertThat(Prefs.cacheAutoClean).isTrue()
     }
 
     @Test
     fun `default crashReportEnabled is false`() {
         assertThat(Prefs.crashReportEnabled).isFalse()
-    }
-
-    @Test
-    fun `default shortcutToast is true`() {
-        assertThat(Prefs.shortcutToast).isTrue()
     }
 
     @Test
@@ -239,7 +234,7 @@ class PrefsTest {
         Prefs.biliJct = "test_bili_jct"
         Prefs.incognitoMode = true
         Prefs.density = 2.5f
-        Prefs.imageCacheThreshold = 1000
+        Prefs.cacheThreshold = 1000
 
         awaitAsyncWrite()
 
@@ -249,7 +244,7 @@ class PrefsTest {
         assertThat(Prefs.biliJct).isEqualTo("test_bili_jct")
         assertThat(Prefs.incognitoMode).isTrue()
         assertThat(Prefs.density).isEqualTo(2.5f)
-        assertThat(Prefs.imageCacheThreshold).isEqualTo(1000)
+        assertThat(Prefs.cacheThreshold).isEqualTo(1000)
     }
 
     @Test

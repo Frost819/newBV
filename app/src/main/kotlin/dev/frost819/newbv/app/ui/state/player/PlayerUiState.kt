@@ -46,6 +46,7 @@ data class PlayerUiState(
     val showSkipToNextEp: Boolean = false,
     val showBackToStart: Boolean = false,
     val showPreviewTip: Boolean = false,
+    val shortcutTipText: String? = null,
 
     // 可用资源
     val availableQuality: Map<Int, String> = emptyMap(),

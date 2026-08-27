@@ -1,22 +1,15 @@
 package dev.frost819.newbv.app.entity.player.shortcut
 
 import android.view.KeyEvent
-import dev.frost819.newbv.app.entity.player.VideoAspectRatio
-import dev.frost819.newbv.data.datastore.Audio
-import dev.frost819.newbv.data.datastore.Resolution
-import dev.frost819.newbv.data.datastore.VideoCodec
+import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutsCodec.normalize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.floatOrNull
-import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import kotlin.math.roundToInt
 
 /**
  * 自定义快捷键绑定。
@@ -77,10 +70,11 @@ object PlayerCustomShortcutKeys {
  * 快捷键序列化/反序列化编解码器。
  *
  * 支持两种 JSON 格式：
- * - 数组格式（旧版兼容）：`[{"k":19,"a":"toggle_play_pause","p":{}}]`
+ * - 数组格式（旧版兼容）：`[{"k":19,"a":"toggle_danmaku","p":{}}]`
  * - 版本化格式：`{"v":1,"items":[...]}`
  *
  * [normalize] 确保：键码去重、动作参数范围合法、禁用键过滤。
+ * 已移除的历史动作（如 set_resolution）在解析时被静默丢弃。
  */
 object PlayerCustomShortcutsCodec {
     private const val VERSION = 1
@@ -139,182 +133,61 @@ object PlayerCustomShortcutsCodec {
 
     private fun PlayerCustomShortcutAction.normalized(): PlayerCustomShortcutAction? {
         return when (this) {
-            is PlayerCustomShortcutAction.SetPlaybackSpeed ->
+            is PlayerCustomShortcutAction.TogglePlaybackSpeed ->
                 copy(speed = speed.coerceIn(0.25f, 4f))
-
-            is PlayerCustomShortcutAction.SetResolution ->
-                takeIf { Resolution.entries.any { resolution -> resolution.code == qualityId } }
-
-            is PlayerCustomShortcutAction.SetDanmakuScale ->
-                copy(scale = scale.coerceIn(0.5f, 4f))
-
-            is PlayerCustomShortcutAction.SetDanmakuOpacity ->
-                copy(opacity = opacity.coerceIn(0f, 1f))
-
-            is PlayerCustomShortcutAction.SetDanmakuSpeedFactor ->
-                copy(factor = factor.coerceIn(0.5f, 1.5f))
-
-            is PlayerCustomShortcutAction.SetDanmakuArea ->
-                copy(area = area.coerceIn(0f, 1f))
-
-            is PlayerCustomShortcutAction.SetSubtitleFontSize ->
-                copy(sp = sp.coerceIn(12, 48))
-
-            is PlayerCustomShortcutAction.SetSubtitleBackgroundOpacity ->
-                copy(opacity = opacity.coerceIn(0f, 1f))
-
-            is PlayerCustomShortcutAction.SetSubtitleBottomPadding ->
-                copy(dp = dp.coerceIn(0, 48))
 
             else -> this
         }
     }
 
-    @Suppress("CyclomaticComplexMethod")
     private fun PlayerCustomShortcutAction.toStorage(): Pair<String, JsonObject> {
         return when (this) {
-            PlayerCustomShortcutAction.ShowInfo -> "show_info" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenSettings -> "open_settings" to buildJsonObject { }
-            PlayerCustomShortcutAction.OpenVideoList -> "open_video_list" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenRelatedVideos -> "open_related_videos" to buildJsonObject { }
-            PlayerCustomShortcutAction.TogglePlayPause -> "toggle_play_pause" to buildJsonObject { }
             PlayerCustomShortcutAction.PlayPrevious -> "play_previous" to buildJsonObject { }
             PlayerCustomShortcutAction.PlayNext -> "play_next" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenVideoDetail -> "open_video_detail" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenUpPage -> "open_up_page" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleLoop -> "toggle_loop" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleDanmaku -> "toggle_danmaku" to buildJsonObject { }
+            PlayerCustomShortcutAction.ToggleDanmakuMask -> "toggle_danmaku_mask" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleSubtitle -> "toggle_subtitle" to buildJsonObject { }
             PlayerCustomShortcutAction.TogglePersistentBottomProgress ->
                 "toggle_persistent_bottom_progress" to buildJsonObject { }
 
-            is PlayerCustomShortcutAction.SetPlaybackSpeed ->
+            is PlayerCustomShortcutAction.TogglePlaybackSpeed ->
                 "set_playback_speed" to buildJsonObject { put("speed", speed) }
-
-            is PlayerCustomShortcutAction.SetResolution ->
-                "set_resolution" to buildJsonObject { put("quality_id", qualityId) }
-
-            is PlayerCustomShortcutAction.SetAudio ->
-                "set_audio" to buildJsonObject { put("audio", audio.code) }
-
-            is PlayerCustomShortcutAction.SetVideoCodec ->
-                "set_video_codec" to buildJsonObject { put("codec", codec.name) }
-
-            is PlayerCustomShortcutAction.SetAspectRatio ->
-                "set_aspect_ratio" to buildJsonObject { put("aspect_ratio", aspectRatio.name) }
-
-            is PlayerCustomShortcutAction.SetDanmakuScale ->
-                "set_danmaku_scale" to buildJsonObject { put("scale", scale) }
-
-            is PlayerCustomShortcutAction.SetDanmakuOpacity ->
-                "set_danmaku_opacity" to buildJsonObject { put("opacity", opacity) }
-
-            is PlayerCustomShortcutAction.SetDanmakuSpeedFactor ->
-                "set_danmaku_speed_factor" to buildJsonObject { put("factor", factor) }
-
-            is PlayerCustomShortcutAction.SetDanmakuArea ->
-                "set_danmaku_area" to buildJsonObject { put("area", area) }
-
-            is PlayerCustomShortcutAction.SetDanmakuMaskEnabled ->
-                "set_danmaku_mask_enabled" to buildJsonObject { put("enabled", enabled) }
-
-            is PlayerCustomShortcutAction.SetSubtitleFontSize ->
-                "set_subtitle_font_size" to buildJsonObject { put("sp", sp) }
-
-            is PlayerCustomShortcutAction.SetSubtitleBackgroundOpacity ->
-                "set_subtitle_background_opacity" to buildJsonObject { put("opacity", opacity) }
-
-            is PlayerCustomShortcutAction.SetSubtitleBottomPadding ->
-                "set_subtitle_bottom_padding" to buildJsonObject { put("dp", dp) }
         }
     }
 
-    @Suppress("CyclomaticComplexMethod", "ReturnCount")
     private fun actionFromStorage(
         action: String,
         params: JsonObject,
     ): PlayerCustomShortcutAction? {
         return when (action) {
-            "show_info" -> PlayerCustomShortcutAction.ShowInfo
             "open_settings" -> PlayerCustomShortcutAction.OpenSettings
-            "open_video_list" -> PlayerCustomShortcutAction.OpenVideoList
             "open_related_videos" -> PlayerCustomShortcutAction.OpenRelatedVideos
-            "toggle_play_pause" -> PlayerCustomShortcutAction.TogglePlayPause
             "play_previous" -> PlayerCustomShortcutAction.PlayPrevious
             "play_next" -> PlayerCustomShortcutAction.PlayNext
             "open_video_detail" -> PlayerCustomShortcutAction.OpenVideoDetail
             "open_up_page" -> PlayerCustomShortcutAction.OpenUpPage
             "toggle_loop" -> PlayerCustomShortcutAction.ToggleLoop
             "toggle_danmaku" -> PlayerCustomShortcutAction.ToggleDanmaku
+            "toggle_danmaku_mask" -> PlayerCustomShortcutAction.ToggleDanmakuMask
             "toggle_subtitle" -> PlayerCustomShortcutAction.ToggleSubtitle
             "toggle_persistent_bottom_progress" -> PlayerCustomShortcutAction.TogglePersistentBottomProgress
 
-            "set_playback_speed" -> PlayerCustomShortcutAction.SetPlaybackSpeed(
+            "set_playback_speed" -> PlayerCustomShortcutAction.TogglePlaybackSpeed(
                 params.float("speed") ?: return null,
             )
 
-            "set_resolution", "set_resolution_qn" -> PlayerCustomShortcutAction.SetResolution(
-                params.int("quality_id") ?: params.int("qn") ?: return null,
-            )
-
-            "set_audio", "set_audio_id" -> {
-                val audioCode = params.int("audio") ?: params.int("audio_id") ?: return null
-                val audio = Audio.entries.find { it.code == audioCode } ?: return null
-                PlayerCustomShortcutAction.SetAudio(audio)
-            }
-
-            "set_video_codec", "set_codec" -> {
-                val codecName = params.string("codec") ?: return null
-                val codec = VideoCodec.entries.find { it.name == codecName } ?: return null
-                PlayerCustomShortcutAction.SetVideoCodec(codec)
-            }
-
-            "set_aspect_ratio" -> {
-                val aspectRatioName = params.string("aspect_ratio") ?: return null
-                val aspectRatio = VideoAspectRatio.entries.find { it.name == aspectRatioName } ?: return null
-                PlayerCustomShortcutAction.SetAspectRatio(aspectRatio)
-            }
-
-            "set_danmaku_scale", "set_danmaku_text_size" -> PlayerCustomShortcutAction.SetDanmakuScale(
-                params.float("scale") ?: params.float("size") ?: return null,
-            )
-
-            "set_danmaku_opacity" -> PlayerCustomShortcutAction.SetDanmakuOpacity(
-                params.float("opacity") ?: return null,
-            )
-
-            "set_danmaku_speed_factor", "set_danmaku_speed" -> PlayerCustomShortcutAction.SetDanmakuSpeedFactor(
-                params.float("factor") ?: params.float("speed") ?: return null,
-            )
-
-            "set_danmaku_area" -> PlayerCustomShortcutAction.SetDanmakuArea(
-                params.float("area") ?: return null,
-            )
-
-            "set_danmaku_mask_enabled" -> PlayerCustomShortcutAction.SetDanmakuMaskEnabled(
-                params.boolean("enabled") ?: return null,
-            )
-
-            "set_subtitle_font_size", "set_subtitle_text_size" -> PlayerCustomShortcutAction.SetSubtitleFontSize(
-                params.int("sp") ?: params.int("size") ?: return null,
-            )
-
-            "set_subtitle_background_opacity" -> PlayerCustomShortcutAction.SetSubtitleBackgroundOpacity(
-                params.float("opacity") ?: return null,
-            )
-
-            "set_subtitle_bottom_padding" -> PlayerCustomShortcutAction.SetSubtitleBottomPadding(
-                params.int("dp") ?: params.int("padding") ?: return null,
-            )
-
+            // 已移除的历史动作返回 null，解析时被静默丢弃
             else -> null
         }?.normalized()
     }
 
-    private fun JsonObject.int(name: String): Int? = this[name]?.jsonPrimitive?.intOrNull
-    private fun JsonObject.float(name: String): Float? = this[name]?.jsonPrimitive?.floatOrNull
-    private fun JsonObject.boolean(name: String): Boolean? = this[name]?.jsonPrimitive?.booleanOrNull
-    private fun JsonObject.string(name: String): String? = this[name]?.jsonPrimitive?.content
+    private fun JsonObject.float(name: String): Float? =
+        this[name]?.jsonPrimitive?.floatOrNull
 
     @Serializable
     private data class PlayerCustomShortcutsPayload(
@@ -329,8 +202,3 @@ object PlayerCustomShortcutsCodec {
         @SerialName("p") val params: JsonObject = buildJsonObject { },
     )
 }
-
-/**
- * Float 转百分比显示文本。
- */
-internal fun Float.percentText(): String = "${(this * 100).roundToInt()}%"

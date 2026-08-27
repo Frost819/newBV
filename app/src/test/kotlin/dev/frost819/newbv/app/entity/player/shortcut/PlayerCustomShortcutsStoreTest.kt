@@ -66,7 +66,7 @@ class PlayerCustomShortcutsStoreTest {
     @Test
     fun `save persists shortcuts and returns normalized list`() {
         val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_UP, PlayerCustomShortcutAction.TogglePlayPause),
+            PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_UP, PlayerCustomShortcutAction.ToggleLoop),
             PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_DOWN, PlayerCustomShortcutAction.ToggleDanmaku),
         )
 
@@ -93,7 +93,7 @@ class PlayerCustomShortcutsStoreTest {
     @Test
     fun `getByKey returns map keyed by keyCode`() {
         val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause),
+            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
             PlayerCustomShortcut(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku),
         )
 
@@ -101,23 +101,23 @@ class PlayerCustomShortcutsStoreTest {
         val map = PlayerCustomShortcutsStore.getByKey()
 
         assertThat(map).hasSize(2)
-        assertThat(map[KeyEvent.KEYCODE_1]?.action).isEqualTo(PlayerCustomShortcutAction.TogglePlayPause)
+        assertThat(map[KeyEvent.KEYCODE_1]?.action).isEqualTo(PlayerCustomShortcutAction.ToggleSubtitle)
         assertThat(map[KeyEvent.KEYCODE_2]?.action).isEqualTo(PlayerCustomShortcutAction.ToggleDanmaku)
     }
 
     @Test
     fun `upsert adds new shortcut`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmakuMask)
 
         val shortcuts = PlayerCustomShortcutsStore.get()
         assertThat(shortcuts).hasSize(1)
         assertThat(shortcuts[0].keyCode).isEqualTo(KeyEvent.KEYCODE_1)
-        assertThat(shortcuts[0].action).isEqualTo(PlayerCustomShortcutAction.TogglePlayPause)
+        assertThat(shortcuts[0].action).isEqualTo(PlayerCustomShortcutAction.ToggleDanmakuMask)
     }
 
     @Test
     fun `upsert updates existing shortcut with same keyCode`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle)
         PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku)
 
         val shortcuts = PlayerCustomShortcutsStore.get()
@@ -127,7 +127,7 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `upsert preserves other shortcuts when updating one`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle)
         PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku)
         PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop)
 
@@ -141,7 +141,7 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `remove deletes shortcut by keyCode`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle)
         PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku)
 
         PlayerCustomShortcutsStore.remove(KeyEvent.KEYCODE_1)
@@ -153,7 +153,7 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `remove non-existent keyCode does not throw`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle)
 
         val result = PlayerCustomShortcutsStore.remove(KeyEvent.KEYCODE_0)
 
@@ -162,7 +162,7 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `clear removes all shortcuts`() {
-        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause)
+        PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle)
         PlayerCustomShortcutsStore.upsert(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku)
 
         val result = PlayerCustomShortcutsStore.clear()
@@ -174,7 +174,7 @@ class PlayerCustomShortcutsStoreTest {
     @Test
     fun `save filters forbidden keyCodes`() {
         val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.TogglePlayPause),
+            PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.ToggleSubtitle),
             PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
         )
 
@@ -187,7 +187,7 @@ class PlayerCustomShortcutsStoreTest {
     @Test
     fun `save deduplicates by keyCode keeping last`() {
         val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlayPause),
+            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
             PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku),
         )
 

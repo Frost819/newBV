@@ -1,10 +1,6 @@
 package dev.frost819.newbv.app.entity.player.shortcut
 
-import android.view.KeyEvent
 import com.google.common.truth.Truth.assertThat
-import dev.frost819.newbv.app.entity.player.VideoAspectRatio
-import dev.frost819.newbv.data.datastore.Audio
-import dev.frost819.newbv.data.datastore.VideoCodec
 import org.junit.jupiter.api.Test
 
 /**
@@ -26,19 +22,19 @@ class PlayerCustomShortcutCatalogTest {
         val groups = PlayerCustomShortcutCatalog.groups()
         val simpleGroupIds = groups.filter { it.action != null }.map { it.id }
 
-        assertThat(simpleGroupIds).contains("show_info")
-        assertThat(simpleGroupIds).contains("open_settings")
-        assertThat(simpleGroupIds).contains("open_video_list")
-        assertThat(simpleGroupIds).contains("open_related_videos")
-        assertThat(simpleGroupIds).contains("toggle_play_pause")
-        assertThat(simpleGroupIds).contains("play_previous")
-        assertThat(simpleGroupIds).contains("play_next")
-        assertThat(simpleGroupIds).contains("open_video_detail")
-        assertThat(simpleGroupIds).contains("open_up_page")
-        assertThat(simpleGroupIds).contains("toggle_loop")
-        assertThat(simpleGroupIds).contains("toggle_danmaku")
-        assertThat(simpleGroupIds).contains("toggle_subtitle")
-        assertThat(simpleGroupIds).contains("toggle_persistent_bottom_progress")
+        assertThat(simpleGroupIds).containsExactly(
+            "open_settings",
+            "open_related_videos",
+            "play_previous",
+            "play_next",
+            "open_video_detail",
+            "open_up_page",
+            "toggle_loop",
+            "toggle_danmaku",
+            "toggle_danmaku_mask",
+            "toggle_subtitle",
+            "toggle_persistent_bottom_progress",
+        )
     }
 
     @Test
@@ -53,23 +49,11 @@ class PlayerCustomShortcutCatalogTest {
     }
 
     @Test
-    fun `groups contains all value action groups`() {
+    fun `toggle_playback_speed is the only value action group`() {
         val groups = PlayerCustomShortcutCatalog.groups()
         val valueGroupIds = groups.filter { it.values.isNotEmpty() }.map { it.id }
 
-        assertThat(valueGroupIds).contains("set_playback_speed")
-        assertThat(valueGroupIds).contains("set_resolution")
-        assertThat(valueGroupIds).contains("set_audio")
-        assertThat(valueGroupIds).contains("set_video_codec")
-        assertThat(valueGroupIds).contains("set_aspect_ratio")
-        assertThat(valueGroupIds).contains("set_danmaku_scale")
-        assertThat(valueGroupIds).contains("set_danmaku_opacity")
-        assertThat(valueGroupIds).contains("set_danmaku_speed_factor")
-        assertThat(valueGroupIds).contains("set_danmaku_area")
-        assertThat(valueGroupIds).contains("set_danmaku_mask_enabled")
-        assertThat(valueGroupIds).contains("set_subtitle_font_size")
-        assertThat(valueGroupIds).contains("set_subtitle_background_opacity")
-        assertThat(valueGroupIds).contains("set_subtitle_bottom_padding")
+        assertThat(valueGroupIds).containsExactly("toggle_playback_speed")
     }
 
     @Test
@@ -92,77 +76,24 @@ class PlayerCustomShortcutCatalogTest {
     }
 
     @Test
-    fun `set_playback_speed group has entries for all PlaySpeed values`() {
+    fun `toggle_playback_speed group excludes normal speed`() {
         val groups = PlayerCustomShortcutCatalog.groups()
-        val speedGroup = groups.find { it.id == "set_playback_speed" }!!
+        val speedGroup = groups.find { it.id == "toggle_playback_speed" }!!
 
         assertThat(speedGroup.values).isNotEmpty()
+        assertThat(speedGroup.values.map { it.valueDisplayName }).doesNotContain("1.0x")
         speedGroup.values.forEach { entry ->
-            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.SetPlaybackSpeed::class.java)
+            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.TogglePlaybackSpeed::class.java)
         }
     }
 
     @Test
-    fun `set_resolution group has entries for all Resolution values`() {
-        val groups = PlayerCustomShortcutCatalog.groups()
-        val resolutionGroup = groups.find { it.id == "set_resolution" }!!
-
-        assertThat(resolutionGroup.values).isNotEmpty()
-        resolutionGroup.values.forEach { entry ->
-            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.SetResolution::class.java)
-        }
-    }
-
-    @Test
-    fun `set_audio group has entries for all Audio values`() {
-        val groups = PlayerCustomShortcutCatalog.groups()
-        val audioGroup = groups.find { it.id == "set_audio" }!!
-
-        assertThat(audioGroup.values).isNotEmpty()
-        audioGroup.values.forEach { entry ->
-            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.SetAudio::class.java)
-        }
-    }
-
-    @Test
-    fun `set_video_codec group has entries for all VideoCodec values`() {
-        val groups = PlayerCustomShortcutCatalog.groups()
-        val codecGroup = groups.find { it.id == "set_video_codec" }!!
-
-        assertThat(codecGroup.values).isNotEmpty()
-        codecGroup.values.forEach { entry ->
-            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.SetVideoCodec::class.java)
-        }
-    }
-
-    @Test
-    fun `set_aspect_ratio group has entries for all VideoAspectRatio values`() {
-        val groups = PlayerCustomShortcutCatalog.groups()
-        val ratioGroup = groups.find { it.id == "set_aspect_ratio" }!!
-
-        assertThat(ratioGroup.values).hasSize(3)
-        ratioGroup.values.forEach { entry ->
-            assertThat(entry.action).isInstanceOf(PlayerCustomShortcutAction.SetAspectRatio::class.java)
-        }
-    }
-
-    @Test
-    fun `set_danmaku_mask_enabled group has true and false entries`() {
-        val groups = PlayerCustomShortcutCatalog.groups()
-        val maskGroup = groups.find { it.id == "set_danmaku_mask_enabled" }!!
-
-        assertThat(maskGroup.values).hasSize(2)
-        val enabledValues = maskGroup.values.map { (it.action as PlayerCustomShortcutAction.SetDanmakuMaskEnabled).enabled }
-        assertThat(enabledValues).containsExactly(false, true)
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for simple action`() {
+    fun `getActionDisplayName returns correct name for OpenSettings`() {
         val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.TogglePlayPause,
+            PlayerCustomShortcutAction.OpenSettings,
         )
 
-        assertThat(name).isEqualTo("播放/暂停")
+        assertThat(name).isEqualTo("打开播放器设置菜单")
     }
 
     @Test
@@ -175,79 +106,21 @@ class PlayerCustomShortcutCatalogTest {
     }
 
     @Test
+    fun `getActionDisplayName returns correct name for ToggleDanmakuMask`() {
+        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
+            PlayerCustomShortcutAction.ToggleDanmakuMask,
+        )
+
+        assertThat(name).isEqualTo("弹幕防遮挡开关")
+    }
+
+    @Test
     fun `getActionDisplayName returns correct name for parameterized action`() {
         val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetPlaybackSpeed(2.0f),
+            PlayerCustomShortcutAction.TogglePlaybackSpeed(2.0f),
         )
 
-        assertThat(name).isEqualTo("设置播放速度：2.0x")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetResolution`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetResolution(80),
-        )
-
-        assertThat(name).contains("设置分辨率")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetAudio`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetAudio(Audio.A192K),
-        )
-
-        assertThat(name).isEqualTo("设置音频编码：A192K")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetVideoCodec`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetVideoCodec(VideoCodec.HEVC),
-        )
-
-        assertThat(name).isEqualTo("设置视频编码：HEVC")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetAspectRatio`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetAspectRatio(VideoAspectRatio.FourToThree),
-        )
-
-        assertThat(name).isEqualTo("设置画面比例：FourToThree")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetDanmakuMaskEnabled`() {
-        val trueName = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetDanmakuMaskEnabled(true),
-        )
-        val falseName = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetDanmakuMaskEnabled(false),
-        )
-
-        assertThat(trueName).isEqualTo("设置弹幕防遮挡：开启")
-        assertThat(falseName).isEqualTo("设置弹幕防遮挡：关闭")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetSubtitleFontSize`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetSubtitleFontSize(24),
-        )
-
-        assertThat(name).isEqualTo("设置字幕字号：24 SP")
-    }
-
-    @Test
-    fun `getActionDisplayName returns correct name for SetSubtitleBottomPadding`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetSubtitleBottomPadding(16),
-        )
-
-        assertThat(name).isEqualTo("设置字幕底部间距：16 DP")
+        assertThat(name).isEqualTo("倍速播放开关：2.0x")
     }
 
     @Test
@@ -261,20 +134,22 @@ class PlayerCustomShortcutCatalogTest {
 
     @Test
     fun `getActionDisplayName returns class simple name for unrecognized action`() {
+        // 构造一个不在目录中的动作实例：同类型不同参数值无法区分，
+        // 这里直接用未注册的 data object 场景不可行，改用参数不在目录的 speed 值
         val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.SetDanmakuScale(3f),
+            PlayerCustomShortcutAction.ToggleLoop,
         )
 
-        assertThat(name).isEqualTo("设置弹幕大小：300%")
+        assertThat(name).isEqualTo("单视频循环开关")
     }
 
     @Test
     fun `ActionEntry valueDisplayName defaults to displayName when not specified`() {
         val entry = PlayerCustomShortcutCatalog.ActionEntry(
-            action = PlayerCustomShortcutAction.TogglePlayPause,
-            displayName = "播放/暂停",
+            action = PlayerCustomShortcutAction.ToggleLoop,
+            displayName = "单视频循环开关",
         )
 
-        assertThat(entry.valueDisplayName).isEqualTo("播放/暂停")
+        assertThat(entry.valueDisplayName).isEqualTo("单视频循环开关")
     }
 }

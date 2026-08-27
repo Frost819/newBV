@@ -65,6 +65,9 @@ object PlayerConstants {
     /** Controller 信息栏自动隐藏延迟（毫秒）。 */
     const val CONTROLLER_AUTO_HIDE_MS = 5_000L
 
+    /** 播放器快捷键提示显示时长（毫秒）。 */
+    const val PLAYER_TIP_DURATION_MS = 1_500L
+
     /** 返回键退出确认窗口（毫秒）。 */
     const val BACK_EXIT_WINDOW_MS = 3_000L
 }

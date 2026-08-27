@@ -1170,17 +1170,15 @@ VideoPlayerScreen
 **可绑定键**：除 BACK / ESCAPE / BUTTON_B / DPAD_CENTER / ENTER / NUMPAD_ENTER 外的所有正数 keyCode
 
 **简单动作**（无参数）：
-- ShowInfo（显示信息）
 - OpenSettings（打开设置）
-- OpenVideoList（打开分集列表）
 - OpenRelatedVideos（打开相关视频）
-- TogglePlayPause（播放/暂停）
 - PlayPrevious（上一集）
 - PlayNext（下一集）
 - OpenVideoDetail（打开详情页）
 - OpenUpPage（打开 UP 主页）
 - ToggleLoop（循环开关）
 - ToggleDanmaku（弹幕开关）
+- ToggleDanmakuMask（弹幕防遮挡开关）
 - ToggleSubtitle（字幕开关）
 - TogglePersistentBottomProgress（常显进度条开关）
 - LikeVideo [新增]（点赞）
@@ -1189,22 +1187,10 @@ VideoPlayerScreen
 - OpenComments [新增]（打开评论）
 
 **值动作**（带参数）：
-- SetPlaybackSpeed（0.25 - 4.0）
-- SetResolution（12 种画质）
-- SetAudio（5 种音轨）
-- SetVideoCodec（5 种编码）
-- SetAspectRatio（3 种宽高比）
-- SetDanmakuScale（0.5 - 4.0）
-- SetDanmakuOpacity（0 - 1）
-- SetDanmakuSpeedFactor（0.5 - 1.5）
-- SetDanmakuArea（0 - 1）
-- SetDanmakuMaskEnabled（开/关）
-- SetDanmakuLevelFilter [新增]（0-6 级屏蔽）
-- SetSubtitleFontSize（12 - 48 SP）
-- SetSubtitleBackgroundOpacity（0 - 1）
-- SetSubtitleBottomPadding（0 - 48 DP）
+- TogglePlaybackSpeed（0.5 / 1.25 / 1.5 / 2.0 倍速，在 1x 与目标倍速之间 toggle）
 
-**Toggle 语义**：值动作按键再次按下时恢复上一个值（如绑定"2x 倍速"，再按恢复原速）
+> 历史版本曾支持 SetPlaybackSpeed（直接设置目标值）及画质/编码/音轨/宽高比/弹幕样式/字幕样式等参数化动作，
+> 已精简移除；旧持久化数据中的对应绑定在解析时被静默丢弃。
 
 **快捷键配置弹窗**：
 - 阶段：Main → CaptureKey → PickAction → (PickActionValue) → ConfirmClear
@@ -1213,9 +1199,9 @@ VideoPlayerScreen
 - 值选择列出该动作的可选值
 
 **快捷键触发提示 [新增]**：
-- 自定义快捷键触发时弹出 Toast 提示动作名称（如"已切换到 2x 倍速"）
+- 自定义快捷键触发时在播放器左下角显示浮层提示动作名称（复用 `PlayerTip` 组件，如"弹幕防遮挡开关"）
+- 新提示覆盖旧提示
 - 提示时长 1.5 秒
-- 可在设置中关闭此提示
 
 **持久化**：JSON 序列化（版本化 `v=1`），紧凑键名，向后兼容别名
 
@@ -1850,18 +1836,18 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | App 接口 | `app.bilibili.com/x/v2/view/video/online`（appkey+sign 自动签名）；返回预格式化 `total_text`，客户端剥离"人在看"后缀统一契约 |
 | 触发机制 | ViewModel 监听 `uiState.cid` 变化即时拉取（覆盖直进、详情返回、切集），60s 周期兜底刷新；失败保留旧文案静默降级 |
 
-### 4.12 自定义快捷键触发时 Toast 提示 [P2]
+### 4.12 自定义快捷键触发提示 [P2]
 
 #### 4.12.1 功能描述
 
-自定义快捷键触发时弹出 Toast 提示当前执行的动作。
+自定义快捷键触发时在播放器内显示浮层提示当前执行的动作。复用播放器 `PlayerTip` 组件（左下角堆栈），不使用系统 Toast。
 
 #### 4.12.2 功能规格
 
-- 触发快捷键时 Toast 显示动作名称（如"已切换到 2x 倍速"、"已点赞"、"弹幕已关闭"）
-- Toast 时长：1.5 秒
-- Toast 位置：屏幕底部居中
-- 设置开关：设置 → 音视频 → 快捷键触发提示（默认开）
+- 触发快捷键时在播放器左下角显示浮层，展示动作名称（如"倍速播放开关"、"弹幕防遮挡开关"）
+- 浮层样式：半透明黑色胶囊背景 + 遥控器图标（`Icons.Outlined.SettingsRemote`）+ 文本
+- 新提示覆盖旧提示（同一时刻仅显示最新一条）
+- 显示时长：1.5 秒
 
 ### 4.13 诊断日志记录 [P1]
 
@@ -2183,7 +2169,7 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | 默认播放速度 | 枚举 | 1.0x | 0.5/1/1.25/1.5/2 | `dps` |
 | 播放结束动作 | 枚举 | PlayNext | Pause/PlayNext/PlayRelated/Exit | `action_after_play` |
 | 自定义播放快捷键 | JSON | "" | 可绑定多组 | `player_custom_shortcuts` |
-| 快捷键触发提示 [新增] | 开关 | 开 | — | `shortcut_toast` |
+| 快捷键触发提示 [新增] | 开关 | 开 | — | `shortcut_trigger_tips` |
 | 启用视频软解 | 开关 | 关 | — | `enable_software_video_decoder` |
 | 启用音频软解 (FFmpeg) | 开关 | 关 | — | `enable_ffmpeg_audio_renderer` |
 
@@ -2485,7 +2471,7 @@ App 模式下接口分三种实现方式：**App gRPC**（grpc.biliapi.net）、
 - 播放器内评论 (P2)
 - 弹幕按用户等级屏蔽 (P2)
 - 播放器同时观看人数显示 (P2)
-- 自定义快捷键触发 Toast 提示 (P2)
+- 自定义快捷键触发浮层提示 (P2)
 - 缓存满阈值自动清理 (P2)
 - 评论 - 播放器内 (P2)
 
@@ -2589,7 +2575,7 @@ App 模式下接口分三种实现方式：**App gRPC**（grpc.biliapi.net）、
 | 播放器内评论 | P2 | 4.8 |
 | 弹幕按用户等级屏蔽 | P2 | 4.10 |
 | 播放器同时观看人数 | P2 | 4.11 |
-| 自定义快捷键 Toast 提示 | P2 | 4.12 |
+| 自定义快捷键触发提示 | P2 | 4.12 |
 | 缓存满阈值自动清理 | P2 | 4.5 |
 
 ---

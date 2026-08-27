@@ -244,8 +244,6 @@ object Prefs {
     )
     /** 自定义播放快捷键（JSON 字符串）。 */
     var playerCustomShortcuts by pref(PrefKeys.playerCustomShortcuts, "")
-    /** 快捷键触发 Toast 提示开关。 */
-    var shortcutToast by pref(PrefKeys.shortcutToast, true)
 
     // --- 播放器 - 音频（PRD 7.1） ---
 

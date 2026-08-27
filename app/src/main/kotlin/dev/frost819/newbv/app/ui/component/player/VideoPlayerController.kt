@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutAction
+import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutCatalog
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutKeys
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutsStore
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
@@ -95,6 +96,7 @@ fun VideoPlayerController(
     onSubtitleSettingChange: (SubtitleSettingAction) -> Unit,
     onRelatedVideoClicked: (dev.frost819.newbv.app.ui.component.videocard.VideoCardData) -> Unit,
     onToggleDanmaku: () -> Unit,
+    onShowShortcutTip: (String) -> Unit,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -211,14 +213,22 @@ fun VideoPlayerController(
         showRelatedVideosController = false
     }
 
-    @Suppress("CyclomaticComplexMethod")
+    /**
+     * 显示自定义快捷键触发提示浮层。
+     *
+     * 复用 [PlayerTip] 组件显示动作名称，定时结束后自动消失。
+     * 快捷键提示始终显示，新的提示会覆盖旧提示。
+     */
+    fun showShortcutTip(action: PlayerCustomShortcutAction) {
+        onShowShortcutTip(PlayerCustomShortcutCatalog.getActionDisplayName(action))
+    }
+
+
     fun executeCustomShortcut(action: PlayerCustomShortcutAction) {
+        showShortcutTip(action)
         when (action) {
-            PlayerCustomShortcutAction.ShowInfo -> showInfoSeekController = true
             PlayerCustomShortcutAction.OpenSettings -> showMenuController = true
-            PlayerCustomShortcutAction.OpenVideoList -> showListController = true
             PlayerCustomShortcutAction.OpenRelatedVideos -> showRelatedVideosController = true
-            PlayerCustomShortcutAction.TogglePlayPause -> onPlay()
             PlayerCustomShortcutAction.PlayPrevious -> onPlayPrevious()
             PlayerCustomShortcutAction.PlayNext -> onPlayNext()
             PlayerCustomShortcutAction.OpenVideoDetail -> onGoToVideoDetail()
@@ -231,32 +241,15 @@ fun VideoPlayerController(
                 Prefs.showPersistentSeek = showPersistentSeek
             }
 
-            // 参数化动作 - 简化版：直接设置值
-            is PlayerCustomShortcutAction.SetPlaybackSpeed -> onPlaySpeedChange(action.speed)
-            is PlayerCustomShortcutAction.SetResolution -> {
-                if (uiState.availableQuality.containsKey(action.qualityId)) {
-                    onMediaProfileSettingChange(MediaProfileSettingAction.SetQuality(action.qualityId))
-                }
+            is PlayerCustomShortcutAction.TogglePlaybackSpeed -> {
+                val targetSpeed = if (uiState.playSpeed == action.speed) 1f else action.speed
+                onPlaySpeedChange(targetSpeed)
             }
-            is PlayerCustomShortcutAction.SetAudio -> {
-                if (uiState.availableAudio.contains(action.audio)) {
-                    onMediaProfileSettingChange(MediaProfileSettingAction.SetAudio(action.audio))
-                }
-            }
-            is PlayerCustomShortcutAction.SetVideoCodec -> {
-                if (uiState.availableVideoCodec.contains(action.codec)) {
-                    onMediaProfileSettingChange(MediaProfileSettingAction.SetVideoCodec(action.codec))
-                }
-            }
-            is PlayerCustomShortcutAction.SetAspectRatio -> onAspectRatioChange(action.aspectRatio)
-            is PlayerCustomShortcutAction.SetDanmakuScale -> onDanmakuSettingChange(DanmakuSettingAction.SetScale(action.scale))
-            is PlayerCustomShortcutAction.SetDanmakuOpacity -> onDanmakuSettingChange(DanmakuSettingAction.SetOpacity(action.opacity))
-            is PlayerCustomShortcutAction.SetDanmakuSpeedFactor -> onDanmakuSettingChange(DanmakuSettingAction.SetSpeedFactor(action.factor))
-            is PlayerCustomShortcutAction.SetDanmakuArea -> onDanmakuSettingChange(DanmakuSettingAction.SetArea(action.area))
-            is PlayerCustomShortcutAction.SetDanmakuMaskEnabled -> onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(action.enabled))
-            is PlayerCustomShortcutAction.SetSubtitleFontSize -> onSubtitleSettingChange(SubtitleSettingAction.SetFontSize(action.sp))
-            is PlayerCustomShortcutAction.SetSubtitleBackgroundOpacity -> onSubtitleSettingChange(SubtitleSettingAction.SetOpacity(action.opacity))
-            is PlayerCustomShortcutAction.SetSubtitleBottomPadding -> onSubtitleSettingChange(SubtitleSettingAction.SetBottomPadding(action.dp))
+
+            is PlayerCustomShortcutAction.ToggleDanmakuMask ->
+                onDanmakuSettingChange(
+                    DanmakuSettingAction.SetMaskEnabled(!uiState.danmakuState.maskEnabled),
+                )
         }
     }
 
@@ -485,11 +478,12 @@ fun VideoPlayerController(
         }
 
         // 跳转提示
-        SkipTips(
-            showBackToStart = uiState.showBackToStart,
-            showSkipToNextEp = uiState.showSkipToNextEp,
-            showPreviewTip = uiState.showPreviewTip,
-        )
+         SkipTips(
+             showBackToStart = uiState.showBackToStart,
+             showSkipToNextEp = uiState.showSkipToNextEp,
+             showPreviewTip = uiState.showPreviewTip,
+             shortcutTipText = uiState.shortcutTipText,
+         )
 
         // 播放状态提示
         PlayStateTips(
@@ -505,7 +499,7 @@ fun VideoPlayerController(
             modifier = Modifier.align(Alignment.Center),
         )
 
-        // 相关视频
+         // 相关视频
         RelatedVideosController(
             show = showRelatedVideosController,
             relatedVideos = uiState.relatedVideos,
