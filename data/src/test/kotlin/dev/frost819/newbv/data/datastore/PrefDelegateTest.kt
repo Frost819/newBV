@@ -203,7 +203,6 @@ class PrefDelegateTest {
         Prefs.defaultDanmakuSpeedFactor = 2.0f
         Prefs.defaultDanmakuArea = 0.8f
         Prefs.defaultDanmakuMask = true
-        Prefs.danmakuLevelFilter = 3
         Prefs.defaultSubtitleFontSize = 36
         Prefs.defaultSubtitleBackgroundOpacity = 0.6f
         Prefs.defaultSubtitleBottomPadding = 20

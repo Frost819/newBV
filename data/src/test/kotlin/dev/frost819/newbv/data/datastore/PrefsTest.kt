@@ -120,11 +120,6 @@ class PrefsTest {
     }
 
     @Test
-    fun `default danmakuLevelFilter is zero`() {
-        assertThat(Prefs.danmakuLevelFilter).isEqualTo(0)
-    }
-
-    @Test
     fun `default subtitleFontSize is 24`() {
         assertThat(Prefs.defaultSubtitleFontSize).isEqualTo(24)
     }

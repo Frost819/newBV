@@ -57,7 +57,6 @@ internal object PrefKeys {
     val defaultDanmakuSpeedFactor = floatPreferencesKey("ddsf")
     val defaultDanmakuArea = floatPreferencesKey("dda")
     val defaultDanmakuMask = booleanPreferencesKey("prefer_enable_webmark")
-    val danmakuLevelFilter = intPreferencesKey("danmaku_level_filter")
 
     // ===== 播放器 - 字幕 =====
     val defaultSubtitleFontSize = intPreferencesKey("dsfs")

@@ -280,8 +280,6 @@ object Prefs {
     var defaultDanmakuArea by pref(PrefKeys.defaultDanmakuArea, 0.5f)
     /** 默认防遮挡蒙版开关。 */
     var defaultDanmakuMask by pref(PrefKeys.defaultDanmakuMask, false)
-    /** 弹幕用户等级屏蔽（0-6，0 表示不屏蔽）。 */
-    var danmakuLevelFilter by pref(PrefKeys.danmakuLevelFilter, 0)
 
     // --- 播放器 - 字幕（PRD 7.4） ---
 
