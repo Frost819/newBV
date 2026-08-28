@@ -496,7 +496,7 @@ private fun EpisodeCard(
                                 androidx.compose.foundation.BorderStroke(
                                     3.dp,
                                     if (isLastWatched) {
-                                        MaterialTheme.colorScheme.border
+                                        MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.border
                                     },
