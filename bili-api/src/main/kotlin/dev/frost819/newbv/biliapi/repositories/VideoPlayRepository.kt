@@ -3,6 +3,7 @@ package dev.frost819.newbv.biliapi.repositories
 import bilibili.app.playerunite.v1.PlayerGrpcKt
 import bilibili.app.playerunite.v1.playViewUniteReq
 import bilibili.community.service.dm.v1.DMGrpcKt
+import bilibili.community.service.dm.v1.dmSegMobileReq
 import bilibili.community.service.dm.v1.dmViewReq
 import bilibili.pgc.gateway.player.v2.playViewReq
 import bilibili.playershared.videoVod
@@ -16,6 +17,7 @@ import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.biliapi.grpc.utils.handleGrpcException
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -269,6 +271,46 @@ class VideoPlayRepository(
             }
         println("send heartbeat result: $result")
     }
+
+    /**
+     * 获取指定 6 分钟分段的弹幕。
+     *
+     * @param aid 视频 AV 号
+     * @param cid 视频 CID
+     * @param segmentIndex 从 1 开始的分段索引
+     * @param preferApiType 优先使用的接口类型
+     * @return 该分段的弹幕列表
+     */
+    suspend fun getDanmakuSegment(
+        aid: Long,
+        cid: Long,
+        segmentIndex: Int,
+        preferApiType: ApiType,
+    ): List<DanmakuData> =
+        when (preferApiType) {
+            ApiType.Web ->
+                BiliHttpApi.getDanmakuSeg(
+                    cid = cid,
+                    avid = aid,
+                    segmentIndex = segmentIndex,
+                )
+
+            ApiType.App ->
+                withContext(Dispatchers.IO) {
+                    val reply =
+                        runCatching {
+                            danmakuStub?.dmSegMobile(
+                                dmSegMobileReq {
+                                    pid = aid
+                                    oid = cid
+                                    type = 1
+                                    this.segmentIndex = segmentIndex.toLong()
+                                },
+                            ) ?: throw IllegalStateException("Danmaku stub is not initialized")
+                        }.onFailure { handleGrpcException(it) }.getOrThrow()
+                    reply.elemsList.map { DanmakuData.fromDanmakuElem(it) }
+                }
+        }
 
     suspend fun getDanmakuMask(
         aid: Long,

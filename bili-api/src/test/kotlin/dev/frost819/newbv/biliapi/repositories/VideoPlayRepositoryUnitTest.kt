@@ -6,6 +6,7 @@ import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
 import dev.frost819.newbv.biliapi.http.entity.RiskControlException
+import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuData
 import dev.frost819.newbv.biliapi.http.entity.video.Dash
 import dev.frost819.newbv.biliapi.http.entity.video.DashData
 import dev.frost819.newbv.biliapi.http.entity.video.DashDolby
@@ -580,8 +581,83 @@ class VideoPlayRepositoryUnitTest {
         }
 
     // ------------------------------------------------------------------
+    // getDanmakuSegment
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `getDanmakuSegment Web calls HTTP seg API with aid cid and segmentIndex`() =
+        runTest {
+            val fake = listOf(fakeDanmakuData(61.5f), fakeDanmakuData(62f))
+            coEvery {
+                BiliHttpApi.getDanmakuSeg(cid = any(), avid = any(), segmentIndex = any())
+            } returns fake
+
+            val result =
+                repository.getDanmakuSegment(
+                    aid = AID,
+                    cid = CID,
+                    segmentIndex = 1,
+                    preferApiType = ApiType.Web,
+                )
+
+            assertThat(result).hasSize(2)
+            assertThat(result[0].dmid).isEqualTo(fake[0].dmid)
+            coVerify {
+                BiliHttpApi.getDanmakuSeg(
+                    cid = eq(CID),
+                    avid = eq(AID),
+                    segmentIndex = eq(1),
+                )
+            }
+        }
+
+    @Test
+    fun `getDanmakuSegment App throws when danmakuStub is null`() =
+        runTest {
+            assertThrows<IllegalStateException> {
+                repository.getDanmakuSegment(
+                    aid = AID,
+                    cid = CID,
+                    segmentIndex = 1,
+                    preferApiType = ApiType.App,
+                )
+            }
+        }
+
+    @Test
+    fun `getDanmakuSegment Web propagates network error`() =
+        runTest {
+            coEvery {
+                BiliHttpApi.getDanmakuSeg(cid = any(), avid = any(), segmentIndex = any())
+            } throws RuntimeException("network error")
+
+            assertThrows<RuntimeException> {
+                repository.getDanmakuSegment(
+                    aid = AID,
+                    cid = CID,
+                    segmentIndex = 2,
+                    preferApiType = ApiType.Web,
+                )
+            }
+        }
+
+    // ------------------------------------------------------------------
     // 测试夹具
     // ------------------------------------------------------------------
+
+    private fun fakeDanmakuData(time: Float): DanmakuData =
+        DanmakuData(
+            time = time,
+            type = 1,
+            size = 25,
+            color = 0xFFFFFF,
+            timestamp = 1700000000,
+            pool = 0,
+            midHash = "hash",
+            dmid = (time * 1000).toLong(),
+            level = 5,
+            text = "seg danmaku",
+        )
 
     private fun fakePlayUrlDataWithDash(): PlayUrlData =
         PlayUrlData(

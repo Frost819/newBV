@@ -119,10 +119,6 @@ object UserSwitchRoute
 @Serializable
 object MediaCodecRoute
 
-/** CDN 测速页。 */
-@Serializable
-object SpeedTestRoute
-
 /** 日志查看页。 */
 @Serializable
 object LogViewerRoute

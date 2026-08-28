@@ -32,15 +32,13 @@ import dev.frost819.newbv.data.datastore.Prefs
 /**
  * 其他设置页。
  *
- * 接口选择/崩溃上报端点/查看日志/CDN 测速。
+ * 接口选择/崩溃上报/查看日志。
  *
- * @param onNavigateToSpeedTest 跳转 CDN 测速页回调。
  * @param onNavigateToLogViewer 跳转日志查看页回调。
  */
 @Composable
 fun OtherSetting(
     modifier: Modifier = Modifier,
-    onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
     screenFocusSaver: ScreenFocusSaver? = null,
 ) {
@@ -101,13 +99,6 @@ fun OtherSetting(
             title = "查看日志",
             supportText = "查看崩溃日志和应用日志，支持扫码下载",
             onClick = onNavigateToLogViewer,
-        )
-
-        SettingListItem(
-            modifier = screenFocusSaver?.let { Modifier.focusSaverItem(it, "content_speed_test") } ?: Modifier,
-            title = "CDN 测速",
-            supportText = "B 站 CDN 测速工具",
-            onClick = onNavigateToSpeedTest,
         )
     }
 

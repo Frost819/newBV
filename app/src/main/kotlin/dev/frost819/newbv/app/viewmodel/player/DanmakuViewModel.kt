@@ -24,18 +24,20 @@ import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
 import dev.frost819.newbv.core.log.Loggers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
  * 弹幕 ViewModel。
  *
- * 管理弹幕播放器生命周期、弹幕数据加载（XML → DanmakuItemData）、
+ * 管理弹幕播放器生命周期、弹幕数据加载（XML → [DanmakuItemData]）、
  * 弹幕配置（大小/透明度/区域/速度/类型/蒙版）、播放同步。
  *
  * 与 [PlayerViewModel] 的同步由 UI 层协调：
@@ -73,6 +75,9 @@ class DanmakuViewModel @Inject constructor(
     private val _danmakuMask = MutableStateFlow<DanmakuMask?>(null)
     val danmakuMask = _danmakuMask.asStateFlow()
 
+    /** 蒙版请求独立于弹幕数据请求，切集时 cancel 旧请求即可。 */
+    private var maskFetchJob: Job? = null
+
     /** 初始化弹幕播放器。 */
     fun init() {
         danmakuPlayer = DanmakuPlayer(SimpleRenderer())
@@ -81,6 +86,8 @@ class DanmakuViewModel @Inject constructor(
 
     /** 释放弹幕播放器资源。 */
     fun release() {
+        maskFetchJob?.cancel()
+        maskFetchJob = null
         danmakuPlayer?.release()
         danmakuPlayer = null
         _danmakuMask.update { null }
@@ -93,6 +100,8 @@ class DanmakuViewModel @Inject constructor(
      * 调用后应接着 [loadDanmaku] 加载新视频的弹幕。
      */
     fun clearDanmaku() {
+        maskFetchJob?.cancel()
+        maskFetchJob = null
         danmakuPlayer?.updateData(emptyList())
         _danmakuMask.update { null }
     }
@@ -102,9 +111,10 @@ class DanmakuViewModel @Inject constructor(
      *
      * 从 B 站 XML 弹幕接口获取弹幕，转换为 akdanmaku 的 [DanmakuItemData] 列表。
      *
+     * @param aid 视频 AV 号（当前未使用，保留给 P4 分段加载）
      * @param cid 视频 CID
      */
-    fun loadDanmaku(cid: Long) {
+    fun loadDanmaku(aid: Long, cid: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 val response = BiliHttpApi.getDanmakuXml(cid = cid)
@@ -138,17 +148,21 @@ class DanmakuViewModel @Inject constructor(
      * @param cid 视频 CID
      */
     fun loadDanmakuMask(aid: Long, cid: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            runCatching {
-                videoPlayRepository.getDanmakuMask(
-                    aid = aid,
-                    cid = cid,
-                    preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
-                )
-            }.onSuccess { mask ->
+        maskFetchJob?.cancel()
+        maskFetchJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val mask = withTimeout(LOAD_TIMEOUT_MS) {
+                    videoPlayRepository.getDanmakuMask(
+                        aid = aid,
+                        cid = cid,
+                        preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
+                    )
+                }
                 _danmakuMask.update { mask }
                 logger.info { "Load danmaku mask segments: ${mask?.segmentCount ?: 0}" }
-            }.onFailure { e ->
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 logger.warn { "Load danmaku mask failed: $e" }
             }
         }
@@ -296,4 +310,8 @@ class DanmakuViewModel @Inject constructor(
     /** 将 danmaku 模块的 DanmakuType 映射为 data 层 DanmakuType。 */
     private fun DanmakuEntityDanmakuType.toDataDanmakuType(): DataDanmakuType =
         DataDanmakuType.entries.getOrElse(this.ordinal) { DataDanmakuType.All }
+
+    companion object {
+        private const val LOAD_TIMEOUT_MS = 10_000L
+    }
 }

@@ -60,7 +60,7 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             playerViewModel.loadVideoDetail(route.aid, route.bvid)
             // 6. 使用正确的 cid 加载弹幕、字幕（route.cid 可能为 0，需从详情获取）
             val actualCid = playerViewModel.uiState.value.cid
-            danmakuViewModel.loadDanmaku(actualCid)
+            danmakuViewModel.loadDanmaku(route.aid, actualCid)
             danmakuViewModel.loadDanmakuMask(route.aid, actualCid)
             subtitleViewModel.loadSubtitleList(route.aid, actualCid)
             // 7. 获取播放地址并开始播放

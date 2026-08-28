@@ -6,7 +6,6 @@ import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.danmaku.entity.DanmakuType
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -28,6 +27,7 @@ import org.junit.jupiter.api.Test
  *
  * 验证弹幕状态更新逻辑：缩放、透明度、区域、速度因子、蒙版开关、类型过滤。
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DanmakuViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()

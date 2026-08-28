@@ -27,7 +27,7 @@
 | GrpcChannelTest | 单元测试：Channel 生命周期 + metadata 构造验证（P2-9 要求，`GrpcInfrastructureTest` 已部分覆盖） |
 | GrpcErrorTest | 单元测试：各 `GrpcErrorKind` 覆盖（P2-9 要求，`GrpcInfrastructureTest` 已部分覆盖） |
 | 风控错误识别 | ✅ **已完成（T-11）**：`handleGrpcException()` 解析 `bilibili.rpc.Status` 业务码，映射风控到 `GrpcErrorKind.RiskControl` |
-| 弹幕分段加载 | `DM.DmSegMobile` 延后，移入开发计划待办（需配套弹幕分段缓存改造） |
+| 弹幕分段加载 | `DM.DmSegMobile` 接口层已实现，ViewModel 层延后至 Phase 4 |
 
 ---
 
@@ -64,9 +64,7 @@
 |---|---|---|---|---|---|
 | 1 | `DmSegMobile` | `DM` / `bilibili.community.service.dm.v1` | 弹幕分段数据（每 6 分钟一段） | HTTP XML `/x/v2/dm/list.so` | ✅ 已编译 |
 
-> `DmSegMobile` 延后原因：Web 弹幕接口当前一次性加载全部弹幕，引入 gRPC 分段加载需配套改造
-> `DanmakuViewModel` 的分段缓存与增量加载逻辑，属功能增强而非适配补全。已作为待开发项写入
-> `docs/开发计划.md`，暂不实现。
+> `DmSegMobile` 接口层已实现（Web `getDanmakuSeg` + App `getDanmakuSegment`），ViewModel 层分段加载延后至 Phase 4。
 
 ### 2.3 不在 PRD 清单但 proto 已编译的可用 RPC（3 个）
 
@@ -166,23 +164,19 @@
 
 **目标**：实现 PRD 列出但尚未实现的 gRPC RPC，使 PRD 清单 100% 覆盖。
 
-**结果**：`SearchAll` 已完成，`DmSegMobile` 延后（需配套弹幕分段加载改造）。
+**结果**：`SearchAll` 已完成。`DmSegMobile` 接口层已实现，ViewModel 层延后至 Phase 4。
 
-#### T-01 `DM.DmSegMobile` — 弹幕分段数据（**延后，已移入开发计划待办**）
+#### T-01 `DM.DmSegMobile` — 弹幕分段数据（接口层已实现，ViewModel 层延后）
 
-- **当前**：App 模式弹幕内容通过 HTTP XML `/x/v2/dm/list.so` 获取
-- **目标**：App 模式下通过 gRPC `DmSegMobile` 获取弹幕分段（protobuf 格式，每段 6 分钟）
-- **延后原因（2026-08）**：Web 弹幕接口不是分段加载的，`DanmakuViewModel` 侧当前一次性
-  加载全部弹幕。引入 gRPC 分段加载需要同步改造弹幕 ViewModel 的分段缓存与增量加载逻辑，
-  属功能增强而非适配补全。**已作为待开发项写入 `docs/开发计划.md`，暂不实现。**
-- **涉及文件**：
-  - `VideoPlayRepository.kt` — 新增 `getDanmakuSegment()` 方法或修改现有弹幕获取逻辑
-  - Entity 层 — 新增 `DmSegMobileReply` → `Danmaku` 转换（`Comment.fromGrpc` 模式）
-  - `danmaku/` 模块 — 确认弹幕渲染层能接受 protobuf 弹幕数据
+- **当前**：`DanmakuViewModel` 直调 `BiliHttpApi.getDanmakuXml()`（`/x/v1/dm/list.so` XML 全量）
+- **目标**：双通道分段加载（每段 6 分钟），详见 [P3剩余任务计划.md](P3剩余任务计划.md) §3.A
+  - Web：HTTP `GET /x/v2/dm/wbi/web/seg.so`（WBI，protobuf `DmSegMobileReply`）
+  - App：gRPC `DM.DmSegMobile`（同一 proto）
+- **涉及文件**：`BiliHttpApi.getDanmakuSeg` / `VideoPlayRepository.getDanmakuSegment` / `DanmakuData.fromDanmakuElem` / `DanmakuViewModel` 分段缓存
 - **proto 请求**：`DmSegMobileReq { pid=aid, oid=cid, type=1, segment_index=N }`
 - **proto 响应**：`DmSegMobileReply { repeated DanmakuElem elems }`
-- **注意**：Web 模式仍用 XML，App 模式用 gRPC；不自动切换
-- **测试**：Entity 转换测试 + Repository 单元测试（Mock stub）
+- **注意**：`preferApiType` 显式分离，不自动切换；旧 XML 接口保留但不作主路径
+- **测试**：Entity 转换 + Repository 双通道单测 + 集成抽检 + DanmakuViewModel 分段流转
 
 #### T-02 `Search.SearchAll` — 全量搜索 ✅
 
@@ -295,7 +289,7 @@ Phase 1 — 补全 PRD 清单（P0）✅
   ├─ T-02 SearchAll 全量搜索          ✅ 已完成
   ├─ T-11 风控错误识别               ✅ 已完成
   ├─ T-12 集成测试凭证                ✅ 22 个集成测试通过
-  └─ T-01 DmSegMobile 弹幕分段        延后（需配套弹幕分段加载改造）
+  └─ T-01 DmSegMobile 弹幕分段        接口层已实现，ViewModel 层延后至 Phase 4
 
 Phase 2 — 高价值补充（P1，待排期）
   ├─ T-03 PlayerOnline 在线人数       ← proto 已编译，无依赖
@@ -316,7 +310,7 @@ Phase 3 — 扩展覆盖（P2，按需）
 ### 6.1 P0 验收
 
 - [x] PRD §8.2 的 RPC 全部实现或明确记录为 Web-only/App HTTP
-- [x] ~~`DM.DmSegMobile` 在 App 模式下可获取弹幕分段数据~~ — **延后，见开发计划待办**
+- [ ] `DM.DmSegMobile` 在 App 模式下可获取弹幕分段数据 — 接口层已实现，ViewModel 层延后至 Phase 4
 - [x] `Search.SearchAll` 在 App 模式下可获取全量搜索结果 ✅（已完成）
 - [x] `GrpcChannelTest` + `GrpcErrorTest` 通过（`GrpcInfrastructureTest` 覆盖）
 - [x] `handleGrpcException` 能识别风控错误 ✅（T-11 完成）

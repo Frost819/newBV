@@ -44,6 +44,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -57,22 +58,11 @@ android {
 
     androidComponents {
         onVariants { variant ->
-            val variantName = variant.name
-            val packageTaskName = "package" + variantName.replaceFirstChar { it.uppercase() }
-            tasks.configureEach {
-                if (name != packageTaskName) return@configureEach
-                doLast {
-                    val apkDirectory = layout.buildDirectory.dir("outputs/apk/$variantName").get().asFile
-                    apkDirectory.listFiles()
-                        ?.filter { it.extension == "apk" }
-                        ?.forEach { apkFile ->
-                            val renamedFile = apkFile.resolveSibling(
-                                "newBV_${AppConfiguration.versionName}_$variantName.apk",
-                            )
-                            if (apkFile != renamedFile) {
-                                apkFile.renameTo(renamedFile)
-                            }
-                        }
+            variant.outputs.forEach { output ->
+                if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
+                    output.outputFileName.set(
+                        "newBV_${AppConfiguration.versionName}_${variant.name}.apk",
+                    )
                 }
             }
         }
@@ -106,7 +96,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.webkit)
     implementation(libs.material)
 
     // === Lifecycle ===
@@ -134,7 +123,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.material.icons)
-    implementation(libs.androidx.compose.constraintlayout)
     implementation(libs.androidx.compose.tv.foundation)
     implementation(libs.androidx.compose.tv.material)
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -163,7 +151,6 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.serialization.kotlinx)
-    implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
 
@@ -174,8 +161,6 @@ dependencies {
     // === Other ===
     implementation(libs.akdanmaku)
     implementation(libs.androidsvg)
-    implementation(libs.jsoup)
-    implementation(libs.lottie)
     implementation(libs.qrcode)
     debugImplementation(libs.leakcanary)
 

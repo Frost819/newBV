@@ -53,14 +53,13 @@ import dev.frost819.newbv.app.ui.screen.settings.content.UISetting
  * D-Pad Left 从内容区返回导航列表。
  *
  * @param onNavigateToMediaCodec 跳转编解码信息页。
- * @param onNavigateToSpeedTest 跳转 CDN 测速页。
+ * @param onNavigateToLogViewer 跳转日志查看页。
  * @param onBack 返回上一页。
  */
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     onNavigateToMediaCodec: () -> Unit = {},
-    onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
@@ -111,7 +110,6 @@ fun SettingsScreen(
                 onBackNav = { focusInNav = true },
                 currentMenu = currentMenu,
                 onNavigateToMediaCodec = onNavigateToMediaCodec,
-                onNavigateToSpeedTest = onNavigateToSpeedTest,
                 onNavigateToLogViewer = onNavigateToLogViewer,
                 screenFocusSaver = screenFocusSaver,
             )
@@ -183,7 +181,6 @@ private fun SettingContent(
     onBackNav: () -> Unit,
     currentMenu: SettingsMenuNavItem,
     onNavigateToMediaCodec: () -> Unit = {},
-    onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
     screenFocusSaver: ScreenFocusSaver,
 ) {
@@ -198,7 +195,6 @@ private fun SettingContent(
                 SettingsMenuNavItem.AudioVideo -> AudioVideoSetting()
                 SettingsMenuNavItem.UI -> UISetting()
                 SettingsMenuNavItem.Other -> OtherSetting(
-                    onNavigateToSpeedTest = onNavigateToSpeedTest,
                     onNavigateToLogViewer = onNavigateToLogViewer,
                     screenFocusSaver = screenFocusSaver,
                 )

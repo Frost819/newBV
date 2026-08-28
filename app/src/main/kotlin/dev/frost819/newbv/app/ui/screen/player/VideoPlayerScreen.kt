@@ -154,7 +154,7 @@ fun VideoPlayerScreen(
     LaunchedEffect(Unit) {
         playerViewModel.videoSwitchEvent.collect { event ->
             danmakuViewModel.clearDanmaku()
-            danmakuViewModel.loadDanmaku(event.cid)
+            danmakuViewModel.loadDanmaku(event.aid, event.cid)
             danmakuViewModel.loadDanmakuMask(event.aid, event.cid)
             subtitleViewModel.clearSubtitle()
             subtitleViewModel.loadSubtitleList(event.aid, event.cid)

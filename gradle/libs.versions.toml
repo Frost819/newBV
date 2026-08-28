@@ -16,7 +16,6 @@ lifecycle = "2.9.0"
 navigation = "2.9.0"
 datastore = "1.1.7"
 room = "2.7.1"
-webkit = "1.13.0"
 
 # === Compose ===
 compose = "1.8.2"
@@ -24,7 +23,6 @@ compose-material3 = "1.4.0-alpha15"
 compose-material-icons = "1.7.8"
 compose-tv = "1.1.0-alpha01"
 compose-tv-foundation = "1.0.0-alpha12"
-compose-constraintlayout = "1.1.1"
 
 # === Media3 ===
 media3 = "1.8.0"
@@ -52,7 +50,6 @@ androidsvg = "1.4"
 brotli = "0.1.2"
 jsoup = "1.20.1"
 ktor-jsoup = "2.3.0"
-lottie = "6.6.6"
 qrcode = "3.3.0"
 material = "1.12.0"
 
@@ -74,7 +71,6 @@ leakcanary = "2.14"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
-androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # === AndroidX - Lifecycle ===
@@ -103,7 +99,6 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "compose-material3" }
 androidx-compose-material = { group = "androidx.compose.material", name = "material", version.ref = "compose" }
 androidx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
-androidx-compose-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "compose-constraintlayout" }
 androidx-compose-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "compose-tv-foundation" }
 androidx-compose-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "compose-tv" }
 
@@ -132,7 +127,6 @@ ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.r
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-encoding = { group = "io.ktor", name = "ktor-client-encoding", version.ref = "ktor" }
 ktor-client-serialization-kotlinx = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
-ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
 ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "ktor" }
 
@@ -157,7 +151,6 @@ akdanmaku = { group = "com.github.Frost819", name = "AkDanmaku", version.ref = "
 androidsvg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "androidsvg" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 ktor-jsoup = { group = "com.tfowl.ktor", name = "ktor-jsoup", version.ref = "ktor-jsoup" }
-lottie = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrcode" }
 brotli = { group = "org.brotli", name = "dec", version.ref = "brotli" }
 

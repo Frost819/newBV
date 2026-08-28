@@ -71,8 +71,9 @@ class PrefDelegate<T, P>(
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         val persistValue = save(value)
         flow.value = persistValue
+        val dataStore = Prefs.dataStore
         Prefs.launchPersist {
-            Prefs.dataStore.edit { prefs -> prefs[key] = persistValue }
+            dataStore.edit { prefs -> prefs[key] = persistValue }
         }
     }
 

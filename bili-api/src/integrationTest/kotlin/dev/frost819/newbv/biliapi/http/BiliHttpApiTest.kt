@@ -151,6 +151,23 @@ internal class BiliHttpApiTest {
     }
 
     @Test
+    fun `get video danmaku segment`() {
+        val aid = localProperties.getProperty("test.video.aid")?.toLongOrNull() ?: 993403941L
+        val cid = localProperties.getProperty("test.video.cid")?.toLongOrNull() ?: 1051761130L
+        assertDoesNotThrow {
+            runBlocking {
+                val segments = BiliHttpApi.getDanmakuSeg(cid = cid, avid = aid, segmentIndex = 1)
+                println("segment 1 danmaku size: ${segments.size}")
+                assertThat(segments).isNotEmpty()
+                val first = segments.first()
+                println("first danmaku: time=${first.time}, text=${first.text}, dmid=${first.dmid}")
+                assertThat(first.text).isNotEmpty()
+                assertThat(first.dmid).isGreaterThan(0L)
+            }
+        }
+    }
+
+    @Test
     fun `get pgc video play url`() {
         runBlocking {
             val response =

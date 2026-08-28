@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.http
 
+import bilibili.community.service.dm.v1.DmSegMobileReply
 import com.tfowl.ktor.client.plugins.JsoupPlugin
 import dev.frost819.newbv.biliapi.entity.SpiData
 import dev.frost819.newbv.biliapi.entity.SpiResult
@@ -416,6 +417,32 @@ object BiliHttpApi {
         }
 
         return DanmakuResponse(chatServer, chatId, maxLimit, state, realName, source, data)
+    }
+
+    /**
+     * 获取视频弹幕分段（Web protobuf 接口）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/danmaku/danmaku_proto.md
+     * 端点：GET /x/v2/dm/wbi/web/seg.so（路径含 wbi，由 encApiSign 拦截器自动 WBI 签名）
+     * 鉴权：SESSDATA Cookie（injectCookies）；半匿名时仅返回部分弹幕，属文档预期行为
+     *
+     * @param cid 视频 CID（oid）
+     * @param avid 稿件 avid（pid）
+     * @param segmentIndex 分段索引，从 1 开始，每 6 分钟一段
+     */
+    suspend fun getDanmakuSeg(
+        cid: Long,
+        avid: Long,
+        segmentIndex: Int,
+    ): List<DanmakuData> {
+        val bytes =
+            client.get("/x/v2/dm/wbi/web/seg.so") {
+                parameter("type", 1)
+                parameter("oid", cid)
+                parameter("pid", avid)
+                parameter("segment_index", segmentIndex)
+            }.readRawBytes()
+        return DmSegMobileReply.parseFrom(bytes).elemsList.map { DanmakuData.fromDanmakuElem(it) }
     }
 
     /**
