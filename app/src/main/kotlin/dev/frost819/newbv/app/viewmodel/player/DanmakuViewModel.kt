@@ -28,7 +28,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -111,8 +110,8 @@ class DanmakuViewModel
         /** 当前视频弹幕是否已关闭（dm/view state==1），关闭时不加载任何分段。 */
         private var danmakuClosed = false
 
-        /** 段号 → 该段弹幕条数；key 集合同时充当已加载标记。 */
-        private val loadedSegments = mutableMapOf<Int, Int>()
+        /** 已加载的分段号集合。 */
+        private val loadedSegments = mutableSetOf<Int>()
 
         /** 加载中的段号，防止同一分段并发重复请求。 */
         private val loadingSegments = mutableSetOf<Int>()
@@ -122,10 +121,6 @@ class DanmakuViewModel
          * 旧协程返回后凭此比对丢弃结果，避免旧视频数据污染新视频。
          */
         private var loadGeneration = 0
-
-        /** 已加载弹幕总条数（各段之和），供 UI 展示加载状态。 */
-        private val _loadedCount = MutableStateFlow(0)
-        val loadedCount: StateFlow<Int> = _loadedCount.asStateFlow()
 
         /** UI 层喂入的播放进度（毫秒），驱动分段加载；conflated，仅保留最新值。 */
         private val currentTimeFlow = MutableStateFlow(0L)
@@ -164,7 +159,6 @@ class DanmakuViewModel
             loadGeneration++
             loadedSegments.clear()
             loadingSegments.clear()
-            _loadedCount.value = 0
             danmakuClosed = false
             currentTimeFlow.value = 0L
             // 引擎 updateData 是增量语义，必须调用 clearData 才能真正清空旧数据
@@ -197,7 +191,6 @@ class DanmakuViewModel
             danmakuClosed = false
             loadedSegments.clear()
             loadingSegments.clear()
-            _loadedCount.value = 0
             currentTimeFlow.value = initialPositionMs.coerceAtLeast(0L)
             danmakuPlayer?.clearData()
 
@@ -294,7 +287,7 @@ class DanmakuViewModel
         private fun canLoadSegment(segmentIndex: Int): Boolean {
             if (segmentIndex <= 0) return false
             if (segmentTotal > 0 && segmentIndex > segmentTotal) return false
-            if (loadedSegments.containsKey(segmentIndex)) return false
+            if (segmentIndex in loadedSegments) return false
             if (segmentIndex in loadingSegments) return false
             loadingSegments.add(segmentIndex)
             return true
@@ -323,10 +316,9 @@ class DanmakuViewModel
                         val items = dataList.map { it.toDanmakuItemData() }
                         // akdanmaku 内部维护有序数据并懒排序，无需预先排序
                         danmakuPlayer?.updateData(items)
-                        loadedSegments[segmentIndex] = items.size
-                        _loadedCount.value = loadedSegments.values.sum()
+                        loadedSegments.add(segmentIndex)
                         logger.info {
-                            "Load danmaku segment $segmentIndex success, size=${items.size}, totalLoaded=${_loadedCount.value}"
+                            "Load danmaku segment $segmentIndex success, size=${items.size}"
                         }
                         return
                     } catch (e: TimeoutCancellationException) {

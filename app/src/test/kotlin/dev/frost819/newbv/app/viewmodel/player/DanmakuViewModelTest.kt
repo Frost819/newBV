@@ -34,7 +34,7 @@ import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
  * 覆盖两部分：
  * - 弹幕状态更新逻辑：缩放、透明度、区域、速度因子、蒙版开关、类型过滤
  * - 分段加载逻辑：元数据兜底、初始段定位、预取、去重、越界 clamp、
- *   弹幕关闭跳过、失败重试、loadedCount 累计
+ *   弹幕关闭跳过、失败重试
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DanmakuViewModelTest {
@@ -292,8 +292,6 @@ class DanmakuViewModelTest {
             coVerify(exactly = 0) {
                 videoPlayRepository.getDanmakuSegment(aid = 1, cid = 2, segmentIndex = 3, preferApiType = any())
             }
-            // 初始段 + 预取段各加载 1 条
-            assertThat(viewModel.loadedCount.value).isEqualTo(2)
         }
 
     @Test
@@ -328,8 +326,6 @@ class DanmakuViewModelTest {
             coVerify(exactly = 1) {
                 videoPlayRepository.getDanmakuSegment(aid = 1, cid = 2, segmentIndex = 3, preferApiType = any())
             }
-            // 默认 6 分钟分段下 seg3 + 预取 seg4
-            assertThat(viewModel.loadedCount.value).isEqualTo(2)
         }
 
     @Test
@@ -346,7 +342,6 @@ class DanmakuViewModelTest {
             coVerify(exactly = 0) {
                 videoPlayRepository.getDanmakuSegment(any(), any(), any(), any())
             }
-            assertThat(viewModel.loadedCount.value).isEqualTo(0)
         }
 
     @Test
@@ -418,8 +413,6 @@ class DanmakuViewModelTest {
             coVerify(exactly = 2) {
                 videoPlayRepository.getDanmakuSegment(aid = 1, cid = 2, segmentIndex = 1, preferApiType = any())
             }
-            // seg1 重试成功 + 预取 seg2
-            assertThat(viewModel.loadedCount.value).isEqualTo(2)
         }
 
     @Test
@@ -431,11 +424,9 @@ class DanmakuViewModelTest {
 
             viewModel.loadDanmaku(aid = 1, cid = 2)
             advanceUntilIdle()
-            assertThat(viewModel.loadedCount.value).isEqualTo(2)
 
             viewModel.clearDanmaku()
 
-            assertThat(viewModel.loadedCount.value).isEqualTo(0)
             assertThat(viewModel.danmakuMask.value).isNull()
         }
 
@@ -456,7 +447,5 @@ class DanmakuViewModelTest {
             coVerify(exactly = 1) {
                 videoPlayRepository.getDanmakuSegment(aid = 1, cid = 2, segmentIndex = 1, preferApiType = any())
             }
-            // 第二次加载 seg1 + 预取 seg2；第一次的陈旧结果已被 generation 丢弃
-            assertThat(viewModel.loadedCount.value).isEqualTo(2)
         }
 }
