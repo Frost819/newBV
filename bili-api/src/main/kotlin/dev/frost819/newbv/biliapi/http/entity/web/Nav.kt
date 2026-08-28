@@ -16,8 +16,18 @@ data class NavResponseData(
         @SerialName("sub_url")
         val subUrl: String,
     ) {
-        fun getImgKey(): String = imgUrl.split("/").last().split(".").first()
+        fun getImgKey(): String =
+            imgUrl
+                .split("/")
+                .last()
+                .split(".")
+                .first()
 
-        fun getSubKey(): String = subUrl.split("/").last().split(".").first()
+        fun getSubKey(): String =
+            subUrl
+                .split("/")
+                .last()
+                .split(".")
+                .first()
     }
 }

@@ -72,44 +72,50 @@ fun PlayerCustomShortcutsDialog(
     }
 
     when (val currentStage = stage) {
-        Stage.Main -> MainStage(
-            shortcuts = shortcuts,
-            onDismiss = onDismiss,
-            onAdd = { stage = Stage.CaptureKey },
-            onClear = { stage = Stage.ConfirmClear },
-            onEdit = { shortcut -> stage = Stage.PickAction(shortcut.keyCode) },
-        )
+        Stage.Main ->
+            MainStage(
+                shortcuts = shortcuts,
+                onDismiss = onDismiss,
+                onAdd = { stage = Stage.CaptureKey },
+                onClear = { stage = Stage.ConfirmClear },
+                onEdit = { shortcut -> stage = Stage.PickAction(shortcut.keyCode) },
+            )
 
-        Stage.CaptureKey -> CaptureKeyStage(
-            onDismiss = { stage = Stage.Main },
-            onCaptured = { keyCode -> stage = Stage.PickAction(keyCode) },
-        )
+        Stage.CaptureKey ->
+            CaptureKeyStage(
+                onDismiss = { stage = Stage.Main },
+                onCaptured = { keyCode -> stage = Stage.PickAction(keyCode) },
+            )
 
-        is Stage.PickAction -> PickActionStage(
-            keyCode = currentStage.keyCode,
-            currentShortcut = shortcuts.firstOrNull { it.keyCode == currentStage.keyCode },
-            onDismiss = { stage = Stage.Main },
-            onSelectAction = { action ->
-                PlayerCustomShortcutsStore.upsert(currentStage.keyCode, action)
-                updateShortcuts(PlayerCustomShortcutsStore.get())
-                stage = Stage.Main
-            },
-            onPickValues = { group ->
-                stage = Stage.PickActionValue(
-                    keyCode = currentStage.keyCode,
-                    groupId = group.id,
-                )
-            },
-            onRemove = {
-                PlayerCustomShortcutsStore.remove(currentStage.keyCode)
-                updateShortcuts(PlayerCustomShortcutsStore.get())
-                stage = Stage.Main
-            },
-        )
+        is Stage.PickAction ->
+            PickActionStage(
+                keyCode = currentStage.keyCode,
+                currentShortcut = shortcuts.firstOrNull { it.keyCode == currentStage.keyCode },
+                onDismiss = { stage = Stage.Main },
+                onSelectAction = { action ->
+                    PlayerCustomShortcutsStore.upsert(currentStage.keyCode, action)
+                    updateShortcuts(PlayerCustomShortcutsStore.get())
+                    stage = Stage.Main
+                },
+                onPickValues = { group ->
+                    stage =
+                        Stage.PickActionValue(
+                            keyCode = currentStage.keyCode,
+                            groupId = group.id,
+                        )
+                },
+                onRemove = {
+                    PlayerCustomShortcutsStore.remove(currentStage.keyCode)
+                    updateShortcuts(PlayerCustomShortcutsStore.get())
+                    stage = Stage.Main
+                },
+            )
 
         is Stage.PickActionValue -> {
-            val group = PlayerCustomShortcutCatalog.groups()
-                .firstOrNull { it.id == currentStage.groupId }
+            val group =
+                PlayerCustomShortcutCatalog
+                    .groups()
+                    .firstOrNull { it.id == currentStage.groupId }
             if (group == null) {
                 stage = Stage.Main
             } else {
@@ -128,23 +134,33 @@ fun PlayerCustomShortcutsDialog(
             }
         }
 
-        Stage.ConfirmClear -> ConfirmClearStage(
-            onDismiss = { stage = Stage.Main },
-            onConfirm = {
-                PlayerCustomShortcutsStore.clear()
-                updateShortcuts(PlayerCustomShortcutsStore.get())
-                stage = Stage.Main
-            },
-        )
+        Stage.ConfirmClear ->
+            ConfirmClearStage(
+                onDismiss = { stage = Stage.Main },
+                onConfirm = {
+                    PlayerCustomShortcutsStore.clear()
+                    updateShortcuts(PlayerCustomShortcutsStore.get())
+                    stage = Stage.Main
+                },
+            )
     }
 }
 
 /** 弹窗阶段。 */
 private sealed interface Stage {
     data object Main : Stage
+
     data object CaptureKey : Stage
-    data class PickAction(val keyCode: Int) : Stage
-    data class PickActionValue(val keyCode: Int, val groupId: String) : Stage
+
+    data class PickAction(
+        val keyCode: Int,
+    ) : Stage
+
+    data class PickActionValue(
+        val keyCode: Int,
+        val groupId: String,
+    ) : Stage
+
     data object ConfirmClear : Stage
 }
 
@@ -174,10 +190,11 @@ private fun MainStage(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 LazyColumn(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .heightIn(max = maxHeightDp)
-                        .padding(vertical = 16.dp),
+                    modifier =
+                        Modifier
+                            .wrapContentHeight()
+                            .heightIn(max = maxHeightDp)
+                            .padding(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     if (shortcuts.isEmpty()) {
@@ -249,26 +266,27 @@ private fun CaptureKeyStage(
             tonalElevation = 4.dp,
         ) {
             Box(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .focusRequester(focusRequester)
-                    .focusable()
-                    .onPreviewKeyEvent { keyEvent ->
-                        if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                        if (keyEvent.nativeKeyEvent.repeatCount != 0) return@onPreviewKeyEvent true
+                modifier =
+                    Modifier
+                        .padding(32.dp)
+                        .focusRequester(focusRequester)
+                        .focusable()
+                        .onPreviewKeyEvent { keyEvent ->
+                            if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent true
+                            if (keyEvent.nativeKeyEvent.repeatCount != 0) return@onPreviewKeyEvent true
 
-                        val keyCode = keyEvent.key.nativeKeyCode
-                        when {
-                            PlayerCustomShortcutKeys.isCancelKeyCode(keyCode) -> {
-                                onDismiss()
-                            }
+                            val keyCode = keyEvent.key.nativeKeyCode
+                            when {
+                                PlayerCustomShortcutKeys.isCancelKeyCode(keyCode) -> {
+                                    onDismiss()
+                                }
 
-                            PlayerCustomShortcutKeys.isAllowedKeyCode(keyCode) -> {
-                                onCaptured(keyCode)
+                                PlayerCustomShortcutKeys.isAllowedKeyCode(keyCode) -> {
+                                    onCaptured(keyCode)
+                                }
                             }
-                        }
-                        true
-                    },
+                            true
+                        },
             ) {
                 Text(
                     text = "按下要绑定的按键...\n（按返回键取消）",
@@ -306,10 +324,11 @@ private fun PickActionStage(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 LazyColumn(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .heightIn(max = maxHeightDp)
-                        .padding(vertical = 16.dp),
+                    modifier =
+                        Modifier
+                            .wrapContentHeight()
+                            .heightIn(max = maxHeightDp)
+                            .padding(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     val groups = PlayerCustomShortcutCatalog.groups()
@@ -367,10 +386,11 @@ private fun PickActionValueStage(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 LazyColumn(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .heightIn(max = maxHeightDp)
-                        .padding(vertical = 16.dp),
+                    modifier =
+                        Modifier
+                            .wrapContentHeight()
+                            .heightIn(max = maxHeightDp)
+                            .padding(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     items(values) { entry ->
@@ -405,9 +425,10 @@ private fun ConfirmClearStage(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Button(

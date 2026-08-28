@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
  * [SettingsMenuNavItem] 枚举的单元测试。
  */
 class SettingsMenuNavItemTest {
-
     @Test
     fun enum_hasSixEntries() {
         assertThat(SettingsMenuNavItem.entries).hasSize(6)

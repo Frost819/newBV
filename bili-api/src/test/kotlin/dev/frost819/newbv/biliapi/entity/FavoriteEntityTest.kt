@@ -241,8 +241,12 @@ class FavoriteEntityTest {
         favState: Int,
         mediaCount: Int,
     ) = FavoriteFolderInfo(
-        id = 1001L, fid = 10L, mid = 12345L, attr = 0,
-        title = "my-folder", cover = "http://cover.test",
+        id = 1001L,
+        fid = 10L,
+        mid = 12345L,
+        attr = 0,
+        title = "my-folder",
+        cover = "http://cover.test",
         upper =
             dev.frost819.newbv.biliapi.http.entity.user.favorite.Upper(
                 mid = 12345L,
@@ -255,8 +259,14 @@ class FavoriteEntityTest {
                 collect = 0,
                 play = 0,
             ),
-        type = 11, intro = "intro", ctime = 0, mtime = 0, state = 0,
-        favState = favState, likeState = 0, mediaCount = mediaCount,
+        type = 11,
+        intro = "intro",
+        ctime = 0,
+        mtime = 0,
+        state = 0,
+        favState = favState,
+        likeState = 0,
+        mediaCount = mediaCount,
     )
 
     private fun fakeFavoriteItem(
@@ -264,16 +274,27 @@ class FavoriteEntityTest {
         type: Int,
         title: String,
     ) = dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteItem(
-        id = id, type = type, title = title, cover = "http://cover.test/$id",
-        intro = "intro", page = 3, duration = 600,
+        id = id,
+        type = type,
+        title = title,
+        cover = "http://cover.test/$id",
+        intro = "intro",
+        page = 3,
+        duration = 600,
         upper =
             dev.frost819.newbv.biliapi.http.entity.user.favorite.Upper(
                 mid = 12345L,
                 name = "up-name",
                 face = "http://face.test",
             ),
-        attr = 0, cntInfo = dev.frost819.newbv.biliapi.http.entity.user.favorite.CntInfo(collect = 0, play = 0),
-        link = "http://link.test/$id", ctime = 0, pubtime = 1000L, favTime = 0,
+        attr = 0,
+        cntInfo =
+            dev.frost819.newbv.biliapi.http.entity.user.favorite
+                .CntInfo(collect = 0, play = 0),
+        link = "http://link.test/$id",
+        ctime = 0,
+        pubtime = 1000L,
+        favTime = 0,
         bvid = "BV$id",
     )
 }

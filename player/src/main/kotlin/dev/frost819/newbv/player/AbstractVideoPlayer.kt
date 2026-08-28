@@ -10,7 +10,6 @@ package dev.frost819.newbv.player
  * @see impl.exo.ExoMediaPlayer
  */
 abstract class AbstractVideoPlayer {
-
     /** 播放器事件回调，由外部通过 [setPlayerEventListener] 设置 */
     protected var mPlayerEventListener: VideoPlayerListener? = null
 
@@ -29,7 +28,10 @@ abstract class AbstractVideoPlayer {
      * @param videoUrl 视频流地址，null 表示无视频流
      * @param audioUrl 音频流地址，null 表示无独立音频流（如直播流音视频合一）
      */
-    abstract fun playUrl(videoUrl: String? = null, audioUrl: String? = null)
+    abstract fun playUrl(
+        videoUrl: String? = null,
+        audioUrl: String? = null,
+    )
 
     /** 准备开始播放（加载流、初始化解码器） */
     abstract fun prepare()

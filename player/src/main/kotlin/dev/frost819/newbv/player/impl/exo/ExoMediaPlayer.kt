@@ -47,9 +47,9 @@ import java.util.Locale
 @OptIn(UnstableApi::class)
 class ExoMediaPlayer(
     private val context: Context,
-    private val options: VideoPlayerOptions
-) : AbstractVideoPlayer(), Player.Listener {
-
+    private val options: VideoPlayerOptions,
+) : AbstractVideoPlayer(),
+    Player.Listener {
     companion object {
         private const val BEHIND_LIVE_WINDOW_RECOVER_WINDOW_MS = 15_000L
         private const val BEHIND_LIVE_WINDOW_RECOVER_MIN_INTERVAL_MS = 1_200L
@@ -86,37 +86,41 @@ class ExoMediaPlayer(
     }
 
     override fun initPlayer() {
-        val renderersFactory = DefaultRenderersFactory(context).apply {
-            setExtensionRendererMode(
-                when (options.enableFfmpegAudioRenderer) {
-                    true -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
-                    false -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
-                }
-            )
-            if (options.enableSoftwareVideoDecoder) {
-                // 强制软件解码：只选择 OMX.google.* / c2.android.* 开头的解码器
-                setMediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
-                    val allDecoders = MediaCodecUtil.getDecoderInfos(
-                        mimeType,
-                        requiresSecureDecoder,
-                        requiresTunnelingDecoder
-                    )
-                    val softwareDecoders = allDecoders.filter {
-                        it.name.startsWith("OMX.google.") || it.name.startsWith("c2.android.")
+        val renderersFactory =
+            DefaultRenderersFactory(context).apply {
+                setExtensionRendererMode(
+                    when (options.enableFfmpegAudioRenderer) {
+                        true -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+                        false -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
+                    },
+                )
+                if (options.enableSoftwareVideoDecoder) {
+                    // 强制软件解码：只选择 OMX.google.* / c2.android.* 开头的解码器
+                    setMediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+                        val allDecoders =
+                            MediaCodecUtil.getDecoderInfos(
+                                mimeType,
+                                requiresSecureDecoder,
+                                requiresTunnelingDecoder,
+                            )
+                        val softwareDecoders =
+                            allDecoders.filter {
+                                it.name.startsWith("OMX.google.") || it.name.startsWith("c2.android.")
+                            }
+                        // 兜底回退到硬解
+                        softwareDecoders.ifEmpty { allDecoders }
                     }
-                    // 兜底回退到硬解
-                    softwareDecoders.ifEmpty { allDecoders }
+                } else {
+                    setMediaCodecSelector(MediaCodecSelector.DEFAULT)
                 }
-            } else {
-                setMediaCodecSelector(MediaCodecSelector.DEFAULT)
             }
-        }
-        mPlayer = ExoPlayer
-            .Builder(context)
-            .setRenderersFactory(renderersFactory)
-            .setSeekForwardIncrementMs(1000 * 10)
-            .setSeekBackIncrementMs(1000 * 5)
-            .build()
+        mPlayer =
+            ExoPlayer
+                .Builder(context)
+                .setRenderersFactory(renderersFactory)
+                .setSeekForwardIncrementMs(1000 * 10)
+                .setSeekBackIncrementMs(1000 * 5)
+                .build()
 
         mPlayer?.addListener(this)
     }
@@ -125,18 +129,22 @@ class ExoMediaPlayer(
         // ExoPlayer 通过 dataSourceFactory 设置默认请求头，此方法预留
     }
 
-    override fun playUrl(videoUrl: String?, audioUrl: String?) {
+    override fun playUrl(
+        videoUrl: String?,
+        audioUrl: String?,
+    ) {
         streamProtocol = resolveStreamProtocol(videoUrl, audioUrl)
         val videoMediaSource = videoUrl?.let { createMediaSource(it) }
         val audioMediaSource = audioUrl?.let { createMediaSource(it) }
 
         val mediaSources = listOfNotNull(videoMediaSource, audioMediaSource)
-        mMediaSource = if (mediaSources.size > 1) {
-            @Suppress("SpreadOperator")
-            MergingMediaSource(*mediaSources.toTypedArray())
-        } else {
-            mediaSources.firstOrNull()
-        }
+        mMediaSource =
+            if (mediaSources.size > 1) {
+                @Suppress("SpreadOperator")
+                MergingMediaSource(*mediaSources.toTypedArray())
+            } else {
+                mediaSources.firstOrNull()
+            }
     }
 
     /**
@@ -152,7 +160,12 @@ class ExoMediaPlayer(
     ): String {
         if (videoUrl != null && audioUrl != null) return "DASH"
         val url = videoUrl ?: return "Unknown"
-        val isHls = url.substringBefore('?').trim().lowercase(Locale.US).endsWith(".m3u8")
+        val isHls =
+            url
+                .substringBefore('?')
+                .trim()
+                .lowercase(Locale.US)
+                .endsWith(".m3u8")
         return if (isHls) "HLS" else "FLV"
     }
 
@@ -165,9 +178,15 @@ class ExoMediaPlayer(
      * 剥离该标签；其余格式（DASH / FLV / progressive）走 [DefaultMediaSourceFactory]。
      */
     private fun createMediaSource(url: String): MediaSource {
-        val isHls = url.substringBefore('?').trim().lowercase(Locale.US).endsWith(".m3u8")
+        val isHls =
+            url
+                .substringBefore('?')
+                .trim()
+                .lowercase(Locale.US)
+                .endsWith(".m3u8")
         return if (isHls) {
-            HlsMediaSource.Factory(dataSourceFactory)
+            HlsMediaSource
+                .Factory(dataSourceFactory)
                 .setPlaylistParserFactory(ExtXStartStrippingHlsPlaylistParserFactory())
                 .createMediaSource(MediaItem.fromUri(url))
         } else {
@@ -266,7 +285,7 @@ class ExoMediaPlayer(
                 audio: ${mPlayer?.audioFormat?.bitrate ?: 0} kbps
                 video codec: ${mPlayer?.videoFormat?.sampleMimeType ?: "null"}
                 audio codec: ${mPlayer?.audioFormat?.sampleMimeType ?: "null"} ($audioRendererName)
-            """.trimIndent()
+                """.trimIndent()
         }
 
     /** 当前活跃的音频渲染器名称（如 "OMX.google.aac.decoder"）。 */
@@ -307,10 +326,11 @@ class ExoMediaPlayer(
      * 频率限制：15 秒滑动窗口内最多 2 次，最小间隔 1.2 秒。
      */
     private fun tryRecoverBehindLiveWindow(error: PlaybackException) {
-        val player = mPlayer ?: run {
-            mPlayerEventListener?.onError(error)
-            return
-        }
+        val player =
+            mPlayer ?: run {
+                mPlayerEventListener?.onError(error)
+                return
+            }
         val nowMs = android.os.SystemClock.elapsedRealtime()
 
         // 重置窗口（超过 15 秒或首次）
@@ -367,18 +387,16 @@ class ExoMediaPlayer(
 private class ExtXStartStrippingHlsPlaylistParserFactory(
     private val delegate: HlsPlaylistParserFactory = DefaultHlsPlaylistParserFactory(),
 ) : HlsPlaylistParserFactory {
-    override fun createPlaylistParser(): ParsingLoadable.Parser<HlsPlaylist> {
-        return ExtXStartStrippingParser(delegate.createPlaylistParser())
-    }
+    override fun createPlaylistParser(): ParsingLoadable.Parser<HlsPlaylist> =
+        ExtXStartStrippingParser(delegate.createPlaylistParser())
 
     override fun createPlaylistParser(
         multivariantPlaylist: HlsMultivariantPlaylist,
         previousMediaPlaylist: HlsMediaPlaylist?,
-    ): ParsingLoadable.Parser<HlsPlaylist> {
-        return ExtXStartStrippingParser(
-            delegate.createPlaylistParser(multivariantPlaylist, previousMediaPlaylist)
+    ): ParsingLoadable.Parser<HlsPlaylist> =
+        ExtXStartStrippingParser(
+            delegate.createPlaylistParser(multivariantPlaylist, previousMediaPlaylist),
         )
-    }
 }
 
 /**
@@ -388,16 +406,20 @@ private class ExtXStartStrippingHlsPlaylistParserFactory(
 private class ExtXStartStrippingParser(
     private val delegate: ParsingLoadable.Parser<HlsPlaylist>,
 ) : ParsingLoadable.Parser<HlsPlaylist> {
-    override fun parse(uri: android.net.Uri, inputStream: InputStream): HlsPlaylist {
+    override fun parse(
+        uri: android.net.Uri,
+        inputStream: InputStream,
+    ): HlsPlaylist {
         val bytes = inputStream.readBytes()
         val text = String(bytes, Charsets.UTF_8)
         if (!text.contains("#EXT-X-START", ignoreCase = true)) {
             return delegate.parse(uri, ByteArrayInputStream(bytes))
         }
-        val filtered = text
-            .lineSequence()
-            .filterNot { it.trimStart().startsWith("#EXT-X-START", ignoreCase = true) }
-            .joinToString("\n")
+        val filtered =
+            text
+                .lineSequence()
+                .filterNot { it.trimStart().startsWith("#EXT-X-START", ignoreCase = true) }
+                .joinToString("\n")
         return delegate.parse(uri, ByteArrayInputStream(filtered.toByteArray(Charsets.UTF_8)))
     }
 }

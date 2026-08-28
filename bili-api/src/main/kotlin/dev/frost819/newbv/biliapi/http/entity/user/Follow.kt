@@ -80,7 +80,9 @@ data class UserFollowData(
     }
 }
 
-enum class FollowAction(val id: Int) {
+enum class FollowAction(
+    val id: Int,
+) {
     AddFollow(1),
     DelFollow(2),
     AddFollowQuietly(3),
@@ -90,7 +92,9 @@ enum class FollowAction(val id: Int) {
     DelFan(7),
 }
 
-enum class FollowActionSource(val id: Int) {
+enum class FollowActionSource(
+    val id: Int,
+) {
     Space(11),
     Video(14),
     Article(115),

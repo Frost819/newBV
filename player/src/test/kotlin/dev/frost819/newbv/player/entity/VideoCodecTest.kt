@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class VideoCodecTest {
-
     @Test
     fun `fromCode returns correct codec by ordinal`() {
         assertEquals(VideoCodec.AVC, VideoCodec.fromCode(0))

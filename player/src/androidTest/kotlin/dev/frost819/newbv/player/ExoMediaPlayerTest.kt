@@ -22,7 +22,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class ExoMediaPlayerTest {
-
     private lateinit var context: Context
     private lateinit var player: ExoMediaPlayer
 
@@ -42,17 +41,19 @@ class ExoMediaPlayerTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        player = runOnMain {
-            ExoMediaPlayer(
-                context = context,
-                options = VideoPlayerOptions(
-                    userAgent = "test-agent",
-                    referer = "https://www.bilibili.com",
-                    enableFfmpegAudioRenderer = false,
-                    enableSoftwareVideoDecoder = false
+        player =
+            runOnMain {
+                ExoMediaPlayer(
+                    context = context,
+                    options =
+                        VideoPlayerOptions(
+                            userAgent = "test-agent",
+                            referer = "https://www.bilibili.com",
+                            enableFfmpegAudioRenderer = false,
+                            enableSoftwareVideoDecoder = false,
+                        ),
                 )
-            )
-        }
+            }
     }
 
     @After
@@ -144,7 +145,7 @@ class ExoMediaPlayerTest {
         runOnMainVoid {
             player.playUrl(
                 videoUrl = "https://example.com/video.m4s",
-                audioUrl = "https://example.com/audio.m4s"
+                audioUrl = "https://example.com/audio.m4s",
             )
         }
     }
@@ -154,7 +155,7 @@ class ExoMediaPlayerTest {
         runOnMainVoid {
             player.playUrl(
                 videoUrl = "https://example.com/video.flv",
-                audioUrl = null
+                audioUrl = null,
             )
         }
     }
@@ -179,15 +180,17 @@ class ExoMediaPlayerTest {
 
     @Test
     fun softwareDecoderOption_createsPlayerWithoutCrash() {
-        val softPlayer = runOnMain {
-            ExoMediaPlayer(
-                context = context,
-                options = VideoPlayerOptions(
-                    enableFfmpegAudioRenderer = true,
-                    enableSoftwareVideoDecoder = true
+        val softPlayer =
+            runOnMain {
+                ExoMediaPlayer(
+                    context = context,
+                    options =
+                        VideoPlayerOptions(
+                            enableFfmpegAudioRenderer = true,
+                            enableSoftwareVideoDecoder = true,
+                        ),
                 )
-            )
-        }
+            }
         val mPlayer = runOnMain { softPlayer.mPlayer }
         assertThat(mPlayer).isNotNull()
         runOnMainVoid { softPlayer.release() }

@@ -10,12 +10,11 @@ data class UgcRegionData(
     val next: UgcRegionPage,
 ) {
     companion object {
-        fun fromRegionDynamic(data: dev.frost819.newbv.biliapi.http.entity.region.RegionDynamic): UgcRegionData {
-            return UgcRegionData(
+        fun fromRegionDynamic(data: dev.frost819.newbv.biliapi.http.entity.region.RegionDynamic): UgcRegionData =
+            UgcRegionData(
                 carouselData = data.banner?.let { CarouselData.fromUgcRegionDynamicBanner(it) },
                 items = data.new.map { UgcItem.fromRegionDynamicListItem(it) },
                 next = UgcRegionPage(data.cBottom),
             )
-        }
     }
 }

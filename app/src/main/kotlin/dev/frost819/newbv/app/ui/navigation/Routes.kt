@@ -2,7 +2,7 @@ package dev.frost819.newbv.app.ui.navigation
 
 import kotlinx.serialization.Serializable
 
-/**
+/*
  * Navigation 路由定义。
  *
  * 所有路由使用 `@Serializable` data class，通过 Navigation-Compose 类型安全路由导航。
@@ -22,7 +22,7 @@ object HomeRoute
 data class VideoDetailRoute(
     val aid: Long,
     val bvid: String = "",
-    val epid: Long? = null
+    val epid: Long? = null,
 )
 
 // ── 播放器 ────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ data class VideoPlayerRoute(
     val bvid: String = "",
     val epid: Long? = null,
     val title: String = "",
-    val cover: String = ""
+    val cover: String = "",
 )
 
 /** 番剧播放器页面。 */
@@ -44,7 +44,7 @@ data class SeasonPlayerRoute(
     val epid: Long,
     val sid: Long,
     val title: String = "",
-    val cover: String = ""
+    val cover: String = "",
 )
 
 // ── 搜索 ──────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ data class SearchResultRoute(
 data class LivePlayerRoute(
     val roomId: Long,
     val title: String = "",
-    val cover: String = ""
+    val cover: String = "",
 )
 
 /** 直播分区列表页面。 */
@@ -94,7 +94,7 @@ data class UserSpaceRoute(
 /** 关注列表页。 */
 @Serializable
 data class FollowRoute(
-    val mid: Long
+    val mid: Long,
 )
 
 // ── 番剧/PGC ──────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ data class FollowRoute(
 /** 番剧详情页。 */
 @Serializable
 data class PgcFeatureRoute(
-    val seasonId: Long
+    val seasonId: Long,
 )
 
 // ── 设置 ──────────────────────────────────────────────────────────────

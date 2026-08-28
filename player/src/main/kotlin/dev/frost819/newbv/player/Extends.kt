@@ -7,17 +7,16 @@ import java.util.concurrent.TimeUnit
  *
  * @return 格式化后的时间字符串，负值返回 "..."
  */
-fun Long.formatMinSec(): String {
-    return if (this < 0L) {
+fun Long.formatMinSec(): String =
+    if (this < 0L) {
         "..."
     } else {
         String.format(
             "%02d:%02d",
             TimeUnit.MILLISECONDS.toMinutes(this),
             TimeUnit.MILLISECONDS.toSeconds(this) -
-                    TimeUnit.MINUTES.toSeconds(
-                        TimeUnit.MILLISECONDS.toMinutes(this)
-                    )
+                TimeUnit.MINUTES.toSeconds(
+                    TimeUnit.MILLISECONDS.toMinutes(this),
+                ),
         )
     }
-}

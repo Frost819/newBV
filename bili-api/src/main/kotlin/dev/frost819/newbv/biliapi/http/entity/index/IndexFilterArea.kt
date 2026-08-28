@@ -20,7 +20,18 @@ object IndexFilterArea {
 
     private val movieAreaIds =
         listOf(
-            -1, 1, 6, 3, 28, 9, 4, 15, 10, 35, 13, 5,
+            -1,
+            1,
+            6,
+            3,
+            28,
+            9,
+            4,
+            15,
+            10,
+            35,
+            13,
+            5,
         )
     private val tvAreaIds =
         listOf(

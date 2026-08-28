@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证枚举值、ratio 属性及 [VideoAspectRatio.fromOrdinal] 安全解析。
  */
 class VideoAspectRatioTest {
-
     @Test
     fun `Default has null ratio`() {
         assertThat(VideoAspectRatio.Default.ratio).isNull()

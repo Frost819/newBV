@@ -194,9 +194,18 @@ class VideoPlayRepositoryUnitTest {
             val playUrlV2Data = fakePlayUrlV2Data()
             coEvery {
                 BiliHttpApi.getPgcVideoPlayUrlV2(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 BiliResponse(code = 0, message = "", data = playUrlV2Data)
@@ -219,9 +228,18 @@ class VideoPlayRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.getPgcVideoPlayUrlV2(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 BiliResponse(code = 0, message = "", data = fakePlayUrlV2Data())
@@ -327,10 +345,20 @@ class VideoPlayRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.sendHeartbeat(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 "{\"code\":0}"
@@ -358,10 +386,20 @@ class VideoPlayRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.sendHeartbeatApp(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns "{\"code\":0}"
 
@@ -384,10 +422,20 @@ class VideoPlayRepositoryUnitTest {
             authRepository.biliJct = null
             coEvery {
                 BiliHttpApi.sendHeartbeat(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 "{\"code\":0}"
@@ -410,10 +458,20 @@ class VideoPlayRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.sendHeartbeat(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 "{\"code\":0}"
@@ -448,10 +506,20 @@ class VideoPlayRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.sendHeartbeatApp(
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(), any(), any(),
-                    any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns "{\"code\":0}"
 
@@ -557,7 +625,13 @@ class VideoPlayRepositoryUnitTest {
     fun `getVideoShot Web calls getWebVideoShot with aid and cid`() =
         runTest {
             coEvery { BiliHttpApi.getWebVideoShot(any(), any(), any(), any()) } returns
-                BiliResponse(code = 0, message = "", data = dev.frost819.newbv.biliapi.http.entity.video.VideoShot())
+                BiliResponse(
+                    code = 0,
+                    message = "",
+                    data =
+                        dev.frost819.newbv.biliapi.http.entity.video
+                            .VideoShot(),
+                )
 
             repository.getVideoShot(aid = AID, cid = CID, preferApiType = ApiType.Web)
 
@@ -571,7 +645,13 @@ class VideoPlayRepositoryUnitTest {
     fun `getVideoShot App calls getAppVideoShot with aid and cid`() =
         runTest {
             coEvery { BiliHttpApi.getAppVideoShot(any(), any()) } returns
-                BiliResponse(code = 0, message = "", data = dev.frost819.newbv.biliapi.http.entity.video.VideoShot())
+                BiliResponse(
+                    code = 0,
+                    message = "",
+                    data =
+                        dev.frost819.newbv.biliapi.http.entity.video
+                            .VideoShot(),
+                )
 
             repository.getVideoShot(aid = AID, cid = CID, preferApiType = ApiType.App)
 

@@ -8,7 +8,9 @@ package dev.frost819.newbv.danmaku.entity
  *
  * @property factor 速度倍数（1.0 = 正常速度，1.5 = 弹幕速度加快 50%）
  */
-enum class DanmakuSpeedFactor(val factor: Float) {
+enum class DanmakuSpeedFactor(
+    val factor: Float,
+) {
     /**
      * 1.5x 速度（弹幕滚动加快）
      */
@@ -32,7 +34,8 @@ enum class DanmakuSpeedFactor(val factor: Float) {
     /**
      * 0.5x 速度（弹幕滚动减慢）
      */
-    S5(0.5f);
+    S5(0.5f),
+    ;
 
     companion object {
         /**
@@ -41,8 +44,6 @@ enum class DanmakuSpeedFactor(val factor: Float) {
          * @param targetFactor 目标速度因子
          * @return 匹配的枚举值，找不到则返回 [S3]（1.0x）
          */
-        fun fromFactor(targetFactor: Float): DanmakuSpeedFactor {
-            return entries.find { it.factor == targetFactor } ?: S3
-        }
+        fun fromFactor(targetFactor: Float): DanmakuSpeedFactor = entries.find { it.factor == targetFactor } ?: S3
     }
 }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.Scaffold as Material3Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -76,12 +74,14 @@ fun DynamicsScreen(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.dynamicItems.size - 20
-            }
-            .collect {
+            }.collect {
                 viewModel.loadDynamic()
             }
     }
@@ -98,22 +98,23 @@ fun DynamicsScreen(
             items = state.dynamicItems,
             key = { index, _ -> index },
         ) { index, item ->
-            val cardData = remember(item) {
-                VideoCardData(
-                    avid = item.aid,
-                    bvid = item.bvid ?: "",
-                    cid = item.cid,
-                    epid = item.epid,
-                    title = item.title,
-                    cover = item.cover,
-                    playString = item.play.takeIf { it != -1 }.toWanString(),
-                    danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
-                    timeString = (item.duration * 1000L).formatHourMinSec(),
-                    upName = item.author,
-                    upMid = item.authorMid,
-                    pubTime = item.pubTime,
-                )
-            }
+            val cardData =
+                remember(item) {
+                    VideoCardData(
+                        avid = item.aid,
+                        bvid = item.bvid ?: "",
+                        cid = item.cid,
+                        epid = item.epid,
+                        title = item.title,
+                        cover = item.cover,
+                        playString = item.play.takeIf { it != -1 }.toWanString(),
+                        danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
+                        timeString = (item.duration * 1000L).formatHourMinSec(),
+                        upName = item.author,
+                        upMid = item.authorMid,
+                        pubTime = item.pubTime,
+                    )
+                }
             SmallVideoCard(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,

@@ -1,7 +1,11 @@
 package dev.frost819.newbv.biliapi.entity.ugc
 
 @Deprecated("Use dev.frost819.newbv.biliapi.entity.ugc.UgcTypeV2 instead")
-enum class UgcType(val rid: Int, val codename: String, val locId: Int = -1) {
+enum class UgcType(
+    val rid: Int,
+    val codename: String,
+    val locId: Int = -1,
+) {
     Douga(1, "douga", 4973),
     DougaMad(24, "mad"),
     DougaMmd(25, "mmd"),

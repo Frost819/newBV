@@ -23,9 +23,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okio.Path.Companion.toPath
 import java.io.File
 import javax.inject.Inject
-import okio.Path.Companion.toPath
 
 /**
  * new BV 应用入口。
@@ -38,7 +38,6 @@ import okio.Path.Companion.toPath
  */
 @HiltAndroidApp
 class BVApplication : Application() {
-
     private val logger = Loggers.get("BVApplication")
 
     @Inject
@@ -119,28 +118,30 @@ class BVApplication : Application() {
 
         // 图片磁盘缓存上限：开启自动清理且设置了阈值时按阈值限制，否则不限制。
         // Coil 在每次写入时自动 LRU 淘汰超限条目（缓存满阈值自动清理）。
-        val diskCacheMaxBytes = if (Prefs.cacheAutoClean && Prefs.cacheThreshold > 0) {
-            Prefs.cacheThreshold * CacheManager.BYTES_PER_MB
-        } else {
-            CacheManager.UNLIMITED_DISK_CACHE_BYTES
-        }
-        val imageDiskCache = DiskCache.Builder()
-            .directory(
-                File(cacheDir, CacheManager.IMAGE_CACHE_DIR).absolutePath.toPath()
-            )
-            .maxSizeBytes(diskCacheMaxBytes)
-            .build()
+        val diskCacheMaxBytes =
+            if (Prefs.cacheAutoClean && Prefs.cacheThreshold > 0) {
+                Prefs.cacheThreshold * CacheManager.BYTES_PER_MB
+            } else {
+                CacheManager.UNLIMITED_DISK_CACHE_BYTES
+            }
+        val imageDiskCache =
+            DiskCache
+                .Builder()
+                .directory(
+                    File(cacheDir, CacheManager.IMAGE_CACHE_DIR).absolutePath.toPath(),
+                ).maxSizeBytes(diskCacheMaxBytes)
+                .build()
 
         coil3.SingletonImageLoader.setSafe {
-            ImageLoader.Builder(this)
+            ImageLoader
+                .Builder(this)
                 .crossfade(true)
                 .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCache(imageDiskCache)
                 .components {
                     add(OkHttpNetworkFetcherFactory(OkHttpClient()))
-                }
-                .build()
+                }.build()
         }
 
         // 启动时检查缓存阈值，超限自动 LRU 清理（检查时机 = App 启动 + 缓存写入后）

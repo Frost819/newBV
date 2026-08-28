@@ -11,7 +11,6 @@ import dev.frost819.newbv.data.db.entity.SearchHistoryEntity
  * @see SearchHistoryEntity
  */
 interface SearchHistoryRepository {
-
     /**
      * 查询最近的搜索历史。
      *

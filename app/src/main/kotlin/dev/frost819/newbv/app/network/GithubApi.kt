@@ -33,28 +33,30 @@ object GithubApi {
     private const val OWNER = "Frost819"
     private const val REPO = "bv"
 
-    private val json = Json {
-        coerceInputValues = true
-        ignoreUnknownKeys = true
-        prettyPrint = true
-    }
+    private val json =
+        Json {
+            coerceInputValues = true
+            ignoreUnknownKeys = true
+            prettyPrint = true
+        }
 
-    private val client: HttpClient = HttpClient(OkHttp) {
-        BrowserUserAgent()
-        install(ContentNegotiation) {
-            json(json)
-        }
-        install(ContentEncoding) {
-            deflate(1.0f)
-            gzip(0.9f)
-        }
-        defaultRequest {
-            url {
-                protocol = URLProtocol.HTTPS
-                host = "api.github.com"
+    private val client: HttpClient =
+        HttpClient(OkHttp) {
+            BrowserUserAgent()
+            install(ContentNegotiation) {
+                json(json)
+            }
+            install(ContentEncoding) {
+                deflate(1.0f)
+                gzip(0.9f)
+            }
+            defaultRequest {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "api.github.com"
+                }
             }
         }
-    }
 
     /** 获取最新 Release（非预发布）。 */
     suspend fun getLatestBuild(): GithubRelease {
@@ -64,11 +66,16 @@ object GithubApi {
     }
 
     /** 获取所有 Releases。 */
-    suspend fun getReleases(pageSize: Int = 30, page: Int = 1): List<GithubRelease> {
-        val response = client.get("repos/$OWNER/$REPO/releases") {
-            parameter("per_page", pageSize)
-            parameter("page", page)
-        }.bodyAsText()
+    suspend fun getReleases(
+        pageSize: Int = 30,
+        page: Int = 1,
+    ): List<GithubRelease> {
+        val response =
+            client
+                .get("repos/$OWNER/$REPO/releases") {
+                    parameter("per_page", pageSize)
+                    parameter("page", page)
+                }.bodyAsText()
         checkErrorMessage(response)
         return json.decodeFromString(response)
     }
@@ -85,19 +92,22 @@ object GithubApi {
         file: File,
         onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
     ) {
-        val downloadUrl = release.assets.firstOrNull {
-            it.name.contains("release") || it.name.contains("alpha")
-        }?.browserDownloadUrl
-            ?: throw IllegalStateException("Didn't find download url")
+        val downloadUrl =
+            release.assets
+                .firstOrNull {
+                    it.name.contains("release") || it.name.contains("alpha")
+                }?.browserDownloadUrl
+                ?: throw IllegalStateException("Didn't find download url")
 
-        client.prepareRequest {
-            url(toGhProxyUrl(downloadUrl))
-            onDownload { downloaded, total ->
-                onProgress(downloaded, total ?: 0)
+        client
+            .prepareRequest {
+                url(toGhProxyUrl(downloadUrl))
+                onDownload { downloaded, total ->
+                    onProgress(downloaded, total ?: 0)
+                }
+            }.execute { response ->
+                response.bodyAsChannel().copyTo(file.outputStream())
             }
-        }.execute { response ->
-            response.bodyAsChannel().copyTo(file.outputStream())
-        }
     }
 
     private fun checkErrorMessage(data: String) {
@@ -109,7 +119,5 @@ object GithubApi {
         }
     }
 
-    private fun toGhProxyUrl(originalUrl: String): String {
-        return "https://ghfast.top/$originalUrl"
-    }
+    private fun toGhProxyUrl(originalUrl: String): String = "https://ghfast.top/$originalUrl"
 }

@@ -27,15 +27,16 @@ import java.util.Date
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AppDatabaseRobolectricTest {
-
     private lateinit var database: AppDatabase
 
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        database =
+            Room
+                .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
     }
 
     @After
@@ -46,196 +47,214 @@ class AppDatabaseRobolectricTest {
     // ===== SearchHistoryDao =====
 
     @Test
-    fun insertSearchHistory_andFind() = runBlocking {
-        database.searchHistoryDao().insert(SearchHistoryEntity(keyword = "test"))
+    fun insertSearchHistory_andFind() =
+        runBlocking {
+            database.searchHistoryDao().insert(SearchHistoryEntity(keyword = "test"))
 
-        val found = database.searchHistoryDao().findHistory("test")
-        assertThat(found).isNotNull()
-        assertThat(found!!.keyword).isEqualTo("test")
-        assertThat(found.id).isNotNull()
-    }
-
-    @Test
-    fun insertMultipleSearchHistories_andGetAll() = runBlocking {
-        database.searchHistoryDao().insert(
-            SearchHistoryEntity(keyword = "a"),
-            SearchHistoryEntity(keyword = "b"),
-            SearchHistoryEntity(keyword = "c"),
-        )
-
-        val all = database.searchHistoryDao().getAll()
-        assertThat(all).hasSize(3)
-    }
-
-    @Test
-    fun getHistories_returnsOrderedByDateDesc() = runBlocking {
-        val early = SearchHistoryEntity(keyword = "early", searchDate = Date(1000))
-        val late = SearchHistoryEntity(keyword = "late", searchDate = Date(5000))
-        database.searchHistoryDao().insert(early, late)
-
-        val result = database.searchHistoryDao().getHistories(10)
-        assertThat(result).hasSize(2)
-        assertThat(result[0].keyword).isEqualTo("late")
-        assertThat(result[1].keyword).isEqualTo("early")
-    }
-
-    @Test
-    fun getHistories_respectsLimit() = runBlocking {
-        for (i in 1..5) {
-            database.searchHistoryDao().insert(SearchHistoryEntity(keyword = "kw$i"))
+            val found = database.searchHistoryDao().findHistory("test")
+            assertThat(found).isNotNull()
+            assertThat(found!!.keyword).isEqualTo("test")
+            assertThat(found.id).isNotNull()
         }
 
-        val result = database.searchHistoryDao().getHistories(3)
-        assertThat(result).hasSize(3)
-    }
+    @Test
+    fun insertMultipleSearchHistories_andGetAll() =
+        runBlocking {
+            database.searchHistoryDao().insert(
+                SearchHistoryEntity(keyword = "a"),
+                SearchHistoryEntity(keyword = "b"),
+                SearchHistoryEntity(keyword = "c"),
+            )
+
+            val all = database.searchHistoryDao().getAll()
+            assertThat(all).hasSize(3)
+        }
 
     @Test
-    fun getHistories_returnsEmptyWhenNoData() = runBlocking {
-        val result = database.searchHistoryDao().getHistories(10)
-        assertThat(result).isEmpty()
-    }
+    fun getHistories_returnsOrderedByDateDesc() =
+        runBlocking {
+            val early = SearchHistoryEntity(keyword = "early", searchDate = Date(1000))
+            val late = SearchHistoryEntity(keyword = "late", searchDate = Date(5000))
+            database.searchHistoryDao().insert(early, late)
+
+            val result = database.searchHistoryDao().getHistories(10)
+            assertThat(result).hasSize(2)
+            assertThat(result[0].keyword).isEqualTo("late")
+            assertThat(result[1].keyword).isEqualTo("early")
+        }
 
     @Test
-    fun findHistory_returnsNullWhenNotFound() = runBlocking {
-        val result = database.searchHistoryDao().findHistory("nonexistent")
-        assertThat(result).isNull()
-    }
+    fun getHistories_respectsLimit() =
+        runBlocking {
+            for (i in 1..5) {
+                database.searchHistoryDao().insert(SearchHistoryEntity(keyword = "kw$i"))
+            }
+
+            val result = database.searchHistoryDao().getHistories(3)
+            assertThat(result).hasSize(3)
+        }
 
     @Test
-    fun updateSearchHistory_changesDate() = runBlocking {
-        val entity = SearchHistoryEntity(keyword = "test", searchDate = Date(1000))
-        database.searchHistoryDao().insert(entity)
-
-        val inserted = database.searchHistoryDao().findHistory("test")!!
-        val newDate = Date(999999999999L)
-        inserted.searchDate = newDate
-        database.searchHistoryDao().update(inserted)
-
-        val updated = database.searchHistoryDao().findHistory("test")!!
-        assertThat(updated.searchDate).isEqualTo(newDate)
-    }
+    fun getHistories_returnsEmptyWhenNoData() =
+        runBlocking {
+            val result = database.searchHistoryDao().getHistories(10)
+            assertThat(result).isEmpty()
+        }
 
     @Test
-    fun deleteSearchHistory_removesRecord() = runBlocking {
-        val entity = SearchHistoryEntity(keyword = "test")
-        database.searchHistoryDao().insert(entity)
-
-        val inserted = database.searchHistoryDao().findHistory("test")!!
-        database.searchHistoryDao().delete(inserted)
-
-        assertThat(database.searchHistoryDao().findHistory("test")).isNull()
-    }
+    fun findHistory_returnsNullWhenNotFound() =
+        runBlocking {
+            val result = database.searchHistoryDao().findHistory("nonexistent")
+            assertThat(result).isNull()
+        }
 
     @Test
-    fun deleteAllSearchHistory_clearsAll() = runBlocking {
-        database.searchHistoryDao().insert(
-            SearchHistoryEntity(keyword = "a"),
-            SearchHistoryEntity(keyword = "b"),
-        )
+    fun updateSearchHistory_changesDate() =
+        runBlocking {
+            val entity = SearchHistoryEntity(keyword = "test", searchDate = Date(1000))
+            database.searchHistoryDao().insert(entity)
 
-        database.searchHistoryDao().deleteAll()
+            val inserted = database.searchHistoryDao().findHistory("test")!!
+            val newDate = Date(999999999999L)
+            inserted.searchDate = newDate
+            database.searchHistoryDao().update(inserted)
 
-        assertThat(database.searchHistoryDao().getAll()).isEmpty()
-    }
+            val updated = database.searchHistoryDao().findHistory("test")!!
+            assertThat(updated.searchDate).isEqualTo(newDate)
+        }
+
+    @Test
+    fun deleteSearchHistory_removesRecord() =
+        runBlocking {
+            val entity = SearchHistoryEntity(keyword = "test")
+            database.searchHistoryDao().insert(entity)
+
+            val inserted = database.searchHistoryDao().findHistory("test")!!
+            database.searchHistoryDao().delete(inserted)
+
+            assertThat(database.searchHistoryDao().findHistory("test")).isNull()
+        }
+
+    @Test
+    fun deleteAllSearchHistory_clearsAll() =
+        runBlocking {
+            database.searchHistoryDao().insert(
+                SearchHistoryEntity(keyword = "a"),
+                SearchHistoryEntity(keyword = "b"),
+            )
+
+            database.searchHistoryDao().deleteAll()
+
+            assertThat(database.searchHistoryDao().getAll()).isEmpty()
+        }
 
     // ===== UserDao =====
 
     @Test
-    fun insertUser_andFindByUid() = runBlocking {
-        val user = UserEntity(
-            uid = 12345L,
-            username = "testuser",
-            avatar = "http://example.com/a.png",
-            auth = """{"sessdata":"abc"}""",
-        )
-        database.userDao().insert(user)
+    fun insertUser_andFindByUid() =
+        runBlocking {
+            val user =
+                UserEntity(
+                    uid = 12345L,
+                    username = "testuser",
+                    avatar = "http://example.com/a.png",
+                    auth = """{"sessdata":"abc"}""",
+                )
+            database.userDao().insert(user)
 
-        val found = database.userDao().findUserByUid(12345L)
-        assertThat(found).isNotNull()
-        assertThat(found!!.username).isEqualTo("testuser")
-        assertThat(found.avatar).isEqualTo("http://example.com/a.png")
-        assertThat(found.auth).isEqualTo("""{"sessdata":"abc"}""")
-        assertThat(found.lock).isEmpty()
-        assertThat(found.id).isNotNull()
-    }
-
-    @Test
-    fun insertMultipleUsers_andGetAll() = runBlocking {
-        database.userDao().insert(
-            UserEntity(uid = 1L, username = "u1", avatar = "", auth = ""),
-            UserEntity(uid = 2L, username = "u2", avatar = "", auth = ""),
-        )
-
-        val all = database.userDao().getAll()
-        assertThat(all).hasSize(2)
-    }
+            val found = database.userDao().findUserByUid(12345L)
+            assertThat(found).isNotNull()
+            assertThat(found!!.username).isEqualTo("testuser")
+            assertThat(found.avatar).isEqualTo("http://example.com/a.png")
+            assertThat(found.auth).isEqualTo("""{"sessdata":"abc"}""")
+            assertThat(found.lock).isEmpty()
+            assertThat(found.id).isNotNull()
+        }
 
     @Test
-    fun findUserByUid_returnsNullWhenNotFound() = runBlocking {
-        val result = database.userDao().findUserByUid(99999L)
-        assertThat(result).isNull()
-    }
+    fun insertMultipleUsers_andGetAll() =
+        runBlocking {
+            database.userDao().insert(
+                UserEntity(uid = 1L, username = "u1", avatar = "", auth = ""),
+                UserEntity(uid = 2L, username = "u2", avatar = "", auth = ""),
+            )
+
+            val all = database.userDao().getAll()
+            assertThat(all).hasSize(2)
+        }
 
     @Test
-    fun updateUser_changesFields() = runBlocking {
-        database.userDao().insert(
-            UserEntity(uid = 100L, username = "old", avatar = "old_url", auth = "old_auth")
-        )
-
-        val inserted = database.userDao().findUserByUid(100L)!!
-        inserted.username = "new"
-        inserted.avatar = "new_url"
-        inserted.auth = "new_auth"
-        inserted.lock = "1234"
-        database.userDao().update(inserted)
-
-        val updated = database.userDao().findUserByUid(100L)!!
-        assertThat(updated.username).isEqualTo("new")
-        assertThat(updated.avatar).isEqualTo("new_url")
-        assertThat(updated.auth).isEqualTo("new_auth")
-        assertThat(updated.lock).isEqualTo("1234")
-    }
+    fun findUserByUid_returnsNullWhenNotFound() =
+        runBlocking {
+            val result = database.userDao().findUserByUid(99999L)
+            assertThat(result).isNull()
+        }
 
     @Test
-    fun deleteUser_removesRecord() = runBlocking {
-        database.userDao().insert(
-            UserEntity(uid = 200L, username = "toremove", avatar = "", auth = "")
-        )
+    fun updateUser_changesFields() =
+        runBlocking {
+            database.userDao().insert(
+                UserEntity(uid = 100L, username = "old", avatar = "old_url", auth = "old_auth"),
+            )
 
-        val inserted = database.userDao().findUserByUid(200L)!!
-        database.userDao().delete(inserted)
+            val inserted = database.userDao().findUserByUid(100L)!!
+            inserted.username = "new"
+            inserted.avatar = "new_url"
+            inserted.auth = "new_auth"
+            inserted.lock = "1234"
+            database.userDao().update(inserted)
 
-        assertThat(database.userDao().findUserByUid(200L)).isNull()
-    }
+            val updated = database.userDao().findUserByUid(100L)!!
+            assertThat(updated.username).isEqualTo("new")
+            assertThat(updated.avatar).isEqualTo("new_url")
+            assertThat(updated.auth).isEqualTo("new_auth")
+            assertThat(updated.lock).isEqualTo("1234")
+        }
 
     @Test
-    fun getAllUsers_returnsEmptyWhenNoData() = runBlocking {
-        val result = database.userDao().getAll()
-        assertThat(result).isEmpty()
-    }
+    fun deleteUser_removesRecord() =
+        runBlocking {
+            database.userDao().insert(
+                UserEntity(uid = 200L, username = "toremove", avatar = "", auth = ""),
+            )
+
+            val inserted = database.userDao().findUserByUid(200L)!!
+            database.userDao().delete(inserted)
+
+            assertThat(database.userDao().findUserByUid(200L)).isNull()
+        }
+
+    @Test
+    fun getAllUsers_returnsEmptyWhenNoData() =
+        runBlocking {
+            val result = database.userDao().getAll()
+            assertThat(result).isEmpty()
+        }
 
     // ===== Converters integration =====
 
     @Test
-    fun dateConverter_persistsAndRestoresCorrectly() = runBlocking {
-        val date = Date(1700000000000L)
-        database.searchHistoryDao().insert(
-            SearchHistoryEntity(keyword = "datetest", searchDate = date)
-        )
+    fun dateConverter_persistsAndRestoresCorrectly() =
+        runBlocking {
+            val date = Date(1700000000000L)
+            database.searchHistoryDao().insert(
+                SearchHistoryEntity(keyword = "datetest", searchDate = date),
+            )
 
-        val found = database.searchHistoryDao().findHistory("datetest")!!
-        assertThat(found.searchDate.time).isEqualTo(1700000000000L)
-    }
+            val found = database.searchHistoryDao().findHistory("datetest")!!
+            assertThat(found.searchDate.time).isEqualTo(1700000000000L)
+        }
 
     @Test
-    fun userEntity_withLock_persistsCorrectly() = runBlocking {
-        database.userDao().insert(
-            UserEntity(uid = 300L, username = "locked", avatar = "", auth = "", lock = "9999")
-        )
+    fun userEntity_withLock_persistsCorrectly() =
+        runBlocking {
+            database.userDao().insert(
+                UserEntity(uid = 300L, username = "locked", avatar = "", auth = "", lock = "9999"),
+            )
 
-        val found = database.userDao().findUserByUid(300L)!!
-        assertThat(found.lock).isEqualTo("9999")
-    }
+            val found = database.userDao().findUserByUid(300L)!!
+            assertThat(found.lock).isEqualTo("9999")
+        }
 
     // ===== AppDatabase =====
 

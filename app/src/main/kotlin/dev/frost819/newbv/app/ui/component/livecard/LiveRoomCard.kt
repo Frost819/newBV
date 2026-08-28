@@ -49,17 +49,20 @@ fun LiveRoomCard(
     Column(modifier = modifier.fillMaxWidth()) {
         Card(
             onClick = onClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.78f)
-                .touchClickable(onClick = onClick),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.78f)
+                    .touchClickable(onClick = onClick),
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
-                    shape = MaterialTheme.shapes.large,
+            border =
+                CardDefaults.border(
+                    focusedBorder =
+                        Border(
+                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+                            shape = MaterialTheme.shapes.large,
+                        ),
                 ),
-            ),
         ) {
             LiveCardCover(
                 cover = data.cover,
@@ -84,42 +87,47 @@ private fun LiveCardCover(
     onlineString: String,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clip(MaterialTheme.shapes.large),
-    ) {
-        AsyncImage(
-            modifier = Modifier
+        modifier =
+            modifier
                 .fillMaxSize()
                 .clip(MaterialTheme.shapes.large),
+    ) {
+        AsyncImage(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(MaterialTheme.shapes.large),
             model = cover,
             contentDescription = null,
             contentScale = ContentScale.Crop,
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.6f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.6f),
+                                ),
                         ),
                     ),
-                ),
         )
 
         if (areaName.isNotBlank()) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(6.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Text(
                     text = areaName,
@@ -131,16 +139,18 @@ private fun LiveCardCover(
         }
 
         Row(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(6.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(MaterialTheme.colorScheme.error),
+                modifier =
+                    Modifier
+                        .size(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(MaterialTheme.colorScheme.error),
             )
             Spacer(Modifier.width(4.dp))
             Text(
@@ -187,18 +197,19 @@ private fun LiveRoomCardPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         Box(modifier = Modifier.width(380.dp)) {
             LiveRoomCard(
-                data = LiveRoomCardData(
-                    roomId = 2537621,
-                    title = "你控灯，我来拍。互动拍拍灯(砸地鼠玩法)",
-                    uname = "诺艾尔",
-                    uid = 33306582,
-                    cover = "",
-                    face = "",
-                    areaV2Name = "搞笑整蛊",
-                    areaV2ParentName = "互动玩法",
-                    onlineString = "1.2万",
-                    watchedString = "3.5万",
-                ),
+                data =
+                    LiveRoomCardData(
+                        roomId = 2537621,
+                        title = "你控灯，我来拍。互动拍拍灯(砸地鼠玩法)",
+                        uname = "诺艾尔",
+                        uid = 33306582,
+                        cover = "",
+                        face = "",
+                        areaV2Name = "搞笑整蛊",
+                        areaV2ParentName = "互动玩法",
+                        onlineString = "1.2万",
+                        watchedString = "3.5万",
+                    ),
                 onClick = {},
             )
         }

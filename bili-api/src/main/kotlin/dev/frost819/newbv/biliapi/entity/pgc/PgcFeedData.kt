@@ -7,14 +7,13 @@ data class PgcFeedData(
     var ranks: List<FeedRank> = emptyList(),
 ) {
     companion object {
-        fun fromPgcFeedData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData): PgcFeedData {
-            return PgcFeedData(
+        fun fromPgcFeedData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData): PgcFeedData =
+            PgcFeedData(
                 hasNext = data.hasNext,
                 cursor = data.coursor,
                 items = data.items.map { PgcItem.fromFeedSubItem(it) },
                 ranks = emptyList(),
             )
-        }
 
         fun fromPgcFeedData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data): PgcFeedData {
             val itemsList = data.items.find { it.subItems.first().cardStyle == "v_card" }
@@ -37,8 +36,8 @@ data class PgcFeedData(
         companion object {
             fun fromFeedSubItem(
                 feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem,
-            ): FeedRank {
-                return FeedRank(
+            ): FeedRank =
+                FeedRank(
                     cover = feedSubItem.cover,
                     title = feedSubItem.title,
                     subTitle = feedSubItem.subTitle,
@@ -46,7 +45,6 @@ data class PgcFeedData(
                         feedSubItem.subItems?.map { PgcItem.fromFeedSubItem(it) }
                             ?: emptyList(),
                 )
-            }
         }
     }
 }

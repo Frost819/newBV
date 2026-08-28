@@ -18,7 +18,6 @@ import javax.net.ssl.X509TrustManager
  * - 允许 bilivideo.com 和 bilivideo.cn 域名证书互通
  */
 object OkHttpUtil {
-
     /**
      * 创建带自定义 SSL 配置的 OkHttpClient。
      *
@@ -27,55 +26,60 @@ object OkHttpUtil {
      */
     fun generateCustomSslOkHttpClient(context: Context): OkHttpClient {
         val certificateFactory = CertificateFactory.getInstance("X.509")
-        val customCaMap = mapOf(
-            "custom:r5" to "GlobalSign ECC Root CA R5.crt"
-        )
+        val customCaMap =
+            mapOf(
+                "custom:r5" to "GlobalSign ECC Root CA R5.crt",
+            )
 
         val keyStoreType = KeyStore.getDefaultType()
-        val systemKeyStore = KeyStore.getInstance("AndroidCAStore").apply {
-            load(null, null)
-        }
-        val customKeyStore = KeyStore.getInstance(keyStoreType).apply {
-            load(null, null)
+        val systemKeyStore =
+            KeyStore.getInstance("AndroidCAStore").apply {
+                load(null, null)
+            }
+        val customKeyStore =
+            KeyStore.getInstance(keyStoreType).apply {
+                load(null, null)
 
-            // 复制系统 CA 证书
-            systemKeyStore.aliases().toList().forEach {
-                setCertificateEntry(it, systemKeyStore.getCertificate(it))
+                // 复制系统 CA 证书
+                systemKeyStore.aliases().toList().forEach {
+                    setCertificateEntry(it, systemKeyStore.getCertificate(it))
+                }
+                // 追加自定义 CA 证书
+                customCaMap.forEach { (alias, caFilename) ->
+                    val certificateInputStream = context.assets.open(caFilename)
+                    val certificate = certificateFactory.generateCertificate(certificateInputStream)
+                    setCertificateEntry(alias, certificate)
+                }
             }
-            // 追加自定义 CA 证书
-            customCaMap.forEach { (alias, caFilename) ->
-                val certificateInputStream = context.assets.open(caFilename)
-                val certificate = certificateFactory.generateCertificate(certificateInputStream)
-                setCertificateEntry(alias, certificate)
-            }
-        }
 
         val tmfAlgorithm: String = TrustManagerFactory.getDefaultAlgorithm()
-        val trustManagerFactory = TrustManagerFactory.getInstance(tmfAlgorithm).apply {
-            init(customKeyStore)
-        }
+        val trustManagerFactory =
+            TrustManagerFactory.getInstance(tmfAlgorithm).apply {
+                init(customKeyStore)
+            }
 
-        val sslContext: SSLContext = SSLContext.getInstance("TLS").apply {
-            init(null, trustManagerFactory.trustManagers, null)
-        }
+        val sslContext: SSLContext =
+            SSLContext.getInstance("TLS").apply {
+                init(null, trustManagerFactory.trustManagers, null)
+            }
 
-        return OkHttpClient.Builder()
+        return OkHttpClient
+            .Builder()
             .sslSocketFactory(
                 sslContext.socketFactory,
-                trustManagerFactory.trustManagers[0] as X509TrustManager
-            )
-            .hostnameVerifier { hostname, session ->
+                trustManagerFactory.trustManagers[0] as X509TrustManager,
+            ).hostnameVerifier { hostname, session ->
                 // 允许 bilivideo.com 和 bilivideo.cn 域名证书互通
                 val biliDomains = listOf("bilivideo.com", "bilivideo.cn")
-                val isBiliDomain = biliDomains.any { domain ->
-                    hostname == domain || hostname.endsWith(".$domain")
-                }
+                val isBiliDomain =
+                    biliDomains.any { domain ->
+                        hostname == domain || hostname.endsWith(".$domain")
+                    }
                 if (isBiliDomain) {
                     true
                 } else {
                     HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session)
                 }
-            }
-            .build()
+            }.build()
     }
 }

@@ -43,7 +43,9 @@ class SpaceEntityTest {
 
     @Test
     fun `fromWebSpaceVideoData with null list returns empty videos`() {
-        val webData = dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData()
+        val webData =
+            dev.frost819.newbv.biliapi.http.entity.user
+                .WebSpaceVideoData()
 
         val result = SpaceVideoData.fromWebSpaceVideoData(webData)
 

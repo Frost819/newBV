@@ -11,7 +11,6 @@ import java.util.UUID
  * buvid 用于 B 站接口的设备标识与风控关联，首次启动时自动生成并持久化。
  */
 object BuvidGenerator {
-
     /**
      * 生成随机 buvid（`XY` 前缀格式）。
      *

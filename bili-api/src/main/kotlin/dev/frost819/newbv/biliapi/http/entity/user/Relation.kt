@@ -48,7 +48,9 @@ private object RelationTypeSerializer : CommonEnumIntSerializer<RelationType>(
 )
 
 @Serializable(with = RelationTypeSerializer::class)
-enum class RelationType(override val serialNumber: Int) : SerialEnum {
+enum class RelationType(
+    override val serialNumber: Int,
+) : SerialEnum {
     None(0),
     FollowedQuietly(1),
     Followed(2),

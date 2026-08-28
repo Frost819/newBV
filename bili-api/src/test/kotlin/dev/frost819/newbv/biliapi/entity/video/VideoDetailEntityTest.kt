@@ -378,7 +378,18 @@ class VideoDetailEntityTest {
                     duration = 600,
                     rights =
                         dev.frost819.newbv.biliapi.http.entity.video.VideoRights(
-                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, arcPay = 0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            arcPay = 0,
                         ),
                     owner =
                         dev.frost819.newbv.biliapi.http.entity.video.VideoOwner(
@@ -394,7 +405,9 @@ class VideoDetailEntityTest {
                         ),
                     dynamic = "",
                     cid = 200L,
-                    dimension = dev.frost819.newbv.biliapi.http.entity.video.Dimension(1920, 1080, 0),
+                    dimension =
+                        dev.frost819.newbv.biliapi.http.entity.video
+                            .Dimension(1920, 1080, 0),
                     rcmdReason = "",
                 ),
             ),
@@ -422,7 +435,18 @@ class VideoDetailEntityTest {
                 duration = 300,
                 rights =
                     dev.frost819.newbv.biliapi.http.entity.video.VideoRights(
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, arcPay = 0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        arcPay = 0,
                     ),
                 owner =
                     dev.frost819.newbv.biliapi.http.entity.video.VideoOwner(
@@ -433,7 +457,9 @@ class VideoDetailEntityTest {
                 stat = stat,
                 dynamic = "",
                 cid = 1051761130L,
-                dimension = dev.frost819.newbv.biliapi.http.entity.video.Dimension(1920, 1080, 0),
+                dimension =
+                    dev.frost819.newbv.biliapi.http.entity.video
+                        .Dimension(1920, 1080, 0),
                 redirectUrl = redirectUrl,
                 isUpowerExclusive = isUpowerExclusive,
                 pages =
@@ -446,7 +472,9 @@ class VideoDetailEntityTest {
                             duration = 300,
                             vid = "",
                             weblink = "",
-                            dimension = dev.frost819.newbv.biliapi.http.entity.video.Dimension(1920, 1080, 0),
+                            dimension =
+                                dev.frost819.newbv.biliapi.http.entity.video
+                                    .Dimension(1920, 1080, 0),
                         ),
                     ),
             )
@@ -514,7 +542,10 @@ class VideoDetailEntityTest {
                                 ),
                             vip =
                                 dev.frost819.newbv.biliapi.http.entity.user.Vip(
-                                    type = 0, status = 0, dueDate = 0L, vipPayType = 0,
+                                    type = 0,
+                                    status = 0,
+                                    dueDate = 0L,
+                                    vipPayType = 0,
                                     themeType = 0,
                                     label =
                                         dev.frost819.newbv.biliapi.http.entity.user.Vip.Label(
@@ -526,8 +557,12 @@ class VideoDetailEntityTest {
                                             bgColor = "",
                                             borderColor = "",
                                         ),
-                                    avatarSubscript = 0, nicknameColor = "", role = 0,
-                                    avatarSubscriptUrl = "", tvVipStatus = 0, tvVipPayType = 0,
+                                    avatarSubscript = 0,
+                                    nicknameColor = "",
+                                    role = 0,
+                                    avatarSubscriptUrl = "",
+                                    tvVipStatus = 0,
+                                    tvVipPayType = 0,
                                 ),
                             isSeniorMember = 0,
                         ),

@@ -14,8 +14,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Text
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import dev.frost819.newbv.R
 
 /**
@@ -24,9 +24,7 @@ import dev.frost819.newbv.R
  * 圆形进度指示器 + "加载中…" 文本，用于列表底部加载更多。
  */
 @Composable
-fun LoadingTip(
-    modifier: Modifier = Modifier,
-) {
+fun LoadingTip(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -48,9 +46,7 @@ fun LoadingTip(
  * 显示 "加载失败" 文本，用于网络超时或请求报错场景。
  */
 @Composable
-fun ErrorTip(
-    modifier: Modifier = Modifier,
-) {
+fun ErrorTip(modifier: Modifier = Modifier) {
     Text(
         modifier = modifier,
         text = stringResource(id = R.string.load_failed),

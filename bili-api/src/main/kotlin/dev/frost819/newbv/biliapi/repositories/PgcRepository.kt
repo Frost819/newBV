@@ -34,18 +34,20 @@ class PgcRepository {
             when (pgcType) {
                 PgcType.Anime, PgcType.GuoChuang ->
                     PgcFeedData.fromPgcFeedData(
-                        BiliHttpApi.getPgcFeedV3(
-                            name = pgcType.name.lowercase(),
-                            cursor = cursor,
-                        ).getResponseData(),
+                        BiliHttpApi
+                            .getPgcFeedV3(
+                                name = pgcType.name.lowercase(),
+                                cursor = cursor,
+                            ).getResponseData(),
                     )
 
                 PgcType.Movie, PgcType.Tv, PgcType.Documentary, PgcType.Variety ->
                     PgcFeedData.fromPgcFeedData(
-                        BiliHttpApi.getPgcFeed(
-                            name = pgcType.name.lowercase(),
-                            cursor = cursor,
-                        ).getResponseData(),
+                        BiliHttpApi
+                            .getPgcFeed(
+                                name = pgcType.name.lowercase(),
+                                cursor = cursor,
+                            ).getResponseData(),
                     )
             }
         return data

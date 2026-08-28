@@ -45,84 +45,86 @@ data class UgcUiState(
  * @property ugcRepository UGC 分区数据仓库。
  */
 @HiltViewModel
-class UgcViewModel @Inject constructor(
-    private val ugcRepository: UgcRepository,
-) : ViewModel() {
+class UgcViewModel
+    @Inject
+    constructor(
+        private val ugcRepository: UgcRepository,
+    ) : ViewModel() {
+        private val logger = Loggers.get("UgcViewModel")
 
-    private val logger = Loggers.get("UgcViewModel")
+        private val _uiState = MutableStateFlow(UgcUiState())
+        val uiState: StateFlow<UgcUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(UgcUiState())
-    val uiState: StateFlow<UgcUiState> = _uiState.asStateFlow()
+        /** 当前选中的分区。 */
+        private var currentType: UgcTypeV2 = UgcTypeV2.Douga
 
-    /** 当前选中的分区。 */
-    private var currentType: UgcTypeV2 = UgcTypeV2.Douga
+        /** 当前分区的下一页游标。 */
+        private var nextPage: UgcFeedPage = UgcFeedPage()
 
-    /** 当前分区的下一页游标。 */
-    private var nextPage: UgcFeedPage = UgcFeedPage()
+        init {
+            loadMore()
+        }
 
-    init {
-        loadMore()
-    }
+        /**
+         * 切换到指定分区。
+         *
+         * 如果该分区已有数据则不重新加载，否则触发首次加载。
+         *
+         * @param type 目标分区。
+         */
+        fun switchType(type: UgcTypeV2) {
+            if (type == currentType && _uiState.value.items.isNotEmpty()) return
+            currentType = type
+            nextPage = UgcFeedPage()
+            _uiState.value = UgcUiState()
+            loadMore()
+        }
 
-    /**
-     * 切换到指定分区。
-     *
-     * 如果该分区已有数据则不重新加载，否则触发首次加载。
-     *
-     * @param type 目标分区。
-     */
-    fun switchType(type: UgcTypeV2) {
-        if (type == currentType && _uiState.value.items.isNotEmpty()) return
-        currentType = type
-        nextPage = UgcFeedPage()
-        _uiState.value = UgcUiState()
-        loadMore()
-    }
+        /**
+         * 加载更多当前分区视频。
+         *
+         * 超时或失败时标记 error，不中断已有数据。
+         */
+        fun loadMore() {
+            val current = _uiState.value
+            if (current.loading || !current.hasMore) return
 
-    /**
-     * 加载更多当前分区视频。
-     *
-     * 超时或失败时标记 error，不中断已有数据。
-     */
-    fun loadMore() {
-        val current = _uiState.value
-        if (current.loading || !current.hasMore) return
+            viewModelScope.launch {
+                _uiState.update { it.copy(loading = true, error = false) }
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = false) }
-
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val data: UgcFeedData = ugcRepository.getRegionFeedRcmd(
-                        ugcType = currentType,
-                        page = nextPage,
-                    )
-                    nextPage = data.nextPage
-                    _uiState.update {
-                        it.copy(
-                            items = it.items + data.items,
-                            hasMore = data.hasNext,
-                        )
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val data: UgcFeedData =
+                            ugcRepository.getRegionFeedRcmd(
+                                ugcType = currentType,
+                                page = nextPage,
+                            )
+                        nextPage = data.nextPage
+                        _uiState.update {
+                            it.copy(
+                                items = it.items + data.items,
+                                hasMore = data.hasNext,
+                            )
+                        }
                     }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to load UGC region: $currentType" }
+                    _uiState.update { it.copy(error = true) }
                 }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to load UGC region: $currentType" }
-                _uiState.update { it.copy(error = true) }
-            }
 
-            _uiState.update { it.copy(loading = false) }
+                _uiState.update { it.copy(loading = false) }
+            }
+        }
+
+        /**
+         * 刷新当前分区数据。
+         */
+        fun refresh() {
+            nextPage = UgcFeedPage()
+            _uiState.value = UgcUiState()
+            loadMore()
         }
     }
-
-    /**
-     * 刷新当前分区数据。
-     */
-    fun refresh() {
-        nextPage = UgcFeedPage()
-        _uiState.value = UgcUiState()
-        loadMore()
-    }
-}

@@ -36,18 +36,19 @@ fun TvLazyVerticalGrid(
     pivotFraction: Float = 0.3f,
     content: LazyGridScope.() -> Unit,
 ) {
-    val bringIntoViewSpec = remember(pivotFraction) {
-        object : BringIntoViewSpec {
-            override fun calculateScrollDistance(
-                offset: Float,
-                size: Float,
-                containerSize: Float,
-            ): Float {
-                val targetPosition = containerSize * pivotFraction
-                return offset - targetPosition
+    val bringIntoViewSpec =
+        remember(pivotFraction) {
+            object : BringIntoViewSpec {
+                override fun calculateScrollDistance(
+                    offset: Float,
+                    size: Float,
+                    containerSize: Float,
+                ): Float {
+                    val targetPosition = containerSize * pivotFraction
+                    return offset - targetPosition
+                }
             }
         }
-    }
 
     CompositionLocalProvider(
         LocalBringIntoViewSpec provides bringIntoViewSpec,

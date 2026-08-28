@@ -18,7 +18,6 @@ import dev.frost819.newbv.biliapi.repositories.LikeRepository
 import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.ActionAfterPlay
-import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Audio
 import dev.frost819.newbv.data.datastore.PlaySpeed
 import dev.frost819.newbv.data.datastore.Prefs
@@ -34,8 +33,8 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -48,6 +47,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 
 /**
  * [PlayerViewModel] 的单元测试。
@@ -61,7 +61,6 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PlayerViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var videoPlayRepository: VideoPlayRepository
@@ -105,16 +104,17 @@ class PlayerViewModelTest {
         every { videoInfoRepository.relatedVideos } returns MutableStateFlow(emptyList())
         every { videoInfoRepository.videoSharedState } returns MutableStateFlow(null)
 
-        viewModel = PlayerViewModel(
-            videoPlayRepository = videoPlayRepository,
-            videoInfoRepository = videoInfoRepository,
-            authRepository = authRepository,
-            exoPlayerFactory = exoPlayerFactory,
-            likeRepository = likeRepository,
-            coinRepository = coinRepository,
-            favoriteRepository = favoriteRepository,
-            oneClickTripleActionRepository = oneClickTripleActionRepository,
-        )
+        viewModel =
+            PlayerViewModel(
+                videoPlayRepository = videoPlayRepository,
+                videoInfoRepository = videoInfoRepository,
+                authRepository = authRepository,
+                exoPlayerFactory = exoPlayerFactory,
+                likeRepository = likeRepository,
+                coinRepository = coinRepository,
+                favoriteRepository = favoriteRepository,
+                oneClickTripleActionRepository = oneClickTripleActionRepository,
+            )
     }
 
     @AfterEach
@@ -229,112 +229,123 @@ class PlayerViewModelTest {
     // ── togglePlayPause tests ────────────────────────────────
 
     @Test
-    fun `togglePlayPause pauses when playing`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        every { mockPlayer.isPlaying } returns true
+    fun `togglePlayPause pauses when playing`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.isPlaying } returns true
 
-        viewModel.togglePlayPause()
+            viewModel.togglePlayPause()
 
-        verify { mockPlayer.pause() }
-    }
-
-    @Test
-    fun `togglePlayPause starts when paused`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        every { mockPlayer.isPlaying } returns false
-
-        viewModel.togglePlayPause()
-
-        verify { mockPlayer.start() }
-    }
+            verify { mockPlayer.pause() }
+        }
 
     @Test
-    fun `togglePlayPause does nothing when player is null`() = runTest(testDispatcher) {
-        viewModel.togglePlayPause()
-    }
+    fun `togglePlayPause starts when paused`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.isPlaying } returns false
+
+            viewModel.togglePlayPause()
+
+            verify { mockPlayer.start() }
+        }
+
+    @Test
+    fun `togglePlayPause does nothing when player is null`() =
+        runTest(testDispatcher) {
+            viewModel.togglePlayPause()
+        }
 
     // ── seekToTime test ──────────────────────────────────────
 
     @Test
-    fun `seekToTime updates seekerState`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
+    fun `seekToTime updates seekerState`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
 
-        viewModel.seekToTime(5000L)
+            viewModel.seekToTime(5000L)
 
-        verify { mockPlayer.seekTo(5000L) }
-        assertThat(viewModel.seekerState.value.currentTime).isEqualTo(5000L)
-    }
+            verify { mockPlayer.seekTo(5000L) }
+            assertThat(viewModel.seekerState.value.currentTime).isEqualTo(5000L)
+        }
 
     // ── backToStart test ─────────────────────────────────────
 
     @Test
-    fun `backToStart seeks to 0 and clears showBackToStart`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        updateUiState { it.copy(showBackToStart = true) }
+    fun `backToStart seeks to 0 and clears showBackToStart`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            updateUiState { it.copy(showBackToStart = true) }
 
-        viewModel.backToStart()
+            viewModel.backToStart()
 
-        verify { mockPlayer.seekTo(0) }
-        assertThat(viewModel.uiState.value.showBackToStart).isFalse()
-    }
+            verify { mockPlayer.seekTo(0) }
+            assertThat(viewModel.uiState.value.showBackToStart).isFalse()
+        }
 
     // ── playNewVideo tests ──────────────────────────────────
 
     @Test
-    fun `playNewVideo clears playData and resets UI state`() = runTest(testDispatcher) {
-        coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
-            delay(Long.MAX_VALUE)
-            error("unreachable")
-        }
+    fun `playNewVideo clears playData and resets UI state`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
 
-        viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New Video"))
-
-        val state = viewModel.uiState.value
-        assertThat(state.aid).isEqualTo(10L)
-        assertThat(state.cid).isEqualTo(20L)
-        assertThat(state.title).isEqualTo("New Video")
-        assertThat(state.isBuffering).isTrue()
-        assertThat(state.availableQuality).isEmpty()
-        assertThat(state.videoShot).isNull()
-        assertThat(state.lastPlayed).isEqualTo(0)
-    }
-
-    @Test
-    fun `playNewVideo emits videoSwitchEvent`() = runTest(testDispatcher) {
-        coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
-            delay(Long.MAX_VALUE)
-            error("unreachable")
-        }
-
-        viewModel.videoSwitchEvent.test {
             viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New Video"))
-            advanceUntilIdle()
 
-            val event = awaitItem()
-            assertThat(event.aid).isEqualTo(10L)
-            assertThat(event.cid).isEqualTo(20L)
+            val state = viewModel.uiState.value
+            assertThat(state.aid).isEqualTo(10L)
+            assertThat(state.cid).isEqualTo(20L)
+            assertThat(state.title).isEqualTo("New Video")
+            assertThat(state.isBuffering).isTrue()
+            assertThat(state.availableQuality).isEmpty()
+            assertThat(state.videoShot).isNull()
+            assertThat(state.lastPlayed).isEqualTo(0)
         }
-    }
 
     @Test
-    fun `playNewVideo pauses old player`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
-            delay(Long.MAX_VALUE)
-            error("unreachable")
+    fun `playNewVideo emits videoSwitchEvent`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+
+            viewModel.videoSwitchEvent.test {
+                viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New Video"))
+                advanceUntilIdle()
+
+                val event = awaitItem()
+                assertThat(event.aid).isEqualTo(10L)
+                assertThat(event.cid).isEqualTo(20L)
+            }
         }
 
-        viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
+    @Test
+    fun `playNewVideo pauses old player`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
 
-        verify { mockPlayer.pause() }
-    }
+            viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
+
+            verify { mockPlayer.pause() }
+        }
 
     // ── online watching polling tests ────────────────────────
 
     /**
      * 初始化 ViewModel 并进入播放会话（会启动时钟与在线人数观察者任务）。
      */
-    private fun initSession(aid: Long, cid: Long) {
+    private fun initSession(
+        aid: Long,
+        cid: Long,
+    ) {
         viewModel.init(
             aid = aid,
             cid = cid,
@@ -350,85 +361,89 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `init fetches online watching immediately when cid ready`() = runTest(testDispatcher) {
-        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } returns "9.4万+"
+    fun `init fetches online watching immediately when cid ready`() =
+        runTest(testDispatcher) {
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } returns "9.4万+"
 
-        initSession(aid = 10, cid = 20)
-        runCurrent()
+            initSession(aid = 10, cid = 20)
+            runCurrent()
 
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
-        viewModel.viewModelScope.cancel()
-    }
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+            viewModel.viewModelScope.cancel()
+        }
 
     @Test
-    fun `online watching refreshes periodically every 60s`() = runTest(testDispatcher) {
-        var calls = 0
-        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
-            calls++
-            "count$calls"
+    fun `online watching refreshes periodically every 60s`() =
+        runTest(testDispatcher) {
+            var calls = 0
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+                calls++
+                "count$calls"
+            }
+
+            initSession(aid = 10, cid = 20)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
+
+            advanceTimeBy(60_000L)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
+
+            advanceTimeBy(60_000L)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count3")
+            viewModel.viewModelScope.cancel()
         }
-
-        initSession(aid = 10, cid = 20)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
-
-        advanceTimeBy(60_000L)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
-
-        advanceTimeBy(60_000L)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count3")
-        viewModel.viewModelScope.cancel()
-    }
 
     @Test
-    fun `online watching keeps previous text on refresh failure`() = runTest(testDispatcher) {
-        var calls = 0
-        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
-            calls++
-            if (calls == 1) "9.4万+" else throw RuntimeException("network error")
+    fun `online watching keeps previous text on refresh failure`() =
+        runTest(testDispatcher) {
+            var calls = 0
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+                calls++
+                if (calls == 1) "9.4万+" else throw RuntimeException("network error")
+            }
+
+            initSession(aid = 10, cid = 20)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+
+            advanceTimeBy(60_000L)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
+            viewModel.viewModelScope.cancel()
         }
-
-        initSession(aid = 10, cid = 20)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
-
-        advanceTimeBy(60_000L)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("9.4万+")
-        viewModel.viewModelScope.cancel()
-    }
 
     @Test
-    fun `playNewVideo clears online watching then refetches for new cid instantly`() = runTest(testDispatcher) {
-        coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
-            delay(Long.MAX_VALUE)
-            error("unreachable")
+    fun `playNewVideo clears online watching then refetches for new cid instantly`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            var calls = 0
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+                calls++
+                "count$calls"
+            }
+
+            initSession(aid = 10, cid = 20)
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
+
+            // 切集时同步清空旧文案；cid 变化触发观察者立即拉取，无需等待刷新周期
+            viewModel.playNewVideo(VideoListItem(aid = 11, cid = 21, title = "Second"))
+            assertThat(viewModel.uiState.value.onlineWatching).isEmpty()
+
+            runCurrent()
+            assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
+
+            // 验证第二次请求使用的是新视频的 aid/cid
+            coVerify {
+                videoInfoRepository.getOnlineWatchingText(aid = 11L, cid = 21L, preferApiType = any())
+            }
+            viewModel.viewModelScope.cancel()
         }
-        var calls = 0
-        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
-            calls++
-            "count$calls"
-        }
-
-        initSession(aid = 10, cid = 20)
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count1")
-
-        // 切集时同步清空旧文案；cid 变化触发观察者立即拉取，无需等待刷新周期
-        viewModel.playNewVideo(VideoListItem(aid = 11, cid = 21, title = "Second"))
-        assertThat(viewModel.uiState.value.onlineWatching).isEmpty()
-
-        runCurrent()
-        assertThat(viewModel.uiState.value.onlineWatching).isEqualTo("count2")
-
-        // 验证第二次请求使用的是新视频的 aid/cid
-        coVerify {
-            videoInfoRepository.getOnlineWatchingText(aid = 11L, cid = 21L, preferApiType = any())
-        }
-        viewModel.viewModelScope.cancel()
-    }
 
     @Test
     fun `online watching skips fetch while cid not ready and fetches once it becomes valid`() =
@@ -455,284 +470,309 @@ class PlayerViewModelTest {
         }
 
     @Test
-    fun `online watching does not refetch when unrelated state changes`() = runTest(testDispatcher) {
-        var calls = 0
-        coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
-            calls++
-            ""
+    fun `online watching does not refetch when unrelated state changes`() =
+        runTest(testDispatcher) {
+            var calls = 0
+            coEvery { videoInfoRepository.getOnlineWatchingText(any(), any(), any()) } coAnswers {
+                calls++
+                ""
+            }
+
+            initSession(aid = 10, cid = 20)
+            runCurrent()
+            assertThat(calls).isEqualTo(1)
+
+            // 标题等无关字段变化不影响 cid 去重，不应重新拉取
+            updateUiState { it.copy(title = "Changed") }
+            runCurrent()
+            assertThat(calls).isEqualTo(1)
+            viewModel.viewModelScope.cancel()
         }
-
-        initSession(aid = 10, cid = 20)
-        runCurrent()
-        assertThat(calls).isEqualTo(1)
-
-        // 标题等无关字段变化不影响 cid 去重，不应重新拉取
-        updateUiState { it.copy(title = "Changed") }
-        runCurrent()
-        assertThat(calls).isEqualTo(1)
-        viewModel.viewModelScope.cancel()
-    }
 
     // ── updatePlaySpeed tests ────────────────────────────────
 
     @Test
-    fun `updatePlaySpeed updates state and player`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
+    fun `updatePlaySpeed updates state and player`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
 
-        viewModel.updatePlaySpeed(1.5f)
+            viewModel.updatePlaySpeed(1.5f)
 
-        assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1.5f)
-        verify { mockPlayer.speed = 1.5f }
-    }
-
-    @Test
-    fun `updatePlaySpeed with forceUpdate applies even when unchanged`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-
-        viewModel.updatePlaySpeed(1f, forceUpdate = true)
-
-        assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1f)
-        verify { mockPlayer.speed = 1f }
-    }
+            assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1.5f)
+            verify { mockPlayer.speed = 1.5f }
+        }
 
     @Test
-    fun `updatePlaySpeed does nothing when speed unchanged and not forced`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
+    fun `updatePlaySpeed with forceUpdate applies even when unchanged`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
 
-        viewModel.updatePlaySpeed(1f)
+            viewModel.updatePlaySpeed(1f, forceUpdate = true)
 
-        assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1f)
-        verify(exactly = 0) { mockPlayer.speed = any() }
-    }
+            assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1f)
+            verify { mockPlayer.speed = 1f }
+        }
+
+    @Test
+    fun `updatePlaySpeed does nothing when speed unchanged and not forced`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+
+            viewModel.updatePlaySpeed(1f)
+
+            assertThat(viewModel.uiState.value.playSpeed).isEqualTo(1f)
+            verify(exactly = 0) { mockPlayer.speed = any() }
+        }
 
     // ── toggleLoop test ──────────────────────────────────────
 
     @Test
-    fun `toggleLoop toggles isLooping`() = runTest(testDispatcher) {
-        assertThat(viewModel.uiState.value.isLooping).isFalse()
+    fun `toggleLoop toggles isLooping`() =
+        runTest(testDispatcher) {
+            assertThat(viewModel.uiState.value.isLooping).isFalse()
 
-        viewModel.toggleLoop()
-        assertThat(viewModel.uiState.value.isLooping).isTrue()
+            viewModel.toggleLoop()
+            assertThat(viewModel.uiState.value.isLooping).isTrue()
 
-        viewModel.toggleLoop()
-        assertThat(viewModel.uiState.value.isLooping).isFalse()
-    }
+            viewModel.toggleLoop()
+            assertThat(viewModel.uiState.value.isLooping).isFalse()
+        }
 
     // ── updateVideoAspectRatio test ──────────────────────────
 
     @Test
-    fun `updateVideoAspectRatio updates state`() = runTest(testDispatcher) {
-        viewModel.updateVideoAspectRatio(VideoAspectRatio.FourToThree)
+    fun `updateVideoAspectRatio updates state`() =
+        runTest(testDispatcher) {
+            viewModel.updateVideoAspectRatio(VideoAspectRatio.FourToThree)
 
-        assertThat(viewModel.uiState.value.aspectRatio).isEqualTo(VideoAspectRatio.FourToThree)
-    }
+            assertThat(viewModel.uiState.value.aspectRatio).isEqualTo(VideoAspectRatio.FourToThree)
+        }
 
     // ── Listener callback tests ──────────────────────────────
 
     @Test
-    fun `onError sets PlayerState Error and clears isBuffering`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-        updateUiState { it.copy(isBuffering = true) }
+    fun `onError sets PlayerState Error and clears isBuffering`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+            updateUiState { it.copy(isBuffering = true) }
 
-        listener.onError(RuntimeException("test error"))
+            listener.onError(RuntimeException("test error"))
 
-        val state = viewModel.uiState.value
-        assertThat(state.playerState).isInstanceOf(PlayerState.Error::class.java)
-        assertThat((state.playerState as PlayerState.Error).message).isEqualTo("test error")
-        assertThat(state.isBuffering).isFalse()
-    }
-
-    @Test
-    fun `onError with null message uses default`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-
-        listener.onError(RuntimeException())
-
-        val state = viewModel.uiState.value
-        assertThat(state.playerState).isInstanceOf(PlayerState.Error::class.java)
-        assertThat((state.playerState as PlayerState.Error).message).isEqualTo("Unknown error")
-    }
-
-    @Test
-    fun `onPlay sets PlayerState Playing and clears isBuffering`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-        updateUiState { it.copy(isBuffering = true) }
-
-        listener.onPlay()
-
-        val state = viewModel.uiState.value
-        assertThat(state.playerState).isEqualTo(PlayerState.Playing)
-        assertThat(state.isBuffering).isFalse()
-    }
-
-    @Test
-    fun `onPlay with lastPlayed greater than zero seeks and clears lastPlayed`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        val listener = getVideoPlayerListener()
-        updateUiState { it.copy(lastPlayed = 30, isBuffering = true) }
-
-        listener.onPlay()
-
-        verify { mockPlayer.seekTo(30L) }
-        assertThat(viewModel.uiState.value.lastPlayed).isEqualTo(0)
-        assertThat(viewModel.uiState.value.showBackToStart).isTrue()
-    }
-
-    @Test
-    fun `onPause sets PlayerState Paused`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-
-        listener.onPause()
-
-        assertThat(viewModel.uiState.value.playerState).isEqualTo(PlayerState.Paused)
-    }
-
-    @Test
-    fun `onBuffering sets isBuffering true`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-
-        listener.onBuffering()
-
-        assertThat(viewModel.uiState.value.isBuffering).isTrue()
-    }
-
-    @Test
-    fun `onEnd sets PlayerState Ended and emits PlayEnded effect`() = runTest(testDispatcher) {
-        val listener = getVideoPlayerListener()
-
-        viewModel.uiEffect.test {
-            listener.onEnd()
-            advanceUntilIdle()
-
-            val effect = awaitItem()
-            assertThat(effect).isEqualTo(PlayerUiEffect.PlayEnded)
+            val state = viewModel.uiState.value
+            assertThat(state.playerState).isInstanceOf(PlayerState.Error::class.java)
+            assertThat((state.playerState as PlayerState.Error).message).isEqualTo("test error")
+            assertThat(state.isBuffering).isFalse()
         }
 
-        assertThat(viewModel.uiState.value.playerState).isEqualTo(PlayerState.Ended)
-    }
+    @Test
+    fun `onError with null message uses default`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+
+            listener.onError(RuntimeException())
+
+            val state = viewModel.uiState.value
+            assertThat(state.playerState).isInstanceOf(PlayerState.Error::class.java)
+            assertThat((state.playerState as PlayerState.Error).message).isEqualTo("Unknown error")
+        }
+
+    @Test
+    fun `onPlay sets PlayerState Playing and clears isBuffering`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+            updateUiState { it.copy(isBuffering = true) }
+
+            listener.onPlay()
+
+            val state = viewModel.uiState.value
+            assertThat(state.playerState).isEqualTo(PlayerState.Playing)
+            assertThat(state.isBuffering).isFalse()
+        }
+
+    @Test
+    fun `onPlay with lastPlayed greater than zero seeks and clears lastPlayed`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            val listener = getVideoPlayerListener()
+            updateUiState { it.copy(lastPlayed = 30, isBuffering = true) }
+
+            listener.onPlay()
+
+            verify { mockPlayer.seekTo(30L) }
+            assertThat(viewModel.uiState.value.lastPlayed).isEqualTo(0)
+            assertThat(viewModel.uiState.value.showBackToStart).isTrue()
+        }
+
+    @Test
+    fun `onPause sets PlayerState Paused`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+
+            listener.onPause()
+
+            assertThat(viewModel.uiState.value.playerState).isEqualTo(PlayerState.Paused)
+        }
+
+    @Test
+    fun `onBuffering sets isBuffering true`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+
+            listener.onBuffering()
+
+            assertThat(viewModel.uiState.value.isBuffering).isTrue()
+        }
+
+    @Test
+    fun `onEnd sets PlayerState Ended and emits PlayEnded effect`() =
+        runTest(testDispatcher) {
+            val listener = getVideoPlayerListener()
+
+            viewModel.uiEffect.test {
+                listener.onEnd()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isEqualTo(PlayerUiEffect.PlayEnded)
+            }
+
+            assertThat(viewModel.uiState.value.playerState).isEqualTo(PlayerState.Ended)
+        }
 
     // ── checkAndPlayNext tests ────────────────────────────────
 
     @Test
-    fun `checkAndPlayNext with Pause action does nothing`() = runTest(testDispatcher) {
-        every { Prefs.actionAfterPlay } returns ActionAfterPlay.Pause
+    fun `checkAndPlayNext with Pause action does nothing`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.Pause
 
-        viewModel.checkAndPlayNext()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
-    }
-
-    @Test
-    fun `checkAndPlayNext with Exit action emits FinishActivity`() = runTest(testDispatcher) {
-        every { Prefs.actionAfterPlay } returns ActionAfterPlay.Exit
-
-        viewModel.uiEffect.test {
             viewModel.checkAndPlayNext()
             advanceUntilIdle()
 
-            val effect = awaitItem()
-            assertThat(effect).isEqualTo(PlayerUiEffect.FinishActivity)
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
         }
-    }
 
     @Test
-    fun `checkAndPlayNext with PlayNext and no next target emits FinishActivity`() = runTest(testDispatcher) {
-        every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayNext
+    fun `checkAndPlayNext with Exit action emits FinishActivity`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.Exit
 
-        viewModel.uiEffect.test {
-            viewModel.checkAndPlayNext()
-            advanceUntilIdle()
+            viewModel.uiEffect.test {
+                viewModel.checkAndPlayNext()
+                advanceUntilIdle()
 
-            val effect = awaitItem()
-            assertThat(effect).isEqualTo(PlayerUiEffect.FinishActivity)
+                val effect = awaitItem()
+                assertThat(effect).isEqualTo(PlayerUiEffect.FinishActivity)
+            }
         }
-    }
+
+    @Test
+    fun `checkAndPlayNext with PlayNext and no next target emits FinishActivity`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayNext
+
+            viewModel.uiEffect.test {
+                viewModel.checkAndPlayNext()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isEqualTo(PlayerUiEffect.FinishActivity)
+            }
+        }
 
     // ── cancelPlayNext test ───────────────────────────────────
 
     @Test
-    fun `cancelPlayNext clears showSkipToNextEp`() = runTest(testDispatcher) {
-        updateUiState { it.copy(showSkipToNextEp = true) }
-        assertThat(viewModel.uiState.value.showSkipToNextEp).isTrue()
+    fun `cancelPlayNext clears showSkipToNextEp`() =
+        runTest(testDispatcher) {
+            updateUiState { it.copy(showSkipToNextEp = true) }
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isTrue()
 
-        viewModel.cancelPlayNext()
+            viewModel.cancelPlayNext()
 
-        assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
-    }
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
+        }
 
     // ── updateMediaProfile tests ──────────────────────────────
 
     @Test
-    fun `updateMediaProfile updates quality in state`() = runTest(testDispatcher) {
-        viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
+    fun `updateMediaProfile updates quality in state`() =
+        runTest(testDispatcher) {
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
 
-        assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(116)
-    }
-
-    @Test
-    fun `updateMediaProfile updates videoCodec in state`() = runTest(testDispatcher) {
-        viewModel.updateMediaProfile(MediaProfileSettingAction.SetVideoCodec(VideoCodec.HEVC))
-
-        assertThat(viewModel.uiState.value.mediaProfileState.videoCodec).isEqualTo(VideoCodec.HEVC)
-    }
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(116)
+        }
 
     @Test
-    fun `updateMediaProfile updates audio in state`() = runTest(testDispatcher) {
-        viewModel.updateMediaProfile(MediaProfileSettingAction.SetAudio(Audio.A132K))
+    fun `updateMediaProfile updates videoCodec in state`() =
+        runTest(testDispatcher) {
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetVideoCodec(VideoCodec.HEVC))
 
-        assertThat(viewModel.uiState.value.mediaProfileState.audio).isEqualTo(Audio.A132K)
-    }
-
-    @Test
-    fun `updateMediaProfile does nothing when state unchanged`() = runTest(testDispatcher) {
-        val before = viewModel.uiState.value.mediaProfileState
-
-        viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(80))
-
-        assertThat(viewModel.uiState.value.mediaProfileState).isEqualTo(before)
-    }
+            assertThat(viewModel.uiState.value.mediaProfileState.videoCodec).isEqualTo(VideoCodec.HEVC)
+        }
 
     @Test
-    fun `updateMediaProfile with player pauses and re-resolves`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        every { mockPlayer.currentPosition } returns 5000L
+    fun `updateMediaProfile updates audio in state`() =
+        runTest(testDispatcher) {
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetAudio(Audio.A132K))
 
-        viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
+            assertThat(viewModel.uiState.value.mediaProfileState.audio).isEqualTo(Audio.A132K)
+        }
 
-        assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(116)
-        verify { mockPlayer.pause() }
-    }
+    @Test
+    fun `updateMediaProfile does nothing when state unchanged`() =
+        runTest(testDispatcher) {
+            val before = viewModel.uiState.value.mediaProfileState
+
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(80))
+
+            assertThat(viewModel.uiState.value.mediaProfileState).isEqualTo(before)
+        }
+
+    @Test
+    fun `updateMediaProfile with player pauses and re-resolves`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 5000L
+
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
+
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(116)
+            verify { mockPlayer.pause() }
+        }
 
     // ── detachPlayer test ─────────────────────────────────────
 
     @Test
-    fun `detachPlayer releases player and sets videoPlayer to null`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
+    fun `detachPlayer releases player and sets videoPlayer to null`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
 
-        viewModel.detachPlayer()
+            viewModel.detachPlayer()
 
-        verify { mockPlayer.release() }
-        assertThat(viewModel.videoPlayer).isNull()
-    }
+            verify { mockPlayer.release() }
+            assertThat(viewModel.videoPlayer).isNull()
+        }
 
     @Test
-    fun `detachPlayer does nothing when player is null`() = runTest(testDispatcher) {
-        viewModel.detachPlayer()
+    fun `detachPlayer does nothing when player is null`() =
+        runTest(testDispatcher) {
+            viewModel.detachPlayer()
 
-        assertThat(viewModel.videoPlayer).isNull()
-    }
+            assertThat(viewModel.videoPlayer).isNull()
+        }
 
     // ── trySendHeartbeat test ─────────────────────────────────
 
     @Test
-    fun `trySendHeartbeat does not update local history`() = runTest(testDispatcher) {
-        setVideoPlayer(mockPlayer)
-        every { mockPlayer.currentPosition } returns 5000L
-        every { mockPlayer.duration } returns 60000L
+    fun `trySendHeartbeat does not update local history`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 5000L
+            every { mockPlayer.duration } returns 60000L
 
-        viewModel.trySendHeartbeat()
+            viewModel.trySendHeartbeat()
 
-        verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any()) }
-    }
+            verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any()) }
+        }
 }

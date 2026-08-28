@@ -42,8 +42,8 @@ class CommentRepository(
         sort: Int = 1,
         page: Int = 1,
         preferApiType: ApiType,
-    ): CommentPage {
-        return when (preferApiType) {
+    ): CommentPage =
+        when (preferApiType) {
             ApiType.Web -> {
                 val data =
                     BiliHttpApi.getVideoComments(aid, sort, page, accessKey = null).getResponseData()
@@ -76,7 +76,6 @@ class CommentRepository(
                 )
             }
         }
-    }
 
     /**
      * 获取根评论下的楼中楼分页。
@@ -91,16 +90,17 @@ class CommentRepository(
         rootRpid: Long,
         page: Int = 1,
         preferApiType: ApiType,
-    ): CommentPage {
-        return when (preferApiType) {
+    ): CommentPage =
+        when (preferApiType) {
             ApiType.Web -> {
                 val data =
-                    BiliHttpApi.getVideoCommentReplies(
-                        aid = aid,
-                        rootRpid = rootRpid,
-                        page = page,
-                        accessKey = null,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getVideoCommentReplies(
+                            aid = aid,
+                            rootRpid = rootRpid,
+                            page = page,
+                            accessKey = null,
+                        ).getResponseData()
                 parsePage(data, aid = aid, page = page, defaultType = 1)
             }
 
@@ -124,7 +124,6 @@ class CommentRepository(
                 )
             }
         }
-    }
 
     /**
      * 点赞或取消点赞评论。

@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -22,14 +20,15 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.frost819.newbv.core.focus.touchClickable
 
-private val keyboardKeys = listOf(
-    listOf("A", "B", "C", "D", "E", "F"),
-    listOf("G", "H", "I", "J", "K", "L"),
-    listOf("M", "N", "O", "P", "Q", "R"),
-    listOf("S", "T", "U", "V", "W", "X"),
-    listOf("Y", "Z", "1", "2", "3", "4"),
-    listOf("5", "6", "7", "8", "9", "0"),
-)
+private val keyboardKeys =
+    listOf(
+        listOf("A", "B", "C", "D", "E", "F"),
+        listOf("G", "H", "I", "J", "K", "L"),
+        listOf("M", "N", "O", "P", "Q", "R"),
+        listOf("S", "T", "U", "V", "W", "X"),
+        listOf("Y", "Z", "1", "2", "3", "4"),
+        listOf("5", "6", "7", "8", "9", "0"),
+    )
 
 /**
  * TV 软键盘。
@@ -63,11 +62,12 @@ fun SoftKeyboard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 rowKeys.forEachIndexed { index, key ->
-                    val keyModifier = if (rowIndex == 0 && index == 0) {
-                        Modifier.focusRequester(firstButtonFocusRequester)
-                    } else {
-                        Modifier
-                    }
+                    val keyModifier =
+                        if (rowIndex == 0 && index == 0) {
+                            Modifier.focusRequester(firstButtonFocusRequester)
+                        } else {
+                            Modifier
+                        }
                     SoftKeyboardKey(
                         modifier = keyModifier,
                         key = key,
@@ -90,9 +90,10 @@ fun SoftKeyboard(
                 onClick = onDelete,
             )
             SoftKeyboardButton(
-                modifier = Modifier
-                    .weight(1f)
-                    .then(searchButtonModifier),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .then(searchButtonModifier),
                 key = "搜索",
                 onClick = onSearch,
             )
@@ -109,10 +110,11 @@ private fun SoftKeyboardKey(
     Surface(
         modifier = modifier.touchClickable(onClick = onClick),
         onClick = onClick,
-        colors = ClickableSurfaceDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-            pressedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                pressedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
     ) {
         Box(
             modifier = Modifier.size(38.dp),
@@ -135,10 +137,11 @@ private fun SoftKeyboardButton(
     Surface(
         modifier = modifier.height(38.dp).touchClickable(onClick = onClick),
         onClick = onClick,
-        colors = ClickableSurfaceDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-            pressedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                pressedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

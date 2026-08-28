@@ -7,7 +7,9 @@ package dev.frost819.newbv.app.ui.state.player
  */
 sealed interface PlayerUiEffect {
     /** 播放器操作提示。 */
-    data class ShowToast(val message: String) : PlayerUiEffect
+    data class ShowToast(
+        val message: String,
+    ) : PlayerUiEffect
 
     /** 视频播放结束，需要检查播放结束动作（暂停/下一集/退出）。 */
     data object PlayEnded : PlayerUiEffect

@@ -12,14 +12,12 @@ import androidx.core.util.toRange
  * 解析设备上所有 [MediaCodecInfo]，分类为编码器/解码器、硬件/软件、音频/视频。
  */
 object CodecUtil {
-
     /** 解析设备上所有编解码器信息。 */
-    fun parseCodecs(): List<CodecInfoData> {
-        return MediaCodecList(MediaCodecList.ALL_CODECS)
+    fun parseCodecs(): List<CodecInfoData> =
+        MediaCodecList(MediaCodecList.ALL_CODECS)
             .codecInfos
             .toList()
             .map { CodecInfoData.fromCodecInfo(it) }
-    }
 }
 
 /**
@@ -61,31 +59,37 @@ data class CodecInfoData(
                 type = CodecType.fromMediaCodecInfo(codecInfo),
                 mode = CodecMode.fromMediaCodecInfo(codecInfo),
                 media = CodecMedia.fromMediaCodecInfo(codecInfo),
-                maxSupportedInstances = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    capabilities.maxSupportedInstances
-                } else {
-                    null
-                },
-                colorFormats = capabilities.colorFormats.toList(),
-                audioBitrateRange = runCatching {
-                    with(capabilities.audioCapabilities.bitrateRange) { lower..upper }
-                }.getOrNull(),
-                videoBitrateRange = runCatching {
-                    with(capabilities.videoCapabilities.bitrateRange) { lower..upper }
-                }.getOrNull(),
-                videoFrame = runCatching {
-                    with(capabilities.videoCapabilities.supportedFrameRates) { lower..upper }
-                }.getOrNull(),
-                supportedFrameRates = runCatching {
-                    codecInfo.getSupportedFrameRates()
-                }.getOrDefault(emptyList()),
-                achievableFrameRates = runCatching {
+                maxSupportedInstances =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        codecInfo.getAchievableFrameRates()
+                        capabilities.maxSupportedInstances
                     } else {
-                        emptyList()
-                    }
-                }.getOrDefault(emptyList()),
+                        null
+                    },
+                colorFormats = capabilities.colorFormats.toList(),
+                audioBitrateRange =
+                    runCatching {
+                        with(capabilities.audioCapabilities.bitrateRange) { lower..upper }
+                    }.getOrNull(),
+                videoBitrateRange =
+                    runCatching {
+                        with(capabilities.videoCapabilities.bitrateRange) { lower..upper }
+                    }.getOrNull(),
+                videoFrame =
+                    runCatching {
+                        with(capabilities.videoCapabilities.supportedFrameRates) { lower..upper }
+                    }.getOrNull(),
+                supportedFrameRates =
+                    runCatching {
+                        codecInfo.getSupportedFrameRates()
+                    }.getOrDefault(emptyList()),
+                achievableFrameRates =
+                    runCatching {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            codecInfo.getAchievableFrameRates()
+                        } else {
+                            emptyList()
+                        }
+                    }.getOrDefault(emptyList()),
             )
         }
     }
@@ -94,39 +98,41 @@ data class CodecInfoData(
 /** 编解码器类型。 */
 enum class CodecType {
     Encoder,
-    Decoder;
+    Decoder,
+    ;
 
     companion object {
-        fun fromMediaCodecInfo(info: MediaCodecInfo): CodecType =
-            if (info.isEncoder) Encoder else Decoder
+        fun fromMediaCodecInfo(info: MediaCodecInfo): CodecType = if (info.isEncoder) Encoder else Decoder
     }
 }
 
 /** 编解码媒体类型。 */
 enum class CodecMedia {
     Audio,
-    Video;
+    Video,
+    ;
 
     companion object {
-        fun fromMediaCodecInfo(info: MediaCodecInfo): CodecMedia =
-            if (info.isAudioCodec()) Audio else Video
+        fun fromMediaCodecInfo(info: MediaCodecInfo): CodecMedia = if (info.isAudioCodec()) Audio else Video
     }
 }
 
 /** 编解码模式（硬件/软件）。 */
 enum class CodecMode {
     Hardware,
-    Software;
+    Software,
+    ;
 
     companion object {
-        private val softwareCodecPrefixes = listOf(
-            "omx.google.",
-            "c2.android.",
-            "c2.google.",
-            "omx.sprd.soft.",
-            "omx.avcodec.",
-            "omx.pv",
-        )
+        private val softwareCodecPrefixes =
+            listOf(
+                "omx.google.",
+                "c2.android.",
+                "c2.google.",
+                "omx.sprd.soft.",
+                "omx.avcodec.",
+                "omx.pv",
+            )
 
         private val softwareCodecSuffixes = listOf("sw", "sw.dec", "sw_vd")
 
@@ -164,43 +170,43 @@ data class SupportedFrameRate(
     val unsupported: Boolean,
 )
 
-private fun MediaCodecInfo.isAudioCodec(): Boolean =
-    supportedTypes.joinToString().contains("audio")
+private fun MediaCodecInfo.isAudioCodec(): Boolean = supportedTypes.joinToString().contains("audio")
 
-private val resolutions = mapOf(
-    480 to 360,
-    720 to 480,
-    1280 to 720,
-    1920 to 1080,
-    2560 to 1440,
-    3840 to 2160,
-    7680 to 4320,
-)
+private val resolutions =
+    mapOf(
+        480 to 360,
+        720 to 480,
+        1280 to 720,
+        1920 to 1080,
+        2560 to 1440,
+        3840 to 2160,
+        7680 to 4320,
+    )
 
-private fun MediaCodecInfo.getSupportedFrameRates(): List<SupportedFrameRate> {
-    return resolutions.map { (width, height) ->
-        val frameRates = runCatching {
-            val videoCapabilities = getCapabilitiesForType(supportedTypes.first()).videoCapabilities
-            videoCapabilities.getSupportedFrameRatesFor(width, height)
-        }.getOrNull()
+private fun MediaCodecInfo.getSupportedFrameRates(): List<SupportedFrameRate> =
+    resolutions.map { (width, height) ->
+        val frameRates =
+            runCatching {
+                val videoCapabilities = getCapabilitiesForType(supportedTypes.first()).videoCapabilities
+                videoCapabilities.getSupportedFrameRatesFor(width, height)
+            }.getOrNull()
         SupportedFrameRate(
             resolution = width to height,
             frameRate = frameRates ?: ((0.0..0.0).toRange()),
             unsupported = frameRates == null,
         )
     }
-}
 
-private fun MediaCodecInfo.getAchievableFrameRates(): List<SupportedFrameRate> {
-    return resolutions.map { (width, height) ->
-        val frameRates = runCatching {
-            val videoCapabilities = getCapabilitiesForType(supportedTypes.first()).videoCapabilities
-            videoCapabilities.getAchievableFrameRatesFor(width, height)
-        }.getOrNull()
+private fun MediaCodecInfo.getAchievableFrameRates(): List<SupportedFrameRate> =
+    resolutions.map { (width, height) ->
+        val frameRates =
+            runCatching {
+                val videoCapabilities = getCapabilitiesForType(supportedTypes.first()).videoCapabilities
+                videoCapabilities.getAchievableFrameRatesFor(width, height)
+            }.getOrNull()
         SupportedFrameRate(
             resolution = width to height,
             frameRate = frameRates ?: ((0.0..0.0).toRange()),
             unsupported = frameRates == null,
         )
     }
-}

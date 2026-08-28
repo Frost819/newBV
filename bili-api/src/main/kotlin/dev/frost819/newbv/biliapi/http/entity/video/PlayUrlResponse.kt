@@ -377,7 +377,10 @@ data class RecordInfo(
 )
 
 @Serializable
-enum class VideoQuality(val qn: Int, val displayName: String) {
+enum class VideoQuality(
+    val qn: Int,
+    val displayName: String,
+) {
     Q260P(6, "240P 极速"),
     Q360P(16, "360P 流畅"),
     Q480P(32, "480P 清晰"),

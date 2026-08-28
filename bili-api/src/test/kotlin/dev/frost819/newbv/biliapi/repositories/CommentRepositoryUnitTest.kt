@@ -195,46 +195,47 @@ class CommentRepositoryUnitTest {
         responses: Int = 0,
         total: Int = 0,
     ): JsonObject =
-        json.parseToJsonElement(
-            buildJsonObject {
-                put(
-                    "replies",
-                    buildJsonArray {
-                        repeat(responses) { i ->
-                            add(
-                                buildJsonObject {
-                                    put("rpid", RPID + i)
-                                    put("oid", AID)
-                                    put("ctime", 1234567890L)
-                                    put("like", 10L)
-                                    put("rcount", 3)
-                                    put(
-                                        "member",
-                                        buildJsonObject {
-                                            put("mid", (1000 + i).toLong())
-                                            put("uname", "用户${i + 1}")
-                                            put("avatar", "http://test/$i")
-                                            put(
-                                                "level_info",
-                                                buildJsonObject { put("current_level", 3) },
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "content",
-                                        buildJsonObject { put("message", "评论${i + 1}") },
-                                    )
-                                },
-                            )
-                        }
-                    },
-                )
-                put(
-                    "page",
-                    buildJsonObject {
-                        put("acount", total.toLong())
-                    },
-                )
-            }.toString(),
-        ).jsonObject
+        json
+            .parseToJsonElement(
+                buildJsonObject {
+                    put(
+                        "replies",
+                        buildJsonArray {
+                            repeat(responses) { i ->
+                                add(
+                                    buildJsonObject {
+                                        put("rpid", RPID + i)
+                                        put("oid", AID)
+                                        put("ctime", 1234567890L)
+                                        put("like", 10L)
+                                        put("rcount", 3)
+                                        put(
+                                            "member",
+                                            buildJsonObject {
+                                                put("mid", (1000 + i).toLong())
+                                                put("uname", "用户${i + 1}")
+                                                put("avatar", "http://test/$i")
+                                                put(
+                                                    "level_info",
+                                                    buildJsonObject { put("current_level", 3) },
+                                                )
+                                            },
+                                        )
+                                        put(
+                                            "content",
+                                            buildJsonObject { put("message", "评论${i + 1}") },
+                                        )
+                                    },
+                                )
+                            }
+                        },
+                    )
+                    put(
+                        "page",
+                        buildJsonObject {
+                            put("acount", total.toLong())
+                        },
+                    )
+                }.toString(),
+            ).jsonObject
 }

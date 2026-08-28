@@ -17,33 +17,34 @@ data class CarouselData(
             if (listOf(1668, 1675, 1682).contains(data.modules.banner.moduleId)) {
                 needParseIdFromUrl = true
             }
-            data.modules.banner.items.filter {
-                it.episodeId != null ||
-                    (needParseIdFromUrl && it.link.contains("bangumi/play/ep")) ||
-                    (needParseIdFromUrl && it.link.contains("bangumi/play/ss"))
-            }.forEach {
-                var cover = it.bigCover ?: it.cover
-                if (cover.startsWith("//")) cover = "https:$cover"
-                var epidFromUrl: Int? = null
-                var ssidFromUrl: Int? = null
+            data.modules.banner.items
+                .filter {
+                    it.episodeId != null ||
+                        (needParseIdFromUrl && it.link.contains("bangumi/play/ep")) ||
+                        (needParseIdFromUrl && it.link.contains("bangumi/play/ss"))
+                }.forEach {
+                    var cover = it.bigCover ?: it.cover
+                    if (cover.startsWith("//")) cover = "https:$cover"
+                    var epidFromUrl: Int? = null
+                    var ssidFromUrl: Int? = null
 
-                if (needParseIdFromUrl) {
-                    val idStr = Url(it.link).rawSegments.last()
-                    epidFromUrl =
-                        idStr.substring(2).takeIf { idStr.startsWith("ep") }?.toIntOrNull()
-                    ssidFromUrl =
-                        idStr.substring(2).takeIf { idStr.startsWith("ss") }?.toIntOrNull()
+                    if (needParseIdFromUrl) {
+                        val idStr = Url(it.link).rawSegments.last()
+                        epidFromUrl =
+                            idStr.substring(2).takeIf { idStr.startsWith("ep") }?.toIntOrNull()
+                        ssidFromUrl =
+                            idStr.substring(2).takeIf { idStr.startsWith("ss") }?.toIntOrNull()
+                    }
+
+                    result.add(
+                        CarouselItem(
+                            cover = cover,
+                            title = it.title,
+                            seasonId = it.seasonId ?: ssidFromUrl ?: -1,
+                            episodeId = it.episodeId ?: epidFromUrl ?: -1,
+                        ),
+                    )
                 }
-
-                result.add(
-                    CarouselItem(
-                        cover = cover,
-                        title = it.title,
-                        seasonId = it.seasonId ?: ssidFromUrl ?: -1,
-                        episodeId = it.episodeId ?: epidFromUrl ?: -1,
-                    ),
-                )
-            }
             return CarouselData(result)
         }
 

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * 禁用键过滤逻辑，以及历史遗留动作的兼容性降级。
  */
 class PlayerCustomShortcutsTest {
-
     @Test
     fun `parse empty string returns empty list`() {
         assertThat(PlayerCustomShortcutsCodec.parse("")).isEmpty()
@@ -26,22 +25,24 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `serialize and parse roundtrip preserves all simple actions`() {
-        val simpleActions = listOf(
-            PlayerCustomShortcutAction.OpenSettings,
-            PlayerCustomShortcutAction.OpenRelatedVideos,
-            PlayerCustomShortcutAction.PlayPrevious,
-            PlayerCustomShortcutAction.PlayNext,
-            PlayerCustomShortcutAction.OpenVideoDetail,
-            PlayerCustomShortcutAction.OpenUpPage,
-            PlayerCustomShortcutAction.ToggleLoop,
-            PlayerCustomShortcutAction.ToggleDanmaku,
-            PlayerCustomShortcutAction.ToggleDanmakuMask,
-            PlayerCustomShortcutAction.ToggleSubtitle,
-            PlayerCustomShortcutAction.TogglePersistentBottomProgress,
-        )
-        val shortcuts = simpleActions.mapIndexed { i, action ->
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1 + i, action)
-        }
+        val simpleActions =
+            listOf(
+                PlayerCustomShortcutAction.OpenSettings,
+                PlayerCustomShortcutAction.OpenRelatedVideos,
+                PlayerCustomShortcutAction.PlayPrevious,
+                PlayerCustomShortcutAction.PlayNext,
+                PlayerCustomShortcutAction.OpenVideoDetail,
+                PlayerCustomShortcutAction.OpenUpPage,
+                PlayerCustomShortcutAction.ToggleLoop,
+                PlayerCustomShortcutAction.ToggleDanmaku,
+                PlayerCustomShortcutAction.ToggleDanmakuMask,
+                PlayerCustomShortcutAction.ToggleSubtitle,
+                PlayerCustomShortcutAction.TogglePersistentBottomProgress,
+            )
+        val shortcuts =
+            simpleActions.mapIndexed { i, action ->
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1 + i, action)
+            }
 
         val serialized = PlayerCustomShortcutsCodec.serialize(shortcuts)
         val parsed = PlayerCustomShortcutsCodec.parse(serialized)
@@ -54,9 +55,10 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `serialize and parse roundtrip preserves parameterized action`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlaybackSpeed(2.0f)),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlaybackSpeed(2.0f)),
+            )
 
         val serialized = PlayerCustomShortcutsCodec.serialize(shortcuts)
         val parsed = PlayerCustomShortcutsCodec.parse(serialized)
@@ -68,10 +70,11 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `normalize deduplicates by keyCode keeping last`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku),
+            )
 
         val normalized = PlayerCustomShortcutsCodec.normalize(shortcuts)
 
@@ -81,12 +84,13 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `normalize filters forbidden keyCodes`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.ToggleLoop),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_CENTER, PlayerCustomShortcutAction.ToggleDanmaku),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_ENTER, PlayerCustomShortcutAction.ToggleSubtitle),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.ToggleLoop),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_CENTER, PlayerCustomShortcutAction.ToggleDanmaku),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_ENTER, PlayerCustomShortcutAction.ToggleSubtitle),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
+            )
 
         val normalized = PlayerCustomShortcutsCodec.normalize(shortcuts)
 
@@ -96,10 +100,11 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `normalize clamps playback speed to valid range`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlaybackSpeed(10f)),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.TogglePlaybackSpeed(0.01f)),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.TogglePlaybackSpeed(10f)),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.TogglePlaybackSpeed(0.01f)),
+            )
 
         val normalized = PlayerCustomShortcutsCodec.normalize(shortcuts)
 
@@ -177,7 +182,8 @@ class PlayerCustomShortcutsTest {
 
     @Test
     fun `parse drops legacy removed actions`() {
-        val legacy = """
+        val legacy =
+            """
             [
                 {"k":20,"a":"show_info","p":{}},
                 {"k":21,"a":"open_video_list","p":{}},
@@ -186,19 +192,20 @@ class PlayerCustomShortcutsTest {
                 {"k":24,"a":"set_danmaku_mask_enabled","p":{"enabled":true}},
                 {"k":25,"a":"set_subtitle_font_size","p":{"sp":24}}
             ]
-        """.trimIndent()
+            """.trimIndent()
 
         assertThat(PlayerCustomShortcutsCodec.parse(legacy)).isEmpty()
     }
 
     @Test
     fun `parse keeps valid entries mixed with legacy removed ones`() {
-        val mixed = """
+        val mixed =
+            """
             [
                 {"k":20,"a":"set_danmaku_mask_enabled","p":{"enabled":true}},
                 {"k":21,"a":"toggle_danmaku_mask","p":{}}
             ]
-        """.trimIndent()
+            """.trimIndent()
         val parsed = PlayerCustomShortcutsCodec.parse(mixed)
 
         assertThat(parsed).hasSize(1)

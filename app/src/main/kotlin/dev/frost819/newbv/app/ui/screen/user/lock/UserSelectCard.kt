@@ -35,9 +35,10 @@ internal fun UserSelectCard(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier
-            .alpha(alpha)
-            .touchClickable(onClick = onClick),
+        modifier =
+            Modifier
+                .alpha(alpha)
+                .touchClickable(onClick = onClick),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -48,15 +49,17 @@ internal fun UserSelectCard(
                     model = user.avatar,
                     contentDescription = user.username,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .size(64.dp)
+                            .clip(CircleShape),
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .size(64.dp)
+                            .clip(CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(text = user.username.firstOrNull()?.toString() ?: "?")
@@ -78,13 +81,14 @@ internal fun UserSelectCard(
 private fun UserSelectCardPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         UserSelectCard(
-            user = UserEntity(
-                uid = 12345L,
-                username = "测试用户",
-                avatar = "",
-                auth = "",
-                lock = "1234",
-            ),
+            user =
+                UserEntity(
+                    uid = 12345L,
+                    username = "测试用户",
+                    avatar = "",
+                    auth = "",
+                    lock = "1234",
+                ),
             alpha = 1f,
             onClick = {},
         )

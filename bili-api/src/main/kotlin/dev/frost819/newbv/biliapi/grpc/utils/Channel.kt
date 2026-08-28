@@ -40,8 +40,8 @@ private class MetadataInterceptor(
         method: MethodDescriptor<ReqT, RespT>,
         callOptions: CallOptions,
         next: Channel,
-    ): ClientCall<ReqT, RespT> {
-        return object : SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    ): ClientCall<ReqT, RespT> =
+        object : SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
             override fun start(
                 responseListener: Listener<RespT>,
                 headers: GrpcMetadata,
@@ -56,7 +56,6 @@ private class MetadataInterceptor(
                 super.start(responseListener, headers)
             }
         }
-    }
 }
 
 fun GrpcMetadata.putAuthorization(accessKey: String) {
@@ -86,7 +85,8 @@ fun GrpcMetadata.putMetadataBin(
 
 fun GrpcMetadata.putDeviceBin(buvid: String) {
     put(
-        io.grpc.Metadata.Key.of("x-bili-device-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
+        io.grpc.Metadata.Key
+            .of("x-bili-device-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         device {
             appId = BiliAppConf.APP_ID
             mobiApp = BiliAppConf.MOBI_APP
@@ -101,7 +101,8 @@ fun GrpcMetadata.putDeviceBin(buvid: String) {
 
 fun GrpcMetadata.putLocalBin() {
     put(
-        io.grpc.Metadata.Key.of("x-bili-local-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
+        io.grpc.Metadata.Key
+            .of("x-bili-local-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         locale {
             timezone = BiliAppConf.TIMEZONE
         }.toByteArray(),
@@ -110,7 +111,8 @@ fun GrpcMetadata.putLocalBin() {
 
 fun GrpcMetadata.putNetworkBin() {
     put(
-        io.grpc.Metadata.Key.of("x-bili-network-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
+        io.grpc.Metadata.Key
+            .of("x-bili-network-bin", GrpcMetadata.BINARY_BYTE_MARSHALLER),
         network {
             type = NetworkType.WIFI
         }.toByteArray(),

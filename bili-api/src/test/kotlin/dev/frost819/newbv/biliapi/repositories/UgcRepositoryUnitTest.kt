@@ -111,11 +111,18 @@ class UgcRepositoryUnitTest {
         runTest {
             val archive =
                 RegionFeedRcmd.Archive(
-                    aid = 100L, bvid = "BV100", cid = 200L,
-                    title = "test", cover = "http://cover.test", duration = 300, pubdate = 1000L,
+                    aid = 100L,
+                    bvid = "BV100",
+                    cid = 200L,
+                    title = "test",
+                    cover = "http://cover.test",
+                    duration = 300,
+                    pubdate = 1000L,
                     stat = RegionFeedRcmd.Archive.Stat(view = 9999, like = 100, danmaku = 50),
                     author = RegionFeedRcmd.Archive.Author(mid = 555L, name = "up-name"),
-                    trackid = "t1", goto = "av", recReason = "hot",
+                    trackid = "t1",
+                    goto = "av",
+                    recReason = "hot",
                 )
             coEvery { BiliHttpApi.getRegionFeedRcmd(any(), any(), any(), any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = RegionFeedRcmd(archives = listOf(archive)))
@@ -274,11 +281,17 @@ class UgcRepositoryUnitTest {
         aid: Long = 1L,
         title: String = "title",
     ) = RegionFeedRcmd.Archive(
-        aid = aid, bvid = "BV$aid", cid = aid * 10,
-        title = title, cover = "http://cover.test/$aid",
-        duration = 120, pubdate = 1000L,
+        aid = aid,
+        bvid = "BV$aid",
+        cid = aid * 10,
+        title = title,
+        cover = "http://cover.test/$aid",
+        duration = 120,
+        pubdate = 1000L,
         stat = RegionFeedRcmd.Archive.Stat(view = 100, like = 10, danmaku = 5),
         author = RegionFeedRcmd.Archive.Author(mid = 1L, name = "up"),
-        trackid = "t$aid", goto = "av", recReason = "",
+        trackid = "t$aid",
+        goto = "av",
+        recReason = "",
     )
 }

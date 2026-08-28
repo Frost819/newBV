@@ -19,11 +19,12 @@ data class DanmakuState(
     val area: Float = 0.5f,
     val speedFactor: Float = 1.0f,
     val maskEnabled: Boolean = false,
-    val enabledTypes: List<DanmakuType> = listOf(
-        DanmakuType.Rolling,
-        DanmakuType.Top,
-        DanmakuType.Bottom
-    )
+    val enabledTypes: List<DanmakuType> =
+        listOf(
+            DanmakuType.Rolling,
+            DanmakuType.Top,
+            DanmakuType.Bottom,
+        ),
 ) {
     /**
      * 是否显示所有类型的弹幕。

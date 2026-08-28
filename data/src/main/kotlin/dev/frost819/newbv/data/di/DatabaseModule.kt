@@ -27,7 +27,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     /**
      * 提供 [AppDatabase] 单例。
      *
@@ -36,19 +35,20 @@ object DatabaseModule {
      */
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+    ): AppDatabase =
+        Room
+            .databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
             .build()
 
     /** 提供搜索历史 DAO。 */
     @Provides
-    fun provideSearchHistoryDao(database: AppDatabase): SearchHistoryDao =
-        database.searchHistoryDao()
+    fun provideSearchHistoryDao(database: AppDatabase): SearchHistoryDao = database.searchHistoryDao()
 
     /** 提供账户 DAO。 */
     @Provides
-    fun provideUserDao(database: AppDatabase): UserDao =
-        database.userDao()
+    fun provideUserDao(database: AppDatabase): UserDao = database.userDao()
 
     /**
      * 提供 DataStore 单例。
@@ -58,9 +58,11 @@ object DatabaseModule {
      */
     @Provides
     @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+    fun provideDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-            produceFile = { java.io.File(context.filesDir, "datastore/Settings.preferences_pb") }
+            produceFile = { java.io.File(context.filesDir, "datastore/Settings.preferences_pb") },
         )
 }

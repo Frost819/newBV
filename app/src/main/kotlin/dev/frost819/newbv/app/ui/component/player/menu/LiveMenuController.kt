@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ClearAll
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -32,9 +35,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ClearAll
-import androidx.compose.material.icons.outlined.Image
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
@@ -50,7 +50,10 @@ import dev.frost819.newbv.data.datastore.DanmakuType
 /**
  * 直播播放器设置菜单导航 Tab。
  */
-enum class LivePlayerMenuNavItem(val displayName: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+enum class LivePlayerMenuNavItem(
+    val displayName: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+) {
     Picture("画质", Icons.Outlined.Image),
     Danmaku("弹幕", Icons.Outlined.ClearAll),
 }
@@ -89,9 +92,10 @@ fun LiveMenuController(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(focusRequester),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .focusRequester(focusRequester),
         contentAlignment = Alignment.CenterEnd,
     ) {
         AnimatedVisibility(
@@ -125,9 +129,10 @@ private fun LiveMenuControllerContent(
 
     Surface(
         modifier = Modifier.fillMaxHeight(),
-        colors = SurfaceDefaults.colors(
-            containerColor = Color.Black.copy(alpha = 0.5f),
-        ),
+        colors =
+            SurfaceDefaults.colors(
+                containerColor = Color.Black.copy(alpha = 0.5f),
+            ),
     ) {
         CompositionLocalProvider(
             LocalMenuFocusStateData provides MenuFocusStateData(focusState = focusState),
@@ -147,22 +152,24 @@ private fun LiveMenuControllerContent(
                     onFocusStateChange = { focusState = it },
                 )
                 LiveMenuNavList(
-                    modifier = Modifier.onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp) {
-                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                                return@onPreviewKeyEvent false
+                    modifier =
+                        Modifier.onPreviewKeyEvent {
+                            if (it.type == KeyEventType.KeyUp) {
+                                if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                                    return@onPreviewKeyEvent false
+                                }
+                                return@onPreviewKeyEvent true
                             }
-                            return@onPreviewKeyEvent true
-                        }
-                        if (it.key == Key.DirectionLeft) {
-                            focusState = if (selectedNavItem == LivePlayerMenuNavItem.Picture) {
-                                MenuFocusState.Items
-                            } else {
-                                MenuFocusState.Menu
+                            if (it.key == Key.DirectionLeft) {
+                                focusState =
+                                    if (selectedNavItem == LivePlayerMenuNavItem.Picture) {
+                                        MenuFocusState.Items
+                                    } else {
+                                        MenuFocusState.Menu
+                                    }
                             }
-                        }
-                        false
-                    },
+                            false
+                        },
                     selectedMenu = selectedNavItem,
                     onSelectedChanged = { selectedNavItem = it },
                     isFocusing = focusState == MenuFocusState.MenuNav,
@@ -190,18 +197,20 @@ private fun LiveMenuList(
 ) {
     Box(contentAlignment = Alignment.Center) {
         when (selectedNavMenu) {
-            LivePlayerMenuNavItem.Picture -> LivePictureMenuList(
-                availableQualities = availableQualities,
-                currentQuality = currentQuality,
-                onQualityChange = onQualityChange,
-                navFocusRequester = navFocusRequester,
-                onFocusStateChange = onFocusStateChange,
-            )
+            LivePlayerMenuNavItem.Picture ->
+                LivePictureMenuList(
+                    availableQualities = availableQualities,
+                    currentQuality = currentQuality,
+                    onQualityChange = onQualityChange,
+                    navFocusRequester = navFocusRequester,
+                    onFocusStateChange = onFocusStateChange,
+                )
 
             LivePlayerMenuNavItem.Danmaku -> {
-                val dataTypes = danmakuState.enabledTypes.mapNotNull { entity ->
-                    runCatching { DanmakuType.entries[entity.ordinal] }.getOrNull()
-                }
+                val dataTypes =
+                    danmakuState.enabledTypes.mapNotNull { entity ->
+                        runCatching { DanmakuType.entries[entity.ordinal] }.getOrNull()
+                    }
                 DanmakuMenuList(
                     currentEnabledTypes = dataTypes,
                     currentScale = danmakuState.scale,
@@ -210,9 +219,11 @@ private fun LiveMenuList(
                     currentArea = danmakuState.area,
                     currentMaskEnabled = danmakuState.maskEnabled,
                     onDanmakuSwitchChange = { types ->
-                        val entityTypes = types.mapNotNull {
-                            runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }.getOrNull()
-                        }
+                        val entityTypes =
+                            types.mapNotNull {
+                                runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }
+                                    .getOrNull()
+                            }
                         onDanmakuSettingChange(DanmakuSettingAction.SetEnabledTypes(entityTypes))
                     },
                     onDanmakuSizeChange = { onDanmakuSettingChange(DanmakuSettingAction.SetScale(it)) },
@@ -251,10 +262,11 @@ private fun LivePictureMenuList(
 
     AnimatedVisibility(visible = true) {
         RadioMenuList(
-            modifier = Modifier
-                .width(216.dp)
-                .padding(horizontal = 8.dp)
-                .focusRequester(itemsFocusRequester),
+            modifier =
+                Modifier
+                    .width(216.dp)
+                    .padding(horizontal = 8.dp)
+                    .focusRequester(itemsFocusRequester),
             items = availableQualities.map { it.second },
             selected = availableQualities.indexOfFirst { it.first == currentQuality }.coerceAtLeast(0),
             onSelectedChanged = { onQualityChange(availableQualities[it].first) },
@@ -286,16 +298,18 @@ private fun LiveMenuNavList(
     }
 
     LazyColumn(
-        modifier = modifier
-            .focusRestorer(restorerFocusRequester)
-            .focusRequester(navFocusRequester),
+        modifier =
+            modifier
+                .focusRestorer(restorerFocusRequester)
+                .focusRequester(navFocusRequester),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(16.dp),
     ) {
         itemsIndexed(LivePlayerMenuNavItem.entries) { index, item ->
             MenuListItem(
-                modifier = Modifier
-                    .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
+                modifier =
+                    Modifier
+                        .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                 text = item.displayName,
                 icon = item.icon,
                 expanded = isFocusing,

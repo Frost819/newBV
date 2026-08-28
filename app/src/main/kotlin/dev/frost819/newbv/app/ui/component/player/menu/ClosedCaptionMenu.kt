@@ -76,92 +76,99 @@ fun ClosedCaptionMenuList(
         modifier = modifier.fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val menuItemsModifier = Modifier
-            .width(216.dp)
-            .padding(horizontal = 8.dp)
+        val menuItemsModifier =
+            Modifier
+                .width(216.dp)
+                .padding(horizontal = 8.dp)
 
         AnimatedVisibility(visible = focusState.focusState != MenuFocusState.MenuNav) {
             when (selectedCcMenuItem) {
-                VideoPlayerClosedCaptionMenuItem.Switch -> RadioMenuList(
-                    modifier = menuItemsModifier,
-                    items = availableSubtitleTracks.map { subtitle ->
-                        if (subtitle.id == -1L) "关闭" else subtitle.langDoc
-                    },
-                    selected = availableSubtitleTracks.indexOfFirst { it.id == currentSubtitleId },
-                    onSelectedChanged = { onSubtitleChange(availableSubtitleTracks[it]) },
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerClosedCaptionMenuItem.Switch ->
+                    RadioMenuList(
+                        modifier = menuItemsModifier,
+                        items =
+                            availableSubtitleTracks.map { subtitle ->
+                                if (subtitle.id == -1L) "关闭" else subtitle.langDoc
+                            },
+                        selected = availableSubtitleTracks.indexOfFirst { it.id == currentSubtitleId },
+                        onSelectedChanged = { onSubtitleChange(availableSubtitleTracks[it]) },
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerClosedCaptionMenuItem.Size -> StepLessMenuItem(
-                    modifier = menuItemsModifier,
-                    value = currentFontSize,
-                    step = 1,
-                    range = 8..48,
-                    text = "${currentFontSize}sp",
-                    onValueChange = onSubtitleSizeChange,
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerClosedCaptionMenuItem.Size ->
+                    StepLessMenuItem(
+                        modifier = menuItemsModifier,
+                        value = currentFontSize,
+                        step = 1,
+                        range = 8..48,
+                        text = "${currentFontSize}sp",
+                        onValueChange = onSubtitleSizeChange,
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerClosedCaptionMenuItem.Opacity -> StepLessMenuItem(
-                    modifier = menuItemsModifier,
-                    value = currentOpacity,
-                    step = 0.01f,
-                    range = 0f..1f,
-                    text = "${(currentOpacity * 100).toInt()}%",
-                    onValueChange = onSubtitleBackgroundOpacityChange,
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerClosedCaptionMenuItem.Opacity ->
+                    StepLessMenuItem(
+                        modifier = menuItemsModifier,
+                        value = currentOpacity,
+                        step = 0.01f,
+                        range = 0f..1f,
+                        text = "${(currentOpacity * 100).toInt()}%",
+                        onValueChange = onSubtitleBackgroundOpacityChange,
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerClosedCaptionMenuItem.Padding -> StepLessMenuItem(
-                    modifier = menuItemsModifier,
-                    value = currentPadding,
-                    step = 1,
-                    range = 0..48,
-                    text = "${currentPadding}dp",
-                    onValueChange = onSubtitleBottomPadding,
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerClosedCaptionMenuItem.Padding ->
+                    StepLessMenuItem(
+                        modifier = menuItemsModifier,
+                        value = currentPadding,
+                        step = 1,
+                        range = 0..48,
+                        text = "${currentPadding}dp",
+                        onValueChange = onSubtitleBottomPadding,
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
             }
         }
 
         LazyColumn(
-            modifier = Modifier
-                .focusRequester(focusRequester)
-                .padding(horizontal = 8.dp)
-                .onPreviewKeyEvent {
-                    if (it.type == KeyEventType.KeyUp) {
-                        if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                            return@onPreviewKeyEvent false
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester)
+                    .padding(horizontal = 8.dp)
+                    .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyUp) {
+                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                                return@onPreviewKeyEvent false
+                            }
+                            return@onPreviewKeyEvent true
                         }
-                        return@onPreviewKeyEvent true
-                    }
-                    when (it.key) {
-                        Key.DirectionRight -> onFocusStateChange(MenuFocusState.MenuNav)
-                        Key.DirectionLeft -> onFocusStateChange(MenuFocusState.Items)
-                        else -> {}
-                    }
-                    false
-                }
-                .focusRestorer(restorerFocusRequester),
+                        when (it.key) {
+                            Key.DirectionRight -> onFocusStateChange(MenuFocusState.MenuNav)
+                            Key.DirectionLeft -> onFocusStateChange(MenuFocusState.Items)
+                            else -> {}
+                        }
+                        false
+                    }.focusRestorer(restorerFocusRequester),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(8.dp),
         ) {
             itemsIndexed(VideoPlayerClosedCaptionMenuItem.entries.toMutableList()) { index, item ->
                 MenuListItem(
-                    modifier = Modifier
-                        .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
+                    modifier =
+                        Modifier
+                            .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                     text = item.displayName,
                     selected = selectedCcMenuItem == item,
                     onClick = {

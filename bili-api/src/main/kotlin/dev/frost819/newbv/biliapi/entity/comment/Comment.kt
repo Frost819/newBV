@@ -55,8 +55,7 @@ data class Comment(
                 (content?.get("pictures") as? kotlinx.serialization.json.JsonArray)
                     ?.mapNotNull { picture ->
                         (picture as? JsonObject)?.get("img_src")?.jsonPrimitive?.contentOrNull
-                    }
-                    .orEmpty()
+                    }.orEmpty()
             val action =
                 control?.get("action")?.jsonPrimitive?.intOrNull
                     ?: json["user_action"]?.jsonPrimitive?.intOrNull

@@ -26,7 +26,7 @@ import java.util.Locale
  */
 class CrashHandler(
     private val context: Context,
-    private val maxLogCount: Int = 10
+    private val maxLogCount: Int = 10,
 ) {
     private val logger = Loggers.get("CrashHandler")
 
@@ -80,31 +80,32 @@ class CrashHandler(
      *
      * @return 生成的日志文件，失败返回 null。
      */
-    fun createManualLog(): File? = runCatching {
-        val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
+    fun createManualLog(): File? =
+        runCatching {
+            val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-        val logDir = File(context.filesDir, LOG_DIR)
-        if (!logDir.exists()) logDir.mkdirs()
+            val logDir = File(context.filesDir, LOG_DIR)
+            if (!logDir.exists()) logDir.mkdirs()
 
-        val logFile = File(logDir, createFilename(manual = true))
-        logFile.createNewFile()
+            val logFile = File(logDir, createFilename(manual = true))
+            logFile.createNewFile()
 
-        with(logFile.writer()) {
-            writeDeviceInfo(this)
-            appendLine("======== Logs ========")
-            var line: String?
-            while (reader.readLine().also { line = it } != null) {
-                appendLine(line)
+            with(logFile.writer()) {
+                writeDeviceInfo(this)
+                appendLine("======== Logs ========")
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    appendLine(line)
+                }
+                flush()
+                close()
+                reader.close()
             }
-            flush()
-            close()
-            reader.close()
-        }
-        logFile
-    }.onFailure {
-        logger.error(it) { "Failed to create manual log" }
-    }.getOrNull()
+            logFile
+        }.onFailure {
+            logger.error(it) { "Failed to create manual log" }
+        }.getOrNull()
 
     /**
      * 列出所有崩溃日志文件。
@@ -138,7 +139,10 @@ class CrashHandler(
         }
     }
 
-    private fun handleCrash(thread: Thread, exception: Throwable) {
+    private fun handleCrash(
+        thread: Thread,
+        exception: Throwable,
+    ) {
         runCatching {
             val logDir = File(context.filesDir, LOG_DIR)
             if (!logDir.exists()) logDir.mkdirs()
@@ -171,24 +175,28 @@ class CrashHandler(
      *
      * @return logcat 文本，失败返回空字符串。
      */
-    private fun collectLogcatText(): String = runCatching {
-        val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-        val sb = StringBuilder()
-        var line: String?
-        while (reader.readLine().also { line = it } != null) {
-            sb.appendLine(line)
-        }
-        reader.close()
-        sb.toString()
-    }.onFailure {
-        logger.error(it) { "Failed to collect logcat" }
-    }.getOrDefault("")
+    private fun collectLogcatText(): String =
+        runCatching {
+            val process = Runtime.getRuntime().exec("logcat -t 10000 -v threadtime")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val sb = StringBuilder()
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                sb.appendLine(line)
+            }
+            reader.close()
+            sb.toString()
+        }.onFailure {
+            logger.error(it) { "Failed to collect logcat" }
+        }.getOrDefault("")
 
     /**
      * 将 logcat 文本追加到文件。
      */
-    private fun appendLogcatText(file: File, logcatText: String) {
+    private fun appendLogcatText(
+        file: File,
+        logcatText: String,
+    ) {
         OutputStreamWriter(FileOutputStream(file, true)).use { writer ->
             writer.appendLine("======== Logcat ========")
             writer.append(logcatText)
@@ -212,7 +220,7 @@ class CrashHandler(
                     device = deviceInfo.device,
                     model = deviceInfo.model,
                     manufacturer = deviceInfo.manufacturer,
-                )
+                ),
             )
             writer.appendLine("======== Exception ========")
             writer.appendLine("Thread: ${thread.name}")
@@ -235,7 +243,7 @@ class CrashHandler(
             androidSdk = Build.VERSION.SDK_INT,
             device = Build.DEVICE ?: "unknown",
             model = Build.MODEL ?: "unknown",
-            manufacturer = Build.MANUFACTURER ?: "unknown"
+            manufacturer = Build.MANUFACTURER ?: "unknown",
         )
     }
 

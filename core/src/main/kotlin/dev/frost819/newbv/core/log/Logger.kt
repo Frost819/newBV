@@ -18,13 +18,19 @@ interface Logger {
     fun warn(message: () -> String)
 
     /** 记录带异常的 Warn 级别日志。 */
-    fun warn(throwable: Throwable, message: () -> String)
+    fun warn(
+        throwable: Throwable,
+        message: () -> String,
+    )
 
     /** 记录 Error 级别日志。 */
     fun error(message: () -> String)
 
     /** 记录带异常的 Error 级别日志。 */
-    fun error(throwable: Throwable, message: () -> String)
+    fun error(
+        throwable: Throwable,
+        message: () -> String,
+    )
 }
 
 /**
@@ -49,7 +55,10 @@ private class AndroidLogger(
         write(Log.WARN, message)
     }
 
-    override fun warn(throwable: Throwable, message: () -> String) {
+    override fun warn(
+        throwable: Throwable,
+        message: () -> String,
+    ) {
         write(Log.WARN, message, throwable)
     }
 
@@ -57,7 +66,10 @@ private class AndroidLogger(
         write(Log.ERROR, message)
     }
 
-    override fun error(throwable: Throwable, message: () -> String) {
+    override fun error(
+        throwable: Throwable,
+        message: () -> String,
+    ) {
         write(Log.ERROR, message, throwable)
     }
 

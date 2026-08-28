@@ -27,15 +27,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class MaskModifiersRobolectricTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val validSvg = """
+    private val validSvg =
+        """
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
             <rect width="10" height="10" fill="black"/>
         </svg>
-    """.trimIndent()
+        """.trimIndent()
 
     /**
      * 辅助：组合 + 等待 idle + 推进帧时钟以触发 draw 阶段。
@@ -53,9 +53,10 @@ class MaskModifiersRobolectricTest {
     fun `danmakuMask with null frame applies no mask`() {
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMask(frame = null, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMask(frame = null, aspectRatio = 1.77f),
             )
         }
     }
@@ -66,9 +67,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMask(frame, aspectRatio = 1.77f),
             )
         }
     }
@@ -79,27 +81,30 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMask(frame, aspectRatio = 1.77f),
             )
         }
     }
 
     @Test
     fun `danmakuMask with MobMaskFrame renders successfully`() {
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = 2,
-            height = 2,
-            image = byteArrayOf(0b1010_0000.toByte()),
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = 2,
+                height = 2,
+                image = byteArrayOf(0b1010_0000.toByte()),
+            )
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMask(frame, aspectRatio = 1.77f),
             )
         }
     }
@@ -112,9 +117,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .bitmapMask(bitmap, videoAspectRatio = 2.0f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .bitmapMask(bitmap, videoAspectRatio = 2.0f),
             )
         }
     }
@@ -125,9 +131,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .bitmapMask(bitmap, videoAspectRatio = 0.5f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .bitmapMask(bitmap, videoAspectRatio = 0.5f),
             )
         }
     }
@@ -138,9 +145,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .bitmapMask(bitmap, videoAspectRatio = 1.0f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .bitmapMask(bitmap, videoAspectRatio = 1.0f),
             )
         }
     }
@@ -153,9 +161,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuWebMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuWebMask(frame, aspectRatio = 1.77f),
             )
         }
     }
@@ -166,9 +175,10 @@ class MaskModifiersRobolectricTest {
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuWebMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuWebMask(frame, aspectRatio = 1.77f),
             )
         }
     }
@@ -177,36 +187,40 @@ class MaskModifiersRobolectricTest {
 
     @Test
     fun `danmakuMobMask renders successfully with 8x2 pixel data`() {
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = 8,
-            height = 2,
-            image = byteArrayOf(0b10101010.toByte(), 0b11001100.toByte()),
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = 8,
+                height = 2,
+                image = byteArrayOf(0b10101010.toByte(), 0b11001100.toByte()),
+            )
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMobMask(frame, aspectRatio = 1.77f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMobMask(frame, aspectRatio = 1.77f),
             )
         }
     }
 
     @Test
     fun `danmakuMobMask renders successfully with 1x1 pixel data`() {
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = 1,
-            height = 1,
-            image = byteArrayOf(0b1000_0000.toByte()),
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = 1,
+                height = 1,
+                image = byteArrayOf(0b1000_0000.toByte()),
+            )
 
         composeAndDraw {
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .danmakuMobMask(frame, aspectRatio = 0.5f),
+                modifier =
+                    Modifier
+                        .size(100.dp)
+                        .danmakuMobMask(frame, aspectRatio = 0.5f),
             )
         }
     }

@@ -67,7 +67,8 @@ object LiveDataWebSocket {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val wsClient by lazy {
-        OkHttpClient.Builder()
+        OkHttpClient
+            .Builder()
             .pingInterval(30, TimeUnit.SECONDS)
             .build()
     }
@@ -160,7 +161,8 @@ object LiveDataWebSocket {
                 val heartbeatPacket = buildPacket(OP_HEARTBEAT, "[object Object]".toByteArray(Charsets.UTF_8))
 
                 val request =
-                    Request.Builder()
+                    Request
+                        .Builder()
                         .url(url)
                         .header("User-Agent", webUserAgent)
                         .header("Referer", "https://live.bilibili.com/")
@@ -374,7 +376,11 @@ object LiveDataWebSocket {
                     val text = body.toString(Charsets.UTF_8).trim()
                     val code =
                         runCatching {
-                            json.parseToJsonElement(text).jsonObject["code"]?.jsonPrimitive?.int ?: -1
+                            json
+                                .parseToJsonElement(text)
+                                .jsonObject["code"]
+                                ?.jsonPrimitive
+                                ?.int ?: -1
                         }.getOrDefault(-1)
                     if (code == 0) {
                         result.add(AuthSuccessSignal)
@@ -402,13 +408,35 @@ object LiveDataWebSocket {
         if (cmd.startsWith("DANMU_MSG")) {
             return runCatching {
                 val danmakuContent = dataJson["info"]!!.jsonArray[1].jsonPrimitive.content
-                val senderMid = dataJson["info"]!!.jsonArray[2].jsonArray[0].jsonPrimitive.long
-                val senderUsername = dataJson["info"]!!.jsonArray[2].jsonArray[1].jsonPrimitive.content
+                val senderMid =
+                    dataJson["info"]!!
+                        .jsonArray[2]
+                        .jsonArray[0]
+                        .jsonPrimitive.long
+                val senderUsername =
+                    dataJson["info"]!!
+                        .jsonArray[2]
+                        .jsonArray[1]
+                        .jsonPrimitive.content
                 var medalLevel: Int? = null
                 var medalName: String? = null
                 runCatching {
-                    medalLevel = dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(0)?.jsonPrimitive?.int
-                    medalName = dataJson["info"]?.jsonArray?.get(3)?.jsonArray?.get(1)?.jsonPrimitive?.content
+                    medalLevel =
+                        dataJson["info"]
+                            ?.jsonArray
+                            ?.get(3)
+                            ?.jsonArray
+                            ?.get(0)
+                            ?.jsonPrimitive
+                            ?.int
+                    medalName =
+                        dataJson["info"]
+                            ?.jsonArray
+                            ?.get(3)
+                            ?.jsonArray
+                            ?.get(1)
+                            ?.jsonPrimitive
+                            ?.content
                 }
                 DanmakuEvent(
                     content = danmakuContent,
@@ -459,11 +487,18 @@ object LiveDataWebSocket {
     private fun readShort(
         bytes: ByteArray,
         offset: Int,
-    ): Int = ByteBuffer.wrap(bytes, offset, 2).order(ByteOrder.BIG_ENDIAN).short.toInt() and 0xFFFF
+    ): Int =
+        ByteBuffer
+            .wrap(bytes, offset, 2)
+            .order(ByteOrder.BIG_ENDIAN)
+            .short
+            .toInt() and 0xFFFF
 
     /** 认证成功的内部信号事件，不对外暴露。 */
     private object AuthSuccessSignal : LiveEvent
 
     /** 认证失败的内部信号事件，不对外暴露。用于通知重连逻辑需要重新获取 token。 */
-    private data class AuthFailedSignal(val code: Int) : LiveEvent
+    private data class AuthFailedSignal(
+        val code: Int,
+    ) : LiveEvent
 }

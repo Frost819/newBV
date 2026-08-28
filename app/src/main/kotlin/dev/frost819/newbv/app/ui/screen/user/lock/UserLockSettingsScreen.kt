@@ -24,19 +24,17 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import dev.frost819.newbv.data.datastore.Prefs
-import dev.frost819.newbv.data.db.entity.UserEntity
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 /**
  * 用户锁设置 ViewModel。
@@ -46,22 +44,26 @@ import javax.inject.Inject
  * @property accountRepository 账户仓库。
  */
 @HiltViewModel
-class UserLockViewModel @Inject constructor(
-    private val accountRepository: AccountRepositoryImpl,
-) : ViewModel() {
-
-    /**
-     * 保存用户锁密码。
-     *
-     * @param uid 用户 UID。
-     * @param lock 密码字符串（空字符串取消锁）。
-     */
-    fun saveLock(uid: Long, lock: String) {
-        viewModelScope.launch {
-            accountRepository.updateUserLock(uid, lock)
+class UserLockViewModel
+    @Inject
+    constructor(
+        private val accountRepository: AccountRepositoryImpl,
+    ) : ViewModel() {
+        /**
+         * 保存用户锁密码。
+         *
+         * @param uid 用户 UID。
+         * @param lock 密码字符串（空字符串取消锁）。
+         */
+        fun saveLock(
+            uid: Long,
+            lock: String,
+        ) {
+            viewModelScope.launch {
+                accountRepository.updateUserLock(uid, lock)
+            }
         }
     }
-}
 
 /**
  * 用户锁设置页面。
@@ -106,70 +108,83 @@ fun UserLockSettingsScreen(
     }
 
     Surface(
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
-                when (event.key) {
-                    Key.DirectionUp -> { inputPassword += "u"; true }
-                    Key.DirectionDown -> { inputPassword += "d"; true }
-                    Key.DirectionLeft -> { inputPassword += "l"; true }
-                    Key.DirectionRight -> { inputPassword += "r"; true }
-                    Key.DirectionCenter -> {
-                        when (inputState) {
-                            InputState.InputOldPassword -> {
-                                if (inputPassword == currentLock) {
-                                    inputState = InputState.InputNewPassword
-                                    inputPassword = ""
-                                    message = ""
-                                } else {
-                                    message = "密码错误"
-                                    inputPassword = ""
-                                }
-                            }
-                            InputState.InputNewPassword -> {
-                                newPassword = inputPassword
-                                if (inputPassword.isEmpty()) {
-                                    viewModel.saveLock(currentUid, "")
-                                    onSaved()
-                                } else {
-                                    inputState = InputState.ConfirmNewPassword
-                                    inputPassword = ""
-                                    message = ""
-                                }
-                            }
-                            InputState.ConfirmNewPassword -> {
-                                if (inputPassword == newPassword) {
-                                    viewModel.saveLock(currentUid, inputPassword)
-                                    onSaved()
-                                } else {
-                                    message = "两次密码不一致"
-                                    inputState = InputState.InputNewPassword
-                                    inputPassword = ""
-                                    newPassword = ""
-                                }
-                            }
+        modifier =
+            modifier
+                .focusRequester(focusRequester)
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
+                    when (event.key) {
+                        Key.DirectionUp -> {
+                            inputPassword += "u"
+                            true
                         }
-                        true
-                    }
-                    Key.Back -> {
-                        if (inputPassword.isNotEmpty()) {
-                            inputPassword = inputPassword.drop(1)
-                        } else {
+                        Key.DirectionDown -> {
+                            inputPassword += "d"
+                            true
+                        }
+                        Key.DirectionLeft -> {
+                            inputPassword += "l"
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            inputPassword += "r"
+                            true
+                        }
+                        Key.DirectionCenter -> {
                             when (inputState) {
-                                InputState.InputOldPassword -> onSaved()
-                                InputState.InputNewPassword -> onSaved()
+                                InputState.InputOldPassword -> {
+                                    if (inputPassword == currentLock) {
+                                        inputState = InputState.InputNewPassword
+                                        inputPassword = ""
+                                        message = ""
+                                    } else {
+                                        message = "密码错误"
+                                        inputPassword = ""
+                                    }
+                                }
+                                InputState.InputNewPassword -> {
+                                    newPassword = inputPassword
+                                    if (inputPassword.isEmpty()) {
+                                        viewModel.saveLock(currentUid, "")
+                                        onSaved()
+                                    } else {
+                                        inputState = InputState.ConfirmNewPassword
+                                        inputPassword = ""
+                                        message = ""
+                                    }
+                                }
                                 InputState.ConfirmNewPassword -> {
-                                    inputState = InputState.InputNewPassword
-                                    newPassword = ""
+                                    if (inputPassword == newPassword) {
+                                        viewModel.saveLock(currentUid, inputPassword)
+                                        onSaved()
+                                    } else {
+                                        message = "两次密码不一致"
+                                        inputState = InputState.InputNewPassword
+                                        inputPassword = ""
+                                        newPassword = ""
+                                    }
                                 }
                             }
+                            true
                         }
-                        true
+                        Key.Back -> {
+                            if (inputPassword.isNotEmpty()) {
+                                inputPassword = inputPassword.drop(1)
+                            } else {
+                                when (inputState) {
+                                    InputState.InputOldPassword -> onSaved()
+                                    InputState.InputNewPassword -> onSaved()
+                                    InputState.ConfirmNewPassword -> {
+                                        inputState = InputState.InputNewPassword
+                                        newPassword = ""
+                                    }
+                                }
+                            }
+                            true
+                        }
+                        else -> false
                     }
-                    else -> false
-                }
-            },
+                },
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -181,19 +196,21 @@ fun UserLockSettingsScreen(
                 modifier = Modifier.padding(48.dp),
             ) {
                 Text(
-                    text = when (inputState) {
-                        InputState.InputOldPassword -> stringResource(R.string.lock_input_old)
-                        InputState.InputNewPassword -> stringResource(R.string.lock_set_new)
-                        InputState.ConfirmNewPassword -> stringResource(R.string.lock_confirm_new)
-                    },
+                    text =
+                        when (inputState) {
+                            InputState.InputOldPassword -> stringResource(R.string.lock_input_old)
+                            InputState.InputNewPassword -> stringResource(R.string.lock_set_new)
+                            InputState.ConfirmNewPassword -> stringResource(R.string.lock_confirm_new)
+                        },
                     style = MaterialTheme.typography.displaySmall,
                 )
 
-                val displayPassword = inputPassword
-                    .replace("u", "↑")
-                    .replace("d", "↓")
-                    .replace("l", "←")
-                    .replace("r", "→")
+                val displayPassword =
+                    inputPassword
+                        .replace("u", "↑")
+                        .replace("d", "↓")
+                        .replace("l", "←")
+                        .replace("r", "→")
                 Text(
                     text = displayPassword.ifEmpty { " " },
                     style = MaterialTheme.typography.displayLarge,

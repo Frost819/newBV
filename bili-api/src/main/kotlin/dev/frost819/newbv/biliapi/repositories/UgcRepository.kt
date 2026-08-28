@@ -14,10 +14,11 @@ class UgcRepository(
     @Deprecated("User getRegionFeedRcmd instead")
     suspend fun getRegionData(ugcType: UgcType): UgcRegionData {
         val responseData =
-            BiliHttpApi.getRegionDynamic(
-                rid = ugcType.rid,
-                accessKey = authRepository.accessToken ?: "",
-            ).getResponseData()
+            BiliHttpApi
+                .getRegionDynamic(
+                    rid = ugcType.rid,
+                    accessKey = authRepository.accessToken ?: "",
+                ).getResponseData()
         val data = UgcRegionData.fromRegionDynamic(responseData)
         return data
     }
@@ -25,10 +26,11 @@ class UgcRepository(
     @Deprecated("User getRegionFeedRcmd instead")
     suspend fun getRegionMoreData(ugcType: UgcType): UgcRegionListData {
         val responseData =
-            BiliHttpApi.getRegionDynamicList(
-                rid = ugcType.rid,
-                accessKey = authRepository.accessToken ?: "",
-            ).getResponseData()
+            BiliHttpApi
+                .getRegionDynamicList(
+                    rid = ugcType.rid,
+                    accessKey = authRepository.accessToken ?: "",
+                ).getResponseData()
         val data = UgcRegionListData.fromRegionDynamicList(responseData)
         return data
     }
@@ -38,10 +40,11 @@ class UgcRepository(
         page: UgcFeedPage,
     ): UgcFeedData {
         val responseData =
-            BiliHttpApi.getRegionFeedRcmd(
-                displayId = page.nextPage,
-                fromRegion = ugcType.tid,
-            ).getResponseData()
+            BiliHttpApi
+                .getRegionFeedRcmd(
+                    displayId = page.nextPage,
+                    fromRegion = ugcType.tid,
+                ).getResponseData()
         val ugcFeedData = UgcFeedData.fromRegionFeedRcmd(responseData)
         ugcFeedData.nextPage = UgcFeedPage(page.nextPage + 1)
         return ugcFeedData

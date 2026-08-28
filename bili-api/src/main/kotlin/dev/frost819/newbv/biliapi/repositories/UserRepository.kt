@@ -109,16 +109,20 @@ class UserRepository(
     ): String =
         when (preferApiType) {
             ApiType.Web ->
-                BiliHttpApi.addSeasonFollow(
-                    seasonId = seasonId,
-                    csrf = authRepository.biliJct!!,
-                ).getResponseData().toast
+                BiliHttpApi
+                    .addSeasonFollow(
+                        seasonId = seasonId,
+                        csrf = authRepository.biliJct!!,
+                    ).getResponseData()
+                    .toast
 
             ApiType.App ->
-                BiliHttpApi.addSeasonFollowApp(
-                    seasonId = seasonId,
-                    accessKey = authRepository.accessToken ?: "",
-                ).getResponseData().toast
+                BiliHttpApi
+                    .addSeasonFollowApp(
+                        seasonId = seasonId,
+                        accessKey = authRepository.accessToken ?: "",
+                    ).getResponseData()
+                    .toast
         }
 
     suspend fun delSeasonFollow(
@@ -127,16 +131,20 @@ class UserRepository(
     ): String =
         when (preferApiType) {
             ApiType.Web ->
-                BiliHttpApi.delSeasonFollow(
-                    seasonId = seasonId,
-                    csrf = authRepository.biliJct!!,
-                ).getResponseData().toast
+                BiliHttpApi
+                    .delSeasonFollow(
+                        seasonId = seasonId,
+                        csrf = authRepository.biliJct!!,
+                    ).getResponseData()
+                    .toast
 
             ApiType.App ->
-                BiliHttpApi.delSeasonFollowApp(
-                    seasonId = seasonId,
-                    accessKey = authRepository.accessToken ?: "",
-                ).getResponseData().toast
+                BiliHttpApi
+                    .delSeasonFollowApp(
+                        seasonId = seasonId,
+                        accessKey = authRepository.accessToken ?: "",
+                    ).getResponseData()
+                    .toast
         }
 
     /**
@@ -154,47 +162,49 @@ class UserRepository(
         order: SpaceVideoOrder = SpaceVideoOrder.PubDate,
         page: SpaceVideoPage = SpaceVideoPage(),
         preferApiType: ApiType,
-    ): SpaceVideoData {
-        return when (preferApiType) {
+    ): SpaceVideoData =
+        when (preferApiType) {
             ApiType.Web -> {
                 val webSpaceVideoData =
-                    BiliHttpApi.getWebUserSpaceVideos(
-                        mid = mid,
-                        order = order.value,
-                        pageNumber = page.nextWebPageNumber,
-                        pageSize = page.nextWebPageSize,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getWebUserSpaceVideos(
+                            mid = mid,
+                            order = order.value,
+                            pageNumber = page.nextWebPageNumber,
+                            pageSize = page.nextWebPageSize,
+                        ).getResponseData()
                 SpaceVideoData.fromWebSpaceVideoData(webSpaceVideoData)
             }
 
             ApiType.App -> {
                 val appSpaceVideoData =
-                    BiliHttpApi.getAppUserSpaceVideos(
-                        mid = mid,
-                        lastAvid = page.lastAvid,
-                        order = order.value,
-                        ts = System.currentTimeMillis(),
-                        accessKey = authRepository.accessToken ?: "",
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getAppUserSpaceVideos(
+                            mid = mid,
+                            lastAvid = page.lastAvid,
+                            order = order.value,
+                            ts = System.currentTimeMillis(),
+                            accessKey = authRepository.accessToken ?: "",
+                        ).getResponseData()
                 SpaceVideoData.fromAppSpaceVideoData(appSpaceVideoData)
             }
         }
-    }
 
     suspend fun getDynamicVideos(
         page: Int,
         offset: String,
         updateBaseline: String,
         preferApiType: ApiType,
-    ): DynamicVideoData {
-        return when (preferApiType) {
+    ): DynamicVideoData =
+        when (preferApiType) {
             ApiType.Web -> {
                 val responseData =
-                    BiliHttpApi.getDynamicList(
-                        type = "video",
-                        page = page,
-                        offset = offset,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getDynamicList(
+                            type = "video",
+                            page = page,
+                            offset = offset,
+                        ).getResponseData()
                 DynamicVideoData.fromDynamicData(responseData)
             }
 
@@ -219,33 +229,36 @@ class UserRepository(
                 result!!
             }
         }
-    }
 
     suspend fun getFollowedUsers(
         mid: Long,
         preferApiType: ApiType,
-    ): List<FollowedUser> {
-        return when (preferApiType) {
+    ): List<FollowedUser> =
+        when (preferApiType) {
             ApiType.Web -> {
                 val result = mutableListOf<FollowedUser>()
                 val firstResponse =
-                    BiliHttpApi.getUserFollow(
-                        mid = mid,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getUserFollow(
+                            mid = mid,
+                        ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
                 result.addAll(firstResponse.list.map { FollowedUser.fromHttpFollowedUser(it) })
                 withContext(Dispatchers.IO) {
-                    (2..pageCount).map { pageNumber ->
-                        async {
-                            BiliHttpApi.getUserFollow(
-                                mid = mid,
-                                pageNumber = pageNumber,
-                            ).getResponseData()
+                    (2..pageCount)
+                        .map { pageNumber ->
+                            async {
+                                BiliHttpApi
+                                    .getUserFollow(
+                                        mid = mid,
+                                        pageNumber = pageNumber,
+                                    ).getResponseData()
+                            }
+                        }.awaitAll()
+                        .forEach { userFollowData ->
+                            result.addAll(userFollowData.list.map { FollowedUser.fromHttpFollowedUser(it) })
                         }
-                    }.awaitAll().forEach { userFollowData ->
-                        result.addAll(userFollowData.list.map { FollowedUser.fromHttpFollowedUser(it) })
-                    }
                 }
                 result
             }
@@ -253,28 +266,31 @@ class UserRepository(
             ApiType.App -> {
                 val result = mutableListOf<FollowedUser>()
                 val firstResponse =
-                    BiliHttpApi.getUserFollow(
-                        mid = mid,
-                        accessKey = authRepository.accessToken,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getUserFollow(
+                            mid = mid,
+                            accessKey = authRepository.accessToken,
+                        ).getResponseData()
                 val userCount = firstResponse.total
                 val pageCount = ceil((userCount.toFloat() / 50)).toInt()
                 result.addAll(firstResponse.list.map { FollowedUser.fromHttpFollowedUser(it) })
                 withContext(Dispatchers.IO) {
-                    (2..pageCount).map { pageNumber ->
-                        async {
-                            BiliHttpApi.getUserFollow(
-                                mid = mid,
-                                pageNumber = pageNumber,
-                                accessKey = authRepository.accessToken,
-                            ).getResponseData()
+                    (2..pageCount)
+                        .map { pageNumber ->
+                            async {
+                                BiliHttpApi
+                                    .getUserFollow(
+                                        mid = mid,
+                                        pageNumber = pageNumber,
+                                        accessKey = authRepository.accessToken,
+                                    ).getResponseData()
+                            }
+                        }.awaitAll()
+                        .forEach { userFollowData ->
+                            result.addAll(userFollowData.list.map { FollowedUser.fromHttpFollowedUser(it) })
                         }
-                    }.awaitAll().forEach { userFollowData ->
-                        result.addAll(userFollowData.list.map { FollowedUser.fromHttpFollowedUser(it) })
-                    }
                 }
                 result
             }
         }
-    }
 }

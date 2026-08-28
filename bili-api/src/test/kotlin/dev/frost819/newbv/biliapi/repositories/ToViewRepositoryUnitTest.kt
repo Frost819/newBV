@@ -277,16 +277,26 @@ class ToViewRepositoryUnitTest {
             list =
                 listOf(
                     ToViewItem(
-                        aid = 1L, bvid = "BV1xx", cid = 100L,
+                        aid = 1L,
+                        bvid = "BV1xx",
+                        cid = 100L,
                         owner = ToViewItem.Owner(name = "up1", mid = 1L),
-                        title = "video-1", pic = "http://pic.test/1",
-                        videos = 2, progress = 30, duration = 120,
+                        title = "video-1",
+                        pic = "http://pic.test/1",
+                        videos = 2,
+                        progress = 30,
+                        duration = 120,
                     ),
                     ToViewItem(
-                        aid = 2L, bvid = "BV2xx", cid = 200L,
+                        aid = 2L,
+                        bvid = "BV2xx",
+                        cid = 200L,
                         owner = ToViewItem.Owner(name = "up2", mid = 2L),
-                        title = "video-2", pic = "http://pic.test/2",
-                        videos = 1, progress = 60, duration = 300,
+                        title = "video-2",
+                        pic = "http://pic.test/2",
+                        videos = 1,
+                        progress = 60,
+                        duration = 300,
                     ),
                 ),
         )

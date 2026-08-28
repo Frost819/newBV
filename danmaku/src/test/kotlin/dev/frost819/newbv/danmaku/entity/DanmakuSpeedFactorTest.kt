@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 class DanmakuSpeedFactorTest {
-
     @Test
     fun `factor values are correct`() {
         assertThat(DanmakuSpeedFactor.S1.factor).isEqualTo(1.5f)

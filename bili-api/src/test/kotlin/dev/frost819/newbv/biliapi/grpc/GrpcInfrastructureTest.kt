@@ -77,7 +77,8 @@ class GrpcInfrastructureTest {
         // 构造带 grpc-status-details-bin trailer 的异常，携带 bilibili.rpc.Status{ code=-352, message=... }
         val trailers = Metadata()
         val statusBytes =
-            bilibili.rpc.Status.newBuilder()
+            bilibili.rpc.Status
+                .newBuilder()
                 .setCode(BiliGrpcCode.RISK_CONTROL)
                 .setMessage("风控触发")
                 .build()

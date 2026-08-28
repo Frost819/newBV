@@ -34,10 +34,11 @@ class CacheManager(
      * @param context 任意 Context（自动取 applicationContext.cacheDir 下的缓存目录）。
      */
     constructor(context: Context) : this(
-        cacheDirs = listOf(
-            File(context.cacheDir, IMAGE_CACHE_DIR),
-            File(context.cacheDir, OTHER_CACHE_DIR),
-        ),
+        cacheDirs =
+            listOf(
+                File(context.cacheDir, IMAGE_CACHE_DIR),
+                File(context.cacheDir, OTHER_CACHE_DIR),
+            ),
     )
 
     /** 当前缓存总大小（字节，全部缓存目录之和）。 */
@@ -80,10 +81,15 @@ class CacheManager(
      * @param preserve 需要保留的文件，可为 null。
      * @return 实际删除的字节数。
      */
-    internal fun evictLru(dirs: List<File>, targetBytes: Long, preserve: File? = null): Long {
-        val files = dirs
-            .filter { it.exists() }
-            .flatMap { dir -> dir.walkTopDown().filter { it.isFile }.toList() }
+    internal fun evictLru(
+        dirs: List<File>,
+        targetBytes: Long,
+        preserve: File? = null,
+    ): Long {
+        val files =
+            dirs
+                .filter { it.exists() }
+                .flatMap { dir -> dir.walkTopDown().filter { it.isFile }.toList() }
         var total = files.sumOf { it.length() }
         if (total <= targetBytes) return 0L
 

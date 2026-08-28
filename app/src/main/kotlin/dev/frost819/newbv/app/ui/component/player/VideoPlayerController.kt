@@ -109,8 +109,10 @@ fun VideoPlayerController(
     var showRelatedVideosController by remember { mutableStateOf(false) }
     val showClickableControllers by remember {
         derivedStateOf {
-            showListController || showMenuController ||
-                showInfoSeekController || showRelatedVideosController
+            showListController ||
+                showMenuController ||
+                showInfoSeekController ||
+                showRelatedVideosController
         }
     }
 
@@ -129,15 +131,14 @@ fun VideoPlayerController(
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
 
-    fun calCoefficient(): Long {
-        return if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
+    fun calCoefficient(): Long =
+        if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
             seekChangeCount++
             seekChangeCount / 5
         } else {
             seekChangeCount = 0
             0
         }
-    }
 
     fun onTimeForward() {
         isSeeking = true
@@ -157,13 +158,14 @@ fun VideoPlayerController(
 
     fun startSeekCountdown() {
         seekCountdown?.cancel()
-        seekCountdown = scope.launch {
-            delay(1000)
-            onGoTime(goTime)
-            if (uiState.playerState != PlayerState.Playing) onPlay()
-            isSeeking = false
-            showInfoSeekController = false
-        }
+        seekCountdown =
+            scope.launch {
+                delay(1000)
+                onGoTime(goTime)
+                if (uiState.playerState != PlayerState.Playing) onPlay()
+                isSeeking = false
+                showInfoSeekController = false
+            }
     }
 
     fun onDirectionLeft() {
@@ -192,10 +194,11 @@ fun VideoPlayerController(
     fun startControllerAutoHide() {
         if (!showInfoSeekController) return
         hideInfoSeekCountdown?.cancel()
-        hideInfoSeekCountdown = scope.launch {
-            delay(5000)
-            showInfoSeekController = false
-        }
+        hideInfoSeekCountdown =
+            scope.launch {
+                delay(5000)
+                showInfoSeekController = false
+            }
     }
 
     fun onSeekToPosition(positionMs: Long) {
@@ -222,7 +225,6 @@ fun VideoPlayerController(
     fun showShortcutTip(action: PlayerCustomShortcutAction) {
         onShowShortcutTip(PlayerCustomShortcutCatalog.getActionDisplayName(action))
     }
-
 
     fun executeCustomShortcut(action: PlayerCustomShortcutAction) {
         showShortcutTip(action)
@@ -369,67 +371,72 @@ fun VideoPlayerController(
     }
 
     Box(
-        modifier = modifier
-            .background(Color.Black)
-            .focusable()
-            .onPreviewKeyEvent { event ->
-                startControllerAutoHide()
-                handleKeyEvent(event)
-            }
-            .playerGestures(
-                totalDuration = { seekerState.value.totalDuration },
-                controllerVisible = { showInfoSeekController },
-                callbacks = PlayerGestureCallbacks(
-                    onSingleTap = {
-                        if (!showClickableControllers) {
-                            showInfoSeekController = !showInfoSeekController
-                            if (showInfoSeekController) startControllerAutoHide()
-                        } else {
-                            closeAllControllers()
-                        }
-                    },
-                    onDoubleTap = { onPlay() },
-                    onSeekDelta = { deltaMs ->
-                        if (!isSeeking) goTime = seekerState.value.currentTime
-                        goTime = (goTime + deltaMs).coerceIn(0L, seekerState.value.totalDuration)
-                        isSeeking = true
-                        showInfoSeekController = true
-                        startSeekCountdown()
-                    },
-                    onSeekCommit = { },
-                    onBrightnessChange = { deltaY ->
-                        val activity = context as? android.app.Activity
-                        if (activity != null) {
-                            currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
-                            gestureTipState.value = GestureTipState(
-                                isActive = true,
-                                type = GestureTipType.Brightness,
-                                value = currentBrightness,
-                            )
-                        }
-                    },
-                    onVolumeChange = { deltaY ->
-                        val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE)
-                            as? android.media.AudioManager
-                        if (audioManager != null) {
-                            val volumePercent = adjustVolume(audioManager, deltaY)
-                            gestureTipState.value = GestureTipState(
-                                isActive = true,
-                                type = GestureTipType.Volume,
-                                value = volumePercent.toFloat(),
-                            )
-                        }
-                    },
-                    onCycleAspectRatio = {
-                        val current = uiState.aspectRatio
-                        val next = VideoAspectRatio.entries[
-                            (current.ordinal + 1) % VideoAspectRatio.entries.size
-                        ]
-                        onAspectRatioChange(next)
-                    },
+        modifier =
+            modifier
+                .background(Color.Black)
+                .focusable()
+                .onPreviewKeyEvent { event ->
+                    startControllerAutoHide()
+                    handleKeyEvent(event)
+                }.playerGestures(
+                    totalDuration = { seekerState.value.totalDuration },
+                    controllerVisible = { showInfoSeekController },
+                    callbacks =
+                        PlayerGestureCallbacks(
+                            onSingleTap = {
+                                if (!showClickableControllers) {
+                                    showInfoSeekController = !showInfoSeekController
+                                    if (showInfoSeekController) startControllerAutoHide()
+                                } else {
+                                    closeAllControllers()
+                                }
+                            },
+                            onDoubleTap = { onPlay() },
+                            onSeekDelta = { deltaMs ->
+                                if (!isSeeking) goTime = seekerState.value.currentTime
+                                goTime = (goTime + deltaMs).coerceIn(0L, seekerState.value.totalDuration)
+                                isSeeking = true
+                                showInfoSeekController = true
+                                startSeekCountdown()
+                            },
+                            onSeekCommit = { },
+                            onBrightnessChange = { deltaY ->
+                                val activity = context as? android.app.Activity
+                                if (activity != null) {
+                                    currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
+                                    gestureTipState.value =
+                                        GestureTipState(
+                                            isActive = true,
+                                            type = GestureTipType.Brightness,
+                                            value = currentBrightness,
+                                        )
+                                }
+                            },
+                            onVolumeChange = { deltaY ->
+                                val audioManager =
+                                    context.getSystemService(android.content.Context.AUDIO_SERVICE)
+                                        as? android.media.AudioManager
+                                if (audioManager != null) {
+                                    val volumePercent = adjustVolume(audioManager, deltaY)
+                                    gestureTipState.value =
+                                        GestureTipState(
+                                            isActive = true,
+                                            type = GestureTipType.Volume,
+                                            value = volumePercent.toFloat(),
+                                        )
+                                }
+                            },
+                            onCycleAspectRatio = {
+                                val current = uiState.aspectRatio
+                                val next =
+                                    VideoAspectRatio.entries[
+                                        (current.ordinal + 1) % VideoAspectRatio.entries.size,
+                                    ]
+                                onAspectRatioChange(next)
+                            },
+                        ),
+                    gestureTipState = gestureTipState,
                 ),
-                gestureTipState = gestureTipState,
-            ),
     ) {
         // 视频画面 + 弹幕层
         content()
@@ -437,11 +444,12 @@ fun VideoPlayerController(
         // 调试信息
         if (Prefs.showPlayerDebugInfo) {
             Box(
-                modifier = Modifier
-                    .align(androidx.compose.ui.Alignment.TopStart)
-                    .padding(8.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(Color.Black.copy(alpha = 0.5f)),
+                modifier =
+                    Modifier
+                        .align(androidx.compose.ui.Alignment.TopStart)
+                        .padding(8.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(Color.Black.copy(alpha = 0.5f)),
             ) {
                 Text(
                     modifier = Modifier.padding(8.dp),
@@ -468,22 +476,25 @@ fun VideoPlayerController(
             BottomSubtitle(
                 subtitleData = uiState.subtitleData,
                 currentTime = seekerState.value.currentTime,
-                fontSize = androidx.compose.ui.unit.TextUnit(
-                    uiState.subtitleState.fontSize.toFloat(),
-                    androidx.compose.ui.unit.TextUnitType.Sp,
-                ),
+                fontSize =
+                    androidx.compose.ui.unit.TextUnit(
+                        uiState.subtitleState.fontSize.toFloat(),
+                        androidx.compose.ui.unit.TextUnitType.Sp,
+                    ),
                 opacity = uiState.subtitleState.opacity,
-                padding = androidx.compose.ui.unit.Dp(uiState.subtitleState.bottomPadding.toFloat()),
+                padding =
+                    androidx.compose.ui.unit
+                        .Dp(uiState.subtitleState.bottomPadding.toFloat()),
             )
         }
 
         // 跳转提示
-         SkipTips(
-             showBackToStart = uiState.showBackToStart,
-             showSkipToNextEp = uiState.showSkipToNextEp,
-             showPreviewTip = uiState.showPreviewTip,
-             shortcutTipText = uiState.shortcutTipText,
-         )
+        SkipTips(
+            showBackToStart = uiState.showBackToStart,
+            showSkipToNextEp = uiState.showSkipToNextEp,
+            showPreviewTip = uiState.showPreviewTip,
+            shortcutTipText = uiState.shortcutTipText,
+        )
 
         // 播放状态提示
         PlayStateTips(
@@ -499,7 +510,7 @@ fun VideoPlayerController(
             modifier = Modifier.align(Alignment.Center),
         )
 
-         // 相关视频
+        // 相关视频
         RelatedVideosController(
             show = showRelatedVideosController,
             relatedVideos = uiState.relatedVideos,
@@ -524,12 +535,21 @@ fun VideoPlayerController(
             onDirectionRight = ::onDirectionRight,
             onSeekGoTime = ::onSeekGoTime,
             onSeekToPosition = ::onSeekToPosition,
-            onPlayPause = { onPlay(); startControllerAutoHide() },
-            onDanmakuSwitchChange = { onToggleDanmaku(); startControllerAutoHide() },
+            onPlayPause = {
+                onPlay()
+                startControllerAutoHide()
+            },
+            onDanmakuSwitchChange = {
+                onToggleDanmaku()
+                startControllerAutoHide()
+            },
             onShowSettings = { showMenuController = true },
             onShowRelatedVideos = { showRelatedVideosController = true },
             onGoToVideoInfo = onGoToVideoDetail,
-            onToggleLoop = { onToggleLoop(); startControllerAutoHide() },
+            onToggleLoop = {
+                onToggleLoop()
+                startControllerAutoHide()
+            },
             onGoToUpPage = onGoToUpPage,
             onShowInteraction = onShowInteraction,
             onShowComments = onShowComments,
@@ -557,9 +577,10 @@ fun VideoPlayerController(
             onAudioChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetAudio(it)) },
             onDanmakuSwitchChange = { types ->
                 // data DanmakuType → danmaku entity DanmakuType
-                val entityTypes = types.mapNotNull {
-                    runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }.getOrNull()
-                }
+                val entityTypes =
+                    types.mapNotNull {
+                        runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }.getOrNull()
+                    }
                 onDanmakuSettingChange(DanmakuSettingAction.SetEnabledTypes(entityTypes))
             },
             onDanmakuSizeChange = { onDanmakuSettingChange(DanmakuSettingAction.SetScale(it)) },

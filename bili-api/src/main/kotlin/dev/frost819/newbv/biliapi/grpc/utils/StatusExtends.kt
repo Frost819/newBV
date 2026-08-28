@@ -28,7 +28,12 @@ fun Status.getTypeClass(): Class<Message> {
 
 @Suppress("UNCHECKED_CAST")
 fun Status.getTypeClass(): Class<Message> {
-    val nameClass = this.detailsList.first().typeUrl.split("/").last()
+    val nameClass =
+        this.detailsList
+            .first()
+            .typeUrl
+            .split("/")
+            .last()
     return Class.forName(nameClass) as Class<Message>
 }
 
@@ -105,7 +110,10 @@ private fun grpcStatusDetail(error: Throwable): BiliDetail? {
 }
 
 /** gRPC 业务详情：业务码 + 消息。 */
-private data class BiliDetail(val code: Int, val message: String)
+private data class BiliDetail(
+    val code: Int,
+    val message: String,
+)
 
 /**
  * 将 gRPC 异常转换为稳定的业务异常。

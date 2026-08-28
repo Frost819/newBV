@@ -24,16 +24,17 @@ object LogFormat {
         androidSdk: Int,
         device: String,
         model: String,
-        manufacturer: String
-    ): String = buildString {
-        appendLine("======== new BV Log ========")
-        appendLine("App Version: $appVersion ($appVersionCode)")
-        appendLine("Android Version: $androidVersion ($androidSdk)")
-        appendLine("Device: $device")
-        appendLine("Model: $model")
-        appendLine("Manufacturer: $manufacturer")
-        appendLine("================================")
-    }
+        manufacturer: String,
+    ): String =
+        buildString {
+            appendLine("======== new BV Log ========")
+            appendLine("App Version: $appVersion ($appVersionCode)")
+            appendLine("Android Version: $androidVersion ($androidSdk)")
+            appendLine("Device: $device")
+            appendLine("Model: $model")
+            appendLine("Manufacturer: $manufacturer")
+            appendLine("================================")
+        }
 
     /**
      * 崩溃日志头部。
@@ -45,15 +46,16 @@ object LogFormat {
         androidSdk: Int,
         device: String,
         model: String,
-        manufacturer: String
-    ): String = buildString {
-        appendLine("======== new BV Crash ========")
-        appendLine("App Version: $appVersion ($appVersionCode)")
-        appendLine("Android Version: $androidVersion ($androidSdk)")
-        appendLine("Device: $device")
-        appendLine("Model: $model")
-        appendLine("Manufacturer: $manufacturer")
-        appendLine("================================")
-        appendLine("Recent application logs are included below from Logcat:")
-    }
+        manufacturer: String,
+    ): String =
+        buildString {
+            appendLine("======== new BV Crash ========")
+            appendLine("App Version: $appVersion ($appVersionCode)")
+            appendLine("Android Version: $androidVersion ($androidSdk)")
+            appendLine("Device: $device")
+            appendLine("Model: $model")
+            appendLine("Manufacturer: $manufacturer")
+            appendLine("================================")
+            appendLine("Recent application logs are included below from Logcat:")
+        }
 }

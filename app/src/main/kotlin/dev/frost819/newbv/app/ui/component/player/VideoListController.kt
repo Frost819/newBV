@@ -74,18 +74,20 @@ fun VideoListController(
     // 显示时自动滚动到当前集并请求焦点
     LaunchedEffect(show) {
         if (show) {
-            val currentIndex = videoList.indexOfFirst { video ->
-                video.cid == currentCid ||
-                    video.ugcPages?.any { it.cid == currentCid } == true
-            }
+            val currentIndex =
+                videoList.indexOfFirst { video ->
+                    video.cid == currentCid ||
+                        video.ugcPages?.any { it.cid == currentCid } == true
+                }
 
             if (currentIndex != -1) {
                 listState.animateScrollToItem(currentIndex)
 
-                val isChild = videoList
-                    .getOrNull(currentIndex)
-                    ?.ugcPages
-                    ?.any { it.cid == currentCid } == true
+                val isChild =
+                    videoList
+                        .getOrNull(currentIndex)
+                        ?.ugcPages
+                        ?.any { it.cid == currentCid } == true
 
                 if (isChild) {
                     childFocusRequester.requestFocus()
@@ -103,14 +105,16 @@ fun VideoListController(
     ) {
         Surface(
             modifier = modifier,
-            colors = SurfaceDefaults.colors(
-                containerColor = Color.Black.copy(alpha = 0.5f),
-            ),
+            colors =
+                SurfaceDefaults.colors(
+                    containerColor = Color.Black.copy(alpha = 0.5f),
+                ),
         ) {
             Box(
-                modifier = Modifier
-                    .width(300.dp)
-                    .fillMaxSize(),
+                modifier =
+                    Modifier
+                        .width(300.dp)
+                        .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 LazyColumn(
@@ -160,32 +164,35 @@ private fun VideoListItemRow(
 
     Column(modifier = Modifier.animateContentSize()) {
         // 父级视频项
-        val parentModifier = if (isParentSelected) {
-            Modifier.focusRequester(parentFocusRequester)
-        } else {
-            Modifier
-        }
+        val parentModifier =
+            if (isParentSelected) {
+                Modifier.focusRequester(parentFocusRequester)
+            } else {
+                Modifier
+            }
 
         PlayerListItem(
             modifier = Modifier.padding(horizontal = 16.dp).then(parentModifier),
             text = video.title,
             selected = isParentSelected && !isChildSelected,
             textAlign = TextAlign.Start,
-            trailingContent = if (hasSubPages) {
-                {
-                    Icon(
-                        imageVector = if (expanded) {
-                            Icons.Default.KeyboardArrowUp
-                        } else {
-                            Icons.Default.KeyboardArrowDown
-                        },
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.7f),
-                    )
-                }
-            } else {
-                null
-            },
+            trailingContent =
+                if (hasSubPages) {
+                    {
+                        Icon(
+                            imageVector =
+                                if (expanded) {
+                                    Icons.Default.KeyboardArrowUp
+                                } else {
+                                    Icons.Default.KeyboardArrowDown
+                                },
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.7f),
+                        )
+                    }
+                } else {
+                    null
+                },
             onClick = {
                 if (hasSubPages) {
                     expanded = !expanded
@@ -203,16 +210,18 @@ private fun VideoListItemRow(
             ) {
                 video.ugcPages?.forEach { page ->
                     val isPageSelected = page.cid == currentCid
-                    val childModifier = if (isPageSelected) {
-                        Modifier.focusRequester(childFocusRequester)
-                    } else {
-                        Modifier
-                    }
+                    val childModifier =
+                        if (isPageSelected) {
+                            Modifier.focusRequester(childFocusRequester)
+                        } else {
+                            Modifier
+                        }
 
                     PlayerListItem(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .then(childModifier),
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 16.dp)
+                                .then(childModifier),
                         text = page.title,
                         selected = isPageSelected,
                         textAlign = TextAlign.Start,
@@ -259,19 +268,22 @@ fun PlayerListItem(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .onFocusChanged { if (it.hasFocus) onFocus() }
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .onFocusChanged { if (it.hasFocus) onFocus() }
+                .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-            } else {
-                Color.Transparent
-            },
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (selected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    } else {
+                        Color.Transparent
+                    },
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -295,18 +307,36 @@ fun PlayerListItem(
 @Preview(showBackground = true)
 @Composable
 private fun VideoListControllerPreview() {
-    val sampleList = listOf(
-        VideoListItem(
-            aid = 1,
-            cid = 101,
-            title = "第一集",
-            ugcPages = listOf(
-                VideoPage(cid = 201, index = 1, title = "P1 上半", duration = 600, dimension = dev.frost819.newbv.biliapi.entity.video.Dimension(1920, 1080)),
-                VideoPage(cid = 202, index = 2, title = "P1 下半", duration = 600, dimension = dev.frost819.newbv.biliapi.entity.video.Dimension(1920, 1080)),
+    val sampleList =
+        listOf(
+            VideoListItem(
+                aid = 1,
+                cid = 101,
+                title = "第一集",
+                ugcPages =
+                    listOf(
+                        VideoPage(
+                            cid = 201,
+                            index = 1,
+                            title = "P1 上半",
+                            duration = 600,
+                            dimension =
+                                dev.frost819.newbv.biliapi.entity.video
+                                    .Dimension(1920, 1080),
+                        ),
+                        VideoPage(
+                            cid = 202,
+                            index = 2,
+                            title = "P1 下半",
+                            duration = 600,
+                            dimension =
+                                dev.frost819.newbv.biliapi.entity.video
+                                    .Dimension(1920, 1080),
+                        ),
+                    ),
             ),
-        ),
-        VideoListItem(aid = 2, cid = 102, title = "第二集"),
-    )
+            VideoListItem(aid = 2, cid = 102, title = "第二集"),
+        )
 
     BVTheme {
         VideoListController(

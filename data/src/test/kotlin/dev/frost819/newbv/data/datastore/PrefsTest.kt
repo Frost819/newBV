@@ -21,17 +21,20 @@ import java.io.File
  * 使用临时文件创建真实 DataStore，不依赖 Android 环境。
  */
 class PrefsTest {
-
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var tempDir: File
 
     @BeforeEach
     fun setUp() {
-        tempDir = kotlin.io.path.createTempDirectory(prefix = "prefs_test").toFile()
-        dataStore = PreferenceDataStoreFactory.create(
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-            produceFile = { File(tempDir, "Test.preferences_pb") }
-        )
+        tempDir =
+            kotlin.io.path
+                .createTempDirectory(prefix = "prefs_test")
+                .toFile()
+        dataStore =
+            PreferenceDataStoreFactory.create(
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                produceFile = { File(tempDir, "Test.preferences_pb") },
+            )
         Prefs.resetForTesting()
         Prefs.init(dataStore)
     }
@@ -215,89 +218,94 @@ class PrefsTest {
             DanmakuType.All,
             DanmakuType.Rolling,
             DanmakuType.Top,
-            DanmakuType.Bottom
+            DanmakuType.Bottom,
         )
     }
 
     // ===== 读写测试 =====
 
     @Test
-    fun `write and read basic types`() = runBlocking {
-        Prefs.isLogin = true
-        Prefs.uid = 12345L
-        Prefs.sessData = "test_sessdata"
-        Prefs.biliJct = "test_bili_jct"
-        Prefs.incognitoMode = true
-        Prefs.density = 2.5f
-        Prefs.cacheThreshold = 1000
+    fun `write and read basic types`() =
+        runBlocking {
+            Prefs.isLogin = true
+            Prefs.uid = 12345L
+            Prefs.sessData = "test_sessdata"
+            Prefs.biliJct = "test_bili_jct"
+            Prefs.incognitoMode = true
+            Prefs.density = 2.5f
+            Prefs.cacheThreshold = 1000
 
-        awaitAsyncWrite()
+            awaitAsyncWrite()
 
-        assertThat(Prefs.isLogin).isTrue()
-        assertThat(Prefs.uid).isEqualTo(12345L)
-        assertThat(Prefs.sessData).isEqualTo("test_sessdata")
-        assertThat(Prefs.biliJct).isEqualTo("test_bili_jct")
-        assertThat(Prefs.incognitoMode).isTrue()
-        assertThat(Prefs.density).isEqualTo(2.5f)
-        assertThat(Prefs.cacheThreshold).isEqualTo(1000)
-    }
-
-    @Test
-    fun `write and read enum types`() = runBlocking {
-        Prefs.apiType = ApiType.App
-        Prefs.defaultQuality = Resolution.R4K
-        Prefs.defaultVideoCodec = VideoCodec.HEVC
-        Prefs.defaultAudio = Audio.AHiRes
-        Prefs.actionAfterPlay = ActionAfterPlay.Exit
-        Prefs.defaultPlaySpeed = PlaySpeed.X2
-        Prefs.themeMode = ThemeMode.Dark
-        Prefs.homeLeftNavItem = LeftNaviItem.Search
-
-        awaitAsyncWrite()
-
-        assertThat(Prefs.apiType).isEqualTo(ApiType.App)
-        assertThat(Prefs.defaultQuality).isEqualTo(Resolution.R4K)
-        assertThat(Prefs.defaultVideoCodec).isEqualTo(VideoCodec.HEVC)
-        assertThat(Prefs.defaultAudio).isEqualTo(Audio.AHiRes)
-        assertThat(Prefs.actionAfterPlay).isEqualTo(ActionAfterPlay.Exit)
-        assertThat(Prefs.defaultPlaySpeed).isEqualTo(PlaySpeed.X2)
-        assertThat(Prefs.themeMode).isEqualTo(ThemeMode.Dark)
-        assertThat(Prefs.homeLeftNavItem).isEqualTo(LeftNaviItem.Search)
-    }
+            assertThat(Prefs.isLogin).isTrue()
+            assertThat(Prefs.uid).isEqualTo(12345L)
+            assertThat(Prefs.sessData).isEqualTo("test_sessdata")
+            assertThat(Prefs.biliJct).isEqualTo("test_bili_jct")
+            assertThat(Prefs.incognitoMode).isTrue()
+            assertThat(Prefs.density).isEqualTo(2.5f)
+            assertThat(Prefs.cacheThreshold).isEqualTo(1000)
+        }
 
     @Test
-    fun `write and read date type`() = runBlocking {
-        val testDate = java.util.Date(1700000000000L)
-        Prefs.tokenExpiredDate = testDate
+    fun `write and read enum types`() =
+        runBlocking {
+            Prefs.apiType = ApiType.App
+            Prefs.defaultQuality = Resolution.R4K
+            Prefs.defaultVideoCodec = VideoCodec.HEVC
+            Prefs.defaultAudio = Audio.AHiRes
+            Prefs.actionAfterPlay = ActionAfterPlay.Exit
+            Prefs.defaultPlaySpeed = PlaySpeed.X2
+            Prefs.themeMode = ThemeMode.Dark
+            Prefs.homeLeftNavItem = LeftNaviItem.Search
 
-        awaitAsyncWrite()
+            awaitAsyncWrite()
 
-        assertThat(Prefs.tokenExpiredDate.time).isEqualTo(1700000000000L)
-    }
+            assertThat(Prefs.apiType).isEqualTo(ApiType.App)
+            assertThat(Prefs.defaultQuality).isEqualTo(Resolution.R4K)
+            assertThat(Prefs.defaultVideoCodec).isEqualTo(VideoCodec.HEVC)
+            assertThat(Prefs.defaultAudio).isEqualTo(Audio.AHiRes)
+            assertThat(Prefs.actionAfterPlay).isEqualTo(ActionAfterPlay.Exit)
+            assertThat(Prefs.defaultPlaySpeed).isEqualTo(PlaySpeed.X2)
+            assertThat(Prefs.themeMode).isEqualTo(ThemeMode.Dark)
+            assertThat(Prefs.homeLeftNavItem).isEqualTo(LeftNaviItem.Search)
+        }
 
     @Test
-    fun `write and read danmaku types list`() = runBlocking {
-        val types = listOf(DanmakuType.Top, DanmakuType.Bottom)
-        Prefs.defaultDanmakuTypes = types
+    fun `write and read date type`() =
+        runBlocking {
+            val testDate = java.util.Date(1700000000000L)
+            Prefs.tokenExpiredDate = testDate
 
-        awaitAsyncWrite()
+            awaitAsyncWrite()
 
-        assertThat(Prefs.defaultDanmakuTypes).containsExactly(DanmakuType.Top, DanmakuType.Bottom)
-    }
+            assertThat(Prefs.tokenExpiredDate.time).isEqualTo(1700000000000L)
+        }
 
     @Test
-    fun `write persists to DataStore and survives reinit`() = runBlocking {
-        Prefs.uid = 99999L
-        Prefs.isLogin = true
-        awaitAsyncWrite()
+    fun `write and read danmaku types list`() =
+        runBlocking {
+            val types = listOf(DanmakuType.Top, DanmakuType.Bottom)
+            Prefs.defaultDanmakuTypes = types
 
-        // 重置并重新初始化（模拟应用重启）
-        Prefs.resetForTesting()
-        Prefs.init(dataStore)
+            awaitAsyncWrite()
 
-        assertThat(Prefs.uid).isEqualTo(99999L)
-        assertThat(Prefs.isLogin).isTrue()
-    }
+            assertThat(Prefs.defaultDanmakuTypes).containsExactly(DanmakuType.Top, DanmakuType.Bottom)
+        }
+
+    @Test
+    fun `write persists to DataStore and survives reinit`() =
+        runBlocking {
+            Prefs.uid = 99999L
+            Prefs.isLogin = true
+            awaitAsyncWrite()
+
+            // 重置并重新初始化（模拟应用重启）
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
+
+            assertThat(Prefs.uid).isEqualTo(99999L)
+            assertThat(Prefs.isLogin).isTrue()
+        }
 
     // ===== buvid 自动生成测试 =====
 
@@ -315,42 +323,45 @@ class PrefsTest {
     }
 
     @Test
-    fun `custom buvid is preserved across reinit`() = runBlocking {
-        Prefs.buvid = "custom_buvid_value"
-        awaitAsyncWrite()
+    fun `custom buvid is preserved across reinit`() =
+        runBlocking {
+            Prefs.buvid = "custom_buvid_value"
+            awaitAsyncWrite()
 
-        Prefs.resetForTesting()
-        Prefs.init(dataStore)
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
 
-        assertThat(Prefs.buvid).isEqualTo("custom_buvid_value")
-    }
+            assertThat(Prefs.buvid).isEqualTo("custom_buvid_value")
+        }
 
     // ===== init 约束测试 =====
 
     @Test
-    fun `init throws when called twice without reset`() = runBlocking {
-        try {
-            Prefs.init(dataStore)
-            assert(false) { "应该抛出 IllegalStateException" }
-        } catch (e: IllegalStateException) {
-            assertThat(e.message).contains("已经初始化")
+    fun `init throws when called twice without reset`() =
+        runBlocking {
+            try {
+                Prefs.init(dataStore)
+                assert(false) { "应该抛出 IllegalStateException" }
+            } catch (e: IllegalStateException) {
+                assertThat(e.message).contains("已经初始化")
+            }
         }
-    }
 
     @Test
-    fun `clear resets all prefs to defaults`() = runBlocking {
-        Prefs.isLogin = true
-        Prefs.uid = 999L
-        Prefs.density = 5f
-        awaitAsyncWrite()
+    fun `clear resets all prefs to defaults`() =
+        runBlocking {
+            Prefs.isLogin = true
+            Prefs.uid = 999L
+            Prefs.density = 5f
+            awaitAsyncWrite()
 
-        Prefs.clear()
-        awaitAsyncWrite()
+            Prefs.clear()
+            awaitAsyncWrite()
 
-        assertThat(Prefs.isLogin).isFalse()
-        assertThat(Prefs.uid).isEqualTo(0L)
-        assertThat(Prefs.density).isEqualTo(2f)
-    }
+            assertThat(Prefs.isLogin).isFalse()
+            assertThat(Prefs.uid).isEqualTo(0L)
+            assertThat(Prefs.density).isEqualTo(2f)
+        }
 
     // ===== flowOf 测试 =====
 
@@ -362,7 +373,9 @@ class PrefsTest {
 
     @Test
     fun `flowOf returns null for unregistered key`() {
-        val unregisteredKey = androidx.datastore.preferences.core.booleanPreferencesKey("nonexistent_key")
+        val unregisteredKey =
+            androidx.datastore.preferences.core
+                .booleanPreferencesKey("nonexistent_key")
         val flow = Prefs.flowOf(unregisteredKey)
         assertThat(flow).isNull()
     }

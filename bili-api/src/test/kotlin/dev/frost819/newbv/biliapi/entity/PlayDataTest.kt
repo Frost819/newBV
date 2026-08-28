@@ -595,13 +595,27 @@ class PlayDataTest {
         // this 与 other 有相同 codecId+quality 的视频 → 去重（保留 this 的）
         val shared =
             DashVideo(
-                quality = 80, baseUrl = "http://this/v.m4s", bandwidth = 100, codecId = 7,
-                width = 1920, height = 1080, frameRate = "30", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "http://this/v.m4s",
+                bandwidth = 100,
+                codecId = 7,
+                width = 1920,
+                height = 1080,
+                frameRate = "30",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val dup =
             DashVideo(
-                quality = 80, baseUrl = "http://other/v.m4s", bandwidth = 200, codecId = 7,
-                width = 1920, height = 1080, frameRate = "30", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "http://other/v.m4s",
+                bandwidth = 200,
+                codecId = 7,
+                width = 1920,
+                height = 1080,
+                frameRate = "30",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val left = playData(dashVideos = listOf(shared))
         val other = playData(dashVideos = listOf(dup))
@@ -617,13 +631,27 @@ class PlayDataTest {
     fun `plus keeps videos with same quality but different codecId`() {
         val v1 =
             DashVideo(
-                quality = 80, baseUrl = "u1", bandwidth = 1, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "u1",
+                bandwidth = 1,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val v2 =
             DashVideo(
-                quality = 80, baseUrl = "u2", bandwidth = 2, codecId = 12,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "hev1",
+                quality = 80,
+                baseUrl = "u2",
+                bandwidth = 2,
+                codecId = 12,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "hev1",
             )
         val left = playData(dashVideos = listOf(v1))
         val other = playData(dashVideos = listOf(v2))
@@ -638,13 +666,27 @@ class PlayDataTest {
     fun `plus keeps videos with same codecId but different quality`() {
         val v1 =
             DashVideo(
-                quality = 80, baseUrl = "u1", bandwidth = 1, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "u1",
+                bandwidth = 1,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val v2 =
             DashVideo(
-                quality = 120, baseUrl = "u2", bandwidth = 2, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 120,
+                baseUrl = "u2",
+                bandwidth = 2,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val left = playData(dashVideos = listOf(v1))
         val other = playData(dashVideos = listOf(v2))
@@ -658,18 +700,39 @@ class PlayDataTest {
     fun `plus sorts merged videos by quality descending`() {
         val low =
             DashVideo(
-                quality = 16, baseUrl = "lo", bandwidth = 1, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 16,
+                baseUrl = "lo",
+                bandwidth = 1,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val mid =
             DashVideo(
-                quality = 80, baseUrl = "mid", bandwidth = 2, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "mid",
+                bandwidth = 2,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val high =
             DashVideo(
-                quality = 120, baseUrl = "hi", bandwidth = 3, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 120,
+                baseUrl = "hi",
+                bandwidth = 3,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         // this 提供 low+high, other 提供 mid
         val left = playData(dashVideos = listOf(low, high))
@@ -686,18 +749,39 @@ class PlayDataTest {
         // quality 相同、codecId 不同 → 都保留；稳定排序保持原始相对顺序
         val v1 =
             DashVideo(
-                quality = 80, baseUrl = "first", bandwidth = 1, codecId = 7,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "avc1",
+                quality = 80,
+                baseUrl = "first",
+                bandwidth = 1,
+                codecId = 7,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "avc1",
             )
         val v2 =
             DashVideo(
-                quality = 80, baseUrl = "second", bandwidth = 2, codecId = 12,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "hev1",
+                quality = 80,
+                baseUrl = "second",
+                bandwidth = 2,
+                codecId = 12,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "hev1",
             )
         val v3 =
             DashVideo(
-                quality = 80, baseUrl = "third", bandwidth = 3, codecId = 13,
-                width = 0, height = 0, frameRate = "", backUrl = emptyList(), codecs = "av01",
+                quality = 80,
+                baseUrl = "third",
+                bandwidth = 3,
+                codecId = 13,
+                width = 0,
+                height = 0,
+                frameRate = "",
+                backUrl = emptyList(),
+                codecs = "av01",
             )
         val left = playData(dashVideos = listOf(v1, v2))
         val other = playData(dashVideos = listOf(v3))
@@ -705,7 +789,8 @@ class PlayDataTest {
         val result = left + other
 
         assertThat(result.dashVideos.map { it.baseUrl })
-            .containsExactly("first", "second", "third").inOrder()
+            .containsExactly("first", "second", "third")
+            .inOrder()
     }
 
     // endregion
@@ -927,14 +1012,26 @@ class PlayDataTest {
                 dashVideos =
                     listOf(
                         DashVideo(
-                            quality = 80, baseUrl = "t-v80", bandwidth = 1, codecId = 7,
-                            width = 1920, height = 1080, frameRate = "30",
-                            backUrl = emptyList(), codecs = "avc1",
+                            quality = 80,
+                            baseUrl = "t-v80",
+                            bandwidth = 1,
+                            codecId = 7,
+                            width = 1920,
+                            height = 1080,
+                            frameRate = "30",
+                            backUrl = emptyList(),
+                            codecs = "avc1",
                         ),
                         DashVideo(
-                            quality = 120, baseUrl = "t-v120", bandwidth = 2, codecId = 12,
-                            width = 3840, height = 2160, frameRate = "60",
-                            backUrl = emptyList(), codecs = "hev1",
+                            quality = 120,
+                            baseUrl = "t-v120",
+                            bandwidth = 2,
+                            codecId = 12,
+                            width = 3840,
+                            height = 2160,
+                            frameRate = "60",
+                            backUrl = emptyList(),
+                            codecs = "hev1",
                         ),
                     ),
                 dashAudios =
@@ -951,14 +1048,26 @@ class PlayDataTest {
                 dashVideos =
                     listOf(
                         DashVideo(
-                            quality = 80, baseUrl = "o-v80", bandwidth = 3, codecId = 13,
-                            width = 1920, height = 1080, frameRate = "30",
-                            backUrl = emptyList(), codecs = "av01",
+                            quality = 80,
+                            baseUrl = "o-v80",
+                            bandwidth = 3,
+                            codecId = 13,
+                            width = 1920,
+                            height = 1080,
+                            frameRate = "30",
+                            backUrl = emptyList(),
+                            codecs = "av01",
                         ),
                         DashVideo(
-                            quality = 120, baseUrl = "o-v120-dup", bandwidth = 4, codecId = 12,
-                            width = 3840, height = 2160, frameRate = "60",
-                            backUrl = emptyList(), codecs = "hev1",
+                            quality = 120,
+                            baseUrl = "o-v120-dup",
+                            bandwidth = 4,
+                            codecId = 12,
+                            width = 3840,
+                            height = 2160,
+                            frameRate = "60",
+                            backUrl = emptyList(),
+                            codecs = "hev1",
                         ),
                     ),
                 dashAudios =
@@ -1087,7 +1196,13 @@ class PlayDataTest {
     fun `DashVideo equality is based on all fields`() {
         val v1 =
             DashVideo(
-                quality = 80, baseUrl = "u", bandwidth = 1, codecId = 7, width = 1920, height = 1080, frameRate = "30",
+                quality = 80,
+                baseUrl = "u",
+                bandwidth = 1,
+                codecId = 7,
+                width = 1920,
+                height = 1080,
+                frameRate = "30",
                 backUrl =
                     listOf(
                         "b",
@@ -1096,7 +1211,13 @@ class PlayDataTest {
             )
         val v2 =
             DashVideo(
-                quality = 80, baseUrl = "u", bandwidth = 1, codecId = 7, width = 1920, height = 1080, frameRate = "30",
+                quality = 80,
+                baseUrl = "u",
+                bandwidth = 1,
+                codecId = 7,
+                width = 1920,
+                height = 1080,
+                frameRate = "30",
                 backUrl =
                     listOf(
                         "b",
@@ -1105,7 +1226,13 @@ class PlayDataTest {
             )
         val v3 =
             DashVideo(
-                quality = 80, baseUrl = "u", bandwidth = 1, codecId = 12, width = 1920, height = 1080, frameRate = "30",
+                quality = 80,
+                baseUrl = "u",
+                bandwidth = 1,
+                codecId = 12,
+                width = 1920,
+                height = 1080,
+                frameRate = "30",
                 backUrl =
                     listOf(
                         "b",

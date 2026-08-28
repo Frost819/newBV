@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -93,7 +93,11 @@ private fun UnlockUserContent(
     var inputPassword by remember { mutableStateOf("") }
     val inputShow by remember {
         derivedStateOf {
-            inputPassword.replace("u", "*").replace("d", "*").replace("l", "*").replace("r", "*")
+            inputPassword
+                .replace("u", "*")
+                .replace("d", "*")
+                .replace("l", "*")
+                .replace("r", "*")
         }
     }
     var unlockState by remember { mutableStateOf(UnlockState.ChooseUser) }
@@ -117,52 +121,67 @@ private fun UnlockUserContent(
     BackHandler(true) { }
 
     Surface(
-        modifier = modifier
-            .focusRequester(inputFocusRequester)
-            .onPreviewKeyEvent { event ->
-                if (unlockState == UnlockState.ChooseUser) return@onPreviewKeyEvent false
-                if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
-                when (event.key) {
-                    Key.DirectionUp -> { inputPassword += "u"; true }
-                    Key.DirectionDown -> { inputPassword += "d"; true }
-                    Key.DirectionLeft -> { inputPassword += "l"; true }
-                    Key.DirectionRight -> { inputPassword += "r"; true }
-                    Key.DirectionCenter -> {
-                        if (selectedUser?.lock == inputPassword) {
-                            onUnlockSuccess(selectedUser)
-                        } else {
-                            inputPassword = ""
+        modifier =
+            modifier
+                .focusRequester(inputFocusRequester)
+                .onPreviewKeyEvent { event ->
+                    if (unlockState == UnlockState.ChooseUser) return@onPreviewKeyEvent false
+                    if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
+                    when (event.key) {
+                        Key.DirectionUp -> {
+                            inputPassword += "u"
+                            true
                         }
-                        true
-                    }
-                    Key.Back -> {
-                        if (inputPassword.isNotEmpty()) {
-                            inputPassword = inputPassword.drop(1)
-                        } else {
-                            unlockState = UnlockState.ChooseUser
-                            defaultFocusRequester.requestFocus()
+                        Key.DirectionDown -> {
+                            inputPassword += "d"
+                            true
                         }
-                        true
+                        Key.DirectionLeft -> {
+                            inputPassword += "l"
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            inputPassword += "r"
+                            true
+                        }
+                        Key.DirectionCenter -> {
+                            if (selectedUser?.lock == inputPassword) {
+                                onUnlockSuccess(selectedUser)
+                            } else {
+                                inputPassword = ""
+                            }
+                            true
+                        }
+                        Key.Back -> {
+                            if (inputPassword.isNotEmpty()) {
+                                inputPassword = inputPassword.drop(1)
+                            } else {
+                                unlockState = UnlockState.ChooseUser
+                                defaultFocusRequester.requestFocus()
+                            }
+                            true
+                        }
+                        else -> false
                     }
-                    else -> false
-                }
-            },
+                },
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
             Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 64.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 64.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = when (unlockState) {
-                        UnlockState.ChooseUser -> stringResource(R.string.lock_choose_user)
-                        UnlockState.InputPassword -> stringResource(R.string.lock_input_password)
-                    },
+                    text =
+                        when (unlockState) {
+                            UnlockState.ChooseUser -> stringResource(R.string.lock_choose_user)
+                            UnlockState.InputPassword -> stringResource(R.string.lock_input_password)
+                        },
                     style = MaterialTheme.typography.displaySmall,
                 )
             }
@@ -173,10 +192,11 @@ private fun UnlockUserContent(
                 contentPadding = PaddingValues(horizontal = 12.dp),
             ) {
                 items(userList, key = { it.uid }) { user ->
-                    val alpha = when (unlockState) {
-                        UnlockState.ChooseUser -> 1f
-                        UnlockState.InputPassword -> if (user == selectedUser) 1f else 0.4f
-                    }
+                    val alpha =
+                        when (unlockState) {
+                            UnlockState.ChooseUser -> 1f
+                            UnlockState.InputPassword -> if (user == selectedUser) 1f else 0.4f
+                        }
                     UserSelectCard(
                         user = user,
                         alpha = alpha,
@@ -196,9 +216,10 @@ private fun UnlockUserContent(
 
             if (unlockState == UnlockState.InputPassword) {
                 Text(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 96.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 96.dp),
                     text = inputShow,
                     style = MaterialTheme.typography.displayLarge,
                 )

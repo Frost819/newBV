@@ -3,7 +3,10 @@ package dev.frost819.newbv.biliapi.entity
 import bilibili.pgc.gateway.player.v2.CodeType as PgcPlayUrlCodeType
 import bilibili.playershared.CodeType as PlayerSharedCodeType
 
-enum class CodeType(val str: String, val codecId: Int) {
+enum class CodeType(
+    val str: String,
+    val codecId: Int,
+) {
     NoCode("none", 0),
     Code264("avc1", 7),
     Code265("hev1", 12),

@@ -19,7 +19,6 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
  */
 @RunWith(AndroidJUnit4::class)
 class ControllerVideoInfoTopTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 

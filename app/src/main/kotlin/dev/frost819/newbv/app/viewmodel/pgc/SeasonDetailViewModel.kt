@@ -9,8 +9,8 @@ import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
-import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.core.log.Loggers
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -48,7 +48,9 @@ data class SeasonDetailUiState(
  */
 sealed interface SeasonDetailUiEffect {
     /** 显示 Toast 消息。 */
-    data class ShowToast(val message: String) : SeasonDetailUiEffect
+    data class ShowToast(
+        val message: String,
+    ) : SeasonDetailUiEffect
 
     /** 跳转到播放器。 */
     data class NavigateToPlayer(
@@ -70,198 +72,204 @@ sealed interface SeasonDetailUiEffect {
  * @param savedStateHandle Navigation 参数（用于读取 [PgcFeatureRoute.seasonId]）。
  */
 @HiltViewModel
-class SeasonDetailViewModel @Inject constructor(
-    private val videoDetailRepository: VideoDetailRepository,
-    private val userRepository: UserRepository,
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+class SeasonDetailViewModel
+    @Inject
+    constructor(
+        private val videoDetailRepository: VideoDetailRepository,
+        private val userRepository: UserRepository,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val logger = Loggers.get("SeasonDetailViewModel")
 
-    private val logger = Loggers.get("SeasonDetailViewModel")
+        private val seasonId: Int = savedStateHandle.get<Long>("seasonId")?.toInt() ?: 0
 
-    private val seasonId: Int = savedStateHandle.get<Long>("seasonId")?.toInt() ?: 0
+        private val _uiState = MutableStateFlow(SeasonDetailUiState())
+        val uiState: StateFlow<SeasonDetailUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(SeasonDetailUiState())
-    val uiState: StateFlow<SeasonDetailUiState> = _uiState.asStateFlow()
+        private fun prefApiType(): ApiType =
+            if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
 
-    private fun prefApiType(): ApiType =
-        if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
+        private val _uiEffect = MutableSharedFlow<SeasonDetailUiEffect>()
+        val uiEffect: SharedFlow<SeasonDetailUiEffect> = _uiEffect.asSharedFlow()
 
-    private val _uiEffect = MutableSharedFlow<SeasonDetailUiEffect>()
-    val uiEffect: SharedFlow<SeasonDetailUiEffect> = _uiEffect.asSharedFlow()
+        init {
+            loadSeasonDetail()
+        }
 
-    init {
-        loadSeasonDetail()
-    }
+        /**
+         * 加载番剧详情数据。
+         *
+         * 获取番剧信息并读取用户追番状态。
+         * 超时或失败时标记 error，不崩溃。
+         */
+        fun loadSeasonDetail() {
+            viewModelScope.launch {
+                _uiState.update {
+                    it.copy(loading = true, error = false, errorTip = "")
+                }
 
-    /**
-     * 加载番剧详情数据。
-     *
-     * 获取番剧信息并读取用户追番状态。
-     * 超时或失败时标记 error，不崩溃。
-     */
-    fun loadSeasonDetail() {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(loading = true, error = false, errorTip = "")
-            }
-
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val detail = videoDetailRepository.getPgcVideoDetail(
-                        seasonId = seasonId,
-                        preferApiType = prefApiType(),
-                    )
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val detail =
+                            videoDetailRepository.getPgcVideoDetail(
+                                seasonId = seasonId,
+                                preferApiType = prefApiType(),
+                            )
+                        _uiState.update {
+                            it.copy(
+                                seasonDetail = detail,
+                                isFollowing = detail.userStatus.follow,
+                            )
+                        }
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to load season detail: $seasonId" }
                     _uiState.update {
                         it.copy(
-                            seasonDetail = detail,
-                            isFollowing = detail.userStatus.follow,
+                            error = true,
+                            errorTip = error.localizedMessage ?: "加载失败",
                         )
                     }
                 }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to load season detail: $seasonId" }
-                _uiState.update {
-                    it.copy(
-                        error = true,
-                        errorTip = error.localizedMessage ?: "加载失败",
+
+                _uiState.update { it.copy(loading = false) }
+            }
+        }
+
+        /**
+         * 切换追番状态。
+         */
+        fun toggleFollow() {
+            val currentDetail = _uiState.value.seasonDetail ?: return
+            val isFollowing = _uiState.value.isFollowing
+            val preferApiType = prefApiType()
+            viewModelScope.launch {
+                runCatching {
+                    if (isFollowing) {
+                        userRepository.delSeasonFollow(
+                            seasonId = currentDetail.seasonId,
+                            preferApiType = preferApiType,
+                        )
+                    } else {
+                        userRepository.addSeasonFollow(
+                            seasonId = currentDetail.seasonId,
+                            preferApiType = preferApiType,
+                        )
+                    }
+                }.onSuccess { toast ->
+                    _uiState.update { it.copy(isFollowing = !isFollowing) }
+                    if (toast.isNotEmpty()) {
+                        _uiEffect.emit(SeasonDetailUiEffect.ShowToast(toast))
+                    }
+                }.onFailure { error ->
+                    logger.error(error) { "Failed to toggle season follow" }
+                    _uiEffect.emit(
+                        SeasonDetailUiEffect.ShowToast(
+                            "${if (isFollowing) "取消追番" else "追番"}失败: ${error.message ?: "未知错误"}",
+                        ),
                     )
                 }
             }
-
-            _uiState.update { it.copy(loading = false) }
         }
-    }
 
-    /**
-     * 切换追番状态。
-     */
-    fun toggleFollow() {
-        val currentDetail = _uiState.value.seasonDetail ?: return
-        val isFollowing = _uiState.value.isFollowing
-        val preferApiType = prefApiType()
-        viewModelScope.launch {
-            runCatching {
-                if (isFollowing) {
-                    userRepository.delSeasonFollow(
-                        seasonId = currentDetail.seasonId,
-                        preferApiType = preferApiType,
-                    )
-                } else {
-                    userRepository.addSeasonFollow(
-                        seasonId = currentDetail.seasonId,
-                        preferApiType = preferApiType,
-                    )
+        /**
+         * 点击播放按钮。
+         *
+         * 如果有观看记录，续播上次的分集；否则播放第一集。
+         */
+        fun onPlay() {
+            val detail = _uiState.value.seasonDetail ?: return
+            val progress = detail.userStatus.progress
+
+            if (progress != null) {
+                val lastEp = findEpisodeById(detail, progress.lastEpId)
+                if (lastEp != null) {
+                    emitNavigateToPlayer(lastEp)
+                    return
                 }
-            }.onSuccess { toast ->
-                _uiState.update { it.copy(isFollowing = !isFollowing) }
-                if (toast.isNotEmpty()) {
-                    _uiEffect.emit(SeasonDetailUiEffect.ShowToast(toast))
+            }
+
+            val firstEp = detail.episodes.firstOrNull()
+            if (firstEp != null) {
+                emitNavigateToPlayer(firstEp)
+            }
+        }
+
+        /**
+         * 点击某个分集播放。
+         */
+        fun onPlayEpisode(episode: Episode) {
+            emitNavigateToPlayer(episode)
+        }
+
+        /**
+         * 切换到同系列的其他季。
+         */
+        fun onSwitchSeason(targetSeasonId: Int) {
+            viewModelScope.launch {
+                _uiState.update {
+                    it.copy(loading = true, error = false, errorTip = "")
                 }
-            }.onFailure { error ->
-                logger.error(error) { "Failed to toggle season follow" }
+
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val detail =
+                            videoDetailRepository.getPgcVideoDetail(
+                                seasonId = targetSeasonId,
+                                preferApiType = prefApiType(),
+                            )
+                        _uiState.update {
+                            it.copy(
+                                seasonDetail = detail,
+                                isFollowing = detail.userStatus.follow,
+                            )
+                        }
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to switch season: $targetSeasonId" }
+                    _uiState.update {
+                        it.copy(
+                            error = true,
+                            errorTip = error.localizedMessage ?: "加载失败",
+                        )
+                    }
+                }
+
+                _uiState.update { it.copy(loading = false) }
+            }
+        }
+
+        /**
+         * 在正片和附加分集中查找指定 epid 的分集。
+         */
+        private fun findEpisodeById(
+            detail: SeasonDetail,
+            epId: Int,
+        ): Episode? {
+            detail.episodes.forEach { if (it.epid == epId) return it }
+            detail.sections.forEach { section ->
+                section.episodes.forEach { if (it.epid == epId) return it }
+            }
+            return null
+        }
+
+        private fun emitNavigateToPlayer(episode: Episode) {
+            viewModelScope.launch {
                 _uiEffect.emit(
-                    SeasonDetailUiEffect.ShowToast(
-                        "${if (isFollowing) "取消追番" else "追番"}失败: ${error.message ?: "未知错误"}"
-                    )
+                    SeasonDetailUiEffect.NavigateToPlayer(
+                        aid = episode.aid,
+                        cid = episode.cid,
+                        title = episode.title,
+                        cover = episode.cover,
+                        epid = episode.epid,
+                    ),
                 )
             }
         }
     }
-
-    /**
-     * 点击播放按钮。
-     *
-     * 如果有观看记录，续播上次的分集；否则播放第一集。
-     */
-    fun onPlay() {
-        val detail = _uiState.value.seasonDetail ?: return
-        val progress = detail.userStatus.progress
-
-        if (progress != null) {
-            val lastEp = findEpisodeById(detail, progress.lastEpId)
-            if (lastEp != null) {
-                emitNavigateToPlayer(lastEp)
-                return
-            }
-        }
-
-        val firstEp = detail.episodes.firstOrNull()
-        if (firstEp != null) {
-            emitNavigateToPlayer(firstEp)
-        }
-    }
-
-    /**
-     * 点击某个分集播放。
-     */
-    fun onPlayEpisode(episode: Episode) {
-        emitNavigateToPlayer(episode)
-    }
-
-    /**
-     * 切换到同系列的其他季。
-     */
-    fun onSwitchSeason(targetSeasonId: Int) {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(loading = true, error = false, errorTip = "")
-            }
-
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val detail = videoDetailRepository.getPgcVideoDetail(
-                        seasonId = targetSeasonId,
-                        preferApiType = prefApiType(),
-                    )
-                    _uiState.update {
-                        it.copy(
-                            seasonDetail = detail,
-                            isFollowing = detail.userStatus.follow,
-                        )
-                    }
-                }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to switch season: $targetSeasonId" }
-                _uiState.update {
-                    it.copy(
-                        error = true,
-                        errorTip = error.localizedMessage ?: "加载失败",
-                    )
-                }
-            }
-
-            _uiState.update { it.copy(loading = false) }
-        }
-    }
-
-    /**
-     * 在正片和附加分集中查找指定 epid 的分集。
-     */
-    private fun findEpisodeById(detail: SeasonDetail, epId: Int): Episode? {
-        detail.episodes.forEach { if (it.epid == epId) return it }
-        detail.sections.forEach { section ->
-            section.episodes.forEach { if (it.epid == epId) return it }
-        }
-        return null
-    }
-
-    private fun emitNavigateToPlayer(episode: Episode) {
-        viewModelScope.launch {
-            _uiEffect.emit(
-                SeasonDetailUiEffect.NavigateToPlayer(
-                    aid = episode.aid,
-                    cid = episode.cid,
-                    title = episode.title,
-                    cover = episode.cover,
-                    epid = episode.epid,
-                )
-            )
-        }
-    }
-}

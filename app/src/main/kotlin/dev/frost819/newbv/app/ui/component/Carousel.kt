@@ -10,7 +10,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -72,10 +71,11 @@ private fun CarouselContent(
 ) {
     Carousel(
         itemCount = data.size,
-        modifier = modifier
-            .height(240.dp)
-            .clip(MaterialTheme.shapes.large)
-            .focusedBorder(),
+        modifier =
+            modifier
+                .height(240.dp)
+                .clip(MaterialTheme.shapes.large)
+                .focusedBorder(),
         onClick = { itemIndex ->
             onClick(data[itemIndex])
         },
@@ -111,10 +111,12 @@ private fun Carousel(
     onClick: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
     autoScrollInterval: Long = CarouselDefaults.TimeToDisplayItemMillis,
-    contentTransformStartToEnd: ContentTransform = fadeIn(tween(1000))
-        .togetherWith(fadeOut(tween(1000))),
-    contentTransformEndToStart: ContentTransform = fadeIn(tween(1000))
-        .togetherWith(fadeOut(tween(1000))),
+    contentTransformStartToEnd: ContentTransform =
+        fadeIn(tween(1000))
+            .togetherWith(fadeOut(tween(1000))),
+    contentTransformEndToStart: ContentTransform =
+        fadeIn(tween(1000))
+            .togetherWith(fadeOut(tween(1000))),
     content: @Composable AnimatedContentScope.(index: Int) -> Unit,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
@@ -131,45 +133,44 @@ private fun Carousel(
     }
 
     Box(
-        modifier = modifier
-            .onFocusChanged { focusState ->
-                hasFocus = focusState.isFocused
-            }
-            .clickable { onClick(currentIndex) }
-            .pointerInput(itemCount) {
-                if (itemCount == 0) return@pointerInput
-                detectHorizontalDragGestures(
-                    onDragStart = { },
-                    onDragEnd = { },
-                ) { _, dragAmount ->
-                    if (dragAmount > 40f) {
-                        isMovingBackward = true
-                        currentIndex = (currentIndex - 1 + itemCount) % itemCount
-                    } else if (dragAmount < -40f) {
-                        isMovingBackward = false
-                        currentIndex = (currentIndex + 1) % itemCount
+        modifier =
+            modifier
+                .onFocusChanged { focusState ->
+                    hasFocus = focusState.isFocused
+                }.clickable { onClick(currentIndex) }
+                .pointerInput(itemCount) {
+                    if (itemCount == 0) return@pointerInput
+                    detectHorizontalDragGestures(
+                        onDragStart = { },
+                        onDragEnd = { },
+                    ) { _, dragAmount ->
+                        if (dragAmount > 40f) {
+                            isMovingBackward = true
+                            currentIndex = (currentIndex - 1 + itemCount) % itemCount
+                        } else if (dragAmount < -40f) {
+                            isMovingBackward = false
+                            currentIndex = (currentIndex + 1) % itemCount
+                        }
                     }
-                }
-            }
-            .onKeyEvent {
-                when {
-                    itemCount == 0 -> false
-                    it.type == KeyEventType.KeyUp -> false
-                    it.key == Key.DirectionLeft -> {
-                        isMovingBackward = true
-                        currentIndex = (currentIndex - 1 + itemCount) % itemCount
-                        true
-                    }
+                }.onKeyEvent {
+                    when {
+                        itemCount == 0 -> false
+                        it.type == KeyEventType.KeyUp -> false
+                        it.key == Key.DirectionLeft -> {
+                            isMovingBackward = true
+                            currentIndex = (currentIndex - 1 + itemCount) % itemCount
+                            true
+                        }
 
-                    it.key == Key.DirectionRight -> {
-                        isMovingBackward = false
-                        currentIndex = (currentIndex + 1) % itemCount
-                        true
-                    }
+                        it.key == Key.DirectionRight -> {
+                            isMovingBackward = false
+                            currentIndex = (currentIndex + 1) % itemCount
+                            true
+                        }
 
-                    else -> false
-                }
-            },
+                        else -> false
+                    }
+                },
     ) {
         AnimatedContent(
             targetState = currentIndex,
@@ -187,9 +188,10 @@ private fun Carousel(
         CarouselDefaults.IndicatorRow(
             itemCount = itemCount,
             activeItemIndex = currentIndex,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
         )
     }
 }

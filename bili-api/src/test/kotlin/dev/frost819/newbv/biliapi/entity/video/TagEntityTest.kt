@@ -20,7 +20,9 @@ class TagEntityTest {
                 type = 0,
                 state = 0,
                 ctime = 0,
-                count = dev.frost819.newbv.biliapi.http.entity.video.Tag.Count(view = 0, use = 0, atten = 0),
+                count =
+                    dev.frost819.newbv.biliapi.http.entity.video.Tag
+                        .Count(view = 0, use = 0, atten = 0),
                 isAtten = 0,
                 likes = 0,
                 hates = 0,

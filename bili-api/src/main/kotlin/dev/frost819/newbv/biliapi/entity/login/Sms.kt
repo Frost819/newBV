@@ -23,18 +23,31 @@ data class SmsLoginResult(
                 accessToken = smsLoginResponse.tokenInfo!!.accessToken,
                 refreshToken = smsLoginResponse.tokenInfo.refreshToken,
                 sessData =
-                    smsLoginResponse.cookieInfo!!.cookies.find { it.name == "SESSDATA" }?.value
+                    smsLoginResponse.cookieInfo!!
+                        .cookies
+                        .find { it.name == "SESSDATA" }
+                        ?.value
                         ?: "",
                 biliJct =
-                    smsLoginResponse.cookieInfo.cookies.find { it.name == "bili_jct" }?.value
+                    smsLoginResponse.cookieInfo.cookies
+                        .find { it.name == "bili_jct" }
+                        ?.value
                         ?: "",
                 dedeUserId =
-                    smsLoginResponse.cookieInfo.cookies.find { it.name == "DedeUserID" }?.value?.toLongOrNull()
+                    smsLoginResponse.cookieInfo.cookies
+                        .find { it.name == "DedeUserID" }
+                        ?.value
+                        ?.toLongOrNull()
                         ?: 0,
                 dedeUserIdCkMd5 =
-                    smsLoginResponse.cookieInfo.cookies.find { it.name == "DedeUserID__ckMd5" }?.value
+                    smsLoginResponse.cookieInfo.cookies
+                        .find { it.name == "DedeUserID__ckMd5" }
+                        ?.value
                         ?: "",
-                sid = smsLoginResponse.cookieInfo.cookies.find { it.name == "sid" }?.value ?: "",
+                sid =
+                    smsLoginResponse.cookieInfo.cookies
+                        .find { it.name == "sid" }
+                        ?.value ?: "",
                 expiredDate = Date(System.currentTimeMillis() + smsLoginResponse.tokenInfo.expiresIn * 1000L),
             )
     }

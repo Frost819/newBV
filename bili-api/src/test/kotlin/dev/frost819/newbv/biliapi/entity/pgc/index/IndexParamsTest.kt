@@ -13,13 +13,14 @@ class IndexParamsTest {
     @Test
     fun `IndexOrder getList for Anime returns expected set`() {
         val list = IndexOrder.getList(PgcType.Anime)
-        assertThat(list).containsExactly(
-            IndexOrder.FollowCount,
-            IndexOrder.UpdateTime,
-            IndexOrder.Score,
-            IndexOrder.PlayCount,
-            IndexOrder.StartTime,
-        ).inOrder()
+        assertThat(list)
+            .containsExactly(
+                IndexOrder.FollowCount,
+                IndexOrder.UpdateTime,
+                IndexOrder.Score,
+                IndexOrder.PlayCount,
+                IndexOrder.StartTime,
+            ).inOrder()
     }
 
     @Test
@@ -40,12 +41,13 @@ class IndexParamsTest {
     @Test
     fun `SeasonVersion getList for Anime returns four entries`() {
         val list = SeasonVersion.getList(PgcType.Anime)
-        assertThat(list).containsExactly(
-            SeasonVersion.All,
-            SeasonVersion.FeatureFilm,
-            SeasonVersion.Movies,
-            SeasonVersion.Other,
-        ).inOrder()
+        assertThat(list)
+            .containsExactly(
+                SeasonVersion.All,
+                SeasonVersion.FeatureFilm,
+                SeasonVersion.Movies,
+                SeasonVersion.Other,
+            ).inOrder()
     }
 
     @Test
@@ -56,11 +58,12 @@ class IndexParamsTest {
     @Test
     fun `SpokenLanguage getList for Anime returns three entries`() {
         val list = SpokenLanguage.getList(PgcType.Anime)
-        assertThat(list).containsExactly(
-            SpokenLanguage.All,
-            SpokenLanguage.OriginalSoundtrack,
-            SpokenLanguage.ChineseDubbing,
-        ).inOrder()
+        assertThat(list)
+            .containsExactly(
+                SpokenLanguage.All,
+                SpokenLanguage.OriginalSoundtrack,
+                SpokenLanguage.ChineseDubbing,
+            ).inOrder()
     }
 
     @Test
@@ -128,13 +131,14 @@ class IndexParamsTest {
     @Test
     fun `SeasonMonth getList for Anime returns five entries`() {
         val list = SeasonMonth.getList(PgcType.Anime)
-        assertThat(list).containsExactly(
-            SeasonMonth.All,
-            SeasonMonth.January,
-            SeasonMonth.April,
-            SeasonMonth.July,
-            SeasonMonth.October,
-        ).inOrder()
+        assertThat(list)
+            .containsExactly(
+                SeasonMonth.All,
+                SeasonMonth.January,
+                SeasonMonth.April,
+                SeasonMonth.July,
+                SeasonMonth.October,
+            ).inOrder()
     }
 
     @Test

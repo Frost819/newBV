@@ -29,10 +29,9 @@ data class LiveRoomCardData(
     val watchedString: String,
 )
 
-fun formatOnlineCount(online: Int): String {
-    return when {
+fun formatOnlineCount(online: Int): String =
+    when {
         online >= 10_000_000 -> String.format("%.1f亿", online / 10_000_000.0)
         online >= 10_000 -> String.format("%.1f万", online / 10_000.0)
         else -> online.toString()
     }
-}

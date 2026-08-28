@@ -44,7 +44,7 @@ import java.io.File
 class HttpServer(
     private val assetProvider: (String) -> ByteArray?,
     private val logFileProvider: () -> List<File>,
-    private val manualLogCreator: () -> File?
+    private val manualLogCreator: () -> File?,
 ) {
     private val logger = Loggers.get("HttpServer")
 
@@ -65,14 +65,20 @@ class HttpServer(
             logger.warn { "HttpServer already running" }
             return
         }
-        server = embeddedServer(CIO, port = 0) {
-            configureRoutes()
-        }.also { it.start(wait = false) }
+        server =
+            embeddedServer(CIO, port = 0) {
+                configureRoutes()
+            }.also { it.start(wait = false) }
 
         // resolvedConnectors() 是 suspend 函数，用 runBlocking 同步获取端口
-        resolvedPort = runBlocking {
-            server?.engine?.resolvedConnectors()?.firstOrNull()?.port
-        }
+        resolvedPort =
+            runBlocking {
+                server
+                    ?.engine
+                    ?.resolvedConnectors()
+                    ?.firstOrNull()
+                    ?.port
+            }
         logger.info { "HttpServer started on port $resolvedPort" }
     }
 
@@ -142,19 +148,22 @@ class HttpServer(
         // 列出所有日志文件
         get("/api/logs/list") {
             val files = logFileProvider()
-            val items = files.map { it.toLogItem() }
-                .sortedByDescending { it.lastModified }
+            val items =
+                files
+                    .map { it.toLogItem() }
+                    .sortedByDescending { it.lastModified }
 
             call.respondText(
                 text = json.encodeToString(items),
-                contentType = ContentType.Application.Json
+                contentType = ContentType.Application.Json,
             )
         }
 
         // 下载指定日志文件（白名单校验）
         get("/api/logs/{filename}") {
-            val filename = call.parameters["filename"]
-                ?: return@get call.respondText("filename is null", status = HttpStatusCode.NotFound)
+            val filename =
+                call.parameters["filename"]
+                    ?: return@get call.respondText("filename is null", status = HttpStatusCode.NotFound)
 
             if (isPathTraversal(filename)) {
                 return@get call.respondText("forbidden", status = HttpStatusCode.Forbidden)
@@ -164,14 +173,17 @@ class HttpServer(
                 return@get call.respondText("forbidden", status = HttpStatusCode.Forbidden)
             }
 
-            val file = logFileProvider().find { it.name == filename }
-                ?: return@get call.respondText("file not found", status = HttpStatusCode.NotFound)
+            val file =
+                logFileProvider().find { it.name == filename }
+                    ?: return@get call.respondText("file not found", status = HttpStatusCode.NotFound)
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
-                ContentDisposition.Attachment.withParameter(
-                    ContentDisposition.Parameters.FileName, file.name
-                ).toString()
+                ContentDisposition.Attachment
+                    .withParameter(
+                        ContentDisposition.Parameters.FileName,
+                        file.name,
+                    ).toString(),
             )
             call.respondFile(file)
         }
@@ -182,15 +194,17 @@ class HttpServer(
             if (file == null || !file.exists()) {
                 return@get call.respondText(
                     "create manual log failed",
-                    status = HttpStatusCode.InternalServerError
+                    status = HttpStatusCode.InternalServerError,
                 )
             }
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
-                ContentDisposition.Attachment.withParameter(
-                    ContentDisposition.Parameters.FileName, file.name
-                ).toString()
+                ContentDisposition.Attachment
+                    .withParameter(
+                        ContentDisposition.Parameters.FileName,
+                        file.name,
+                    ).toString(),
             )
             call.respondFile(file)
         }
@@ -211,15 +225,16 @@ class HttpServer(
         val name: String,
         val size: Long,
         val lastModified: Long,
-        val type: String
+        val type: String,
     )
 
     private fun File.toLogItem(): LogItem {
-        val type = when {
-            name.startsWith(CrashHandler.MANUAL_LOG_PREFIX) -> "manual"
-            name.startsWith(CrashHandler.CRASH_LOG_PREFIX) -> "crash"
-            else -> "unknown"
-        }
+        val type =
+            when {
+                name.startsWith(CrashHandler.MANUAL_LOG_PREFIX) -> "manual"
+                name.startsWith(CrashHandler.CRASH_LOG_PREFIX) -> "crash"
+                else -> "unknown"
+            }
         return LogItem(name = name, size = length(), lastModified = lastModified(), type = type)
     }
 
@@ -229,8 +244,9 @@ class HttpServer(
 
     /** 检查文件名是否符合日志白名单（前缀 + 后缀）。 */
     private fun isAllowedLogFilename(filename: String): Boolean {
-        val allowedPrefix = filename.startsWith(CrashHandler.MANUAL_LOG_PREFIX)
-            || filename.startsWith(CrashHandler.CRASH_LOG_PREFIX)
+        val allowedPrefix =
+            filename.startsWith(CrashHandler.MANUAL_LOG_PREFIX) ||
+                filename.startsWith(CrashHandler.CRASH_LOG_PREFIX)
         val allowedSuffix = filename.endsWith(".log")
         return allowedPrefix && allowedSuffix
     }

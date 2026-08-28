@@ -6,20 +6,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.repositories.ToViewRepository
-import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.core.log.Loggers
-import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 
 sealed interface WatchLaterEffect {
-    data class ShowToast(val message: String) : WatchLaterEffect
+    data class ShowToast(
+        val message: String,
+    ) : WatchLaterEffect
 }
 
 /**
@@ -31,65 +33,68 @@ sealed interface WatchLaterEffect {
  * @param toViewRepository 稍后再看仓库。
  */
 @HiltViewModel
-class WatchLaterViewModel @Inject constructor(
-    private val toViewRepository: ToViewRepository,
-) : ViewModel() {
+class WatchLaterViewModel
+    @Inject
+    constructor(
+        private val toViewRepository: ToViewRepository,
+    ) : ViewModel() {
+        private val logger = Loggers.get("WatchLaterViewModel")
 
-    private val logger = Loggers.get("WatchLaterViewModel")
+        private fun prefApiType(): ApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web
 
-    private fun prefApiType(): ApiType =
-        if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web
+        private val _effect = MutableSharedFlow<WatchLaterEffect>()
+        val effect = _effect.asSharedFlow()
 
-    private val _effect = MutableSharedFlow<WatchLaterEffect>()
-    val effect = _effect.asSharedFlow()
+        /**
+         * 添加视频到稍后再看。
+         *
+         * @param aid 视频 AV 号。
+         * @param bvid 视频 BV 号（可选）。
+         */
+        fun addToView(
+            aid: Long,
+            bvid: String? = null,
+        ) {
+            viewModelScope.launch {
+                runCatching {
+                    toViewRepository.addToView(
+                        aid = aid,
+                        bvid = bvid,
+                        preferApiType = prefApiType(),
+                    )
+                }.onSuccess {
+                    _effect.emit(WatchLaterEffect.ShowToast("已添加到稍后再看"))
+                }.onFailure { error ->
+                    if (error is CancellationException) throw error
+                    logger.error(error) { "Failed to add to view" }
+                    _effect.emit(WatchLaterEffect.ShowToast("添加失败: ${error.message ?: "未知错误"}"))
+                }
+            }
+        }
 
-    /**
-     * 添加视频到稍后再看。
-     *
-     * @param aid 视频 AV 号。
-     * @param bvid 视频 BV 号（可选）。
-     */
-    fun addToView(aid: Long, bvid: String? = null) {
-        viewModelScope.launch {
-            runCatching {
-                toViewRepository.addToView(
-                    aid = aid,
-                    bvid = bvid,
-                    preferApiType = prefApiType(),
-                )
-            }.onSuccess {
-                _effect.emit(WatchLaterEffect.ShowToast("已添加到稍后再看"))
-            }.onFailure { error ->
-                if (error is CancellationException) throw error
-                logger.error(error) { "Failed to add to view" }
-                _effect.emit(WatchLaterEffect.ShowToast("添加失败: ${error.message ?: "未知错误"}"))
+        /**
+         * 从稍后再看移除视频。
+         *
+         * @param aid 视频 AV 号。
+         */
+        fun delToView(aid: Long) {
+            viewModelScope.launch {
+                runCatching {
+                    toViewRepository.delToView(
+                        aid = aid,
+                        viewed = false,
+                        preferApiType = prefApiType(),
+                    )
+                }.onSuccess {
+                    _effect.emit(WatchLaterEffect.ShowToast("已移除稍后再看"))
+                }.onFailure { error ->
+                    if (error is CancellationException) throw error
+                    logger.error(error) { "Failed to delete to view" }
+                    _effect.emit(WatchLaterEffect.ShowToast("移除失败: ${error.message ?: "未知错误"}"))
+                }
             }
         }
     }
-
-    /**
-     * 从稍后再看移除视频。
-     *
-     * @param aid 视频 AV 号。
-     */
-    fun delToView(aid: Long) {
-        viewModelScope.launch {
-            runCatching {
-                toViewRepository.delToView(
-                    aid = aid,
-                    viewed = false,
-                    preferApiType = prefApiType(),
-                )
-            }.onSuccess {
-                _effect.emit(WatchLaterEffect.ShowToast("已移除稍后再看"))
-            }.onFailure { error ->
-                if (error is CancellationException) throw error
-                logger.error(error) { "Failed to delete to view" }
-                _effect.emit(WatchLaterEffect.ShowToast("移除失败: ${error.message ?: "未知错误"}"))
-            }
-        }
-    }
-}
 
 /**
  * 收集 [WatchLaterViewModel] 的 effect 并显示 Toast。

@@ -31,8 +31,7 @@ data class ToViewData(
                         .filter {
                             it.cardItemCase == CursorItem.CardItemCase.CARD_UGC ||
                                 it.cardItemCase == CursorItem.CardItemCase.CARD_OGV
-                        }
-                        .map { ToViewItem.fromToViewItem(it) },
+                        }.map { ToViewItem.fromToViewItem(it) },
             )
     }
 }

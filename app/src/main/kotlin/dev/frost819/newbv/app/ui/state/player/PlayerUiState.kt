@@ -7,9 +7,9 @@ import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMask
 import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.bilisubtitle.entity.SubtitleItem
+import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.Audio
 import dev.frost819.newbv.data.datastore.VideoCodec
-import dev.frost819.newbv.danmaku.config.DanmakuState
 
 /**
  * 播放器主 UI 状态（低频更新）。
@@ -35,40 +35,33 @@ data class PlayerUiState(
     val lastPlayed: Int = 0,
     val fromSeason: Boolean = false,
     val subType: Int = 0,
-
     // 播放状态
     val playerState: PlayerState = PlayerState.Ready,
     val isBuffering: Boolean = false,
     val videoShot: VideoShot? = null,
     val clock: Pair<Int, Int> = Pair(0, 0),
-
     // 提示
     val showSkipToNextEp: Boolean = false,
     val showBackToStart: Boolean = false,
     val showPreviewTip: Boolean = false,
     val shortcutTipText: String? = null,
-
     // 可用资源
     val availableQuality: Map<Int, String> = emptyMap(),
     val availableVideoCodec: List<VideoCodec> = emptyList(),
     val availableAudio: List<Audio> = emptyList(),
-
     // 当前选中状态
     val mediaProfileState: MediaProfileState = MediaProfileState(),
     val playSpeed: Float = 1f,
     val aspectRatio: VideoAspectRatio = VideoAspectRatio.Default,
     val isLooping: Boolean = false,
-
     // 弹幕
     val danmakuState: DanmakuState = DanmakuState(),
     val danmakuMask: DanmakuMask? = null,
-
     // 字幕
     val subtitleState: SubtitleState = SubtitleState(),
     val subtitleId: Long = -1L,
     val subtitleData: List<SubtitleItem> = emptyList(),
     val subtitleList: List<Subtitle> = emptyList(),
-
     // 列表
     val videoList: List<VideoListItem> = emptyList(),
     val relatedVideos: List<VideoCardData> = emptyList(),
@@ -136,5 +129,7 @@ sealed class PlayerState {
     /** 发生错误。
      * @param message 错误信息
      */
-    data class Error(val message: String) : PlayerState()
+    data class Error(
+        val message: String,
+    ) : PlayerState()
 }

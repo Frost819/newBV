@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
  * 验证 User-Agent 和 Referer 按接口类型正确返回。
  */
 class PlayerConstantsTest {
-
     @Test
     fun `getUserAgent returns web UA for Web type`() {
         val ua = PlayerConstants.getUserAgent(ApiType.Web)

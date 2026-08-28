@@ -14,7 +14,6 @@ import java.io.File
  * 阈值与开关通过构造参数注入，不依赖 Prefs 单例。
  */
 class CacheManagerTest {
-
     @TempDir
     lateinit var tempDir: File
 
@@ -28,14 +27,16 @@ class CacheManagerTest {
     }
 
     /** 构建被测对象，阈值与开关通过 lambda 注入（每次检查时读取，模拟实时变更）。 */
-    private fun createManager(): CacheManager = CacheManager(
-        cacheDirs = listOf(
-            File(tempDir, "cache_a"),
-            File(tempDir, "cache_b"),
-        ),
-        thresholdMb = { thresholdMb },
-        autoCleanEnabled = { autoCleanEnabled },
-    )
+    private fun createManager(): CacheManager =
+        CacheManager(
+            cacheDirs =
+                listOf(
+                    File(tempDir, "cache_a"),
+                    File(tempDir, "cache_b"),
+                ),
+            thresholdMb = { thresholdMb },
+            autoCleanEnabled = { autoCleanEnabled },
+        )
 
     /**
      * 在 [dir] 下创建指定大小的文件。
@@ -43,7 +44,12 @@ class CacheManagerTest {
      * @param sizeBytes 文件大小（字节）。
      * @param ageMs 文件修改时间回拨的毫秒数（值越大越"旧"，控制 LRU 顺序）。
      */
-    private fun createFile(dir: File, name: String, sizeBytes: Int, ageMs: Long = 0L): File {
+    private fun createFile(
+        dir: File,
+        name: String,
+        sizeBytes: Int,
+        ageMs: Long = 0L,
+    ): File {
         val file = File(dir, name)
         file.parentFile?.mkdirs()
         file.writeBytes(ByteArray(sizeBytes))

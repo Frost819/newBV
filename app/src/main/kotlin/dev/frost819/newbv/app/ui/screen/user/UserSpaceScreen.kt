@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,7 +23,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +32,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
@@ -95,12 +94,14 @@ private fun UserSpaceScreen(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState, state.videos.size) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.videos.size - 20
-            }
-            .collect {
+            }.collect {
                 viewModel.loadVideos(mid)
             }
     }
@@ -120,27 +121,29 @@ private fun UserSpaceScreen(
             items = state.videos,
             key = { _, item -> item.aid },
         ) { index, video ->
-            val cardData = remember(video) {
-                val durationMs = video.duration * 1000L
-                val progressRatio = if (video.playbackPosition > 0) {
-                    video.playbackPosition / 100f
-                } else {
-                    null
+            val cardData =
+                remember(video) {
+                    val durationMs = video.duration * 1000L
+                    val progressRatio =
+                        if (video.playbackPosition > 0) {
+                            video.playbackPosition / 100f
+                        } else {
+                            null
+                        }
+                    VideoCardData(
+                        avid = video.aid,
+                        bvid = video.bvid,
+                        title = video.title,
+                        cover = video.cover,
+                        playString = video.play.takeIf { it != -1 }.toWanString(),
+                        danmakuString = video.danmaku.takeIf { it != -1 }.toWanString(),
+                        timeString = durationMs.formatHourMinSec(),
+                        upName = video.author,
+                        upMid = mid,
+                        pubTime = video.pubTime,
+                        progress = progressRatio,
+                    )
                 }
-                VideoCardData(
-                    avid = video.aid,
-                    bvid = video.bvid,
-                    title = video.title,
-                    cover = video.cover,
-                    playString = video.play.takeIf { it != -1 }.toWanString(),
-                    danmakuString = video.danmaku.takeIf { it != -1 }.toWanString(),
-                    timeString = durationMs.formatHourMinSec(),
-                    upName = video.author,
-                    upMid = mid,
-                    pubTime = video.pubTime,
-                    progress = progressRatio,
-                )
-            }
             SmallVideoCard(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,
@@ -165,22 +168,22 @@ private fun UserSpaceScreen(
 }
 
 @Composable
-private fun UserSpaceHeader(
-    state: dev.frost819.newbv.app.viewmodel.user.UserSpaceUiState,
-) {
+private fun UserSpaceHeader(state: dev.frost819.newbv.app.viewmodel.user.UserSpaceUiState) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (state.face.isNotEmpty()) {
             AsyncImage(
                 model = state.face,
                 contentDescription = state.name,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape),
+                modifier =
+                    Modifier
+                        .size(80.dp)
+                        .clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
             Spacer(modifier = Modifier.width(16.dp))

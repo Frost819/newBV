@@ -79,9 +79,13 @@ fun UpdateDialog(
         scope.launch(Dispatchers.IO) {
             runCatching {
                 latestRelease = GithubApi.getLatestBuild()
-                val revision = latestRelease!!
-                    .assets.first { it.name.startsWith("BV") }
-                    .name.split("_")[1].toInt()
+                val revision =
+                    latestRelease!!
+                        .assets
+                        .first { it.name.startsWith("BV") }
+                        .name
+                        .split("_")[1]
+                        .toInt()
                 if (revision <= BuildConfig.VERSION_CODE) {
                     updateStatus = UpdateStatus.NoAvailableUpdate
                     return@launch
@@ -99,17 +103,19 @@ fun UpdateDialog(
     val installUpdate: (File) -> Unit = { file ->
         updateStatus = UpdateStatus.Installing
         runCatching {
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${BuildConfig.APPLICATION_ID}.provider",
-                file,
-            )
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                addCategory(Intent.CATEGORY_DEFAULT)
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
+            val uri =
+                FileProvider.getUriForFile(
+                    context,
+                    "${BuildConfig.APPLICATION_ID}.provider",
+                    file,
+                )
+            val intent =
+                Intent(Intent.ACTION_VIEW).apply {
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
             context.startActivity(intent)
         }.onFailure {
             updateStatus = UpdateStatus.InstallError
@@ -118,31 +124,36 @@ fun UpdateDialog(
 
     val startUpdate: () -> Unit = {
         updateStatus = UpdateStatus.Downloading
-        downloadJob = scope.launch(Dispatchers.IO) {
-            val tempFilename = latestRelease!!
-                .assets.first { it.name.startsWith("BV") }.name
-            val tempDir = File(context.cacheDir, "update_downloader")
-            if (!tempDir.exists()) tempDir.mkdirs()
-            val tempFile = File(tempDir, tempFilename)
-            tempFile.createNewFile()
-            runCatching {
-                GithubApi.downloadUpdate(latestRelease!!, tempFile) { downloaded, total ->
-                    bytesSentTotal = downloaded
-                    contentLength = total
-                    targetProgress = if (total > 0) {
-                        downloaded.toFloat() / total
-                    } else {
-                        0f
+        downloadJob =
+            scope.launch(Dispatchers.IO) {
+                val tempFilename =
+                    latestRelease!!
+                        .assets
+                        .first { it.name.startsWith("BV") }
+                        .name
+                val tempDir = File(context.cacheDir, "update_downloader")
+                if (!tempDir.exists()) tempDir.mkdirs()
+                val tempFile = File(tempDir, tempFilename)
+                tempFile.createNewFile()
+                runCatching {
+                    GithubApi.downloadUpdate(latestRelease!!, tempFile) { downloaded, total ->
+                        bytesSentTotal = downloaded
+                        contentLength = total
+                        targetProgress =
+                            if (total > 0) {
+                                downloaded.toFloat() / total
+                            } else {
+                                0f
+                            }
                     }
+                    // 缓存写入后检查阈值，保留刚下载的 APK 待安装
+                    CacheManager(context).checkCache(preserve = tempFile)
+                    if (show) installUpdate(tempFile)
+                }.onFailure {
+                    logger.error(it) { "Failed to download update" }
+                    updateStatus = UpdateStatus.DownloadError
                 }
-                // 缓存写入后检查阈值，保留刚下载的 APK 待安装
-                CacheManager(context).checkCache(preserve = tempFile)
-                if (show) installUpdate(tempFile)
-            }.onFailure {
-                logger.error(it) { "Failed to download update" }
-                updateStatus = UpdateStatus.DownloadError
             }
-        }
     }
 
     LaunchedEffect(show) {
@@ -159,16 +170,17 @@ fun UpdateDialog(
             onDismissRequest = onHideDialog,
             title = {
                 Text(
-                    text = when (updateStatus) {
-                        UpdateStatus.UpdatingInfo -> "获取更新信息中"
-                        UpdateStatus.Ready -> latestRelease?.name ?: "Loading..."
-                        UpdateStatus.Downloading -> "下载中"
-                        UpdateStatus.Installing -> "安装中"
-                        UpdateStatus.NoAvailableUpdate -> "无可用更新"
-                        UpdateStatus.CheckError -> "检查更新失败"
-                        UpdateStatus.DownloadError -> "下载失败"
-                        UpdateStatus.InstallError -> "安装失败"
-                    },
+                    text =
+                        when (updateStatus) {
+                            UpdateStatus.UpdatingInfo -> "获取更新信息中"
+                            UpdateStatus.Ready -> latestRelease?.name ?: "Loading..."
+                            UpdateStatus.Downloading -> "下载中"
+                            UpdateStatus.Installing -> "安装中"
+                            UpdateStatus.NoAvailableUpdate -> "无可用更新"
+                            UpdateStatus.CheckError -> "检查更新失败"
+                            UpdateStatus.DownloadError -> "下载失败"
+                            UpdateStatus.InstallError -> "安装失败"
+                        },
                 )
             },
             text = {
@@ -222,7 +234,8 @@ fun UpdateDialog(
             confirmButton = {
                 when (updateStatus) {
                     UpdateStatus.UpdatingInfo, UpdateStatus.NoAvailableUpdate,
-                    UpdateStatus.Downloading, UpdateStatus.Installing -> {}
+                    UpdateStatus.Downloading, UpdateStatus.Installing,
+                    -> {}
 
                     UpdateStatus.Ready -> {
                         Button(
@@ -245,27 +258,36 @@ fun UpdateDialog(
             },
             dismissButton = {
                 OutlinedButton(
-                    enabled = updateStatus !in setOf(
-                        UpdateStatus.Downloading,
-                        UpdateStatus.Installing,
-                    ),
+                    enabled =
+                        updateStatus !in
+                            setOf(
+                                UpdateStatus.Downloading,
+                                UpdateStatus.Installing,
+                            ),
                     onClick = onHideDialog,
-                    modifier = Modifier.touchClickable(onClick = {
-                        if (updateStatus !in setOf(
-                            UpdateStatus.Downloading,
-                            UpdateStatus.Installing,
-                        )) onHideDialog()
-                    }),
+                    modifier =
+                        Modifier.touchClickable(onClick = {
+                            if (updateStatus !in
+                                setOf(
+                                    UpdateStatus.Downloading,
+                                    UpdateStatus.Installing,
+                                )
+                            ) {
+                                onHideDialog()
+                            }
+                        }),
                 ) {
                     Text(
-                        text = when (updateStatus) {
-                            UpdateStatus.UpdatingInfo -> "我点错了"
-                            UpdateStatus.Ready -> "打死不更"
-                            UpdateStatus.NoAvailableUpdate -> "走了走了"
-                            UpdateStatus.CheckError, UpdateStatus.DownloadError,
-                            UpdateStatus.InstallError -> "算了算了"
-                            UpdateStatus.Downloading, UpdateStatus.Installing -> "你已经无路可逃！"
-                        },
+                        text =
+                            when (updateStatus) {
+                                UpdateStatus.UpdatingInfo -> "我点错了"
+                                UpdateStatus.Ready -> "打死不更"
+                                UpdateStatus.NoAvailableUpdate -> "走了走了"
+                                UpdateStatus.CheckError, UpdateStatus.DownloadError,
+                                UpdateStatus.InstallError,
+                                -> "算了算了"
+                                UpdateStatus.Downloading, UpdateStatus.Installing -> "你已经无路可逃！"
+                            },
                     )
                 }
             },
@@ -286,10 +308,9 @@ enum class UpdateStatus {
     InstallError,
 }
 
-private fun Long.toMBString(): String {
-    return when {
+private fun Long.toMBString(): String =
+    when {
         this >= 1_000_000 -> "%.1f MB".format(this / 1_000_000.0)
         this >= 1_000 -> "%.1f KB".format(this / 1_000.0)
         else -> "$this B"
     }
-}

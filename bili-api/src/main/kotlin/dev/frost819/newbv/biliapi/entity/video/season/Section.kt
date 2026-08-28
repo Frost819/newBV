@@ -32,7 +32,8 @@ data class Section(
                 id = section.id,
                 title = section.title,
                 episodes =
-                    section.episodes.map { Episode.fromEpisode(it) }
+                    section.episodes
+                        .map { Episode.fromEpisode(it) }
                         // aid 为 0 的视频是跳转到其它 PGC 页面的链接，暂不适配
                         .filter { it.aid != 0L },
             )

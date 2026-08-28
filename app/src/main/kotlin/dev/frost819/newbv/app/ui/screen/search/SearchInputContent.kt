@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -69,10 +68,11 @@ fun SearchInputContent(
     focusSaver.RestoreFocus()
 
     Row(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(start = 24.dp, top = 24.dp, end = 24.dp)
-            .horizontalScroll(rememberScrollState()),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(start = 24.dp, top = 24.dp, end = 24.dp)
+                .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         // 列 1：搜索框 + 软键盘
@@ -119,10 +119,11 @@ private fun SearchInputColumn(
     onSearch: () -> Unit,
 ) {
     androidx.compose.foundation.layout.Box(
-        modifier = Modifier
-            .width(280.dp)
-            .fillMaxHeight()
-            .focusGroup(),
+        modifier =
+            Modifier
+                .width(280.dp)
+                .fillMaxHeight()
+                .focusGroup(),
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(
@@ -135,13 +136,14 @@ private fun SearchInputColumn(
                 onValueChange = onKeywordChange,
                 maxLines = 1,
                 shape = MaterialTheme.shapes.large,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.border,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.border,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                    ),
                 placeholder = { Text("搜索") },
             )
             SoftKeyboard(
@@ -169,10 +171,11 @@ private fun SearchHotwordsColumn(
     var showHotword by remember { mutableStateOf(Prefs.showHotword) }
 
     Column(
-        modifier = Modifier
-            .width(250.dp)
-            .fillMaxHeight()
-            .focusGroup(),
+        modifier =
+            Modifier
+                .width(250.dp)
+                .fillMaxHeight()
+                .focusGroup(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -189,10 +192,11 @@ private fun SearchHotwordsColumn(
                     showHotword = !showHotword
                     Prefs.showHotword = showHotword
                 },
-                colors = ButtonDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    ButtonDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             ) {
                 if (showHotword) {
                     Icon(
@@ -234,10 +238,11 @@ private fun SearchSuggestsColumn(
     focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
 ) {
     Column(
-        modifier = Modifier
-            .width(250.dp)
-            .fillMaxHeight()
-            .focusGroup(),
+        modifier =
+            Modifier
+                .width(250.dp)
+                .fillMaxHeight()
+                .focusGroup(),
     ) {
         Text(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -269,10 +274,11 @@ private fun SearchHistoryColumn(
     var deleteMode by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .width(250.dp)
-            .fillMaxHeight()
-            .focusGroup(),
+        modifier =
+            Modifier
+                .width(250.dp)
+                .fillMaxHeight()
+                .focusGroup(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -327,14 +333,17 @@ private fun SearchHistoryColumn(
                             onSearch(history.keyword)
                         }
                     },
-                    trailingIcon = if (deleteMode) {
-                        {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                            )
-                        }
-                    } else null,
+                    trailingIcon =
+                        if (deleteMode) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                )
+                            }
+                        } else {
+                            null
+                        },
                 )
             }
         }

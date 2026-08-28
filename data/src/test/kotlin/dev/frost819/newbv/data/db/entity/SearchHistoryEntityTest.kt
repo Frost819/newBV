@@ -10,7 +10,6 @@ import java.util.Date
  * 验证构造默认值、equals/hashCode、copy、destructuring 及可变字段修改。
  */
 class SearchHistoryEntityTest {
-
     @Test
     fun `construct with keyword only uses defaults for id and searchDate`() {
         val entity = SearchHistoryEntity(keyword = "test")

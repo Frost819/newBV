@@ -7,8 +7,8 @@ data class PgcIndexData(
     val nextPage: PgcIndexPage,
 ) {
     companion object {
-        fun fromIndexResultData(data: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData): PgcIndexData {
-            return PgcIndexData(
+        fun fromIndexResultData(data: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData): PgcIndexData =
+            PgcIndexData(
                 list = data.list.map { PgcItem.fromIndexResultItem(it) },
                 nextPage =
                     PgcIndexPage(
@@ -19,7 +19,6 @@ data class PgcIndexData(
                         hasNext = data.hasNext == 1,
                     ),
             )
-        }
     }
 
     data class PgcIndexPage(

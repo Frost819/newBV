@@ -9,15 +9,15 @@ import androidx.compose.ui.graphics.Color
  * 所有颜色以 `Color` 表示，供 [BVTheme] 构建 colorScheme。
  */
 object BVColors {
-    /** B 站粉，品牌主色。 */
     /** 低饱和蓝紫，作为 new BV 的主品牌色。 */
     val Primary = Color(0xFF7773AD)
+
     /** 深色背景下使用的主色变体。 */
     val PrimaryStrong = Color(0xFF5E5A8B)
+
     /** 浅色背景下使用的主色变体。 */
     val PrimaryLight = Color(0xFF9995CF)
 
-    /** B 站蓝，辅助色。 */
     /** 低饱和青绿，用于辅助操作和信息状态。 */
     val Secondary = Color(0xFF5B9B94)
     val SecondaryLight = Color(0xFF79B8AE)

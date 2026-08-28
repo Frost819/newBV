@@ -25,8 +25,7 @@ data class HistoryData(
                         .filter {
                             it.cardItemCase == CursorItem.CardItemCase.CARD_UGC ||
                                 it.cardItemCase == CursorItem.CardItemCase.CARD_OGV
-                        }
-                        .map { HistoryItem.fromHistoryItem(it) },
+                        }.map { HistoryItem.fromHistoryItem(it) },
             )
     }
 }

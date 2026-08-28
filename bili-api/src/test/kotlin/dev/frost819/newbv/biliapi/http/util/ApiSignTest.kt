@@ -43,7 +43,9 @@ class ApiSignTest {
 
     @Test
     fun `encAppPost adds appkey and sign to form data body`() {
-        val builder = io.ktor.client.request.HttpRequestBuilder()
+        val builder =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder.setBody(FormDataContent(Parameters.build { append("keyword", "test") }))
 
         builder.encAppPost()
@@ -56,12 +58,16 @@ class ApiSignTest {
 
     @Test
     fun `encAppPost sign is deterministic for same input`() {
-        val builder1 = io.ktor.client.request.HttpRequestBuilder()
+        val builder1 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder1.setBody(FormDataContent(Parameters.build { append("keyword", "test") }))
         builder1.encAppPost()
         val sign1 = (builder1.body as FormDataContent).formData["sign"]!!
 
-        val builder2 = io.ktor.client.request.HttpRequestBuilder()
+        val builder2 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder2.setBody(FormDataContent(Parameters.build { append("keyword", "test") }))
         builder2.encAppPost()
         val sign2 = (builder2.body as FormDataContent).formData["sign"]!!
@@ -71,12 +77,16 @@ class ApiSignTest {
 
     @Test
     fun `encAppPost sign changes when input changes`() {
-        val builder1 = io.ktor.client.request.HttpRequestBuilder()
+        val builder1 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder1.setBody(FormDataContent(Parameters.build { append("keyword", "test1") }))
         builder1.encAppPost()
         val sign1 = (builder1.body as FormDataContent).formData["sign"]!!
 
-        val builder2 = io.ktor.client.request.HttpRequestBuilder()
+        val builder2 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder2.setBody(FormDataContent(Parameters.build { append("keyword", "test2") }))
         builder2.encAppPost()
         val sign2 = (builder2.body as FormDataContent).formData["sign"]!!
@@ -86,7 +96,9 @@ class ApiSignTest {
 
     @Test
     fun `encAppPost sign is 32 char hex md5`() {
-        val builder = io.ktor.client.request.HttpRequestBuilder()
+        val builder =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder.setBody(FormDataContent(Parameters.build { append("keyword", "test") }))
         builder.encAppPost()
 
@@ -101,7 +113,9 @@ class ApiSignTest {
 
     @Test
     fun `encAppGet adds appkey and sign parameters`() {
-        val builder = io.ktor.client.request.HttpRequestBuilder()
+        val builder =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder.method = HttpMethod.Get
         builder.url.takeFrom("https://api.bilibili.com/test")
         builder.parameter("keyword", "test")
@@ -115,14 +129,18 @@ class ApiSignTest {
 
     @Test
     fun `encAppGet sign is deterministic for same parameters`() {
-        val builder1 = io.ktor.client.request.HttpRequestBuilder()
+        val builder1 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder1.method = HttpMethod.Get
         builder1.url.takeFrom("https://api.bilibili.com/test")
         builder1.parameter("keyword", "test")
         builder1.encAppGet()
         val sign1 = builder1.url.parameters["sign"]!!
 
-        val builder2 = io.ktor.client.request.HttpRequestBuilder()
+        val builder2 =
+            io.ktor.client.request
+                .HttpRequestBuilder()
         builder2.method = HttpMethod.Get
         builder2.url.takeFrom("https://api.bilibili.com/test")
         builder2.parameter("keyword", "test")
@@ -143,7 +161,9 @@ class ApiSignTest {
             every { BiliHttpApi.wbiSubKey } returns "4932caff0ff746eab6f01bf08b70ac45"
             coEvery { BiliHttpApi.updateWbi() } just Runs
 
-            val builder = io.ktor.client.request.HttpRequestBuilder()
+            val builder =
+                io.ktor.client.request
+                    .HttpRequestBuilder()
             builder.method = HttpMethod.Get
             builder.url.takeFrom("https://api.bilibili.com/x/web-interface/wbi/search")
             builder.parameter("keyword", "test")
@@ -168,7 +188,9 @@ class ApiSignTest {
                 subKey = "4932caff0ff746eab6f01bf08b70ac45"
             }
 
-            val builder = io.ktor.client.request.HttpRequestBuilder()
+            val builder =
+                io.ktor.client.request
+                    .HttpRequestBuilder()
             builder.method = HttpMethod.Get
             builder.url.takeFrom("https://api.bilibili.com/x/web-interface/wbi/search")
             builder.parameter("keyword", "test")
@@ -186,7 +208,9 @@ class ApiSignTest {
             every { BiliHttpApi.wbiSubKey } returns "4932caff0ff746eab6f01bf08b70ac45"
             coEvery { BiliHttpApi.updateWbi() } just Runs
 
-            val builder = io.ktor.client.request.HttpRequestBuilder()
+            val builder =
+                io.ktor.client.request
+                    .HttpRequestBuilder()
             builder.method = HttpMethod.Get
             builder.url.takeFrom("https://api.bilibili.com/x/web-interface/wbi/search")
             builder.parameter("keyword", "test")
@@ -203,7 +227,9 @@ class ApiSignTest {
             every { BiliHttpApi.wbiSubKey } returns "4932caff0ff746eab6f01bf08b70ac45"
             coEvery { BiliHttpApi.updateWbi() } just Runs
 
-            val builder = io.ktor.client.request.HttpRequestBuilder()
+            val builder =
+                io.ktor.client.request
+                    .HttpRequestBuilder()
             builder.method = HttpMethod.Get
             builder.url.takeFrom("https://api.bilibili.com/x/web-interface/wbi/search")
             builder.parameter("keyword", "test!'()*")
@@ -373,24 +399,30 @@ class ApiSignTest {
 
     private fun invokeGetMixinKey(orig: String): String {
         val method =
-            Class.forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
-                .declaredMethods.first { it.name == "getMixinKey" }
+            Class
+                .forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
+                .declaredMethods
+                .first { it.name == "getMixinKey" }
         method.isAccessible = true
         return method.invoke(null, orig) as String
     }
 
     private fun invokeMd5(input: String): String {
         val method =
-            Class.forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
-                .declaredMethods.first { it.name == "md5" }
+            Class
+                .forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
+                .declaredMethods
+                .first { it.name == "md5" }
         method.isAccessible = true
         return method.invoke(null, input) as String
     }
 
     private fun invokeToSortedQueryString(params: Map<String, String>): String {
         val method =
-            Class.forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
-                .declaredMethods.first { it.name == "toSortedQueryString" }
+            Class
+                .forName("dev.frost819.newbv.biliapi.http.util.ApiSignKt")
+                .declaredMethods
+                .first { it.name == "toSortedQueryString" }
         method.isAccessible = true
         return method.invoke(null, params) as String
     }

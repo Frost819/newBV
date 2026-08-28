@@ -89,10 +89,12 @@ class CrashUploader(
         if (!enabled || authToken.isBlank()) return
 
         val logDir = File(context.filesDir, CrashHandler.LOG_DIR)
-        val jsonFiles = logDir.listFiles { file ->
-            file.name.startsWith(CRASH_JSON_PREFIX) &&
-                file.name.endsWith(CRASH_JSON_SUFFIX)
-        }?.sortedBy { it.lastModified() } ?: return
+        val jsonFiles =
+            logDir
+                .listFiles { file ->
+                    file.name.startsWith(CRASH_JSON_PREFIX) &&
+                        file.name.endsWith(CRASH_JSON_SUFFIX)
+                }?.sortedBy { it.lastModified() } ?: return
 
         if (jsonFiles.isEmpty()) return
 
@@ -197,14 +199,15 @@ class CrashUploader(
         var connection: HttpURLConnection? = null
         return try {
             val url = URL("$WORKER_URL$UPLOAD_PATH")
-            connection = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = UPLOAD_TIMEOUT_MS
-                readTimeout = UPLOAD_TIMEOUT_MS
-                doOutput = true
-                setRequestProperty("Authorization", "Bearer $authToken")
-                setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            }
+            connection =
+                (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = UPLOAD_TIMEOUT_MS
+                    readTimeout = UPLOAD_TIMEOUT_MS
+                    doOutput = true
+                    setRequestProperty("Authorization", "Bearer $authToken")
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
 
             connection.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
 

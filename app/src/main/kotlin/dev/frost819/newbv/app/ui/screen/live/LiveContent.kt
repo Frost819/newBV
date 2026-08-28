@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -85,11 +84,16 @@ fun LiveContent(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .collect { index ->
-                if (index != null && index >= state.recommendItems.size + 2 - 4 &&
-                    state.recommendHasMore && !state.recommendLoading
+                if (index != null &&
+                    index >= state.recommendItems.size + 2 - 4 &&
+                    state.recommendHasMore &&
+                    !state.recommendLoading
                 ) {
                     viewModel.loadMoreRecommend()
                 }
@@ -97,17 +101,18 @@ fun LiveContent(
     }
 
     TvLazyVerticalGrid(
-        modifier = Modifier
-            .fillMaxSize()
-            .onPreviewKeyEvent { event ->
-                if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                    viewModel.loadFollowLive()
-                    viewModel.loadAreaList()
-                    viewModel.loadRecommend()
-                    return@onPreviewKeyEvent true
-                }
-                false
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .onPreviewKeyEvent { event ->
+                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                        viewModel.loadFollowLive()
+                        viewModel.loadAreaList()
+                        viewModel.loadRecommend()
+                        return@onPreviewKeyEvent true
+                    }
+                    false
+                },
         state = gridState,
         columns = GridCells.Fixed(4),
         contentPadding = PaddingValues(24.dp),
@@ -250,15 +255,17 @@ private fun FollowHeader(
         )
         Spacer(Modifier.width(12.dp))
         Surface(
-            modifier = Modifier
-                .focusRequester(focusRequester)
-                .focusSaverItem(focusSaver, "follow_more"),
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester)
+                    .focusSaverItem(focusSaver, "follow_more"),
             onClick = onMoreClick,
             shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-            colors = ClickableSurfaceDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
+            colors =
+                ClickableSurfaceDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -297,7 +304,7 @@ private fun AreaSection(
             text = "推荐分区",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = 2.dp) // 标题稍微往右缩进对齐
+            modifier = Modifier.padding(start = 2.dp), // 标题稍微往右缩进对齐
         )
         Spacer(Modifier.height(10.dp))
 
@@ -332,21 +339,25 @@ private fun AreaMiniCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier
-            .size(100.dp)
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(100.dp)
+                .touchClickable(onClick = onClick),
         shape = CardDefaults.shape(MaterialTheme.shapes.medium),
-        border = CardDefaults.border(
-            focusedBorder = Border(
-                border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.border),
-                shape = MaterialTheme.shapes.medium,
+        border =
+            CardDefaults.border(
+                focusedBorder =
+                    Border(
+                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.border),
+                        shape = MaterialTheme.shapes.medium,
+                    ),
             ),
-        ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -359,12 +370,13 @@ private fun AreaMiniCard(
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            MaterialTheme.colorScheme.secondaryContainer,
-                            MaterialTheme.shapes.small,
-                        ),
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .background(
+                                MaterialTheme.colorScheme.secondaryContainer,
+                                MaterialTheme.shapes.small,
+                            ),
                 )
             }
             Spacer(Modifier.height(6.dp))

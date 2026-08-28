@@ -35,9 +35,10 @@ fun Long.toSmartDate(timeZone: TimeZone = TimeZone.getDefault()): String? {
             }
 
         // 线程安全的日期格式化
-        return SimpleDateFormat(pattern, Locale.CHINESE).apply {
-            this.timeZone = timeZone
-        }.format(cal.time)
+        return SimpleDateFormat(pattern, Locale.CHINESE)
+            .apply {
+                this.timeZone = timeZone
+            }.format(cal.time)
     } catch (e: Exception) {
         return null
     }

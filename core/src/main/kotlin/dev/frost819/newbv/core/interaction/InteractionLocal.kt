@@ -2,7 +2,6 @@ package dev.frost819.newbv.core.interaction
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 
@@ -15,9 +14,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
  *
  * 默认值为 `null`，未注入时 [currentInputMethod] 回退到 [InputMethod.DPad]。
  */
-val LocalInteractionTracker = staticCompositionLocalOf<InteractionTracker?> {
-    null
-}
+val LocalInteractionTracker =
+    staticCompositionLocalOf<InteractionTracker?> {
+        null
+    }
 
 /**
  * 在 Composable 中获取当前 [InputMethod]。
@@ -40,6 +40,4 @@ fun currentInputMethod(): InputMethod {
  * 触屏模式下隐藏焦点边框。
  */
 @Composable
-fun shouldShowFocusVisual(): Boolean {
-    return currentInputMethod() == InputMethod.DPad
-}
+fun shouldShowFocusVisual(): Boolean = currentInputMethod() == InputMethod.DPad

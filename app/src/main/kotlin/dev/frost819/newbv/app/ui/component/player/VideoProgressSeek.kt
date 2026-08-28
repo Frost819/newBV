@@ -43,10 +43,11 @@ fun VideoProgressSeek(
     val trackWidthDp = if (isPersistentSeek) 2.dp else 8.dp
 
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(trackWidthDp)
-            .clip(RoundedCornerShape(50)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(trackWidthDp)
+                .clip(RoundedCornerShape(50)),
     ) {
         val trackWidthPx = trackWidthDp.toPx()
 

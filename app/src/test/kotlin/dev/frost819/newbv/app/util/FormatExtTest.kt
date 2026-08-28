@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证播放数格式化、时间格式化、HTML 标签去除。
  */
 class FormatExtTest {
-
     @Test
     fun `toWanString returns empty for null`() {
         assertThat((null as Int?).toWanString()).isEmpty()

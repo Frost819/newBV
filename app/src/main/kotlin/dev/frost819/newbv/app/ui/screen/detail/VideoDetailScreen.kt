@@ -6,24 +6,22 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
-import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -33,7 +31,6 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material.icons.outlined.PersonAdd
-import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.rounded.Paid
@@ -54,22 +51,19 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -84,10 +78,11 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.LoadingTip
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
 import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -98,19 +93,19 @@ import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
-import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiEffect
-import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.app.viewmodel.detail.VideoDetailUiState
+import dev.frost819.newbv.app.viewmodel.detail.VideoDetailViewModel
 import dev.frost819.newbv.biliapi.entity.FavoriteFolderMetadata
-import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.Tag
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
+import dev.frost819.newbv.core.focus.touchClickable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -219,24 +214,29 @@ private fun ErrorScreen(
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Surface(
-                modifier = Modifier
-                    .focusRequester(focusRequester)
-                    .touchClickable(onClick = onRetry),
+                modifier =
+                    Modifier
+                        .focusRequester(focusRequester)
+                        .touchClickable(onClick = onRetry),
                 onClick = onRetry,
                 shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
-                border = ClickableSurfaceDefaults.border(
-                    focusedBorder = Border(
-                        border = androidx.compose.foundation.BorderStroke(
-                            2.dp,
-                            MaterialTheme.colorScheme.border,
-                        ),
-                        shape = MaterialTheme.shapes.medium,
+                border =
+                    ClickableSurfaceDefaults.border(
+                        focusedBorder =
+                            Border(
+                                border =
+                                    androidx.compose.foundation.BorderStroke(
+                                        2.dp,
+                                        MaterialTheme.colorScheme.border,
+                                    ),
+                                shape = MaterialTheme.shapes.medium,
+                            ),
                     ),
-                ),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    ClickableSurfaceDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -271,10 +271,11 @@ private fun VideoDetailContent(
     var showCommentsDialog by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(bottom = 64.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(bottom = 64.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         VideoInfoHeader(
@@ -315,7 +316,9 @@ private fun VideoDetailContent(
                 }
             },
             onClickUp = {
-                navController.navigate(UserSpaceRoute(mid = detail.author.mid, name = detail.author.name, face = detail.author.face))
+                navController.navigate(
+                    UserSpaceRoute(mid = detail.author.mid, name = detail.author.name, face = detail.author.face),
+                )
             },
             focusSaver = focusSaver,
         )
@@ -389,11 +392,11 @@ private fun VideoDetailContent(
                     val epid = relatedVideo.epid
                     if (relatedVideo.jumpToSeason && epid != null) {
                         navController.navigate(
-                            PgcFeatureRoute(seasonId = epid.toLong())
+                            PgcFeatureRoute(seasonId = epid.toLong()),
                         )
                     } else {
                         navController.navigate(
-                            VideoDetailRoute(aid = relatedVideo.aid)
+                            VideoDetailRoute(aid = relatedVideo.aid),
                         )
                     }
                 },
@@ -495,15 +498,15 @@ private fun FavoriteFolderDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
-            modifier = Modifier
-                .focusRequester(defaultFocusRequester)
-                .onGloballyPositioned {
-                    runCatching { defaultFocusRequester.requestFocus() }
-                }
-                .width(500.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .focusRequester(defaultFocusRequester)
+                    .onGloballyPositioned {
+                        runCatching { defaultFocusRequester.requestFocus() }
+                    }.width(500.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(20.dp),
         ) {
             Column {
                 Text(
@@ -514,9 +517,10 @@ private fun FavoriteFolderDialog(
                 )
 
                 androidx.compose.foundation.layout.FlowRow(
-                    modifier = Modifier
-                        .heightIn(max = 300.dp)
-                        .verticalScroll(rememberScrollState()),
+                    modifier =
+                        Modifier
+                            .heightIn(max = 300.dp)
+                            .verticalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -532,16 +536,17 @@ private fun FavoriteFolderDialog(
                                 }
                                 onUpdate(selectedIds.toList())
                             },
-                            modifier = Modifier.touchClickable(
-                                onClick = {
-                                    if (selectedIds.contains(folder.id)) {
-                                        selectedIds.remove(folder.id)
-                                    } else {
-                                        selectedIds.add(folder.id)
-                                    }
-                                    onUpdate(selectedIds.toList())
-                                },
-                            ),
+                            modifier =
+                                Modifier.touchClickable(
+                                    onClick = {
+                                        if (selectedIds.contains(folder.id)) {
+                                            selectedIds.remove(folder.id)
+                                        } else {
+                                            selectedIds.add(folder.id)
+                                        }
+                                        onUpdate(selectedIds.toList())
+                                    },
+                                ),
                         ) {
                             Text(
                                 text = folder.title,
@@ -590,29 +595,34 @@ private fun VideoInfoHeader(
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 50.dp, vertical = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp, vertical = 16.dp),
     ) {
         Card(
-            modifier = Modifier
-                .focusRequester(coverFocusRequester)
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
-                .weight(3f)
-                .fillMaxHeight()
-                .aspectRatio(1.6f)
-                .touchClickable(onClick = onPlayVideo),
+            modifier =
+                Modifier
+                    .focusRequester(coverFocusRequester)
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
+                    .weight(3f)
+                    .fillMaxHeight()
+                    .aspectRatio(1.6f)
+                    .touchClickable(onClick = onPlayVideo),
             onClick = onPlayVideo,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        3.dp,
-                        MaterialTheme.colorScheme.border,
-                    ),
-                    shape = MaterialTheme.shapes.large,
+            border =
+                CardDefaults.border(
+                    focusedBorder =
+                        Border(
+                            border =
+                                androidx.compose.foundation.BorderStroke(
+                                    3.dp,
+                                    MaterialTheme.colorScheme.border,
+                                ),
+                            shape = MaterialTheme.shapes.large,
+                        ),
                 ),
-            ),
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
@@ -625,9 +635,10 @@ private fun VideoInfoHeader(
         Spacer(modifier = Modifier.width(24.dp))
 
         Column(
-            modifier = Modifier
-                .weight(7f)
-                .fillMaxHeight(),
+            modifier =
+                Modifier
+                    .weight(7f)
+                    .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -662,37 +673,44 @@ private fun VideoInfoHeader(
                 ) {
                     Surface(
                         onClick = onClickUp,
-                        modifier = Modifier
-                            .focusRequester(upFocusRequester)
-                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") }
-                            .touchClickable(onClick = onClickUp),
+                        modifier =
+                            Modifier
+                                .focusRequester(upFocusRequester)
+                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") }
+                                .touchClickable(onClick = onClickUp),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                        border = ClickableSurfaceDefaults.border(
-                            focusedBorder = Border(
-                                border = androidx.compose.foundation.BorderStroke(
-                                    2.dp,
-                                    MaterialTheme.colorScheme.border,
-                                ),
-                                shape = MaterialTheme.shapes.small,
+                        border =
+                            ClickableSurfaceDefaults.border(
+                                focusedBorder =
+                                    Border(
+                                        border =
+                                            androidx.compose.foundation.BorderStroke(
+                                                2.dp,
+                                                MaterialTheme.colorScheme.border,
+                                            ),
+                                        shape = MaterialTheme.shapes.small,
+                                    ),
                             ),
-                        ),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                        colors =
+                            ClickableSurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Row(
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier =
+                                Modifier
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             AsyncImage(
                                 model = detail.author.face,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
+                                modifier =
+                                    Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
                             )
                             Text(
@@ -707,9 +725,10 @@ private fun VideoInfoHeader(
                         icon = if (isFollowing) Icons.Rounded.PersonAdd else Icons.Outlined.PersonAdd,
                         highlighted = isFollowing,
                         onClick = onToggleFollow,
-                        modifier = Modifier
-                            .focusRequester(followFocusRequester)
-                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
+                        modifier =
+                            Modifier
+                                .focusRequester(followFocusRequester)
+                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
                     )
                 }
             }
@@ -723,10 +742,11 @@ private fun VideoInfoHeader(
                         val tagKey = "tag_${tag.id}"
                         SuggestionChip(
                             onClick = { onClickTag(tag) },
-                            modifier = Modifier
-                                .focusRequester(focusSaver.focusRequesterFor(tagKey))
-                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) }
-                                .touchClickable(onClick = { onClickTag(tag) }),
+                            modifier =
+                                Modifier
+                                    .focusRequester(focusSaver.focusRequesterFor(tagKey))
+                                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) }
+                                    .touchClickable(onClick = { onClickTag(tag) }),
                         ) {
                             Text(
                                 text = tag.name,
@@ -748,36 +768,40 @@ private fun VideoInfoHeader(
                     highlighted = isLiked,
                     onClick = onToggleLike,
                     onLongClick = onOneClickTriple,
-                    modifier = Modifier
-                        .focusRequester(likeFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("like") },
+                    modifier =
+                        Modifier
+                            .focusRequester(likeFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("like") },
                 )
                 ActionButton(
                     text = "投币",
                     icon = if (isCoined) Icons.Rounded.Paid else Icons.Outlined.Paid,
                     highlighted = isCoined,
                     onClick = onSendCoin,
-                    modifier = Modifier
-                        .focusRequester(coinFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("coin") },
+                    modifier =
+                        Modifier
+                            .focusRequester(coinFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("coin") },
                 )
                 ActionButton(
                     text = "收藏",
                     icon = if (isFavorite) Icons.Rounded.Star else Icons.Outlined.StarBorder,
                     highlighted = isFavorite,
                     onClick = onToggleFavorite,
-                    modifier = Modifier
-                        .focusRequester(favoriteFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("favorite") },
+                    modifier =
+                        Modifier
+                            .focusRequester(favoriteFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("favorite") },
                 )
                 ActionButton(
                     text = "评论",
                     icon = Icons.AutoMirrored.Outlined.Comment,
                     highlighted = false,
                     onClick = onShowComments,
-                    modifier = Modifier
-                        .focusRequester(commentsFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("comments") },
+                    modifier =
+                        Modifier
+                            .focusRequester(commentsFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("comments") },
                 )
             }
         }
@@ -812,35 +836,38 @@ private fun ActionButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .then(
-                if (highlighted) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.border,
-                        MaterialTheme.shapes.small,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .touchClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier =
+            modifier
+                .clip(MaterialTheme.shapes.small)
+                .then(
+                    if (highlighted) {
+                        Modifier.border(
+                            2.dp,
+                            MaterialTheme.colorScheme.border,
+                            MaterialTheme.shapes.small,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).touchClickable(onClick = onClick, onLongClick = onLongClick),
         onClick = onClick,
         onLongClick = onLongClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (highlighted) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-            contentColor = if (highlighted) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -851,16 +878,22 @@ private fun ActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (highlighted) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }
@@ -875,33 +908,39 @@ private fun VideoDescription(
     val focusRequester = focusSaver.focusRequesterFor("description")
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 50.dp)
-            .focusRequester(focusRequester)
-            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") }
-            .touchClickable(onClick = { expanded = !expanded }),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                border = androidx.compose.foundation.BorderStroke(
-                    2.dp,
-                    MaterialTheme.colorScheme.border,
-                ),
-                shape = MaterialTheme.shapes.medium,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
+                .focusRequester(focusRequester)
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") }
+                .touchClickable(onClick = { expanded = !expanded }),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface,
             ),
-        ),
+        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
+        border =
+            ClickableSurfaceDefaults.border(
+                focusedBorder =
+                    Border(
+                        border =
+                            androidx.compose.foundation.BorderStroke(
+                                2.dp,
+                                MaterialTheme.colorScheme.border,
+                            ),
+                        shape = MaterialTheme.shapes.medium,
+                    ),
+            ),
         onClick = { expanded = !expanded },
     ) {
         Text(
-            modifier = Modifier
-                .padding(16.dp)
-                .animateContentSize(),
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .animateContentSize(),
             text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -940,9 +979,10 @@ private fun VideoPartRow(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 50.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -956,17 +996,19 @@ private fun VideoPartRow(
                     onClick = onShowPartListDialog,
                     modifier = Modifier.touchClickable(onClick = onShowPartListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                    colors = ClickableSurfaceDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+                    colors =
+                        ClickableSurfaceDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Apps,
                         contentDescription = "网格列表",
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .size(20.dp),
+                        modifier =
+                            Modifier
+                                .padding(4.dp)
+                                .size(20.dp),
                     )
                 }
             }
@@ -977,10 +1019,11 @@ private fun VideoPartRow(
                         onClick = { onClick(lastPage) },
                         modifier = Modifier.touchClickable(onClick = { onClick(lastPage) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                        colors =
+                            ClickableSurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -1004,11 +1047,14 @@ private fun VideoPartRow(
         }
         val focusRequester = focusSaver.focusRequesterFor("parts")
         LazyRow(
-            modifier = Modifier
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("parts") }
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("parts") }
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
+            contentPadding =
+                androidx.compose.foundation.layout
+                    .PaddingValues(horizontal = 50.dp),
         ) {
             items(pages) { page ->
                 val played = if (page.cid == lastPlayedCid) lastPlayedTime else 0
@@ -1046,47 +1092,51 @@ private fun PartButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier
-            .width(200.dp)
-            .height(64.dp)
-            .clip(MaterialTheme.shapes.small)
-            .then(
-                if (isCurrent) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.border,
-                        MaterialTheme.shapes.small,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .width(200.dp)
+                .height(64.dp)
+                .clip(MaterialTheme.shapes.small)
+                .then(
+                    if (isCurrent) {
+                        Modifier.border(
+                            2.dp,
+                            MaterialTheme.colorScheme.border,
+                            MaterialTheme.shapes.small,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (isCurrent) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (isCurrent) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (played > 0 && duration > 0) {
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .fillMaxHeight()
-                        .fillMaxWidth((played.toFloat() / duration.toFloat()).coerceIn(0f, 1f))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxHeight()
+                            .fillMaxWidth((played.toFloat() / duration.toFloat()).coerceIn(0f, 1f))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
                 )
             }
             Text(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1126,9 +1176,10 @@ private fun VideoUgcSeasonRow(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 50.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -1142,17 +1193,19 @@ private fun VideoUgcSeasonRow(
                     onClick = onShowListDialog,
                     modifier = Modifier.touchClickable(onClick = onShowListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                    colors = ClickableSurfaceDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+                    colors =
+                        ClickableSurfaceDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Apps,
                         contentDescription = "网格列表",
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .size(20.dp),
+                        modifier =
+                            Modifier
+                                .padding(4.dp)
+                                .size(20.dp),
                     )
                 }
             }
@@ -1163,10 +1216,11 @@ private fun VideoUgcSeasonRow(
                         onClick = { onClick(lastEpisode) },
                         modifier = Modifier.touchClickable(onClick = { onClick(lastEpisode) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                        colors =
+                            ClickableSurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -1190,11 +1244,14 @@ private fun VideoUgcSeasonRow(
         }
         val focusRequester = focusSaver.focusRequesterFor("seasons")
         LazyRow(
-            modifier = Modifier
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
+            contentPadding =
+                androidx.compose.foundation.layout
+                    .PaddingValues(horizontal = 50.dp),
         ) {
             items(episodes) { episode ->
                 val played = if (episode.cid == lastPlayedCid) lastPlayedTime else 0
@@ -1227,43 +1284,57 @@ private fun RelatedVideoRow(
         Text(
             text = "相关视频",
             style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 50.dp),
         )
         val focusRequester = focusSaver.focusRequesterFor("related")
         LazyRow(
-            modifier = Modifier
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("related") }
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("related") }
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 50.dp),
+            contentPadding =
+                androidx.compose.foundation.layout
+                    .PaddingValues(horizontal = 50.dp),
         ) {
             items(videos) { video ->
-                val cardData = VideoCardData(
-                    avid = video.aid,
-                    cid = video.cid,
-                    title = video.title,
-                    cover = video.cover,
-                    upName = video.author?.name ?: "",
-                    upMid = video.author?.mid,
-                    playString = video.view.toWanString(),
-                    danmakuString = video.danmaku.toWanString(),
-                    timeString = video.duration.formatHourMinSec(),
-                )
+                val cardData =
+                    VideoCardData(
+                        avid = video.aid,
+                        cid = video.cid,
+                        title = video.title,
+                        cover = video.cover,
+                        upName = video.author?.name ?: "",
+                        upMid = video.author?.mid,
+                        playString = video.view.toWanString(),
+                        danmakuString = video.danmaku.toWanString(),
+                        timeString = video.duration.formatHourMinSec(),
+                    )
                 SmallVideoCard(
-                    modifier = if (video == videos.first()) {
-                        Modifier
-                            .width(200.dp)
-                            .focusRequester(focusRequester)
-                    } else {
-                        Modifier.width(200.dp)
-                    },
+                    modifier =
+                        if (video == videos.first()) {
+                            Modifier
+                                .width(200.dp)
+                                .focusRequester(focusRequester)
+                        } else {
+                            Modifier.width(200.dp)
+                        },
                     data = cardData,
                     onClick = { onClick(video) },
                     onGoToDetailPage = { onClick(video) },
-                    onGoToUpPage = video.author?.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid, name = video.author?.name ?: "", face = video.author?.face)) }
-                    },
+                    onGoToUpPage =
+                        video.author?.mid?.let { mid ->
+                            {
+                                navController.navigate(
+                                    UserSpaceRoute(
+                                        mid = mid,
+                                        name = video.author?.name ?: "",
+                                        face = video.author?.face,
+                                    ),
+                                )
+                            }
+                        },
                     onAddWatchLater = { watchLaterViewModel.addToView(aid = video.aid) },
                 )
             }
@@ -1305,50 +1376,58 @@ private fun VideoPartListDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-        ),
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+            ),
     ) {
         Box(
-            modifier = Modifier
-                .focusRequester(dialogFocusRequester)
-                .size(width = 600.dp, height = 330.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(MaterialTheme.colorScheme.surface),
+            modifier =
+                Modifier
+                    .focusRequester(dialogFocusRequester)
+                    .size(width = 600.dp, height = 330.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surface),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (pageCount > 1) {
                     TabRow(
-                        modifier = Modifier
-                            .focusRestorer(tabFocusRequester)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .focusRestorer(tabFocusRequester)
+                                .fillMaxWidth(),
                         selectedTabIndex = selectedTab,
                     ) {
                         repeat(pageCount) { index ->
                             val start = index * PART_LIST_DIALOG_PAGE_SIZE + 1
-                            val end = minOf(
-                                (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
-                                pages.size,
-                            )
+                            val end =
+                                minOf(
+                                    (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
+                                    pages.size,
+                                )
                             Tab(
                                 selected = selectedTab == index,
                                 onFocus = { selectedTab = index },
                                 onClick = { selectedTab = index },
-                                modifier = (if (index == selectedTab) {
-                                    Modifier.focusRequester(tabFocusRequester)
-                                } else {
-                                    Modifier
-                                }).touchClickable(onClick = { selectedTab = index }),
+                                modifier =
+                                    (
+                                        if (index == selectedTab) {
+                                            Modifier.focusRequester(tabFocusRequester)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ).touchClickable(onClick = { selectedTab = index }),
                             ) {
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     text = "P$start-$end",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = if (selectedTab == index) {
-                                        MaterialTheme.colorScheme.border
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
+                                    color =
+                                        if (selectedTab == index) {
+                                            MaterialTheme.colorScheme.border
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
                                 )
                             }
                         }
@@ -1358,9 +1437,10 @@ private fun VideoPartListDialog(
                 val end = minOf(start + PART_LIST_DIALOG_PAGE_SIZE, pages.size)
                 val pageSlice = pages.subList(start, end)
                 TvLazyVerticalGrid(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1415,58 +1495,67 @@ private fun VideoEpisodeListDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-        ),
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+            ),
     ) {
         Box(
-            modifier = Modifier
-                .focusRequester(dialogFocusRequester)
-                .size(width = 600.dp, height = 330.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(MaterialTheme.colorScheme.surface),
+            modifier =
+                Modifier
+                    .focusRequester(dialogFocusRequester)
+                    .size(width = 600.dp, height = 330.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surface),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (pageCount > 1) {
                     TabRow(
-                        modifier = Modifier
-                            .focusRestorer(tabFocusRequester)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .focusRestorer(tabFocusRequester)
+                                .fillMaxWidth(),
                         selectedTabIndex = selectedTab,
                     ) {
                         repeat(pageCount) { index ->
                             val start = index * PART_LIST_DIALOG_PAGE_SIZE + 1
-                            val end = minOf(
-                                (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
-                                episodes.size,
-                            )
+                            val end =
+                                minOf(
+                                    (index + 1) * PART_LIST_DIALOG_PAGE_SIZE,
+                                    episodes.size,
+                                )
                             Tab(
                                 selected = selectedTab == index,
                                 onFocus = { selectedTab = index },
                                 onClick = { selectedTab = index },
-                                modifier = (if (index == selectedTab) {
-                                    Modifier.focusRequester(tabFocusRequester)
-                                } else {
-                                    Modifier
-                                }).touchClickable(onClick = { selectedTab = index }),
+                                modifier =
+                                    (
+                                        if (index == selectedTab) {
+                                            Modifier.focusRequester(tabFocusRequester)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ).touchClickable(onClick = { selectedTab = index }),
                             ) {
                                 Text(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     text = "$start-$end",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = if (selectedTab == index) {
-                                        MaterialTheme.colorScheme.border
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
+                                    color =
+                                        if (selectedTab == index) {
+                                            MaterialTheme.colorScheme.border
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
                                 )
                             }
                         }
@@ -1476,9 +1565,10 @@ private fun VideoEpisodeListDialog(
                 val end = minOf(start + PART_LIST_DIALOG_PAGE_SIZE, episodes.size)
                 val episodeSlice = episodes.subList(start, end)
                 TvLazyVerticalGrid(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),

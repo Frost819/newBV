@@ -26,10 +26,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
@@ -102,10 +98,11 @@ fun MenuController(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(focusRequester)
-            .onFocusChanged {},
+        modifier =
+            modifier
+                .fillMaxSize()
+                .focusRequester(focusRequester)
+                .onFocusChanged {},
         contentAlignment = Alignment.CenterEnd,
     ) {
         AnimatedVisibility(
@@ -163,9 +160,10 @@ private fun MenuControllerContent(
 
     Surface(
         modifier = Modifier.fillMaxHeight(),
-        colors = SurfaceDefaults.colors(
-            containerColor = Color.Black.copy(alpha = 0.5f),
-        ),
+        colors =
+            SurfaceDefaults.colors(
+                containerColor = Color.Black.copy(alpha = 0.5f),
+            ),
     ) {
         CompositionLocalProvider(
             LocalMenuFocusStateData provides MenuFocusStateData(focusState = focusState),
@@ -195,16 +193,17 @@ private fun MenuControllerContent(
                     onSubtitleBottomPadding = onSubtitleBottomPadding,
                 )
                 MenuNavList(
-                    modifier = Modifier.onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp) {
-                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                                return@onPreviewKeyEvent false
+                    modifier =
+                        Modifier.onPreviewKeyEvent {
+                            if (it.type == KeyEventType.KeyUp) {
+                                if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                                    return@onPreviewKeyEvent false
+                                }
+                                return@onPreviewKeyEvent true
                             }
-                            return@onPreviewKeyEvent true
-                        }
-                        if (it.key == Key.DirectionLeft) focusState = MenuFocusState.Menu
-                        false
-                    },
+                            if (it.key == Key.DirectionLeft) focusState = MenuFocusState.Menu
+                            false
+                        },
                     selectedMenu = selectedNavItem,
                     onSelectedChanged = { selectedNavItem = it },
                     isFocusing = focusState == MenuFocusState.MenuNav,
@@ -241,32 +240,36 @@ private fun MenuList(
 ) {
     Box(contentAlignment = Alignment.Center) {
         when (selectedNavMenu) {
-            VideoPlayerMenuNavItem.Picture -> PictureMenuList(
-                availableQualityIds = uiState.availableQuality.keys.toList(),
-                availableAudio = uiState.availableAudio,
-                availableVideoCodec = uiState.availableVideoCodec,
-                currentResolution = uiState.mediaProfileState.qualityId,
-                currentVideoCodec = uiState.mediaProfileState.videoCodec,
-                currentVideoAspectRatio = uiState.aspectRatio,
-                currentAudio = uiState.mediaProfileState.audio,
-                onResolutionChange = onResolutionChange,
-                onCodecChange = onCodecChange,
-                onAspectRatioChange = onAspectRatioChange,
-                onAudioChange = onAudioChange,
-                onFocusStateChange = onFocusStateChange,
-            )
+            VideoPlayerMenuNavItem.Picture ->
+                PictureMenuList(
+                    availableQualityIds = uiState.availableQuality.keys.toList(),
+                    availableAudio = uiState.availableAudio,
+                    availableVideoCodec = uiState.availableVideoCodec,
+                    currentResolution = uiState.mediaProfileState.qualityId,
+                    currentVideoCodec = uiState.mediaProfileState.videoCodec,
+                    currentVideoAspectRatio = uiState.aspectRatio,
+                    currentAudio = uiState.mediaProfileState.audio,
+                    onResolutionChange = onResolutionChange,
+                    onCodecChange = onCodecChange,
+                    onAspectRatioChange = onAspectRatioChange,
+                    onAudioChange = onAudioChange,
+                    onFocusStateChange = onFocusStateChange,
+                )
 
-            VideoPlayerMenuNavItem.PlaySpeed -> PlaySpeedMenuList(
-                currentSelectedPlaySpeedItem = PlaySpeedItem.fromSpeed(uiState.playSpeed),
-                onPlaySpeedChange = onPlaySpeedChange,
-                onFocusStateChange = onFocusStateChange,
-            )
+            VideoPlayerMenuNavItem.PlaySpeed ->
+                PlaySpeedMenuList(
+                    currentSelectedPlaySpeedItem = PlaySpeedItem.fromSpeed(uiState.playSpeed),
+                    onPlaySpeedChange = onPlaySpeedChange,
+                    onFocusStateChange = onFocusStateChange,
+                )
 
             VideoPlayerMenuNavItem.Danmaku -> {
                 // 将 danmaku 模块 DanmakuType 映射为 data 模块 DanmakuType
-                val dataTypes = uiState.danmakuState.enabledTypes.mapNotNull { entity ->
-                    runCatching { dev.frost819.newbv.data.datastore.DanmakuType.entries[entity.ordinal] }.getOrNull()
-                }
+                val dataTypes =
+                    uiState.danmakuState.enabledTypes.mapNotNull { entity ->
+                        runCatching { dev.frost819.newbv.data.datastore.DanmakuType.entries[entity.ordinal] }
+                            .getOrNull()
+                    }
                 DanmakuMenuList(
                     currentEnabledTypes = dataTypes,
                     currentScale = uiState.danmakuState.scale,
@@ -285,21 +288,22 @@ private fun MenuList(
             }
 
             VideoPlayerMenuNavItem.ClosedCaption -> {
-                val subtitleTracks = buildList {
-                    add(
-                        Subtitle(
-                            id = -1,
-                            lang = "",
-                            langDoc = "关闭",
-                            url = "",
-                            type = SubtitleType.CC,
-                            aiType = SubtitleAiType.Normal,
-                            aiStatus = SubtitleAiStatus.None,
-                        ),
-                    )
-                    addAll(uiState.subtitleList)
-                    sortBy { it.id }
-                }
+                val subtitleTracks =
+                    buildList {
+                        add(
+                            Subtitle(
+                                id = -1,
+                                lang = "",
+                                langDoc = "关闭",
+                                url = "",
+                                type = SubtitleType.CC,
+                                aiType = SubtitleAiType.Normal,
+                                aiStatus = SubtitleAiStatus.None,
+                            ),
+                        )
+                        addAll(uiState.subtitleList)
+                        sortBy { it.id }
+                    }
                 ClosedCaptionMenuList(
                     currentSubtitleId = uiState.subtitleId,
                     availableSubtitleTracks = subtitleTracks,

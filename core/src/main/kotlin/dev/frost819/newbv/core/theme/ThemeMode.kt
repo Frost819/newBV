@@ -8,7 +8,9 @@ package dev.frost819.newbv.core.theme
  *
  * @property displayName 用于设置页显示的名称。
  */
-enum class ThemeMode(val displayName: String) {
+enum class ThemeMode(
+    val displayName: String,
+) {
     /** 跟随系统暗色模式。 */
     FollowSystem("跟随系统"),
 
@@ -16,7 +18,8 @@ enum class ThemeMode(val displayName: String) {
     Dark("深色"),
 
     /** 强制浅色。 */
-    Light("浅色");
+    Light("浅色"),
+    ;
 
     /**
      * 根据当前 [ThemeMode] 与系统是否深色，计算最终是否使用深色主题。
@@ -24,11 +27,12 @@ enum class ThemeMode(val displayName: String) {
      * @param systemIsDark 系统当前是否处于深色模式。
      * @return `true` 表示应使用深色主题。
      */
-    fun isDark(systemIsDark: Boolean): Boolean = when (this) {
-        FollowSystem -> systemIsDark
-        Dark -> true
-        Light -> false
-    }
+    fun isDark(systemIsDark: Boolean): Boolean =
+        when (this) {
+            FollowSystem -> systemIsDark
+            Dark -> true
+            Light -> false
+        }
 
     companion object {
         /**
@@ -36,7 +40,6 @@ enum class ThemeMode(val displayName: String) {
          *
          * @param ordinal 序号，若越界则返回 [FollowSystem]。
          */
-        fun fromOrdinal(ordinal: Int): ThemeMode =
-            entries.getOrElse(ordinal) { FollowSystem }
+        fun fromOrdinal(ordinal: Int): ThemeMode = entries.getOrElse(ordinal) { FollowSystem }
     }
 }

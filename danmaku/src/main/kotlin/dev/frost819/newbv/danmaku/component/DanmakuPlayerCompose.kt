@@ -24,7 +24,7 @@ import com.kuaishou.akdanmaku.ui.DanmakuView
 @Composable
 fun DanmakuPlayerCompose(
     modifier: Modifier = Modifier,
-    danmakuPlayer: DanmakuPlayer?
+    danmakuPlayer: DanmakuPlayer?,
 ) {
     AndroidView(
         modifier = modifier.fillMaxSize(),
@@ -38,6 +38,6 @@ fun DanmakuPlayerCompose(
             if (danmakuView.danmakuPlayer === danmakuPlayer) {
                 danmakuView.danmakuPlayer = null
             }
-        }
+        },
     )
 }

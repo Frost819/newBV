@@ -38,7 +38,8 @@ data class AuthData(
          * @return 反序列化后的 [AuthData]。
          */
         fun fromJson(json: String): AuthData =
-            kotlinx.serialization.json.Json.decodeFromString(serializer(), json)
+            kotlinx.serialization.json.Json
+                .decodeFromString(serializer(), json)
 
         /**
          * 从当前 [Prefs] 构造 [AuthData]。
@@ -47,16 +48,17 @@ data class AuthData(
          *
          * @return 当前 Prefs 中的凭证。
          */
-        fun fromPrefs(): AuthData = AuthData(
-            uid = Prefs.uid,
-            uidCkMd5 = Prefs.uidCkMd5,
-            sid = Prefs.sid,
-            biliJct = Prefs.biliJct,
-            sessData = Prefs.sessData,
-            tokenExpiredDate = Prefs.tokenExpiredDate.time,
-            accessToken = Prefs.accessToken,
-            refreshToken = Prefs.refreshToken,
-        )
+        fun fromPrefs(): AuthData =
+            AuthData(
+                uid = Prefs.uid,
+                uidCkMd5 = Prefs.uidCkMd5,
+                sid = Prefs.sid,
+                biliJct = Prefs.biliJct,
+                sessData = Prefs.sessData,
+                tokenExpiredDate = Prefs.tokenExpiredDate.time,
+                accessToken = Prefs.accessToken,
+                refreshToken = Prefs.refreshToken,
+            )
     }
 
     /**
@@ -67,7 +69,8 @@ data class AuthData(
      * @return JSON 字符串。
      */
     fun toJson(): String =
-        kotlinx.serialization.json.Json.encodeToString(serializer(), this)
+        kotlinx.serialization.json.Json
+            .encodeToString(serializer(), this)
 
     /**
      * 将凭证写入 [Prefs]。

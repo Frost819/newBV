@@ -61,31 +61,33 @@ fun VideoShot(
 
         spriteFrame?.let { frame ->
             VideoShotImage(
-                modifier = Modifier
-                    .layout { measurable, constraints ->
-                        val placeable = measurable.measure(constraints)
+                modifier =
+                    Modifier
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(constraints)
 
-                        val containerWidthPx = constraints.maxWidth
-                        val imageWidthPx = placeable.width
-                        val coercedOffsetPx = coercedOffset.roundToPx()
+                            val containerWidthPx = constraints.maxWidth
+                            val imageWidthPx = placeable.width
+                            val coercedOffsetPx = coercedOffset.roundToPx()
 
-                        val xPosition = if (duration <= 0L) {
-                            0
-                        } else {
-                            val progress = position.toDouble() / duration.toDouble()
-                            val rawOffset = (-imageWidthPx / 2.0) + (containerWidthPx * progress)
+                            val xPosition =
+                                if (duration <= 0L) {
+                                    0
+                                } else {
+                                    val progress = position.toDouble() / duration.toDouble()
+                                    val rawOffset = (-imageWidthPx / 2.0) + (containerWidthPx * progress)
 
-                            val minOffset = coercedOffsetPx.toDouble()
-                            val maxOffset =
-                                (containerWidthPx - imageWidthPx - coercedOffsetPx).toDouble()
+                                    val minOffset = coercedOffsetPx.toDouble()
+                                    val maxOffset =
+                                        (containerWidthPx - imageWidthPx - coercedOffsetPx).toDouble()
 
-                            rawOffset.coerceIn(minOffset, maxOffset).toInt()
-                        }
+                                    rawOffset.coerceIn(minOffset, maxOffset).toInt()
+                                }
 
-                        layout(placeable.width, placeable.height) {
-                            placeable.placeRelative(x = xPosition, y = 0)
-                        }
-                    },
+                            layout(placeable.width, placeable.height) {
+                                placeable.placeRelative(x = xPosition, y = 0)
+                            }
+                        },
                 spriteFrame = frame,
             )
         }
@@ -109,22 +111,23 @@ fun VideoShotImage(
     val aspectRatio = spriteFrame.srcRect.width.toFloat() / spriteFrame.srcRect.height
 
     Spacer(
-        modifier = modifier
-            .height(100.dp)
-            .aspectRatio(aspectRatio)
-            .shadow(4.dp, MaterialTheme.shapes.large)
-            .clip(MaterialTheme.shapes.large)
-            .drawWithCache {
-                onDrawBehind {
-                    drawImage(
-                        image = spriteFrame.spriteSheet,
-                        srcOffset = spriteFrame.srcRect.topLeft,
-                        srcSize = spriteFrame.srcRect.size,
-                        dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
-                        filterQuality = FilterQuality.Low,
-                    )
-                }
-            },
+        modifier =
+            modifier
+                .height(100.dp)
+                .aspectRatio(aspectRatio)
+                .shadow(4.dp, MaterialTheme.shapes.large)
+                .clip(MaterialTheme.shapes.large)
+                .drawWithCache {
+                    onDrawBehind {
+                        drawImage(
+                            image = spriteFrame.spriteSheet,
+                            srcOffset = spriteFrame.srcRect.topLeft,
+                            srcSize = spriteFrame.srcRect.size,
+                            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
+                            filterQuality = FilterQuality.Low,
+                        )
+                    }
+                },
     )
 }
 
@@ -135,14 +138,15 @@ fun VideoShotImage(
 private fun VideoShotPreview() {
     MaterialTheme {
         VideoShot(
-            videoShot = VideoShot(
-                times = emptyList(),
-                imageCountX = 0,
-                imageCountY = 0,
-                imageWidth = 0,
-                imageHeight = 0,
-                images = emptyList(),
-            ),
+            videoShot =
+                VideoShot(
+                    times = emptyList(),
+                    imageCountX = 0,
+                    imageCountY = 0,
+                    imageWidth = 0,
+                    imageHeight = 0,
+                    images = emptyList(),
+                ),
             imageCache = VideoShotImageCache(),
             position = 234_000L,
             duration = 1234_000L,

@@ -10,7 +10,8 @@ import dev.frost819.newbv.player.factory.PlayerFactory
  * 创建 [ExoMediaPlayer] 实例，供 Hilt Module 注入或直接使用。
  */
 class ExoPlayerFactory : PlayerFactory<ExoMediaPlayer>() {
-    override fun create(context: Context, options: VideoPlayerOptions): ExoMediaPlayer {
-        return ExoMediaPlayer(context, options)
-    }
+    override fun create(
+        context: Context,
+        options: VideoPlayerOptions,
+    ): ExoMediaPlayer = ExoMediaPlayer(context, options)
 }

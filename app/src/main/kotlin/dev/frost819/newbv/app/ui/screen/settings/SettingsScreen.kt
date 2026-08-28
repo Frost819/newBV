@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.screen.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,9 +10,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,11 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
-import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
-import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -39,12 +34,16 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.screen.settings.content.AboutSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.AudioVideoSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.InfoSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.OtherSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.StorageSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.UISetting
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 设置页主屏幕。
@@ -76,12 +75,13 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             Box(
-                modifier = Modifier.padding(
-                    start = 48.dp,
-                    top = 24.dp,
-                    bottom = 8.dp,
-                    end = 48.dp,
-                ),
+                modifier =
+                    Modifier.padding(
+                        start = 48.dp,
+                        top = 24.dp,
+                        bottom = 8.dp,
+                        end = 48.dp,
+                    ),
             ) {
                 Text(
                     text = "设置",
@@ -94,19 +94,21 @@ fun SettingsScreen(
             modifier = Modifier.padding(innerPadding),
         ) {
             SettingsNav(
-                modifier = Modifier
-                    .onFocusChanged { focusInNav = it.hasFocus }
-                    .weight(3f)
-                    .fillMaxHeight(),
+                modifier =
+                    Modifier
+                        .onFocusChanged { focusInNav = it.hasFocus }
+                        .weight(3f)
+                        .fillMaxHeight(),
                 currentMenu = currentMenu,
                 onMenuChanged = { currentMenu = it },
                 isFocusing = focusInNav,
                 screenFocusSaver = screenFocusSaver,
             )
             SettingContent(
-                modifier = Modifier
-                    .weight(5f)
-                    .fillMaxSize(),
+                modifier =
+                    Modifier
+                        .weight(5f)
+                        .fillMaxSize(),
                 onBackNav = { focusInNav = true },
                 currentMenu = currentMenu,
                 onNavigateToMediaCodec = onNavigateToMediaCodec,
@@ -148,16 +150,17 @@ private fun SettingsNav(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         for (item in SettingsMenuNavItem.entries) {
-            val buttonModifier = if (currentMenu == item) {
-                Modifier
-                    .focusRequester(focusRequester)
-                    .focusSaverItem(screenFocusSaver, "nav_${item.name}")
-                    .fillMaxWidth()
-            } else {
-                Modifier
-                    .focusSaverItem(screenFocusSaver, "nav_${item.name}")
-                    .fillMaxWidth()
-            }
+            val buttonModifier =
+                if (currentMenu == item) {
+                    Modifier
+                        .focusRequester(focusRequester)
+                        .focusSaverItem(screenFocusSaver, "nav_${item.name}")
+                        .fillMaxWidth()
+                } else {
+                    Modifier
+                        .focusSaverItem(screenFocusSaver, "nav_${item.name}")
+                        .fillMaxWidth()
+                }
             item {
                 SettingsMenuButton(
                     modifier = buttonModifier,
@@ -194,15 +197,17 @@ private fun SettingContent(
             when (currentMenu) {
                 SettingsMenuNavItem.AudioVideo -> AudioVideoSetting()
                 SettingsMenuNavItem.UI -> UISetting()
-                SettingsMenuNavItem.Other -> OtherSetting(
-                    onNavigateToLogViewer = onNavigateToLogViewer,
-                    screenFocusSaver = screenFocusSaver,
-                )
+                SettingsMenuNavItem.Other ->
+                    OtherSetting(
+                        onNavigateToLogViewer = onNavigateToLogViewer,
+                        screenFocusSaver = screenFocusSaver,
+                    )
                 SettingsMenuNavItem.Storage -> StorageSetting()
-                SettingsMenuNavItem.Info -> InfoSetting(
-                    onOpenMediaCodec = onNavigateToMediaCodec,
-                    screenFocusSaver = screenFocusSaver,
-                )
+                SettingsMenuNavItem.Info ->
+                    InfoSetting(
+                        onOpenMediaCodec = onNavigateToMediaCodec,
+                        screenFocusSaver = screenFocusSaver,
+                    )
                 SettingsMenuNavItem.About -> AboutSetting()
             }
         }
@@ -219,16 +224,17 @@ private fun SettingsDetail(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onPreviewKeyEvent {
-                if (it.key == Key.DirectionLeft && it.type == KeyEventType.KeyDown) {
-                    onFocusBackMenuList()
-                    true
-                } else {
-                    false
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxSize()
+                .onPreviewKeyEvent {
+                    if (it.key == Key.DirectionLeft && it.type == KeyEventType.KeyDown) {
+                        onFocusBackMenuList()
+                        true
+                    } else {
+                        false
+                    }
+                },
     ) {
         content()
     }
@@ -245,17 +251,18 @@ private fun SettingsMenuButton(
     selected: Boolean,
 ) {
     ListItem(
-        modifier = modifier
-            .background(
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    androidx.compose.ui.graphics.Color.Transparent
-                },
-                shape = RoundedCornerShape(12.dp),
-            )
-            .onFocusChanged { if (it.hasFocus) onFocus() }
-            .touchClickable(onClick = { onFocus() }),
+        modifier =
+            modifier
+                .background(
+                    color =
+                        if (selected) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            androidx.compose.ui.graphics.Color.Transparent
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                ).onFocusChanged { if (it.hasFocus) onFocus() }
+                .touchClickable(onClick = { onFocus() }),
         selected = selected,
         onClick = { onFocus() },
         headlineContent = {
@@ -263,11 +270,12 @@ private fun SettingsMenuButton(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 text = text,
                 style = MaterialTheme.typography.titleLarge,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color =
+                    if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         },
     )
@@ -276,7 +284,9 @@ private fun SettingsMenuButton(
 /**
  * 设置导航分类。
  */
-enum class SettingsMenuNavItem(val displayName: String) {
+enum class SettingsMenuNavItem(
+    val displayName: String,
+) {
     AudioVideo("音视频"),
     UI("界面"),
     Other("其他"),

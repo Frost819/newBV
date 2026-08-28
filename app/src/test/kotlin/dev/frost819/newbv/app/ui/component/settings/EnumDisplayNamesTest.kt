@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
  * 设置枚举 displayName 扩展属性的单元测试。
  */
 class EnumDisplayNamesTest {
-
     @Test
     fun resolution_displayNames_allNonEmpty() {
         Resolution.entries.forEach { resolution ->

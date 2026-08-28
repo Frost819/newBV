@@ -20,49 +20,50 @@ import javax.inject.Inject
  * 不涉及数据加载或播放控制，纯 UI 状态。
  */
 @HiltViewModel
-class PlayerMenuViewModel @Inject constructor() : ViewModel() {
+class PlayerMenuViewModel
+    @Inject
+    constructor() : ViewModel() {
+        private val _menuState = MutableStateFlow(PlayerMenuState())
+        val menuState = _menuState.asStateFlow()
 
-    private val _menuState = MutableStateFlow(PlayerMenuState())
-    val menuState = _menuState.asStateFlow()
+        /** 选中导航 Tab。 */
+        fun selectNavItem(item: VideoPlayerMenuNavItem) {
+            _menuState.update {
+                it.copy(
+                    selectedNavItem = item,
+                    selectedPictureItem = null,
+                    selectedDanmakuItem = null,
+                    selectedClosedCaptionItem = null,
+                )
+            }
+        }
 
-    /** 选中导航 Tab。 */
-    fun selectNavItem(item: VideoPlayerMenuNavItem) {
-        _menuState.update {
-            it.copy(
-                selectedNavItem = item,
-                selectedPictureItem = null,
-                selectedDanmakuItem = null,
-                selectedClosedCaptionItem = null,
-            )
+        /** 选中画质/编码/宽高比/音轨中的子项。 */
+        fun selectPictureItem(item: VideoPlayerPictureMenuItem?) {
+            _menuState.update { it.copy(selectedPictureItem = item) }
+        }
+
+        /** 选中弹幕设置中的子项。 */
+        fun selectDanmakuItem(item: VideoPlayerDanmakuMenuItem?) {
+            _menuState.update { it.copy(selectedDanmakuItem = item) }
+        }
+
+        /** 选中字幕设置中的子项。 */
+        fun selectClosedCaptionItem(item: VideoPlayerClosedCaptionMenuItem?) {
+            _menuState.update { it.copy(selectedClosedCaptionItem = item) }
+        }
+
+        /** 关闭所有子项选择。 */
+        fun clearSelection() {
+            _menuState.update {
+                it.copy(
+                    selectedPictureItem = null,
+                    selectedDanmakuItem = null,
+                    selectedClosedCaptionItem = null,
+                )
+            }
         }
     }
-
-    /** 选中画质/编码/宽高比/音轨中的子项。 */
-    fun selectPictureItem(item: VideoPlayerPictureMenuItem?) {
-        _menuState.update { it.copy(selectedPictureItem = item) }
-    }
-
-    /** 选中弹幕设置中的子项。 */
-    fun selectDanmakuItem(item: VideoPlayerDanmakuMenuItem?) {
-        _menuState.update { it.copy(selectedDanmakuItem = item) }
-    }
-
-    /** 选中字幕设置中的子项。 */
-    fun selectClosedCaptionItem(item: VideoPlayerClosedCaptionMenuItem?) {
-        _menuState.update { it.copy(selectedClosedCaptionItem = item) }
-    }
-
-    /** 关闭所有子项选择。 */
-    fun clearSelection() {
-        _menuState.update {
-            it.copy(
-                selectedPictureItem = null,
-                selectedDanmakuItem = null,
-                selectedClosedCaptionItem = null,
-            )
-        }
-    }
-}
 
 /**
  * 播放器菜单 UI 状态。
@@ -75,7 +76,10 @@ data class PlayerMenuState(
 )
 
 /** 设置菜单导航 Tab。 */
-enum class VideoPlayerMenuNavItem(val displayName: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+enum class VideoPlayerMenuNavItem(
+    val displayName: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+) {
     PlaySpeed("倍速", Icons.Outlined.Speed),
     Picture("画质", Icons.Outlined.Image),
     Danmaku("弹幕", Icons.Outlined.ClearAll),
@@ -83,7 +87,9 @@ enum class VideoPlayerMenuNavItem(val displayName: String, val icon: androidx.co
 }
 
 /** 画质设置子项。 */
-enum class VideoPlayerPictureMenuItem(val displayName: String) {
+enum class VideoPlayerPictureMenuItem(
+    val displayName: String,
+) {
     Resolution("分辨率"),
     Codec("编码"),
     AspectRatio("宽高比"),
@@ -91,7 +97,9 @@ enum class VideoPlayerPictureMenuItem(val displayName: String) {
 }
 
 /** 弹幕设置子项。 */
-enum class VideoPlayerDanmakuMenuItem(val displayName: String) {
+enum class VideoPlayerDanmakuMenuItem(
+    val displayName: String,
+) {
     Switch("开关"),
     Size("大小"),
     Opacity("透明度"),
@@ -101,7 +109,9 @@ enum class VideoPlayerDanmakuMenuItem(val displayName: String) {
 }
 
 /** 字幕设置子项。 */
-enum class VideoPlayerClosedCaptionMenuItem(val displayName: String) {
+enum class VideoPlayerClosedCaptionMenuItem(
+    val displayName: String,
+) {
     Switch("开关"),
     Size("大小"),
     Opacity("透明度"),

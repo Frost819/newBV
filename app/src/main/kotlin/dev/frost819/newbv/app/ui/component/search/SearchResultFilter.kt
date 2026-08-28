@@ -28,21 +28,23 @@ import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
 import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
 import dev.frost819.newbv.core.focus.touchClickable
 
-private val orderLabels = mapOf(
-    SearchFilterOrderType.ComprehensiveSort to "综合排序",
-    SearchFilterOrderType.MostClicks to "最多点击",
-    SearchFilterOrderType.LatestPublish to "最新发布",
-    SearchFilterOrderType.MostDanmaku to "最多弹幕",
-    SearchFilterOrderType.MostFavorites to "最多收藏",
-)
+private val orderLabels =
+    mapOf(
+        SearchFilterOrderType.ComprehensiveSort to "综合排序",
+        SearchFilterOrderType.MostClicks to "最多点击",
+        SearchFilterOrderType.LatestPublish to "最新发布",
+        SearchFilterOrderType.MostDanmaku to "最多弹幕",
+        SearchFilterOrderType.MostFavorites to "最多收藏",
+    )
 
-private val durationLabels = mapOf(
-    SearchFilterDuration.All to "全部时长",
-    SearchFilterDuration.LessThan10Minutes to "10分钟以下",
-    SearchFilterDuration.Between10And30Minutes to "10-30分钟",
-    SearchFilterDuration.Between30And60Minutes to "30-60分钟",
-    SearchFilterDuration.MoreThan60Minutes to "60分钟以上",
-)
+private val durationLabels =
+    mapOf(
+        SearchFilterDuration.All to "全部时长",
+        SearchFilterDuration.LessThan10Minutes to "10分钟以下",
+        SearchFilterDuration.Between10And30Minutes to "10-30分钟",
+        SearchFilterDuration.Between30And60Minutes to "30-60分钟",
+        SearchFilterDuration.MoreThan60Minutes to "60分钟以上",
+    )
 
 /**
  * 搜索结果筛选弹窗（仅视频 Tab 支持）。
@@ -97,17 +99,19 @@ fun SearchResultFilter(
                                 selected = currentOrder == order,
                                 onClick = { currentOrder = order },
                                 modifier = Modifier.touchClickable(onClick = { currentOrder = order }),
-                                colors = FilterChipDefaults.colors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                ),
+                                colors =
+                                    FilterChipDefaults.colors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    ),
                             ) {
                                 Text(
                                     text = label,
-                                    color = if (currentOrder == order) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    },
+                                    color =
+                                        if (currentOrder == order) {
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                             }
                         }
@@ -130,17 +134,19 @@ fun SearchResultFilter(
                                 selected = currentDuration == duration,
                                 onClick = { currentDuration = duration },
                                 modifier = Modifier.touchClickable(onClick = { currentDuration = duration }),
-                                colors = FilterChipDefaults.colors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                ),
+                                colors =
+                                    FilterChipDefaults.colors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    ),
                             ) {
                                 Text(
                                     text = label,
-                                    color = if (currentDuration == duration) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    },
+                                    color =
+                                        if (currentDuration == duration) {
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                             }
                         }
@@ -158,9 +164,10 @@ fun SearchResultFilter(
                         Text("取消")
                     }
                     Button(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .touchClickable(onClick = { onConfirm(currentOrder, currentDuration) }),
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp)
+                                .touchClickable(onClick = { onConfirm(currentOrder, currentDuration) }),
                         onClick = { onConfirm(currentOrder, currentDuration) },
                     ) {
                         Text("确定")

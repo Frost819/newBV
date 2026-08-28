@@ -4,7 +4,7 @@ agp = "9.1.1"
 kotlin = "2.4.10"
 ksp = "2.3.10"
 protobuf-gradle = "0.9.5"
-ktlint = "12.1.2"
+ktlint = "14.2.0"
 detekt = "1.23.7"
 versions-plugin = "0.52.0"
 

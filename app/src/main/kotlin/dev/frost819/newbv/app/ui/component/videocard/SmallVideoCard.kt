@@ -42,9 +42,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
-import dev.frost819.newbv.core.interaction.currentInputMethod
-import dev.frost819.newbv.core.interaction.InputMethod
 import dev.frost819.newbv.core.focus.touchClickable
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.currentInputMethod
 
 /**
  * 小型视频卡片。
@@ -80,8 +80,11 @@ fun SmallVideoCard(
     val firstButtonRequester = remember { FocusRequester() }
     val isTouchMode = currentInputMethod() == InputMethod.Touch
 
-    val hasAnyAction = onAddWatchLater != null || onGoToDetailPage != null ||
-        onGoToUpPage != null || onRemoveWatchLater != null
+    val hasAnyAction =
+        onAddWatchLater != null ||
+            onGoToDetailPage != null ||
+            onGoToUpPage != null ||
+            onRemoveWatchLater != null
 
     BackHandler(enabled = showActions) {
         showActions = false
@@ -101,29 +104,32 @@ fun SmallVideoCard(
             onLongClick = {
                 if (hasAnyAction) showActions = true
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.6f)
-                .touchClickable(
-                    onClick = { if (!showActions) onClick() },
-                    onLongClick = { if (hasAnyAction) showActions = true },
-                )
-                .onFocusChanged { focusState ->
-                    if (!focusState.hasFocus) showActions = false
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.6f)
+                    .touchClickable(
+                        onClick = { if (!showActions) onClick() },
+                        onLongClick = { if (hasAnyAction) showActions = true },
+                    ).onFocusChanged { focusState ->
+                        if (!focusState.hasFocus) showActions = false
+                    },
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
-                    shape = MaterialTheme.shapes.large,
+            border =
+                CardDefaults.border(
+                    focusedBorder =
+                        Border(
+                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+                            shape = MaterialTheme.shapes.large,
+                        ),
                 ),
-            ),
         ) {
             if (showActions) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -136,15 +142,16 @@ fun SmallVideoCard(
                                 }
                                 action()
                             },
-                            modifier = Modifier
-                                .focusRequester(firstButtonRequester)
-                                .touchClickable(onClick = {
-                                    if (!isTouchMode && !releaseLongPress) {
-                                        releaseLongPress = true
-                                    } else {
-                                        action()
-                                    }
-                                }),
+                            modifier =
+                                Modifier
+                                    .focusRequester(firstButtonRequester)
+                                    .touchClickable(onClick = {
+                                        if (!isTouchMode && !releaseLongPress) {
+                                            releaseLongPress = true
+                                        } else {
+                                            action()
+                                        }
+                                    }),
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.remove_from_list),
@@ -163,24 +170,26 @@ fun SmallVideoCard(
                                 }
                                 action()
                             },
-                            modifier = if (addIsFirst) {
-                                Modifier.focusRequester(firstButtonRequester)
-                                    .touchClickable(onClick = {
+                            modifier =
+                                if (addIsFirst) {
+                                    Modifier
+                                        .focusRequester(firstButtonRequester)
+                                        .touchClickable(onClick = {
+                                            if (!isTouchMode && addIsFirst && !releaseLongPress) {
+                                                releaseLongPress = true
+                                            } else {
+                                                action()
+                                            }
+                                        })
+                                } else {
+                                    Modifier.touchClickable(onClick = {
                                         if (!isTouchMode && addIsFirst && !releaseLongPress) {
                                             releaseLongPress = true
                                         } else {
                                             action()
                                         }
                                     })
-                            } else {
-                                Modifier.touchClickable(onClick = {
-                                    if (!isTouchMode && addIsFirst && !releaseLongPress) {
-                                        releaseLongPress = true
-                                    } else {
-                                        action()
-                                    }
-                                })
-                            },
+                                },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.add_to_list),
@@ -199,24 +208,26 @@ fun SmallVideoCard(
                                 }
                                 action()
                             },
-                            modifier = if (detailIsFirst) {
-                                Modifier.focusRequester(firstButtonRequester)
-                                    .touchClickable(onClick = {
+                            modifier =
+                                if (detailIsFirst) {
+                                    Modifier
+                                        .focusRequester(firstButtonRequester)
+                                        .touchClickable(onClick = {
+                                            if (!isTouchMode && detailIsFirst && !releaseLongPress) {
+                                                releaseLongPress = true
+                                            } else {
+                                                action()
+                                            }
+                                        })
+                                } else {
+                                    Modifier.touchClickable(onClick = {
                                         if (!isTouchMode && detailIsFirst && !releaseLongPress) {
                                             releaseLongPress = true
                                         } else {
                                             action()
                                         }
                                     })
-                            } else {
-                                Modifier.touchClickable(onClick = {
-                                    if (!isTouchMode && detailIsFirst && !releaseLongPress) {
-                                        releaseLongPress = true
-                                    } else {
-                                        action()
-                                    }
-                                })
-                            },
+                                },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.info_24px),
@@ -226,8 +237,10 @@ fun SmallVideoCard(
                     }
 
                     onGoToUpPage?.let { action ->
-                        val upIsFirst = onRemoveWatchLater == null &&
-                            onAddWatchLater == null && onGoToDetailPage == null
+                        val upIsFirst =
+                            onRemoveWatchLater == null &&
+                                onAddWatchLater == null &&
+                                onGoToDetailPage == null
                         IconButton(
                             onClick = {
                                 if (!isTouchMode && upIsFirst && !releaseLongPress) {
@@ -236,24 +249,26 @@ fun SmallVideoCard(
                                 }
                                 action()
                             },
-                            modifier = if (upIsFirst) {
-                                Modifier.focusRequester(firstButtonRequester)
-                                    .touchClickable(onClick = {
+                            modifier =
+                                if (upIsFirst) {
+                                    Modifier
+                                        .focusRequester(firstButtonRequester)
+                                        .touchClickable(onClick = {
+                                            if (!isTouchMode && upIsFirst && !releaseLongPress) {
+                                                releaseLongPress = true
+                                            } else {
+                                                action()
+                                            }
+                                        })
+                                } else {
+                                    Modifier.touchClickable(onClick = {
                                         if (!isTouchMode && upIsFirst && !releaseLongPress) {
                                             releaseLongPress = true
                                         } else {
                                             action()
                                         }
                                     })
-                            } else {
-                                Modifier.touchClickable(onClick = {
-                                    if (!isTouchMode && upIsFirst && !releaseLongPress) {
-                                        releaseLongPress = true
-                                    } else {
-                                        action()
-                                    }
-                                })
-                            },
+                                },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.contact_page_24px),
@@ -297,38 +312,43 @@ private fun CardCover(
     progress: Float? = null,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clip(MaterialTheme.shapes.large),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .clip(MaterialTheme.shapes.large),
         contentAlignment = Alignment.BottomCenter,
     ) {
         AsyncImage(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(MaterialTheme.shapes.large),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(MaterialTheme.shapes.large),
             model = cover,
             contentDescription = null,
             contentScale = ContentScale.Crop,
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.5f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.5f),
+                                ),
                         ),
                     ),
-                ),
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (play.isNotBlank()) {
@@ -373,16 +393,18 @@ private fun CardCover(
 
         if (progress != null && progress > 0f) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .background(Color.White.copy(alpha = 0.3f)),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(Color.White.copy(alpha = 0.3f)),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(progress.coerceIn(0f, 1f))
-                        .height(3.dp)
-                        .background(MaterialTheme.colorScheme.secondary),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
+                            .height(3.dp)
+                            .background(MaterialTheme.colorScheme.secondary),
                 )
             }
         }
@@ -449,18 +471,19 @@ private fun SmallVideoCardPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         SmallVideoCard(
             modifier = Modifier.width(380.dp),
-            data = VideoCardData(
-                avid = 1L,
-                cid = 10L,
-                title = "这是一个测试视频标题，可能会很长很长很长很长很长",
-                cover = "",
-                upName = "测试UP主名称",
-                upMid = 100L,
-                playString = "12.3万",
-                danmakuString = "9999",
-                timeString = "10:42",
-                pubTime = "7月29日",
-            ),
+            data =
+                VideoCardData(
+                    avid = 1L,
+                    cid = 10L,
+                    title = "这是一个测试视频标题，可能会很长很长很长很长很长",
+                    cover = "",
+                    upName = "测试UP主名称",
+                    upMid = 100L,
+                    playString = "12.3万",
+                    danmakuString = "9999",
+                    timeString = "10:42",
+                    pubTime = "7月29日",
+                ),
             onClick = {},
         )
     }

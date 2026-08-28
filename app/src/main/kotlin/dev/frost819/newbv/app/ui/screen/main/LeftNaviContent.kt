@@ -73,24 +73,26 @@ fun LeftNaviContent(
     onLogin: () -> Unit,
 ) {
     NavigationRail(
-        modifier = modifier
-            .fillMaxHeight()
-            .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.isDpadRight()) {
-                    if (keyEvent.isKeyDown()) {
-                        onFocusToContent()
-                        return@onPreviewKeyEvent true
+        modifier =
+            modifier
+                .fillMaxHeight()
+                .onPreviewKeyEvent { keyEvent ->
+                    if (keyEvent.isDpadRight()) {
+                        if (keyEvent.isKeyDown()) {
+                            onFocusToContent()
+                            return@onPreviewKeyEvent true
+                        }
                     }
-                }
-                false
-            },
+                    false
+                },
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         var userIsFocused by remember { mutableStateOf(false) }
         NavigationRailItem(
-            modifier = Modifier.onFocusChanged {
-                userIsFocused = it.hasFocus
-            },
+            modifier =
+                Modifier.onFocusChanged {
+                    userIsFocused = it.hasFocus
+                },
             onClick = {
                 if (isLogin) {
                     onShowUserPanel()
@@ -102,17 +104,20 @@ fun LeftNaviContent(
             icon = {
                 if (isLogin) {
                     Surface(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape),
-                        colors = SurfaceDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        ),
-                    ) {
-                        AsyncImage(
-                            modifier = Modifier
+                        modifier =
+                            Modifier
                                 .size(40.dp)
                                 .clip(CircleShape),
+                        colors =
+                            SurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            ),
+                    ) {
+                        AsyncImage(
+                            modifier =
+                                Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape),
                             model = avatar,
                             contentDescription = null,
                             contentScale = ContentScale.FillBounds,
@@ -134,17 +139,19 @@ fun LeftNaviContent(
             LeftNaviItem.entries.forEach { item ->
                 var isFocused by remember { mutableStateOf(false) }
                 val indicatorColor by animateColorAsState(
-                    targetValue = if (item == selectedItem) {
-                        MaterialTheme.colorScheme.border
-                    } else {
-                        Color.Transparent
-                    },
+                    targetValue =
+                        if (item == selectedItem) {
+                            MaterialTheme.colorScheme.border
+                        } else {
+                            Color.Transparent
+                        },
                     label = "selection-indicator",
                 )
                 NavigationRailItem(
-                    modifier = Modifier
-                        .onFocusChanged { isFocused = it.hasFocus }
-                        .selectionIndicator(indicatorColor),
+                    modifier =
+                        Modifier
+                            .onFocusChanged { isFocused = it.hasFocus }
+                            .selectionIndicator(indicatorColor),
                     onClick = { onLeftNaviItemChanged(item) },
                     selected = isFocused,
                     icon = {
@@ -159,9 +166,10 @@ fun LeftNaviContent(
 
         var settingsIsFocused by remember { mutableStateOf(false) }
         NavigationRailItem(
-            modifier = Modifier.onFocusChanged {
-                settingsIsFocused = it.hasFocus
-            },
+            modifier =
+                Modifier.onFocusChanged {
+                    settingsIsFocused = it.hasFocus
+                },
             onClick = onOpenSettings,
             selected = settingsIsFocused,
             icon = {
@@ -176,35 +184,38 @@ fun LeftNaviContent(
 
 /** 左侧导航项的图标与显示名称扩展。 */
 val LeftNaviItem.displayIcon: ImageVector
-    get() = when (this) {
-        LeftNaviItem.Search -> Icons.Default.Search
-        LeftNaviItem.Personal -> Icons.Default.Person
-        LeftNaviItem.Home -> Icons.Default.Home
-        LeftNaviItem.UGC -> Icons.Default.OndemandVideo
-        LeftNaviItem.PGC -> Icons.Default.Movie
-        LeftNaviItem.Live -> Icons.Default.LiveTv
-    }
+    get() =
+        when (this) {
+            LeftNaviItem.Search -> Icons.Default.Search
+            LeftNaviItem.Personal -> Icons.Default.Person
+            LeftNaviItem.Home -> Icons.Default.Home
+            LeftNaviItem.UGC -> Icons.Default.OndemandVideo
+            LeftNaviItem.PGC -> Icons.Default.Movie
+            LeftNaviItem.Live -> Icons.Default.LiveTv
+        }
 
 /** 左侧导航项的显示名称扩展。 */
 val LeftNaviItem.displayName: String
-    get() = when (this) {
-        LeftNaviItem.Search -> "搜索"
-        LeftNaviItem.Personal -> "个人"
-        LeftNaviItem.Home -> "主页"
-        LeftNaviItem.UGC -> "分区"
-        LeftNaviItem.PGC -> "影视"
-        LeftNaviItem.Live -> "直播"
-    }
+    get() =
+        when (this) {
+            LeftNaviItem.Search -> "搜索"
+            LeftNaviItem.Personal -> "个人"
+            LeftNaviItem.Home -> "主页"
+            LeftNaviItem.UGC -> "分区"
+            LeftNaviItem.PGC -> "影视"
+            LeftNaviItem.Live -> "直播"
+        }
 
 /** 绘制左侧选中指示条。 */
-private fun Modifier.selectionIndicator(color: Color): Modifier = this.drawBehind {
-    val strokeWidth = 4.dp.toPx()
-    drawRect(
-        color = color,
-        topLeft = Offset.Zero,
-        size = Size(width = strokeWidth, height = size.height),
-    )
-}
+private fun Modifier.selectionIndicator(color: Color): Modifier =
+    this.drawBehind {
+        val strokeWidth = 4.dp.toPx()
+        drawRect(
+            color = color,
+            topLeft = Offset.Zero,
+            size = Size(width = strokeWidth, height = size.height),
+        )
+    }
 
 @Preview(showBackground = true, heightDp = 1080)
 @Composable

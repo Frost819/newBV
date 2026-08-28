@@ -63,7 +63,8 @@ class LiveRepository {
     ): AreaLiveListResult {
         val pageSize = 30
         val list =
-            BiliLiveHttpApi.getAreaLiveList(parentAreaId, areaId, page, pageSize, sortType)
+            BiliLiveHttpApi
+                .getAreaLiveList(parentAreaId, areaId, page, pageSize, sortType)
                 .getResponseData()
         val hasMore = list.size >= pageSize
         return AreaLiveListResult(list = list, hasMore = hasMore)
@@ -101,15 +102,16 @@ class LiveRepository {
     suspend fun getLiveStreamInfo(
         roomId: Int,
         qn: Int = 0,
-    ): LiveStreamInfo {
-        return runCatching {
+    ): LiveStreamInfo =
+        runCatching {
             val playInfo = BiliLiveHttpApi.getRoomPlayInfoV2(roomId, qn).getResponseData()
             val url = resolveStreamUrl(playInfo)
             val currentQn =
                 playInfo.playUrlInfo.playUrl.stream
                     .flatMap { it.format }
                     .flatMap { it.codec }
-                    .firstOrNull { it.currentQn > 0 }?.currentQn ?: 0
+                    .firstOrNull { it.currentQn > 0 }
+                    ?.currentQn ?: 0
             LiveStreamInfo(url = url, currentQn = currentQn)
         }.onFailure {
             logger.warn { "getLiveStreamInfo failed: ${it.message}, trying fallback" }
@@ -121,7 +123,6 @@ class LiveRepository {
                 logger.warn { "getLiveStreamInfo fallback failed: ${e.message}" }
             }.getOrDefault(LiveStreamInfo(null, 0))
         }
-    }
 
     /**
      * 从 v2 流地址响应中解析出最佳流 URL。
@@ -192,8 +193,8 @@ class LiveRepository {
      * 从 playUrlInfo 中提取 accept_qn（直播间实际支持的画质），
      * 与 qnDesc（画质描述）交叉过滤，只返回该直播间实际可用的画质。
      */
-    suspend fun getAvailableQualities(roomId: Int): List<Pair<Int, String>> {
-        return runCatching {
+    suspend fun getAvailableQualities(roomId: Int): List<Pair<Int, String>> =
+        runCatching {
             val playInfo = BiliLiveHttpApi.getRoomPlayInfoV2(roomId, 0).getResponseData()
             val playUrl = playInfo.playUrlInfo.playUrl
             val qnDescMap = playUrl.qnDesc.associate { it.qn to it.desc }
@@ -209,7 +210,6 @@ class LiveRepository {
         }.onFailure {
             logger.warn { "getAvailableQualities failed: ${it.message}" }
         }.getOrDefault(emptyList())
-    }
 }
 
 /**

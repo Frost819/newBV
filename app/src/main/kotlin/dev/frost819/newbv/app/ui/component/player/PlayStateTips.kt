@@ -52,9 +52,10 @@ fun PlayStateTips(
     Box(modifier = modifier.fillMaxSize()) {
         if (!isPlaying && !isBuffering && !isError) {
             PauseIcon(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(24.dp),
             )
         }
         if (isBuffering && !isError) {
@@ -77,20 +78,20 @@ fun PlayStateTips(
  * 右下角显示的半透明暂停图标，提示用户当前处于暂停状态。
  */
 @Composable
-fun PauseIcon(
-    modifier: Modifier = Modifier,
-) {
+fun PauseIcon(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        colors = SurfaceDefaults.colors(
-            containerColor = Color.Black.copy(0.5f),
-        ),
+        colors =
+            SurfaceDefaults.colors(
+                containerColor = Color.Black.copy(0.5f),
+            ),
         shape = MaterialTheme.shapes.medium,
     ) {
         Icon(
-            modifier = Modifier
-                .padding(12.dp, 4.dp)
-                .size(50.dp),
+            modifier =
+                Modifier
+                    .padding(12.dp, 4.dp)
+                    .size(50.dp),
             imageVector = Icons.Rounded.Pause,
             contentDescription = null,
             tint = Color.White,
@@ -104,14 +105,13 @@ fun PauseIcon(
  * 屏幕中央显示的半透明加载框，包含圆形进度指示器和"缓冲中..."文本。
  */
 @Composable
-fun BufferingTip(
-    modifier: Modifier = Modifier,
-) {
+fun BufferingTip(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        colors = SurfaceDefaults.colors(
-            containerColor = Color.Black.copy(0.5f),
-        ),
+        colors =
+            SurfaceDefaults.colors(
+                containerColor = Color.Black.copy(0.5f),
+            ),
         shape = MaterialTheme.shapes.medium,
     ) {
         Row(
@@ -119,9 +119,10 @@ fun BufferingTip(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             CircularProgressIndicator(
-                modifier = Modifier
-                    .size(36.dp)
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .size(36.dp)
+                        .padding(8.dp),
                 color = Color.White,
                 strokeWidth = 2.dp,
             )
@@ -147,9 +148,10 @@ fun PlayErrorTip(
 ) {
     Surface(
         modifier = modifier,
-        colors = SurfaceDefaults.colors(
-            containerColor = Color.Black.copy(0.5f),
-        ),
+        colors =
+            SurfaceDefaults.colors(
+                containerColor = Color.Black.copy(0.5f),
+            ),
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(

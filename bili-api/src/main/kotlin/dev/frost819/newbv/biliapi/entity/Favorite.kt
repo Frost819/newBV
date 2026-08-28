@@ -11,17 +11,18 @@ data class FavoriteFolderItemId(
     val bvid: String,
 ) {
     companion object {
-        fun fromFavoriteItemId(favoriteItemId: FavoriteItemId): FavoriteFolderItemId {
-            return FavoriteFolderItemId(
+        fun fromFavoriteItemId(favoriteItemId: FavoriteItemId): FavoriteFolderItemId =
+            FavoriteFolderItemId(
                 id = favoriteItemId.id,
                 type = FavoriteItemType.fromValue(favoriteItemId.type),
                 bvid = favoriteItemId.bvid,
             )
-        }
     }
 }
 
-enum class FavoriteItemType(val value: Int) {
+enum class FavoriteItemType(
+    val value: Int,
+) {
     All(0),
     Video(2),
     Audio(12),
@@ -55,8 +56,8 @@ data class FavoriteFolderMetadata(
     companion object {
         fun fromHttpFavoriteFolderInfo(
             httpFavoriteFolderInfo: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteFolderInfo,
-        ): FavoriteFolderMetadata {
-            return FavoriteFolderMetadata(
+        ): FavoriteFolderMetadata =
+            FavoriteFolderMetadata(
                 id = httpFavoriteFolderInfo.id,
                 fid = httpFavoriteFolderInfo.fid,
                 mid = httpFavoriteFolderInfo.mid,
@@ -65,12 +66,11 @@ data class FavoriteFolderMetadata(
                 videoInThisFav = httpFavoriteFolderInfo.favState == 1,
                 mediaCount = httpFavoriteFolderInfo.mediaCount,
             )
-        }
 
         fun fromHttpUserFavoriteFolder(
             httpUserFavoriteFoldersData: UserFavoriteFoldersData.UserFavoriteFolder,
-        ): FavoriteFolderMetadata {
-            return FavoriteFolderMetadata(
+        ): FavoriteFolderMetadata =
+            FavoriteFolderMetadata(
                 id = httpUserFavoriteFoldersData.id,
                 fid = httpUserFavoriteFoldersData.fid,
                 mid = httpUserFavoriteFoldersData.mid,
@@ -79,7 +79,6 @@ data class FavoriteFolderMetadata(
                 videoInThisFav = httpUserFavoriteFoldersData.favState == 1,
                 mediaCount = httpUserFavoriteFoldersData.mediaCount,
             )
-        }
     }
 }
 
@@ -91,8 +90,8 @@ data class FavoriteFolderData(
     companion object {
         fun fromHttpFavoriteFolderInfoListData(
             httpFavoriteFolderInfoListData: FavoriteFolderInfoListData,
-        ): FavoriteFolderData {
-            return FavoriteFolderData(
+        ): FavoriteFolderData =
+            FavoriteFolderData(
                 info =
                     FavoriteFolderMetadata.fromHttpFavoriteFolderInfo(
                         httpFavoriteFolderInfoListData.info,
@@ -105,7 +104,6 @@ data class FavoriteFolderData(
                     },
                 hasMore = httpFavoriteFolderInfoListData.hasMore,
             )
-        }
     }
 }
 
@@ -125,8 +123,8 @@ data class FavoriteItem(
     companion object {
         fun fromHttpFavoriteItem(
             httpFavoriteItem: dev.frost819.newbv.biliapi.http.entity.user.favorite.FavoriteItem,
-        ): FavoriteItem {
-            return FavoriteItem(
+        ): FavoriteItem =
+            FavoriteItem(
                 id = httpFavoriteItem.id,
                 type = FavoriteItemType.fromValue(httpFavoriteItem.type),
                 title = httpFavoriteItem.title,
@@ -139,7 +137,6 @@ data class FavoriteItem(
                 pubtime = httpFavoriteItem.pubtime,
                 bvid = httpFavoriteItem.bvid,
             )
-        }
     }
 }
 
@@ -150,12 +147,11 @@ data class Upper(
     val face: String,
 ) {
     companion object {
-        fun fromHttpUpper(httpUpper: dev.frost819.newbv.biliapi.http.entity.user.favorite.Upper): Upper {
-            return Upper(
+        fun fromHttpUpper(httpUpper: dev.frost819.newbv.biliapi.http.entity.user.favorite.Upper): Upper =
+            Upper(
                 mid = httpUpper.mid,
                 name = httpUpper.name,
                 face = httpUpper.face,
             )
-        }
     }
 }

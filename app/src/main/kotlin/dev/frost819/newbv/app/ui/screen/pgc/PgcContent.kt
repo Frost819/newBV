@@ -31,7 +31,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.material3.Scaffold as Material3Scaffold
 import androidx.navigation.NavController
 import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.component.ListFooterTip
@@ -48,6 +47,7 @@ import dev.frost819.newbv.app.viewmodel.pgc.PgcViewModel
 import dev.frost819.newbv.biliapi.entity.pgc.PgcType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import androidx.compose.material3.Scaffold as Material3Scaffold
 
 /**
  * PGC 影视顶部导航项。
@@ -56,14 +56,16 @@ import kotlinx.coroutines.flow.filter
  *
  * @property pgcType 对应的 PGC 分区类型。
  */
-enum class PgcTabItem(val pgcType: PgcType, override val displayName: String) : TopNavItem {
+enum class PgcTabItem(
+    val pgcType: PgcType,
+    override val displayName: String,
+) : TopNavItem {
     Anime(PgcType.Anime, "番剧"),
     GuoChuang(PgcType.GuoChuang, "国创"),
     Movie(PgcType.Movie, "电影"),
     Documentary(PgcType.Documentary, "纪录片"),
     Tv(PgcType.Tv, "电视剧"),
     Variety(PgcType.Variety, "综艺"),
-    ;
 }
 
 /**
@@ -109,17 +111,18 @@ fun PgcContent(
         },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .onFocusChanged { focusOnContent = it.hasFocus }
-                .onPreviewKeyEvent { event ->
-                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                        viewModel.refresh()
-                        navFocusRequester.requestFocus()
-                        return@onPreviewKeyEvent true
-                    }
-                    false
-                },
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .onFocusChanged { focusOnContent = it.hasFocus }
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                            viewModel.refresh()
+                            navFocusRequester.requestFocus()
+                            return@onPreviewKeyEvent true
+                        }
+                        false
+                    },
         ) {
             PgcGrid(
                 viewModel = viewModel,
@@ -147,12 +150,14 @@ private fun PgcGrid(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.items.size - 10
-            }
-            .collect {
+            }.collect {
                 viewModel.loadMore()
             }
     }
@@ -183,9 +188,10 @@ private fun PgcGrid(
                 }
             } else {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
                 )
             }
         }
@@ -194,15 +200,16 @@ private fun PgcGrid(
             items = state.items,
             key = { index, _ -> index },
         ) { index, item ->
-            val cardData = remember(item) {
-                SeasonCardData(
-                    seasonId = item.seasonId,
-                    title = item.title,
-                    subTitle = item.subTitle,
-                    cover = item.cover,
-                    rating = item.rating,
-                )
-            }
+            val cardData =
+                remember(item) {
+                    SeasonCardData(
+                        seasonId = item.seasonId,
+                        title = item.title,
+                        subTitle = item.subTitle,
+                        cover = item.cover,
+                        rating = item.rating,
+                    )
+                }
             SeasonCard(
                 data = cardData,
                 onClick = {

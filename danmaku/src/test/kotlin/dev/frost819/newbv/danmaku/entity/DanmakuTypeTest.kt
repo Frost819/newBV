@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 class DanmakuTypeTest {
-
     @Test
     fun `fromAkDanmakuMode with rolling mode returns Rolling`() {
         assertThat(DanmakuType.fromAkDanmakuMode(1)).isEqualTo(DanmakuType.Rolling)

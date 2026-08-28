@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -66,14 +65,14 @@ import dev.frost819.newbv.app.ui.component.LoadingTip
 import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
-import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiEffect
-import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiState
-import dev.frost819.newbv.core.focus.touchClickable
+import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 番剧详情页路由注册。
@@ -172,50 +171,51 @@ private fun SeasonDetailContent(
     // 切换季时用 key 强制重组，重置所有 LazyRow 滚动位置
     key(detail.seasonId) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(bottom = 64.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        SeasonInfoHeader(
-            detail = detail,
-            isFollowing = state.isFollowing,
-            onPlay = { viewModel.onPlay() },
-            onToggleFollow = { viewModel.toggleFollow() },
-            focusSaver = focusSaver,
-        )
-
-        if (detail.episodes.isNotEmpty()) {
-            SeasonEpisodeRow(
-                title = "正片",
-                episodes = detail.episodes,
-                progress = detail.userStatus.progress,
-                onClick = { episode -> viewModel.onPlayEpisode(episode) },
-                focusSaver = focusSaver,
-                rowKey = "episodes",
-            )
-        }
-
-        detail.sections.forEach { section ->
-            SeasonEpisodeRow(
-                title = section.title,
-                episodes = section.episodes,
-                progress = detail.userStatus.progress,
-                onClick = { episode -> viewModel.onPlayEpisode(episode) },
-                focusSaver = focusSaver,
-                rowKey = "section_${section.id}",
-            )
-        }
-
-        if (detail.seasons.size > 1) {
-            SeasonSwitcherRow(
-                seasons = detail.seasons,
-                currentSeasonId = detail.seasonId,
-                onClick = { seasonId -> viewModel.onSwitchSeason(seasonId) },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(bottom = 64.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SeasonInfoHeader(
+                detail = detail,
+                isFollowing = state.isFollowing,
+                onPlay = { viewModel.onPlay() },
+                onToggleFollow = { viewModel.toggleFollow() },
                 focusSaver = focusSaver,
             )
-        }
+
+            if (detail.episodes.isNotEmpty()) {
+                SeasonEpisodeRow(
+                    title = "正片",
+                    episodes = detail.episodes,
+                    progress = detail.userStatus.progress,
+                    onClick = { episode -> viewModel.onPlayEpisode(episode) },
+                    focusSaver = focusSaver,
+                    rowKey = "episodes",
+                )
+            }
+
+            detail.sections.forEach { section ->
+                SeasonEpisodeRow(
+                    title = section.title,
+                    episodes = section.episodes,
+                    progress = detail.userStatus.progress,
+                    onClick = { episode -> viewModel.onPlayEpisode(episode) },
+                    focusSaver = focusSaver,
+                    rowKey = "section_${section.id}",
+                )
+            }
+
+            if (detail.seasons.size > 1) {
+                SeasonSwitcherRow(
+                    seasons = detail.seasons,
+                    currentSeasonId = detail.seasonId,
+                    onClick = { seasonId -> viewModel.onSwitchSeason(seasonId) },
+                    focusSaver = focusSaver,
+                )
+            }
         }
     }
 }
@@ -240,29 +240,34 @@ private fun SeasonInfoHeader(
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 50.dp, vertical = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp, vertical = 16.dp),
     ) {
         Card(
-            modifier = Modifier
-                .focusRequester(coverFocusRequester)
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
-                .width(240.dp)
-                .fillMaxHeight()
-                .aspectRatio(0.7f)
-                .touchClickable(onClick = onPlay),
+            modifier =
+                Modifier
+                    .focusRequester(coverFocusRequester)
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") }
+                    .width(240.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(0.7f)
+                    .touchClickable(onClick = onPlay),
             onClick = onPlay,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        3.dp,
-                        MaterialTheme.colorScheme.border,
-                    ),
-                    shape = MaterialTheme.shapes.large,
+            border =
+                CardDefaults.border(
+                    focusedBorder =
+                        Border(
+                            border =
+                                androidx.compose.foundation.BorderStroke(
+                                    3.dp,
+                                    MaterialTheme.colorScheme.border,
+                                ),
+                            shape = MaterialTheme.shapes.large,
+                        ),
                 ),
-            ),
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
@@ -275,9 +280,10 @@ private fun SeasonInfoHeader(
         Spacer(modifier = Modifier.width(24.dp))
 
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -320,9 +326,10 @@ private fun SeasonInfoHeader(
                     icon = Icons.Rounded.PlayArrow,
                     highlighted = true,
                     onClick = onPlay,
-                    modifier = Modifier
-                        .focusRequester(playFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("play") },
+                    modifier =
+                        Modifier
+                            .focusRequester(playFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("play") },
                 )
                 SeasonActionButton(
                     text = if (isFollowing) "已追番" else "追番",
@@ -330,9 +337,10 @@ private fun SeasonInfoHeader(
                     highlighted = isFollowing,
                     accentColor = MaterialTheme.colorScheme.secondary,
                     onClick = onToggleFollow,
-                    modifier = Modifier
-                        .focusRequester(followFocusRequester)
-                        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
+                    modifier =
+                        Modifier
+                            .focusRequester(followFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
                 )
             }
         }
@@ -349,34 +357,37 @@ private fun SeasonActionButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .then(
-                if (highlighted) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.border,
-                        MaterialTheme.shapes.small,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .clip(MaterialTheme.shapes.small)
+                .then(
+                    if (highlighted) {
+                        Modifier.border(
+                            2.dp,
+                            MaterialTheme.colorScheme.border,
+                            MaterialTheme.shapes.small,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (highlighted) {
-                accentColor.copy(alpha = 0.2f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-            contentColor = if (highlighted) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (highlighted) {
+                        accentColor.copy(alpha = 0.2f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -392,11 +403,12 @@ private fun SeasonActionButton(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (highlighted) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color =
+                    if (highlighted) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }
@@ -423,10 +435,11 @@ private fun SeasonEpisodeRow(
         )
         val focusRequester = focusSaver.focusRequesterFor(rowKey)
         LazyRow(
-            modifier = Modifier
-                .focusRestorer(focusRequester)
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(rowKey) }
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .focusRestorer(focusRequester)
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(rowKey) }
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 50.dp),
         ) {
@@ -436,11 +449,12 @@ private fun SeasonEpisodeRow(
                     episode = episode,
                     isLastWatched = progress?.lastEpId == episode.epid,
                     onClick = { onClick(episode) },
-                    modifier = if (episode == episodes.first()) {
-                        Modifier.focusRequester(focusRequester)
-                    } else {
-                        Modifier
-                    },
+                    modifier =
+                        if (episode == episodes.first()) {
+                            Modifier.focusRequester(focusRequester)
+                        } else {
+                            Modifier
+                        },
                     focusSaver = focusSaver,
                     epKey = epKey,
                 )
@@ -460,27 +474,36 @@ private fun EpisodeCard(
     epKey: String,
 ) {
     Column(
-        modifier = modifier
-            .width(200.dp)
-            .focusRequester(focusSaver.focusRequesterFor(epKey))
-            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(epKey) },
+        modifier =
+            modifier
+                .width(200.dp)
+                .focusRequester(focusSaver.focusRequesterFor(epKey))
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(epKey) },
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.6f)
-                .touchClickable(onClick = onClick),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.6f)
+                    .touchClickable(onClick = onClick),
             onClick = onClick,
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        3.dp,
-                        if (isLastWatched) MaterialTheme.colorScheme.border else MaterialTheme.colorScheme.border,
-                    ),
-                    shape = MaterialTheme.shapes.large,
+            border =
+                CardDefaults.border(
+                    focusedBorder =
+                        Border(
+                            border =
+                                androidx.compose.foundation.BorderStroke(
+                                    3.dp,
+                                    if (isLastWatched) {
+                                        MaterialTheme.colorScheme.border
+                                    } else {
+                                        MaterialTheme.colorScheme.border
+                                    },
+                                ),
+                            shape = MaterialTheme.shapes.large,
+                        ),
                 ),
-            ),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
@@ -491,14 +514,16 @@ private fun EpisodeCard(
                 )
                 if (isLastWatched) {
                     Surface(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(4.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(4.dp),
                         shape = RoundedCornerShape(4.dp),
-                        colors = SurfaceDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White,
-                        ),
+                        colors =
+                            SurfaceDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = Color.White,
+                            ),
                     ) {
                         Text(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -513,7 +538,7 @@ private fun EpisodeCard(
         Text(
             text = episode.title,
             style = MaterialTheme.typography.labelSmall,
-             color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -534,15 +559,16 @@ private fun SeasonSwitcherRow(
         Text(
             text = "系列",
             style = MaterialTheme.typography.titleMedium,
-             color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 50.dp),
         )
         val focusRequester = focusSaver.focusRequesterFor("seasons")
         LazyRow(
-            modifier = Modifier
-                .focusRestorer(focusRequester)
-                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .focusRestorer(focusRequester)
+                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 50.dp),
         ) {
@@ -552,11 +578,12 @@ private fun SeasonSwitcherRow(
                     title = season.shortTitle,
                     isCurrent = season.seasonId == currentSeasonId,
                     onClick = { onClick(season.seasonId) },
-                    modifier = if (season == seasons.first()) {
-                        Modifier.focusRequester(focusRequester)
-                    } else {
-                        Modifier
-                    },
+                    modifier =
+                        if (season == seasons.first()) {
+                            Modifier.focusRequester(focusRequester)
+                        } else {
+                            Modifier
+                        },
                     focusSaver = focusSaver,
                     chipKey = seasonKey,
                 )
@@ -576,46 +603,50 @@ private fun SeasonChip(
     chipKey: String,
 ) {
     Surface(
-        modifier = modifier
-            .focusRequester(focusSaver.focusRequesterFor(chipKey))
-            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(chipKey) }
-            .clip(MaterialTheme.shapes.small)
-            .then(
-                if (isCurrent) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.border,
-                        MaterialTheme.shapes.small,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .focusRequester(focusSaver.focusRequesterFor(chipKey))
+                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(chipKey) }
+                .clip(MaterialTheme.shapes.small)
+                .then(
+                    if (isCurrent) {
+                        Modifier.border(
+                            2.dp,
+                            MaterialTheme.colorScheme.border,
+                            MaterialTheme.shapes.small,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (isCurrent) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-            contentColor = if (isCurrent) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (isCurrent) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor =
+                    if (isCurrent) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            ),
     ) {
         Text(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color = if (isCurrent) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
+            color =
+                if (isCurrent) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
         )
     }
 }
@@ -643,24 +674,29 @@ private fun SeasonErrorScreen(
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Surface(
-                modifier = Modifier
-                    .focusRequester(focusRequester)
-                    .touchClickable(onClick = onRetry),
+                modifier =
+                    Modifier
+                        .focusRequester(focusRequester)
+                        .touchClickable(onClick = onRetry),
                 onClick = onRetry,
                 shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
-                border = ClickableSurfaceDefaults.border(
-                    focusedBorder = Border(
-                        border = androidx.compose.foundation.BorderStroke(
-                            2.dp,
-                            MaterialTheme.colorScheme.border,
-                        ),
-                        shape = MaterialTheme.shapes.medium,
+                border =
+                    ClickableSurfaceDefaults.border(
+                        focusedBorder =
+                            Border(
+                                border =
+                                    androidx.compose.foundation.BorderStroke(
+                                        2.dp,
+                                        MaterialTheme.colorScheme.border,
+                                    ),
+                                shape = MaterialTheme.shapes.medium,
+                            ),
                     ),
-                ),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    ClickableSurfaceDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),

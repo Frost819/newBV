@@ -18,8 +18,8 @@ import dev.frost819.newbv.app.ui.screen.search.searchResultScreen
 import dev.frost819.newbv.app.ui.screen.search.searchScreen
 import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
 import dev.frost819.newbv.app.ui.screen.user.followScreen
-import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
+import dev.frost819.newbv.app.ui.screen.user.userSwitchScreen
 import dev.frost819.newbv.core.log.Loggers
 
 /**
@@ -34,7 +34,7 @@ import dev.frost819.newbv.core.log.Loggers
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: Any = HomeRoute
+    startDestination: Any = HomeRoute,
 ) {
     val logger = Loggers.get("AppNavHost")
 
@@ -51,7 +51,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
     ) {
         // ── 主流程 ────────────────────────────────────────────────────
         homeScreen(navController)

@@ -77,11 +77,12 @@ class LoginRepository {
      */
     suspend fun requestAppQrLogin(): QrLoginData {
         val response =
-            BiliPassportHttpApi.getAppQRUrl(
-                localId = "0",
-                ts = (System.currentTimeMillis() / 1000).toInt(),
-                mobiApp = "android_hd",
-            ).getResponseData()
+            BiliPassportHttpApi
+                .getAppQRUrl(
+                    localId = "0",
+                    ts = (System.currentTimeMillis() / 1000).toInt(),
+                    mobiApp = "android_hd",
+                ).getResponseData()
         return QrLoginData(
             url = response.url,
             key = response.authCode,
@@ -108,23 +109,49 @@ class LoginRepository {
                     resultCookies =
                         WebCookies(
                             dedeUserId =
-                                response.getResponseData().cookieInfo.cookies
-                                    .find { it.name == "DedeUserID" }?.value?.toLong()
+                                response
+                                    .getResponseData()
+                                    .cookieInfo.cookies
+                                    .find { it.name == "DedeUserID" }
+                                    ?.value
+                                    ?.toLong()
                                     ?: throw IllegalArgumentException("Cookie DedeUserID not found"),
                             dedeUserIdCkMd5 =
-                                response.getResponseData().cookieInfo.cookies
-                                    .find { it.name == "DedeUserID__ckMd5" }?.value
+                                response
+                                    .getResponseData()
+                                    .cookieInfo.cookies
+                                    .find { it.name == "DedeUserID__ckMd5" }
+                                    ?.value
                                     ?: throw IllegalArgumentException("Cookie DedeUserID__ckMd5 not found"),
                             sid =
-                                response.getResponseData().cookieInfo.cookies.find { it.name == "sid" }?.value
+                                response
+                                    .getResponseData()
+                                    .cookieInfo.cookies
+                                    .find { it.name == "sid" }
+                                    ?.value
                                     ?: throw IllegalArgumentException("Cookie sid not found"),
                             biliJct =
-                                response.getResponseData().cookieInfo.cookies.find { it.name == "bili_jct" }?.value
+                                response
+                                    .getResponseData()
+                                    .cookieInfo.cookies
+                                    .find { it.name == "bili_jct" }
+                                    ?.value
                                     ?: throw IllegalArgumentException("Cookie bili_jct not found"),
                             sessData =
-                                response.getResponseData().cookieInfo.cookies.find { it.name == "SESSDATA" }?.value
+                                response
+                                    .getResponseData()
+                                    .cookieInfo.cookies
+                                    .find { it.name == "SESSDATA" }
+                                    ?.value
                                     ?: throw IllegalArgumentException("Cookie SESSDATA not found"),
-                            expiredDate = Date(response.getResponseData().cookieInfo.cookies.first().expires * 1000L),
+                            expiredDate =
+                                Date(
+                                    response
+                                        .getResponseData()
+                                        .cookieInfo.cookies
+                                        .first()
+                                        .expires * 1000L,
+                                ),
                         )
                     QrLoginState.Success
                 }
@@ -211,13 +238,14 @@ class LoginRepository {
         captchaKey: String,
     ): SmsLoginResult {
         val response =
-            BiliPassportHttpApi.loginWithSms(
-                cid = 86,
-                tel = phone,
-                loginSessionId = loginSessionId,
-                code = code,
-                captchaKey = captchaKey,
-            ).getResponseData()
+            BiliPassportHttpApi
+                .loginWithSms(
+                    cid = 86,
+                    tel = phone,
+                    loginSessionId = loginSessionId,
+                    code = code,
+                    captchaKey = captchaKey,
+                ).getResponseData()
         return SmsLoginResult.fromSmsLoginResponse(response)
     }
 }

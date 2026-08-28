@@ -20,7 +20,8 @@ class SearchRepository(
     private val searchSuggestStub
         get() =
             runCatching {
-                bilibili.app.interfaces.v1.SearchGrpcKt.SearchCoroutineStub(channelRepository.requireDefaultChannel())
+                bilibili.app.interfaces.v1.SearchGrpcKt
+                    .SearchCoroutineStub(channelRepository.requireDefaultChannel())
             }.getOrNull()
 
     private val searchResultStub
@@ -67,19 +68,22 @@ class SearchRepository(
     suspend fun getSearchHotwords(
         limit: Int = 30,
         preferApiType: ApiType,
-    ): List<Hotword> {
-        return when (preferApiType) {
+    ): List<Hotword> =
+        when (preferApiType) {
             ApiType.Web ->
-                BiliHttpApi.getWebSearchSquare(limit = limit)
-                    .getResponseData().trending.list
+                BiliHttpApi
+                    .getWebSearchSquare(limit = limit)
+                    .getResponseData()
+                    .trending.list
                     .map { Hotword.fromHttpWebHotword(it) }
 
             ApiType.App ->
-                BiliHttpApi.getSearchTrendRank(limit = limit)
-                    .getResponseData().list
+                BiliHttpApi
+                    .getSearchTrendRank(limit = limit)
+                    .getResponseData()
+                    .list
                     .map { Hotword.fromHttpAppSearchTrendingHotword(it) }
         }
-    }
 
     /**
      * 全量搜索（返回所有类型结果）。
@@ -96,14 +100,15 @@ class SearchRepository(
         keyword: String,
         page: Int = 1,
         preferApiType: ApiType,
-    ): SearchAllResult {
-        return when (preferApiType) {
+    ): SearchAllResult =
+        when (preferApiType) {
             ApiType.Web -> {
                 val data =
-                    BiliHttpApi.searchAll(
-                        keyword = keyword,
-                        page = page,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .searchAll(
+                            keyword = keyword,
+                            page = page,
+                        ).getResponseData()
                 SearchAllResult.fromWeb(data)
             }
 
@@ -123,28 +128,30 @@ class SearchRepository(
                 SearchAllResult.fromGrpc(reply)
             }
         }
-    }
 
     suspend fun getSearchSuggest(
         keyword: String,
         preferApiType: ApiType,
-    ): List<String> {
-        return when (preferApiType) {
+    ): List<String> =
+        when (preferApiType) {
             ApiType.Web ->
-                BiliHttpApi.getKeywordSuggest(
-                    term = keyword,
-                    buvid = authRepository.buvid ?: "",
-                ).suggests.map { it.value }
+                BiliHttpApi
+                    .getKeywordSuggest(
+                        term = keyword,
+                        buvid = authRepository.buvid ?: "",
+                    ).suggests
+                    .map { it.value }
 
             // TODO 返回的关键词提示中可能包含通过avid/bvid/专栏id等的直达跳转结果项，需要过滤掉或进行单独处理
             ApiType.App ->
-                searchSuggestStub?.suggest3(
-                    suggestionResult3Req {
-                        this.keyword = keyword
-                    },
-                )?.listList?.map { it.keyword } ?: emptyList()
+                searchSuggestStub
+                    ?.suggest3(
+                        suggestionResult3Req {
+                            this.keyword = keyword
+                        },
+                    )?.listList
+                    ?.map { it.keyword } ?: emptyList()
         }
-    }
 
     /**
      * 按分类进行搜索
@@ -159,18 +166,19 @@ class SearchRepository(
         duration: SearchFilterDuration,
         page: SearchTypePage,
         preferApiType: ApiType,
-    ): SearchTypeResult {
-        return when (preferApiType) {
+    ): SearchTypeResult =
+        when (preferApiType) {
             ApiType.Web -> {
                 val response =
-                    BiliHttpApi.searchType(
-                        keyword = keyword,
-                        type = type.httpTypeParam,
-                        page = page.nextPageForWeb,
-                        tid = tid,
-                        order = order.httpOrderParam,
-                        duration = duration.httpDurationParam,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .searchType(
+                            keyword = keyword,
+                            type = type.httpTypeParam,
+                            page = page.nextPageForWeb,
+                            tid = tid,
+                            order = order.httpOrderParam,
+                            duration = duration.httpDurationParam,
+                        ).getResponseData()
                 SearchTypeResult.fromSearchTypeResult(response)
             }
 
@@ -195,7 +203,6 @@ class SearchRepository(
                 SearchTypeResult.fromSearchTypeResult(searchTypeReply)
             }
         }
-    }
 }
 
 data class SearchTypePage(
@@ -343,8 +350,8 @@ data class SearchTypeResult(
             }
         }
 
-        fun fromSearchTypeResult(result: bilibili.polymer.app.search.v1.SearchByTypeResponse): SearchTypeResult {
-            return when (result.itemsList.firstOrNull()?.cardItemCase) {
+        fun fromSearchTypeResult(result: bilibili.polymer.app.search.v1.SearchByTypeResponse): SearchTypeResult =
+            when (result.itemsList.firstOrNull()?.cardItemCase) {
                 bilibili.polymer.app.search.v1.Item.CardItemCase.AV -> {
                     SearchTypeResult(
                         videos = result.itemsList.map { Video.fromSearchVideoCard(it) },
@@ -370,7 +377,6 @@ data class SearchTypeResult(
                     SearchTypeResult(page = SearchTypePage(nextPageForApp = result.pagination.next))
                 }
             }
-        }
     }
 
     interface SearchTypeResultItem

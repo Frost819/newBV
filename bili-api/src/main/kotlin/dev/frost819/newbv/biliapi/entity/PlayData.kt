@@ -33,19 +33,20 @@ data class PlayData(
 
             // 处理 dashVideo
             val dashVideos =
-                dashVideoStreams.map {
-                    DashVideo(
-                        quality = it.streamInfo.quality,
-                        baseUrl = it.dashVideo.baseUrl,
-                        bandwidth = it.dashVideo.bandwidth,
-                        codecId = it.dashVideo.codecid,
-                        width = it.dashVideo.width,
-                        height = it.dashVideo.height,
-                        frameRate = it.dashVideo.frameRate,
-                        backUrl = it.dashVideo.backupUrlList,
-                        codecs = CodeType.fromCodecId(it.dashVideo.codecid).str,
-                    )
-                }.toMutableList()
+                dashVideoStreams
+                    .map {
+                        DashVideo(
+                            quality = it.streamInfo.quality,
+                            baseUrl = it.dashVideo.baseUrl,
+                            bandwidth = it.dashVideo.bandwidth,
+                            codecId = it.dashVideo.codecid,
+                            width = it.dashVideo.width,
+                            height = it.dashVideo.height,
+                            frameRate = it.dashVideo.frameRate,
+                            backUrl = it.dashVideo.backupUrlList,
+                            codecs = CodeType.fromCodecId(it.dashVideo.codecid).str,
+                        )
+                    }.toMutableList()
 
             val isPreview = dashVideos.isEmpty() && segmentVideoStreams.isNotEmpty()
 
@@ -143,19 +144,20 @@ data class PlayData(
 
             // 处理 dashVideo
             val dashVideos =
-                dashVideoStreams.map {
-                    DashVideo(
-                        quality = it.info.quality,
-                        baseUrl = it.dashVideo.baseUrl,
-                        bandwidth = it.dashVideo.bandwidth,
-                        codecId = it.dashVideo.codecid,
-                        width = it.dashVideo.width,
-                        height = it.dashVideo.height,
-                        frameRate = it.dashVideo.frameRate,
-                        backUrl = it.dashVideo.backupUrlList,
-                        codecs = CodeType.fromCodecId(it.dashVideo.codecid).str,
-                    )
-                }.toMutableList()
+                dashVideoStreams
+                    .map {
+                        DashVideo(
+                            quality = it.info.quality,
+                            baseUrl = it.dashVideo.baseUrl,
+                            bandwidth = it.dashVideo.bandwidth,
+                            codecId = it.dashVideo.codecid,
+                            width = it.dashVideo.width,
+                            height = it.dashVideo.height,
+                            frameRate = it.dashVideo.frameRate,
+                            backUrl = it.dashVideo.backupUrlList,
+                            codecs = CodeType.fromCodecId(it.dashVideo.codecid).str,
+                        )
+                    }.toMutableList()
 
             // 当 dashVideo 不存在时，使用 segmentVideo（试看流）的 durl 填充
             if (dashVideos.isEmpty() && segmentVideoStreams.isNotEmpty()) {
@@ -231,7 +233,11 @@ data class PlayData(
             val isPreview = !hasDash && playUrlData.durl.isNotEmpty()
 
             val audios = playUrlData.dash?.audio
-            val dolbyItem = playUrlData.dash?.dolby?.audio?.firstOrNull()
+            val dolbyItem =
+                playUrlData.dash
+                    ?.dolby
+                    ?.audio
+                    ?.firstOrNull()
             val flacItem = playUrlData.dash?.flac?.audio
             val codec =
                 playUrlData.supportFormats
@@ -262,7 +268,11 @@ data class PlayData(
                             backUrl = it.backupUrl,
                             codecId = playUrlData.videoCodecId,
                             // durl 模式下没有这些信息，给默认值
-                            bandwidth = 0, width = 0, height = 0, frameRate = "", codecs = "",
+                            bandwidth = 0,
+                            width = 0,
+                            height = 0,
+                            frameRate = "",
+                            codecs = "",
                         )
                     }
                 }
@@ -304,13 +314,12 @@ data class PlayData(
             )
         }
 
-        fun fromPlayUrlV2Data(playUrlV2Data: dev.frost819.newbv.biliapi.http.entity.video.PlayUrlV2Data): PlayData {
-            return fromPlayUrlData(playUrlV2Data.videoInfo)
-        }
+        fun fromPlayUrlV2Data(playUrlV2Data: dev.frost819.newbv.biliapi.http.entity.video.PlayUrlV2Data): PlayData =
+            fromPlayUrlData(playUrlV2Data.videoInfo)
     }
 
-    operator fun plus(other: PlayData): PlayData {
-        return PlayData(
+    operator fun plus(other: PlayData): PlayData =
+        PlayData(
             dashVideos =
                 (dashVideos + other.dashVideos)
                     .distinctBy { "${it.codecId}_${it.quality}" }
@@ -322,15 +331,15 @@ data class PlayData(
             dolby = dolby ?: other.dolby,
             flac = flac ?: other.flac,
             codec =
-                codec.map {
-                    it.key to
-                        (it.value + other.codec[it.key].orEmpty())
-                            .distinct()
-                            .filter { it != "none" }
-                }.toMap(),
+                codec
+                    .map {
+                        it.key to
+                            (it.value + other.codec[it.key].orEmpty())
+                                .distinct()
+                                .filter { it != "none" }
+                    }.toMap(),
             needPay = needPay || other.needPay,
         )
-    }
 }
 
 /**

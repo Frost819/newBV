@@ -64,12 +64,13 @@ fun BottomSubtitle(
     Box(modifier = modifier.fillMaxSize()) {
         if (currentText.isNotEmpty()) {
             Text(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = padding)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(Color.Black.copy(alpha = opacity))
-                    .padding(vertical = 4.dp, horizontal = 12.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = padding)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(Color.Black.copy(alpha = opacity))
+                        .padding(vertical = 4.dp, horizontal = 12.dp),
                 text = currentText,
                 fontSize = fontSize,
                 textAlign = TextAlign.Center,
@@ -83,23 +84,26 @@ fun BottomSubtitle(
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 private fun BottomSubtitlePreview() {
-    val sampleSubtitle = listOf(
-        SubtitleItem(
-            from = dev.frost819.newbv.bilisubtitle.entity.Timestamp(
-                hours = 0,
-                minutes = 0,
-                seconds = 0,
-                milliSeconds = 0,
+    val sampleSubtitle =
+        listOf(
+            SubtitleItem(
+                from =
+                    dev.frost819.newbv.bilisubtitle.entity.Timestamp(
+                        hours = 0,
+                        minutes = 0,
+                        seconds = 0,
+                        milliSeconds = 0,
+                    ),
+                to =
+                    dev.frost819.newbv.bilisubtitle.entity.Timestamp(
+                        hours = 0,
+                        minutes = 0,
+                        seconds = 10,
+                        milliSeconds = 0,
+                    ),
+                content = "这是一条示例字幕",
             ),
-            to = dev.frost819.newbv.bilisubtitle.entity.Timestamp(
-                hours = 0,
-                minutes = 0,
-                seconds = 10,
-                milliSeconds = 0,
-            ),
-            content = "这是一条示例字幕",
-        ),
-    )
+        )
 
     BVTheme {
         BottomSubtitle(

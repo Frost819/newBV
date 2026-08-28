@@ -941,7 +941,10 @@ class VideoDetailRepositoryUnitTest {
                 ),
             vip =
                 dev.frost819.newbv.biliapi.http.entity.user.Vip(
-                    type = 0, status = 0, dueDate = 0L, vipPayType = 0,
+                    type = 0,
+                    status = 0,
+                    dueDate = 0L,
+                    vipPayType = 0,
                     themeType = 0,
                     label =
                         dev.frost819.newbv.biliapi.http.entity.user.Vip.Label(
@@ -953,8 +956,12 @@ class VideoDetailRepositoryUnitTest {
                             bgColor = "",
                             borderColor = "",
                         ),
-                    avatarSubscript = 0, nicknameColor = "", role = 0,
-                    avatarSubscriptUrl = "", tvVipStatus = 0, tvVipPayType = 0,
+                    avatarSubscript = 0,
+                    nicknameColor = "",
+                    role = 0,
+                    avatarSubscriptUrl = "",
+                    tvVipStatus = 0,
+                    tvVipPayType = 0,
                 ),
             answerStatue = 0,
             blockTime = 0,

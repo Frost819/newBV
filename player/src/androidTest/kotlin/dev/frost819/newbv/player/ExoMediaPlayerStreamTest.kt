@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @RunWith(AndroidJUnit4::class)
 class ExoMediaPlayerStreamTest {
-
     private lateinit var context: Context
     private lateinit var player: ExoMediaPlayer
 
@@ -50,28 +49,44 @@ class ExoMediaPlayerStreamTest {
         readyLatch: CountDownLatch,
         playLatch: CountDownLatch = CountDownLatch(1),
         pauseLatch: CountDownLatch? = null,
-        errorRef: AtomicReference<Exception?>
-    ): VideoPlayerListener = object : VideoPlayerListener {
-        override fun onError(error: Exception) { errorRef.set(error) }
-        override fun onReady() { readyLatch.countDown() }
-        override fun onPlay() { playLatch.countDown() }
-        override fun onPause() { pauseLatch?.countDown() }
-        override fun onBuffering() {}
-        override fun onEnd() {}
-        override fun onSeekBack(seekBackIncrementMs: Long) {}
-        override fun onSeekForward(seekForwardIncrementMs: Long) {}
-    }
+        errorRef: AtomicReference<Exception?>,
+    ): VideoPlayerListener =
+        object : VideoPlayerListener {
+            override fun onError(error: Exception) {
+                errorRef.set(error)
+            }
+
+            override fun onReady() {
+                readyLatch.countDown()
+            }
+
+            override fun onPlay() {
+                playLatch.countDown()
+            }
+
+            override fun onPause() {
+                pauseLatch?.countDown()
+            }
+
+            override fun onBuffering() {}
+
+            override fun onEnd() {}
+
+            override fun onSeekBack(seekBackIncrementMs: Long) {}
+
+            override fun onSeekForward(seekForwardIncrementMs: Long) {}
+        }
 
     private fun awaitReady(
         readyLatch: CountDownLatch,
-        errorRef: AtomicReference<Exception?>
+        errorRef: AtomicReference<Exception?>,
     ) {
         val ready = readyLatch.await(LATCH_TIMEOUT_SEC, TimeUnit.SECONDS)
         if (!ready) {
             val error = errorRef.get()
             throw AssertionError(
                 "onReady not received within ${LATCH_TIMEOUT_SEC}s. " +
-                    "Error: ${error?.message ?: "none"}"
+                    "Error: ${error?.message ?: "none"}",
             )
         }
     }
@@ -79,17 +94,19 @@ class ExoMediaPlayerStreamTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        player = runOnMain {
-            ExoMediaPlayer(
-                context = context,
-                options = VideoPlayerOptions(
-                    userAgent = "test-agent",
-                    referer = "https://www.bilibili.com",
-                    enableFfmpegAudioRenderer = false,
-                    enableSoftwareVideoDecoder = false
+        player =
+            runOnMain {
+                ExoMediaPlayer(
+                    context = context,
+                    options =
+                        VideoPlayerOptions(
+                            userAgent = "test-agent",
+                            referer = "https://www.bilibili.com",
+                            enableFfmpegAudioRenderer = false,
+                            enableSoftwareVideoDecoder = false,
+                        ),
                 )
-            )
-        }
+            }
         runOnMainVoid { player.setOptions() }
     }
 
@@ -108,7 +125,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, playLatch, errorRef = errorRef)
+                createTrackingListener(readyLatch, playLatch, errorRef = errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -133,7 +150,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, playLatch, errorRef = errorRef)
+                createTrackingListener(readyLatch, playLatch, errorRef = errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -158,7 +175,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, playLatch, pauseLatch, errorRef)
+                createTrackingListener(readyLatch, playLatch, pauseLatch, errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -182,7 +199,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, errorRef = errorRef)
+                createTrackingListener(readyLatch, errorRef = errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -209,7 +226,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, playLatch, errorRef = errorRef)
+                createTrackingListener(readyLatch, playLatch, errorRef = errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -233,7 +250,7 @@ class ExoMediaPlayerStreamTest {
 
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch, errorRef = errorRef)
+                createTrackingListener(readyLatch, errorRef = errorRef),
             )
             player.playUrl(videoUrl = TEST_VIDEO_URI, audioUrl = null)
             player.prepare()
@@ -251,7 +268,7 @@ class ExoMediaPlayerStreamTest {
         val errorRef2 = AtomicReference<Exception?>(null)
         runOnMainVoid {
             player.setPlayerEventListener(
-                createTrackingListener(readyLatch2, errorRef = errorRef2)
+                createTrackingListener(readyLatch2, errorRef = errorRef2),
             )
             player.prepare()
         }

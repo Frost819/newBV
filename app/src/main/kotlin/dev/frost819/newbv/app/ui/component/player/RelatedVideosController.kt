@@ -50,14 +50,15 @@ fun RelatedVideosController(
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    val backgroundBrush = remember {
-        Brush.verticalGradient(
-            0.0f to Color.Transparent,
-            0.15f to Color.Black.copy(alpha = 0.5f),
-            0.85f to Color.Black.copy(alpha = 0.5f),
-            1.0f to Color.Transparent,
-        )
-    }
+    val backgroundBrush =
+        remember {
+            Brush.verticalGradient(
+                0.0f to Color.Transparent,
+                0.15f to Color.Black.copy(alpha = 0.5f),
+                0.85f to Color.Black.copy(alpha = 0.5f),
+                1.0f to Color.Transparent,
+            )
+        }
 
     LaunchedEffect(show) {
         if (show) {
@@ -66,9 +67,10 @@ fun RelatedVideosController(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(focusRequester),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .focusRequester(focusRequester),
         contentAlignment = Alignment.Center,
     ) {
         AnimatedVisibility(
@@ -77,10 +79,11 @@ fun RelatedVideosController(
             exit = fadeOut(),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(backgroundBrush)
-                    .padding(vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(backgroundBrush)
+                        .padding(vertical = 12.dp),
             ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -90,7 +93,9 @@ fun RelatedVideosController(
                 )
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 24.dp),
+                    contentPadding =
+                        androidx.compose.foundation.layout
+                            .PaddingValues(horizontal = 24.dp),
                 ) {
                     items(
                         items = relatedVideos,
@@ -113,28 +118,29 @@ fun RelatedVideosController(
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 private fun RelatedVideosControllerPreview() {
-    val sampleVideos = listOf(
-        VideoCardData(
-            avid = 1,
-            cid = 101,
-            title = "相关视频标题 1",
-            cover = "",
-            upName = "UP主A",
-            playString = "1.2万播放",
-            danmakuString = "300弹幕",
-            timeString = "10:30",
-        ),
-        VideoCardData(
-            avid = 2,
-            cid = 102,
-            title = "相关视频标题 2",
-            cover = "",
-            upName = "UP主B",
-            playString = "5000播放",
-            danmakuString = "100弹幕",
-            timeString = "5:20",
-        ),
-    )
+    val sampleVideos =
+        listOf(
+            VideoCardData(
+                avid = 1,
+                cid = 101,
+                title = "相关视频标题 1",
+                cover = "",
+                upName = "UP主A",
+                playString = "1.2万播放",
+                danmakuString = "300弹幕",
+                timeString = "10:30",
+            ),
+            VideoCardData(
+                avid = 2,
+                cid = 102,
+                title = "相关视频标题 2",
+                cover = "",
+                upName = "UP主B",
+                playString = "5000播放",
+                danmakuString = "100弹幕",
+                timeString = "5:20",
+            ),
+        )
 
     BVTheme {
         RelatedVideosController(

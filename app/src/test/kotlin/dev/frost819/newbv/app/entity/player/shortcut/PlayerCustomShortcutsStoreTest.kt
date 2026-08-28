@@ -26,7 +26,6 @@ import java.io.File
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PlayerCustomShortcutsStoreTest {
-
     companion object {
         @JvmStatic
         @BeforeAll
@@ -35,10 +34,11 @@ class PlayerCustomShortcutsStoreTest {
             val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             val file = File.createTempFile("test_shortcuts_store", ".preferences_pb")
             file.deleteOnExit()
-            val testDataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
-                scope = scope,
-                produceFile = { file },
-            )
+            val testDataStore: DataStore<Preferences> =
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { file },
+                )
             Prefs.init(testDataStore)
         }
 
@@ -65,10 +65,11 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `save persists shortcuts and returns normalized list`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_UP, PlayerCustomShortcutAction.ToggleLoop),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_DOWN, PlayerCustomShortcutAction.ToggleDanmaku),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_UP, PlayerCustomShortcutAction.ToggleLoop),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_DPAD_DOWN, PlayerCustomShortcutAction.ToggleDanmaku),
+            )
 
         val saved = PlayerCustomShortcutsStore.save(shortcuts)
 
@@ -78,9 +79,10 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `get returns saved shortcuts after save`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
+            )
 
         PlayerCustomShortcutsStore.save(shortcuts)
         val retrieved = PlayerCustomShortcutsStore.get()
@@ -92,10 +94,11 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `getByKey returns map keyed by keyCode`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_2, PlayerCustomShortcutAction.ToggleDanmaku),
+            )
 
         PlayerCustomShortcutsStore.save(shortcuts)
         val map = PlayerCustomShortcutsStore.getByKey()
@@ -173,10 +176,11 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `save filters forbidden keyCodes`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.ToggleSubtitle),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_BACK, PlayerCustomShortcutAction.ToggleSubtitle),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleLoop),
+            )
 
         val saved = PlayerCustomShortcutsStore.save(shortcuts)
 
@@ -186,10 +190,11 @@ class PlayerCustomShortcutsStoreTest {
 
     @Test
     fun `save deduplicates by keyCode keeping last`() {
-        val shortcuts = listOf(
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
-            PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku),
-        )
+        val shortcuts =
+            listOf(
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleSubtitle),
+                PlayerCustomShortcut(KeyEvent.KEYCODE_1, PlayerCustomShortcutAction.ToggleDanmaku),
+            )
 
         val saved = PlayerCustomShortcutsStore.save(shortcuts)
 

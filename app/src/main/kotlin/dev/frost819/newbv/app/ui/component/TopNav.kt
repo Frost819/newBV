@@ -1,15 +1,16 @@
 package dev.frost819.newbv.app.ui.component
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,13 +19,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -70,14 +70,16 @@ fun TopNav(
     )
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(12.dp, verticalPadding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(12.dp, verticalPadding),
         horizontalArrangement = Arrangement.Center,
     ) {
         TabRow(
-            modifier = Modifier
-                .focusRestorer(focusRequester),
+            modifier =
+                Modifier
+                    .focusRestorer(focusRequester),
             selectedTabIndex = selectedTabIndex,
             separator = { Spacer(modifier = Modifier.width(12.dp)) },
         ) {
@@ -108,27 +110,30 @@ private fun TabRowScope.NavItemTab(
     onFocus: () -> Unit,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
-    val containerColor = if (selected) {
-        accentColor.copy(alpha = if (hasFocus) 0.24f else 0.14f)
-    } else {
-        Color.Transparent
-    }
+    val containerColor =
+        if (selected) {
+            accentColor.copy(alpha = if (hasFocus) 0.24f else 0.14f)
+        } else {
+            Color.Transparent
+        }
     val borderColor = if (hasFocus) accentColor else Color.Transparent
     Tab(
-        modifier = modifier
-            .onFocusChanged { hasFocus = it.hasFocus }
-            .clip(RoundedCornerShape(50))
-            .background(containerColor)
-            .border(2.dp, borderColor, RoundedCornerShape(50))
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .onFocusChanged { hasFocus = it.hasFocus }
+                .clip(RoundedCornerShape(50))
+                .background(containerColor)
+                .border(2.dp, borderColor, RoundedCornerShape(50))
+                .touchClickable(onClick = onClick),
         selected = selected,
         onFocus = onFocus,
         onClick = onClick,
     ) {
         Text(
-            modifier = Modifier
-                .height(32.dp)
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier =
+                Modifier
+                    .height(32.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
             text = topNavItem.displayName,
             color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelLarge,
@@ -152,11 +157,12 @@ private data class DummyTopNavItem(
 private fun TopNavPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         TopNav(
-            items = listOf(
-                DummyTopNavItem("推荐"),
-                DummyTopNavItem("热门"),
-                DummyTopNavItem("动态"),
-            ),
+            items =
+                listOf(
+                    DummyTopNavItem("推荐"),
+                    DummyTopNavItem("热门"),
+                    DummyTopNavItem("动态"),
+                ),
             isLargePadding = true,
         )
     }

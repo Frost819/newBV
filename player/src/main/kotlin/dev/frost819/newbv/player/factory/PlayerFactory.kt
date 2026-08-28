@@ -19,5 +19,8 @@ abstract class PlayerFactory<T : AbstractVideoPlayer> {
      * @param options 播放器配置
      * @return 播放器实例
      */
-    abstract fun create(context: Context, options: VideoPlayerOptions): T
+    abstract fun create(
+        context: Context,
+        options: VideoPlayerOptions,
+    ): T
 }

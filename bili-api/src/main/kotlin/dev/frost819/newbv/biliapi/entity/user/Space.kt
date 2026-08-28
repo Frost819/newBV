@@ -12,7 +12,8 @@ data class SpaceVideoData(
         fun fromWebSpaceVideoData(webSpaceVideoData: dev.frost819.newbv.biliapi.http.entity.user.WebSpaceVideoData) =
             SpaceVideoData(
                 videos =
-                    webSpaceVideoData.list?.vlist
+                    webSpaceVideoData.list
+                        ?.vlist
                         ?.map { SpaceVideo.fromSpaceVideoItem(it) }
                         ?: emptyList(),
                 page =
@@ -36,7 +37,11 @@ data class SpaceVideoData(
                 page =
                     SpaceVideoPage(
                         hasNext = appSpaceVideoData.hasNext,
-                        lastAvid = appSpaceVideoData.item.lastOrNull()?.param?.toLong() ?: 0,
+                        lastAvid =
+                            appSpaceVideoData.item
+                                .lastOrNull()
+                                ?.param
+                                ?.toLong() ?: 0,
                     ),
             )
 
@@ -116,7 +121,9 @@ private fun convertMmSsToSeconds(time: String): Int {
     return (minutes * 60) + seconds
 }
 
-enum class SpaceVideoOrder(val value: String) {
+enum class SpaceVideoOrder(
+    val value: String,
+) {
     PubDate("pubdate"),
     Click("click"),
 }

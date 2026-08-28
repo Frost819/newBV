@@ -26,8 +26,8 @@ import dev.frost819.newbv.app.ui.component.settings.displayName
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.data.datastore.ActionAfterPlay
 import dev.frost819.newbv.data.datastore.Audio
-import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.PlaySpeed
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.Resolution
 import dev.frost819.newbv.data.datastore.VideoCodec
 
@@ -37,9 +37,7 @@ import dev.frost819.newbv.data.datastore.VideoCodec
  * 画质/编码/音轨/倍速/播放结束动作/快捷键/软解/FFmpeg 音频。
  */
 @Composable
-fun AudioVideoSetting(
-    modifier: Modifier = Modifier,
-) {
+fun AudioVideoSetting(modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
 
     var showResolutionDialog by remember { mutableStateOf(false) }
@@ -61,10 +59,11 @@ fun AudioVideoSetting(
     var showPlayerDebugInfo by remember { mutableStateOf(Prefs.showPlayerDebugInfo) }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 48.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
  * 验证各日志级别调用时传入了正确的 priority、tag 和消息内容。
  */
 class LoggerTest {
-
     @BeforeEach
     fun setUp() {
         mockkStatic(Log::class)
@@ -105,7 +104,10 @@ class LoggerTest {
 
         every { Log.println(any(), any(), any()) } throws RuntimeException("mock failure")
 
-        logger.info { evaluated = true; "should not be used" }
+        logger.info {
+            evaluated = true
+            "should not be used"
+        }
 
         assertThat(evaluated).isTrue()
     }

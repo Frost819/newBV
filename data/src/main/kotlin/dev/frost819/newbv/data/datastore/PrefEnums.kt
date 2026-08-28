@@ -1,6 +1,6 @@
 package dev.frost819.newbv.data.datastore
 
-/**
+/*
  * 偏好设置相关枚举集合。
  *
  * 这些枚举用于 DataStore 持久化，仅保留持久化所需的 code/ordinal 与反序列化方法。
@@ -9,8 +9,6 @@ package dev.frost819.newbv.data.datastore
  * 当 bili-api / player / danmaku 模块迁移完成后，部分枚举（ApiType / Resolution /
  * VideoCodec / Audio）可迁移至对应模块，data 层改为引用。
  */
-
-// ===== 网络 & API =====
 
 /**
  * 接口类型。
@@ -23,7 +21,9 @@ enum class ApiType {
     Web,
 
     /** App gRPC API（需 App 签名）。 */
-    App;
+    App,
+
+    ;
 
     companion object {
         /** 从序号安全解析，越界返回 [Web]。 */
@@ -40,7 +40,9 @@ enum class ApiType {
  *
  * @property code B 站画质标识（qn）。
  */
-enum class Resolution(val code: Int) {
+enum class Resolution(
+    val code: Int,
+) {
     R240P(6),
     R360P(16),
     R480P(32),
@@ -52,7 +54,8 @@ enum class Resolution(val code: Int) {
     R4K(120),
     RHdr(125),
     RDolby(126),
-    R8K(127);
+    R8K(127),
+    ;
 
     companion object {
         /** 从 code 安全解析，未知 code 返回 [R1080P]。 */
@@ -69,21 +72,27 @@ enum class Resolution(val code: Int) {
  * @property codecId B 站编码 ID。
  * @property prefixes 所有匹配前缀，用于从 codec string 匹配（如 HEVC 匹配 `hev1.*` 和 `hvc1.*`）。
  */
-enum class VideoCodec(val prefix: String, val codecId: Int, val prefixes: List<String> = listOf(prefix)) {
+enum class VideoCodec(
+    val prefix: String,
+    val codecId: Int,
+    val prefixes: List<String> = listOf(prefix),
+) {
     AVC("avc1", 7),
     HEVC("hev1", 12, listOf("hev1", "hvc1")),
     AV1("av01", 13),
-    DVH1("dvh1", 0);
+    DVH1("dvh1", 0),
+    ;
 
     companion object {
         /** 从 ordinal 安全解析，越界返回 [AVC]。 */
         fun fromCode(ordinal: Int): VideoCodec = entries.find { it.ordinal == ordinal } ?: AVC
 
         /** 从 codec string（如 `avc1.640028`、`hvc1.1.6.L153.90`）匹配编码，无匹配返回 null。 */
-        fun fromCodecString(codec: String): VideoCodec? = runCatching {
-            entries.forEach { if (it.prefixes.any { p -> codec.startsWith(p) }) return it }
-            null
-        }.getOrNull()
+        fun fromCodecString(codec: String): VideoCodec? =
+            runCatching {
+                entries.forEach { if (it.prefixes.any { p -> codec.startsWith(p) }) return it }
+                null
+            }.getOrNull()
 
         /** 从 B 站 codecId 匹配，无匹配返回 [AVC]。 */
         fun fromCodecId(codecId: Int): VideoCodec = entries.find { it.codecId == codecId } ?: AVC
@@ -97,11 +106,14 @@ enum class VideoCodec(val prefix: String, val codecId: Int, val prefixes: List<S
  *
  * @property code 动作标识。
  */
-enum class ActionAfterPlay(val code: Int) {
+enum class ActionAfterPlay(
+    val code: Int,
+) {
     Pause(0),
     PlayNext(1),
     Exit(2),
-    PlayRelated(3);
+    PlayRelated(3),
+    ;
 
     companion object {
         /** 从 code 安全解析，未知 code 返回 [PlayNext]。 */
@@ -118,12 +130,15 @@ enum class ActionAfterPlay(val code: Int) {
  *
  * @property code B 站音频标识。
  */
-enum class Audio(val code: Int) {
+enum class Audio(
+    val code: Int,
+) {
     A64K(30216),
     A132K(30232),
     A192K(30280),
     ADolbyAtoms(30250),
-    AHiRes(30251);
+    AHiRes(30251),
+    ;
 
     companion object {
         /** 从 code 安全解析，未知 code 返回 [A192K]。 */
@@ -149,7 +164,7 @@ enum class DanmakuType {
     Rolling,
 
     /** 底部弹幕。 */
-    Bottom;
+    Bottom,
 }
 
 // ===== 播放器 - 界面 =====
@@ -162,12 +177,16 @@ enum class DanmakuType {
  * @property code 速度标识。
  * @property speed 实际倍速值。
  */
-enum class PlaySpeed(val code: Int, val speed: Float) {
+enum class PlaySpeed(
+    val code: Int,
+    val speed: Float,
+) {
     X0_5(0, 0.5f),
     X1(1, 1f),
     X1_25(2, 1.25f),
     X1_5(3, 1.5f),
-    X2(4, 2f);
+    X2(4, 2f),
+    ;
 
     companion object {
         /** 从 code 安全解析，未知 code 返回 [X1]。 */
@@ -192,7 +211,8 @@ enum class LeftNaviItem : java.io.Serializable {
     Home,
     UGC,
     PGC,
-    Live;
+    Live,
+    ;
 
     companion object {
         /** 从序号安全解析，越界返回 [Home]。 */
@@ -207,10 +227,13 @@ enum class LeftNaviItem : java.io.Serializable {
  *
  * @property code Tab 标识。
  */
-enum class HomeTopNavItem(val code: Int) {
+enum class HomeTopNavItem(
+    val code: Int,
+) {
     Dynamics(0),
     Recommend(1),
-    Popular(2);
+    Popular(2),
+    ;
 
     companion object {
         /** 从 code 安全解析，未知 code 返回 [Dynamics]。 */
@@ -227,7 +250,8 @@ enum class PersonalTopNavItem {
     ToView,
     History,
     Favorite,
-    FollowingSeason;
+    FollowingSeason,
+    ;
 
     companion object {
         /** 从序号安全解析，越界返回 [ToView]。 */
@@ -251,7 +275,9 @@ enum class ThemeMode {
     Dark,
 
     /** 强制浅色。 */
-    Light;
+    Light,
+
+    ;
 
     companion object {
         /** 从序号安全解析，越界返回 [FollowSystem]。 */

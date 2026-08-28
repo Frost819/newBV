@@ -11,7 +11,6 @@ import java.util.Date
  * 包括 null 值处理与往返一致性。
  */
 class ConvertersTest {
-
     @Test
     fun `timestampToDate returns null for null input`() {
         assertThat(Converters.timestampToDate(null)).isNull()

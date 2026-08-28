@@ -64,9 +64,10 @@ fun SkipTips(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(bottom = 80.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             PlayerTip(
@@ -115,23 +116,27 @@ fun PlayerTip(
 ) {
     AnimatedVisibility(
         visible = show,
-        enter = expandVertically(
-            expandFrom = Alignment.Bottom,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        ) + fadeIn(tween(400)),
-        exit = shrinkVertically(
-            shrinkTowards = Alignment.Bottom,
-            animationSpec = tween(350),
-        ) + fadeOut(tween(280)),
+        enter =
+            expandVertically(
+                expandFrom = Alignment.Bottom,
+                animationSpec =
+                    spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow,
+                    ),
+            ) + fadeIn(tween(400)),
+        exit =
+            shrinkVertically(
+                shrinkTowards = Alignment.Bottom,
+                animationSpec = tween(350),
+            ) + fadeOut(tween(280)),
     ) {
         Row(
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
-                .background(Color.Black.copy(alpha = 0.6f)),
+            modifier =
+                Modifier
+                    .height(IntrinsicSize.Min)
+                    .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+                    .background(Color.Black.copy(alpha = 0.6f)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(

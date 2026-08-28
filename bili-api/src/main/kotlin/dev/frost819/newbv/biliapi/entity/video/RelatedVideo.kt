@@ -29,8 +29,10 @@ data class RelatedVideo(
                 jumpToSeason = relate.goto.needJumpToSeason(),
                 epid =
                     if (relate.goto.needJumpToSeason()) {
-                        relate.uri.substringBeforeLast("?")
-                            .substringAfterLast("/ep").toInt()
+                        relate.uri
+                            .substringBeforeLast("?")
+                            .substringAfterLast("/ep")
+                            .toInt()
                     } else {
                         null
                     },

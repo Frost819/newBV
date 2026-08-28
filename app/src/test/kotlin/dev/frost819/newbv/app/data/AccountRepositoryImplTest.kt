@@ -6,8 +6,8 @@ import androidx.datastore.preferences.core.Preferences
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
-import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.http.entity.user.LevelInfo
+import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.data.datastore.Prefs
@@ -40,7 +40,6 @@ import java.io.File
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AccountRepositoryImplTest {
-
     private lateinit var userDao: UserDao
     private lateinit var authRepository: AuthRepository
     private lateinit var repository: AccountRepositoryImpl
@@ -55,10 +54,11 @@ class AccountRepositoryImplTest {
             val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             val file = File.createTempFile("test_account_repo", ".preferences_pb")
             file.deleteOnExit()
-            testDataStore = PreferenceDataStoreFactory.create(
-                scope = scope,
-                produceFile = { file },
-            )
+            testDataStore =
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { file },
+                )
             Prefs.init(testDataStore)
         }
 
@@ -80,17 +80,19 @@ class AccountRepositoryImplTest {
         val myInfoData = mockk<MyInfoData>(relaxed = true)
         every { myInfoData.name } returns "testuser"
         every { myInfoData.face } returns "http://example.com/avatar.png"
-        every { myInfoData.levelExp } returns LevelInfo(
-            currentLevel = 6,
-            currentMin = 50,
-            currentExp = 100,
-            nextExp = 200,
-        )
-        val mockResponse = BiliResponse<MyInfoData>(
-            code = 0,
-            message = "ok",
-            data = myInfoData,
-        )
+        every { myInfoData.levelExp } returns
+            LevelInfo(
+                currentLevel = 6,
+                currentMin = 50,
+                currentExp = 100,
+                nextExp = 200,
+            )
+        val mockResponse =
+            BiliResponse<MyInfoData>(
+                code = 0,
+                message = "ok",
+                data = myInfoData,
+            )
         coEvery { BiliHttpApi.getUserSelfInfo() } returns mockResponse
 
         repository = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
@@ -102,68 +104,75 @@ class AccountRepositoryImplTest {
     }
 
     @Test
-    fun `getAllUsers delegates to userDao`() = runTest {
-        val users = listOf(
-            UserEntity(uid = 1L, username = "user1", avatar = "", auth = "{}"),
-            UserEntity(uid = 2L, username = "user2", avatar = "", auth = "{}"),
-        )
-        coEvery { userDao.getAll() } returns users
+    fun `getAllUsers delegates to userDao`() =
+        runTest {
+            val users =
+                listOf(
+                    UserEntity(uid = 1L, username = "user1", avatar = "", auth = "{}"),
+                    UserEntity(uid = 2L, username = "user2", avatar = "", auth = "{}"),
+                )
+            coEvery { userDao.getAll() } returns users
 
-        val result = repository.getAllUsers()
+            val result = repository.getAllUsers()
 
-        assertThat(result).hasSize(2)
-        assertThat(result[0].username).isEqualTo("user1")
-    }
-
-    @Test
-    fun `findUserByUid delegates to userDao`() = runTest {
-        val user = UserEntity(uid = 100L, username = "test", avatar = "url", auth = "{}")
-        coEvery { userDao.findUserByUid(100L) } returns user
-
-        val result = repository.findUserByUid(100L)
-
-        assertThat(result?.username).isEqualTo("test")
-    }
+            assertThat(result).hasSize(2)
+            assertThat(result[0].username).isEqualTo("user1")
+        }
 
     @Test
-    fun `findUserByUid returns null when not found`() = runTest {
-        coEvery { userDao.findUserByUid(any()) } returns null
+    fun `findUserByUid delegates to userDao`() =
+        runTest {
+            val user = UserEntity(uid = 100L, username = "test", avatar = "url", auth = "{}")
+            coEvery { userDao.findUserByUid(100L) } returns user
 
-        val result = repository.findUserByUid(999L)
+            val result = repository.findUserByUid(100L)
 
-        assertThat(result).isNull()
-    }
-
-    @Test
-    fun `upsertUser updates auth when user exists`() = runTest {
-        val existing = UserEntity(id = 1, uid = 100L, username = "old", avatar = "old_url", auth = "{}")
-        val updated = UserEntity(id = null, uid = 100L, username = "", avatar = "", auth = "new_auth")
-        coEvery { userDao.findUserByUid(100L) } returns existing
-
-        repository.upsertUser(updated)
-
-        coVerify { userDao.update(existing) }
-        assertThat(existing.auth).isEqualTo("new_auth")
-    }
+            assertThat(result?.username).isEqualTo("test")
+        }
 
     @Test
-    fun `upsertUser inserts when user does not exist`() = runTest {
-        val newUser = UserEntity(uid = 200L, username = "fresh", avatar = "", auth = "{}")
-        coEvery { userDao.findUserByUid(200L) } returns null
+    fun `findUserByUid returns null when not found`() =
+        runTest {
+            coEvery { userDao.findUserByUid(any()) } returns null
 
-        repository.upsertUser(newUser)
+            val result = repository.findUserByUid(999L)
 
-        coVerify { userDao.insert(newUser) }
-    }
+            assertThat(result).isNull()
+        }
 
     @Test
-    fun `deleteUser delegates to userDao`() = runTest {
-        val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
+    fun `upsertUser updates auth when user exists`() =
+        runTest {
+            val existing = UserEntity(id = 1, uid = 100L, username = "old", avatar = "old_url", auth = "{}")
+            val updated = UserEntity(id = null, uid = 100L, username = "", avatar = "", auth = "new_auth")
+            coEvery { userDao.findUserByUid(100L) } returns existing
 
-        repository.deleteUser(user)
+            repository.upsertUser(updated)
 
-        coVerify { userDao.delete(user) }
-    }
+            coVerify { userDao.update(existing) }
+            assertThat(existing.auth).isEqualTo("new_auth")
+        }
+
+    @Test
+    fun `upsertUser inserts when user does not exist`() =
+        runTest {
+            val newUser = UserEntity(uid = 200L, username = "fresh", avatar = "", auth = "{}")
+            coEvery { userDao.findUserByUid(200L) } returns null
+
+            repository.upsertUser(newUser)
+
+            coVerify { userDao.insert(newUser) }
+        }
+
+    @Test
+    fun `deleteUser delegates to userDao`() =
+        runTest {
+            val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
+
+            repository.deleteUser(user)
+
+            coVerify { userDao.delete(user) }
+        }
 
     @Test
     fun `isLogin reads from Prefs`() {
@@ -181,100 +190,108 @@ class AccountRepositoryImplTest {
     }
 
     @Test
-    fun `setCurrentUser saves auth to prefs and syncs to AuthRepository`() = runTest {
-        val authData = AuthData(
-            uid = 100L,
-            uidCkMd5 = "ckmd5",
-            sid = "sid-123",
-            biliJct = "jct-token",
-            sessData = "sess-data",
-            tokenExpiredDate = System.currentTimeMillis() + 86400000,
-            accessToken = "access-token",
-            refreshToken = "refresh-token",
-        )
-        val user = UserEntity(
-            uid = 100L,
-            username = "testuser",
-            avatar = "http://example.com/avatar.png",
-            auth = authData.toJson(),
-        )
-        coEvery { userDao.findUserByUid(100L) } returns user
+    fun `setCurrentUser saves auth to prefs and syncs to AuthRepository`() =
+        runTest {
+            val authData =
+                AuthData(
+                    uid = 100L,
+                    uidCkMd5 = "ckmd5",
+                    sid = "sid-123",
+                    biliJct = "jct-token",
+                    sessData = "sess-data",
+                    tokenExpiredDate = System.currentTimeMillis() + 86400000,
+                    accessToken = "access-token",
+                    refreshToken = "refresh-token",
+                )
+            val user =
+                UserEntity(
+                    uid = 100L,
+                    username = "testuser",
+                    avatar = "http://example.com/avatar.png",
+                    auth = authData.toJson(),
+                )
+            coEvery { userDao.findUserByUid(100L) } returns user
 
-        repository.setCurrentUser(user)
+            repository.setCurrentUser(user)
 
-        assertThat(Prefs.isLogin).isTrue()
-        assertThat(Prefs.uid).isEqualTo(100L)
-        assertThat(Prefs.sessData).isEqualTo("sess-data")
-        assertThat(Prefs.biliJct).isEqualTo("jct-token")
-        assertThat(Prefs.accessToken).isEqualTo("access-token")
+            assertThat(Prefs.isLogin).isTrue()
+            assertThat(Prefs.uid).isEqualTo(100L)
+            assertThat(Prefs.sessData).isEqualTo("sess-data")
+            assertThat(Prefs.biliJct).isEqualTo("jct-token")
+            assertThat(Prefs.accessToken).isEqualTo("access-token")
 
-        assertThat(authRepository.mid).isEqualTo(100L)
-        assertThat(authRepository.sessionData).isEqualTo("sess-data")
-        assertThat(authRepository.biliJct).isEqualTo("jct-token")
-        assertThat(authRepository.accessToken).isEqualTo("access-token")
-    }
-
-    @Test
-    fun `addUser persists to DB and sets current user`() = runTest {
-        val authData = AuthData(
-            uid = 200L,
-            uidCkMd5 = "md5",
-            sid = "sid",
-            biliJct = "jct",
-            sessData = "sess",
-            tokenExpiredDate = System.currentTimeMillis() + 86400000,
-        )
-        coEvery { userDao.findUserByUid(200L) } returns null
-
-        repository.addUser(authData)
-
-        coVerify { userDao.insert(any()) }
-        assertThat(Prefs.isLogin).isTrue()
-        assertThat(Prefs.uid).isEqualTo(200L)
-        assertThat(authRepository.mid).isEqualTo(200L)
-    }
+            assertThat(authRepository.mid).isEqualTo(100L)
+            assertThat(authRepository.sessionData).isEqualTo("sess-data")
+            assertThat(authRepository.biliJct).isEqualTo("jct-token")
+            assertThat(authRepository.accessToken).isEqualTo("access-token")
+        }
 
     @Test
-    fun `logout clears Prefs and AuthRepository`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        Prefs.sessData = "sess"
-        Prefs.biliJct = "jct"
-        authRepository.mid = 100L
-        authRepository.sessionData = "sess"
+    fun `addUser persists to DB and sets current user`() =
+        runTest {
+            val authData =
+                AuthData(
+                    uid = 200L,
+                    uidCkMd5 = "md5",
+                    sid = "sid",
+                    biliJct = "jct",
+                    sessData = "sess",
+                    tokenExpiredDate = System.currentTimeMillis() + 86400000,
+                )
+            coEvery { userDao.findUserByUid(200L) } returns null
 
-        coEvery { userDao.findUserByUid(100L) } returns null
+            repository.addUser(authData)
 
-        repository.logout()
-
-        assertThat(Prefs.isLogin).isFalse()
-        assertThat(Prefs.uid).isEqualTo(0L)
-        assertThat(Prefs.sessData).isEmpty()
-        assertThat(authRepository.mid).isNull()
-        assertThat(authRepository.sessionData).isNull()
-    }
-
-    @Test
-    fun `logout deletes user from DB if exists`() = runTest {
-        val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        coEvery { userDao.findUserByUid(100L) } returns user
-
-        repository.logout()
-
-        coVerify { userDao.delete(user) }
-    }
+            coVerify { userDao.insert(any()) }
+            assertThat(Prefs.isLogin).isTrue()
+            assertThat(Prefs.uid).isEqualTo(200L)
+            assertThat(authRepository.mid).isEqualTo(200L)
+        }
 
     @Test
-    fun `updateUserLock updates lock field in DB`() = runTest {
-        val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
-        coEvery { userDao.findUserByUid(100L) } returns user
+    fun `logout clears Prefs and AuthRepository`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            Prefs.sessData = "sess"
+            Prefs.biliJct = "jct"
+            authRepository.mid = 100L
+            authRepository.sessionData = "sess"
 
-        repository.updateUserLock(100L, "udlr")
+            coEvery { userDao.findUserByUid(100L) } returns null
 
-        coVerify { userDao.update(match { it.lock == "udlr" }) }
-    }
+            repository.logout()
+
+            assertThat(Prefs.isLogin).isFalse()
+            assertThat(Prefs.uid).isEqualTo(0L)
+            assertThat(Prefs.sessData).isEmpty()
+            assertThat(authRepository.mid).isNull()
+            assertThat(authRepository.sessionData).isNull()
+        }
+
+    @Test
+    fun `logout deletes user from DB if exists`() =
+        runTest {
+            val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            coEvery { userDao.findUserByUid(100L) } returns user
+
+            repository.logout()
+
+            coVerify { userDao.delete(user) }
+        }
+
+    @Test
+    fun `updateUserLock updates lock field in DB`() =
+        runTest {
+            val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
+            coEvery { userDao.findUserByUid(100L) } returns user
+
+            repository.updateUserLock(100L, "udlr")
+
+            coVerify { userDao.update(match { it.lock == "udlr" }) }
+        }
 
     @Test
     fun `toggleIncognitoMode toggles Prefs`() {
@@ -316,160 +333,179 @@ class AccountRepositoryImplTest {
     // ── refreshUserInfo ──────────────────────────────────────────────
 
     @Test
-    fun `refreshUserInfo updates username avatar and level from API`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        val user = UserEntity(uid = 100L, username = "old_name", avatar = "old_avatar", auth = "{}")
-        coEvery { userDao.findUserByUid(100L) } returns user
+    fun `refreshUserInfo updates username avatar and level from API`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            val user = UserEntity(uid = 100L, username = "old_name", avatar = "old_avatar", auth = "{}")
+            coEvery { userDao.findUserByUid(100L) } returns user
 
-        repository.refreshUserInfo()
+            repository.refreshUserInfo()
 
-        assertThat(repository.uiState.value.username).isEqualTo("testuser")
-        assertThat(repository.uiState.value.avatar).isEqualTo("http://example.com/avatar.png")
-        assertThat(repository.uiState.value.level).isEqualTo(6)
-        assertThat(repository.uiState.value.currentMin).isEqualTo(50)
-        assertThat(repository.uiState.value.exp).isEqualTo(100)
-        assertThat(repository.uiState.value.nextExp).isEqualTo(200)
-    }
-
-    @Test
-    fun `refreshUserInfo does nothing when not logged in`() = runTest {
-        Prefs.isLogin = false
-
-        repository.refreshUserInfo()
-
-        coVerify(exactly = 0) { userDao.findUserByUid(any()) }
-    }
+            assertThat(repository.uiState.value.username).isEqualTo("testuser")
+            assertThat(repository.uiState.value.avatar).isEqualTo("http://example.com/avatar.png")
+            assertThat(repository.uiState.value.level).isEqualTo(6)
+            assertThat(repository.uiState.value.currentMin).isEqualTo(50)
+            assertThat(repository.uiState.value.exp).isEqualTo(100)
+            assertThat(repository.uiState.value.nextExp).isEqualTo(200)
+        }
 
     @Test
-    fun `refreshUserInfo returns when user not found in DB`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 999L
-        coEvery { userDao.findUserByUid(999L) } returns null
+    fun `refreshUserInfo does nothing when not logged in`() =
+        runTest {
+            Prefs.isLogin = false
 
-        repository.refreshUserInfo()
+            repository.refreshUserInfo()
 
-        assertThat(repository.uiState.value.username).isEmpty()
-    }
-
-    @Test
-    fun `refreshUserInfo persists updated username and avatar to DB`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        val user = UserEntity(uid = 100L, username = "old", avatar = "old", auth = "{}")
-        coEvery { userDao.findUserByUid(100L) } returns user
-
-        repository.refreshUserInfo()
-
-        coVerify { userDao.update(match { it.username == "testuser" && it.avatar == "http://example.com/avatar.png" }) }
-    }
+            coVerify(exactly = 0) { userDao.findUserByUid(any()) }
+        }
 
     @Test
-    fun `refreshUserInfo catches exception without crashing`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        coEvery { BiliHttpApi.getUserSelfInfo() } throws RuntimeException("network error")
-        coEvery { userDao.findUserByUid(100L) } returns UserEntity(uid = 100L, username = "u", avatar = "a", auth = "{}")
+    fun `refreshUserInfo returns when user not found in DB`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 999L
+            coEvery { userDao.findUserByUid(999L) } returns null
 
-        repository.refreshUserInfo()
+            repository.refreshUserInfo()
 
-        assertThat(repository.uiState.value.username).isEmpty()
-    }
+            assertThat(repository.uiState.value.username).isEmpty()
+        }
+
+    @Test
+    fun `refreshUserInfo persists updated username and avatar to DB`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            val user = UserEntity(uid = 100L, username = "old", avatar = "old", auth = "{}")
+            coEvery { userDao.findUserByUid(100L) } returns user
+
+            repository.refreshUserInfo()
+
+            coVerify {
+                userDao.update(
+                    match { it.username == "testuser" && it.avatar == "http://example.com/avatar.png" },
+                )
+            }
+        }
+
+    @Test
+    fun `refreshUserInfo catches exception without crashing`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            coEvery { BiliHttpApi.getUserSelfInfo() } throws RuntimeException("network error")
+            coEvery { userDao.findUserByUid(100L) } returns
+                UserEntity(uid = 100L, username = "u", avatar = "a", auth = "{}")
+
+            repository.refreshUserInfo()
+
+            assertThat(repository.uiState.value.username).isEmpty()
+        }
 
     // ── reloadAvatar ────────────────────────────────────────────────
 
     @Test
-    fun `reloadAvatar updates username and avatar from DB`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        val user = UserEntity(uid = 100L, username = "db_user", avatar = "db_avatar", auth = "{}")
-        coEvery { userDao.findUserByUid(100L) } returns user
+    fun `reloadAvatar updates username and avatar from DB`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            val user = UserEntity(uid = 100L, username = "db_user", avatar = "db_avatar", auth = "{}")
+            coEvery { userDao.findUserByUid(100L) } returns user
 
-        repository.reloadAvatar()
+            repository.reloadAvatar()
 
-        assertThat(repository.uiState.value.username).isEqualTo("db_user")
-        assertThat(repository.uiState.value.avatar).isEqualTo("db_avatar")
-    }
-
-    @Test
-    fun `reloadAvatar does nothing when not logged in`() = runTest {
-        Prefs.isLogin = false
-
-        repository.reloadAvatar()
-
-        coVerify(exactly = 0) { userDao.findUserByUid(any()) }
-    }
+            assertThat(repository.uiState.value.username).isEqualTo("db_user")
+            assertThat(repository.uiState.value.avatar).isEqualTo("db_avatar")
+        }
 
     @Test
-    fun `reloadAvatar returns when user not found in DB`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 999L
-        coEvery { userDao.findUserByUid(999L) } returns null
+    fun `reloadAvatar does nothing when not logged in`() =
+        runTest {
+            Prefs.isLogin = false
 
-        repository.reloadAvatar()
+            repository.reloadAvatar()
 
-        assertThat(repository.uiState.value.username).isEmpty()
-    }
+            coVerify(exactly = 0) { userDao.findUserByUid(any()) }
+        }
+
+    @Test
+    fun `reloadAvatar returns when user not found in DB`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 999L
+            coEvery { userDao.findUserByUid(999L) } returns null
+
+            repository.reloadAvatar()
+
+            assertThat(repository.uiState.value.username).isEmpty()
+        }
 
     // ── uiState ─────────────────────────────────────────────────────
 
     @Test
-    fun `uiState reflects level info after setCurrentUser`() = runTest {
-        val authData = AuthData(
-            uid = 100L,
-            uidCkMd5 = "ckmd5",
-            sid = "sid",
-            biliJct = "jct",
-            sessData = "sess",
-            tokenExpiredDate = System.currentTimeMillis() + 86400000,
-        )
-        val user = UserEntity(
-            uid = 100L,
-            username = "testuser",
-            avatar = "http://example.com/avatar.png",
-            auth = authData.toJson(),
-        )
-        coEvery { userDao.findUserByUid(100L) } returns user
+    fun `uiState reflects level info after setCurrentUser`() =
+        runTest {
+            val authData =
+                AuthData(
+                    uid = 100L,
+                    uidCkMd5 = "ckmd5",
+                    sid = "sid",
+                    biliJct = "jct",
+                    sessData = "sess",
+                    tokenExpiredDate = System.currentTimeMillis() + 86400000,
+                )
+            val user =
+                UserEntity(
+                    uid = 100L,
+                    username = "testuser",
+                    avatar = "http://example.com/avatar.png",
+                    auth = authData.toJson(),
+                )
+            coEvery { userDao.findUserByUid(100L) } returns user
 
-        repository.setCurrentUser(user)
+            repository.setCurrentUser(user)
 
-        assertThat(repository.uiState.value.isLogin).isTrue()
-        assertThat(repository.uiState.value.uid).isEqualTo(100L)
-        assertThat(repository.uiState.value.level).isEqualTo(6)
-        assertThat(repository.uiState.value.exp).isEqualTo(100)
-    }
-
-    @Test
-    fun `uiState shows login state after addUser`() = runTest {
-        val authData = AuthData(
-            uid = 200L,
-            uidCkMd5 = "md5",
-            sid = "sid",
-            biliJct = "jct",
-            sessData = "sess",
-            tokenExpiredDate = System.currentTimeMillis() + 86400000,
-        )
-        coEvery { userDao.findUserByUid(200L) } returns null
-
-        repository.addUser(authData)
-
-        assertThat(repository.uiState.value.isLogin).isTrue()
-        assertThat(repository.uiState.value.uid).isEqualTo(200L)
-    }
+            assertThat(repository.uiState.value.isLogin).isTrue()
+            assertThat(repository.uiState.value.uid).isEqualTo(100L)
+            assertThat(repository.uiState.value.level).isEqualTo(6)
+            assertThat(repository.uiState.value.exp).isEqualTo(100)
+        }
 
     @Test
-    fun `uiState resets to default after logout`() = runTest {
-        Prefs.isLogin = true
-        Prefs.uid = 100L
-        coEvery { userDao.findUserByUid(100L) } returns null
+    fun `uiState shows login state after addUser`() =
+        runTest {
+            val authData =
+                AuthData(
+                    uid = 200L,
+                    uidCkMd5 = "md5",
+                    sid = "sid",
+                    biliJct = "jct",
+                    sessData = "sess",
+                    tokenExpiredDate = System.currentTimeMillis() + 86400000,
+                )
+            coEvery { userDao.findUserByUid(200L) } returns null
 
-        repository.logout()
+            repository.addUser(authData)
 
-        val state = repository.uiState.value
-        assertThat(state.isLogin).isFalse()
-        assertThat(state.uid).isEqualTo(0L)
-        assertThat(state.username).isEmpty()
-    }
+            assertThat(repository.uiState.value.isLogin).isTrue()
+            assertThat(repository.uiState.value.uid).isEqualTo(200L)
+        }
+
+    @Test
+    fun `uiState resets to default after logout`() =
+        runTest {
+            Prefs.isLogin = true
+            Prefs.uid = 100L
+            coEvery { userDao.findUserByUid(100L) } returns null
+
+            repository.logout()
+
+            val state = repository.uiState.value
+            assertThat(state.isLogin).isFalse()
+            assertThat(state.uid).isEqualTo(0L)
+            assertThat(state.username).isEmpty()
+        }
 
     @Test
     fun `toggleIncognitoMode updates uiState`() {
@@ -483,11 +519,12 @@ class AccountRepositoryImplTest {
     }
 
     @Test
-    fun `updateUserLock does nothing when user not found`() = runTest {
-        coEvery { userDao.findUserByUid(999L) } returns null
+    fun `updateUserLock does nothing when user not found`() =
+        runTest {
+            coEvery { userDao.findUserByUid(999L) } returns null
 
-        repository.updateUserLock(999L, "udlr")
+            repository.updateUserLock(999L, "udlr")
 
-        coVerify(exactly = 0) { userDao.update(any()) }
-    }
+            coVerify(exactly = 0) { userDao.update(any()) }
+        }
 }

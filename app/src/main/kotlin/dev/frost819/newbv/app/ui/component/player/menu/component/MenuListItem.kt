@@ -59,27 +59,31 @@ fun MenuListItem(
 ) {
     val itemWidth by animateDpAsState(
         targetValue = if (expanded) 200.dp else 66.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow,
-        ),
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
         label = "MenuListItem width [$text]",
     )
 
     Surface(
-        modifier = modifier
-            .width(itemWidth)
-            .onFocusChanged { if (it.hasFocus) onFocus() }
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .width(itemWidth)
+                .onFocusChanged { if (it.hasFocus) onFocus() }
+                .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.4f)
-            } else {
-                Color.Transparent
-            },
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (selected) {
+                        MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.4f)
+                    } else {
+                        Color.Transparent
+                    },
+            ),
     ) {
         Box {
             Row(
@@ -93,9 +97,10 @@ fun MenuListItem(
                     label = "MenuListItem text [$text]",
                 ) {
                     Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(32.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(32.dp),
                         text = text,
                         style = MaterialTheme.typography.titleLarge,
                         textAlign = textAlign,

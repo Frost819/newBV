@@ -31,8 +31,8 @@ class VideoDetailRepository(
         aid: Long,
         preferApiType: ApiType,
         bvid: String = "",
-    ): VideoDetail {
-        return when (preferApiType) {
+    ): VideoDetail =
+        when (preferApiType) {
             ApiType.Web -> {
                 withContext(Dispatchers.IO) {
                     val videoDetailWithoutUserActions =
@@ -84,10 +84,11 @@ class VideoDetailRepository(
                         async {
                             runCatching {
                                 val videoModeInfo =
-                                    BiliHttpApi.getVideoMoreInfo(
-                                        avid = aid,
-                                        cid = videoDetailWithoutUserActions.await().cid,
-                                    ).getResponseData()
+                                    BiliHttpApi
+                                        .getVideoMoreInfo(
+                                            avid = aid,
+                                            cid = videoDetailWithoutUserActions.await().cid,
+                                        ).getResponseData()
                                 val history =
                                     VideoDetail.History(
                                         progress = videoModeInfo.lastPlayTime / 1000,
@@ -126,19 +127,19 @@ class VideoDetailRepository(
                 VideoDetail.fromViewReply(viewReply)
             }
         }
-    }
 
     suspend fun getUgcPages(
         aid: Long,
         preferApiType: ApiType,
-    ): List<VideoPage> {
-        return try {
+    ): List<VideoPage> =
+        try {
             when (preferApiType) {
                 ApiType.Web -> {
                     val detail =
-                        BiliHttpApi.getVideoInfo(
-                            av = aid,
-                        ).getResponseData()
+                        BiliHttpApi
+                            .getVideoInfo(
+                                av = aid,
+                            ).getResponseData()
                     detail.pages.map { VideoPage.fromVideoPage(it) }
                 }
 
@@ -161,7 +162,6 @@ class VideoDetailRepository(
         } catch (e: Throwable) {
             emptyList()
         }
-    }
 
     /**
      * 获取视频同时观看人数的可展示文案。
@@ -187,22 +187,25 @@ class VideoDetailRepository(
         when (preferApiType) {
             ApiType.Web ->
                 withContext(Dispatchers.IO) {
-                    BiliHttpApi.getVideoOnlineTotal(
-                        avid = aid,
-                        bvid = bvid.ifEmpty { null },
-                        cid = cid,
-                    ).getResponseData().displayText()
+                    BiliHttpApi
+                        .getVideoOnlineTotal(
+                            avid = aid,
+                            bvid = bvid.ifEmpty { null },
+                            cid = cid,
+                        ).getResponseData()
+                        .displayText()
                 }
 
             ApiType.App ->
                 withContext(Dispatchers.IO) {
                     // App 端返回带"人在看"后缀的完整文案（如 "1000+人在看"），
                     // 剥离后缀与 Web 端契约对齐，由 UI 层统一拼接"人正在看"
-                    BiliHttpApi.getAppVideoOnlineTotal(
-                        aid = aid,
-                        cid = cid,
-                    )
-                        .getResponseData().online.totalText
+                    BiliHttpApi
+                        .getAppVideoOnlineTotal(
+                            aid = aid,
+                            cid = cid,
+                        ).getResponseData()
+                        .online.totalText
                         .takeIf { it.isNotBlank() }
                         ?.removeSuffix("人在看")
                         ?.takeIf { it.isNotBlank() }
@@ -217,20 +220,22 @@ class VideoDetailRepository(
         return when (preferApiType) {
             ApiType.Web -> {
                 val webSeasonData =
-                    BiliHttpApi.getWebSeasonInfo(
-                        epId = epid,
-                        seasonId = seasonId,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getWebSeasonInfo(
+                            epId = epid,
+                            seasonId = seasonId,
+                        ).getResponseData()
                 val seasonDetail = SeasonDetail.fromSeasonData(webSeasonData)
                 val firstEp = webSeasonData.episodes.firstOrNull() ?: return seasonDetail
 
                 val playerIcon =
                     runCatching {
                         val videoModeInfo =
-                            BiliHttpApi.getVideoMoreInfo(
-                                avid = firstEp.aid,
-                                cid = firstEp.cid,
-                            ).getResponseData()
+                            BiliHttpApi
+                                .getVideoMoreInfo(
+                                    avid = firstEp.aid,
+                                    cid = firstEp.cid,
+                                ).getResponseData()
                         val playerIcon = VideoDetail.PlayerIcon.fromPlayerIcon(videoModeInfo.playerIcon)
                         playerIcon
                     }.onFailure {
@@ -241,12 +246,13 @@ class VideoDetailRepository(
 
             ApiType.App -> {
                 val appSeasonData =
-                    BiliHttpApi.getAppSeasonInfo(
-                        seasonId = seasonId,
-                        epId = epid,
-                        mobiApp = BiliAppConf.MOBI_APP,
-                        accessKey = authRepository.accessToken ?: "",
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getAppSeasonInfo(
+                            seasonId = seasonId,
+                            epId = epid,
+                            mobiApp = BiliAppConf.MOBI_APP,
+                            accessKey = authRepository.accessToken ?: "",
+                        ).getResponseData()
                 SeasonDetail.fromSeasonData(appSeasonData)
             }
         }

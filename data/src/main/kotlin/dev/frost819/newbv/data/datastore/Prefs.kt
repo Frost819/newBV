@@ -48,7 +48,6 @@ class PrefDelegate<T, P>(
     private val save: (T) -> P = { it as P },
     private val restore: (P) -> T = { it as T },
 ) : ReadWriteProperty<Any?, T> {
-
     /** 内存缓存流，初始值为默认值的持久化形式。 */
     internal val flow: MutableStateFlow<Any?> = MutableStateFlow(save(defaultValue))
 
@@ -57,7 +56,10 @@ class PrefDelegate<T, P>(
      *
      * 直接读内存缓存，若无持久化值则返回 [defaultValue]。
      */
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    override fun getValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+    ): T {
         val rawValue = flow.value as? P
         return if (rawValue != null) restore(rawValue) else defaultValue
     }
@@ -68,7 +70,11 @@ class PrefDelegate<T, P>(
      * 1. 立即更新内存缓存，UI 瞬间响应。
      * 2. 异步写入 DataStore，不阻塞调用方。
      */
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    override fun setValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+        value: T,
+    ) {
         val persistValue = save(value)
         flow.value = persistValue
         val dataStore = Prefs.dataStore
@@ -112,7 +118,6 @@ class PrefDelegate<T, P>(
  * @see BuvidGenerator
  */
 object Prefs {
-
     /** 持久化写入的协程作用域，使用 IO 调度器 + SupervisorJob（单次失败不影响后续）。 */
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -143,8 +148,10 @@ object Prefs {
      * @param key DataStore 键。
      * @param default 默认值。
      */
-    private fun <T> pref(key: Preferences.Key<T>, default: T): PrefDelegate<T, T> =
-        PrefDelegate(key, default).also { registerDelegate(key, it) }
+    private fun <T> pref(
+        key: Preferences.Key<T>,
+        default: T,
+    ): PrefDelegate<T, T> = PrefDelegate(key, default).also { registerDelegate(key, it) }
 
     /**
      * 创建对象映射委托。
@@ -164,7 +171,10 @@ object Prefs {
     ): PrefDelegate<T, P> = PrefDelegate(key, default, save, restore).also { registerDelegate(key, it) }
 
     /** 注册委托到映射表，供 [init] 同步内存缓存使用。 */
-    private fun <T, P> registerDelegate(key: Preferences.Key<P>, delegate: PrefDelegate<T, P>) {
+    private fun <T, P> registerDelegate(
+        key: Preferences.Key<P>,
+        delegate: PrefDelegate<T, P>,
+    ) {
         delegateMap[key] = delegate
     }
 
@@ -174,35 +184,48 @@ object Prefs {
 
     /** 是否已登录。 */
     var isLogin by pref(PrefKeys.isLogin, false)
+
     /** 当前登录用户 UID。 */
     var uid by pref(PrefKeys.uid, 0L)
+
     /** SID（会话标识）。 */
     var sid by pref(PrefKeys.sid, "")
+
     /** SESSDATA Cookie 值。 */
     var sessData by pref(PrefKeys.sessData, "")
+
     /** bili_jct（csrf token）。 */
     var biliJct by pref(PrefKeys.biliJct, "")
+
     /** uid_ck_md5（登录校验值）。 */
     var uidCkMd5 by pref(PrefKeys.uidCkMd5, "")
+
     /** Token 过期时间。 */
     var tokenExpiredDate by pref(
         PrefKeys.tokenExpiredDate,
         Date(0),
         save = { it.time },
-        restore = { Date(it) }
+        restore = { Date(it) },
     )
+
     /** Access Token。 */
     var accessToken by pref(PrefKeys.accessToken, "")
+
     /** Refresh Token。 */
     var refreshToken by pref(PrefKeys.refreshToken, "")
+
     /** buvid（设备标识），首次启动自动生成。 */
     var buvid by pref(PrefKeys.buvid, "")
+
     /** buvid3（Web 端设备标识），首次启动自动生成。 */
     var buvid3 by pref(PrefKeys.buvid3, "")
+
     /** buvid3 是否已通过 SPI 接口注册（已注册则不再重复获取）。 */
     var buvid3FromSpi by pref(PrefKeys.buvid3FromSpi, false)
+
     /** 设备 cookie 字符串（buvid3 + b_nut 等），由 SPI 流程获取并持久化。 */
     var deviceCookies by pref(PrefKeys.deviceCookies, "")
+
     /** 无痕模式（不记录历史）。 */
     var incognitoMode by pref(PrefKeys.incognitoMode, false)
 
@@ -213,8 +236,9 @@ object Prefs {
         PrefKeys.apiType,
         ApiType.Web,
         save = { it.ordinal },
-        restore = { ApiType.fromOrdinal(it) }
+        restore = { ApiType.fromOrdinal(it) },
     )
+
     /** 是否启用崩溃日志上传（默认关闭）。 */
     var crashReportEnabled by pref(PrefKeys.crashReportEnabled, false)
 
@@ -225,24 +249,28 @@ object Prefs {
         PrefKeys.defaultQuality,
         Resolution.R1080P,
         save = { it.code },
-        restore = { Resolution.fromCode(it) }
+        restore = { Resolution.fromCode(it) },
     )
+
     /** 默认视频编码。 */
     var defaultVideoCodec by pref(
         PrefKeys.defaultVideoCodec,
         VideoCodec.AVC,
         save = { it.ordinal },
-        restore = { VideoCodec.fromCode(it) }
+        restore = { VideoCodec.fromCode(it) },
     )
+
     /** 启用视频软解。 */
     var enableSoftwareVideoDecoder by pref(PrefKeys.enableSoftwareVideoDecoder, false)
+
     /** 播放结束动作。 */
     var actionAfterPlay by pref(
         PrefKeys.actionAfterPlay,
         ActionAfterPlay.PlayNext,
         save = { it.code },
-        restore = { ActionAfterPlay.fromCode(it) }
+        restore = { ActionAfterPlay.fromCode(it) },
     )
+
     /** 自定义播放快捷键（JSON 字符串）。 */
     var playerCustomShortcuts by pref(PrefKeys.playerCustomShortcuts, "")
 
@@ -253,8 +281,9 @@ object Prefs {
         PrefKeys.defaultAudio,
         Audio.A192K,
         save = { it.code },
-        restore = { Audio.fromCode(it) }
+        restore = { Audio.fromCode(it) },
     )
+
     /** 启用 FFmpeg 音频软解。 */
     var enableFfmpegAudioRenderer by pref(PrefKeys.enableFfmpegAudioRenderer, false)
 
@@ -266,19 +295,28 @@ object Prefs {
         listOf(DanmakuType.All, DanmakuType.Rolling, DanmakuType.Top, DanmakuType.Bottom),
         save = { list -> list.joinToString(",") { it.ordinal.toString() } },
         restore = { str ->
-            if (str.isEmpty()) emptyList()
-            else str.split(",")
-                .mapNotNull { runCatching { DanmakuType.entries[it.toInt()] }.getOrNull() }
-        }
+            if (str.isEmpty()) {
+                emptyList()
+            } else {
+                str
+                    .split(",")
+                    .mapNotNull { runCatching { DanmakuType.entries[it.toInt()] }.getOrNull() }
+            }
+        },
     )
+
     /** 默认弹幕大小。 */
     var defaultDanmakuScale by pref(PrefKeys.defaultDanmakuScale, 1.75f)
+
     /** 默认弹幕透明度。 */
     var defaultDanmakuOpacity by pref(PrefKeys.defaultDanmakuOpacity, 0.7f)
+
     /** 默认弹幕速度因子。 */
     var defaultDanmakuSpeedFactor by pref(PrefKeys.defaultDanmakuSpeedFactor, 1f)
+
     /** 默认弹幕显示区域。 */
     var defaultDanmakuArea by pref(PrefKeys.defaultDanmakuArea, 0.5f)
+
     /** 默认防遮挡蒙版开关。 */
     var defaultDanmakuMask by pref(PrefKeys.defaultDanmakuMask, false)
 
@@ -286,8 +324,10 @@ object Prefs {
 
     /** 默认字幕字号（SP）。 */
     var defaultSubtitleFontSize by pref(PrefKeys.defaultSubtitleFontSize, 24)
+
     /** 默认字幕背景透明度。 */
     var defaultSubtitleBackgroundOpacity by pref(PrefKeys.defaultSubtitleBackgroundOpacity, 0.4f)
+
     /** 默认字幕底部边距（DP）。 */
     var defaultSubtitleBottomPadding by pref(PrefKeys.defaultSubtitleBottomPadding, 12)
 
@@ -298,12 +338,15 @@ object Prefs {
         PrefKeys.defaultPlaySpeed,
         PlaySpeed.X1,
         save = { it.code },
-        restore = { PlaySpeed.fromCode(it) }
+        restore = { PlaySpeed.fromCode(it) },
     )
+
     /** 显示视频详情页（关闭后点击直接播放）。 */
     var showVideoInfo by pref(PrefKeys.showVideoInfo, true)
+
     /** 显示常显进度条。 */
     var showPersistentSeek by pref(PrefKeys.showPersistentSeek, false)
+
     /** 显示播放器调试信息。 */
     var showPlayerDebugInfo by pref(PrefKeys.showPlayerDebugInfo, false)
 
@@ -311,41 +354,47 @@ object Prefs {
 
     /** 界面缩放密度（默认 1f，app 层 init 时按屏幕宽度重新计算）。 */
     var density by pref(PrefKeys.density, 2f)
+
     /** 启动页（左侧导航项）。 */
     var homeLeftNavItem by pref(
         PrefKeys.homeLeftNavItem,
         LeftNaviItem.Home,
         save = { it.ordinal },
-        restore = { LeftNaviItem.fromOrdinal(it) }
+        restore = { LeftNaviItem.fromOrdinal(it) },
     )
+
     /** 首页置顶 Tab。 */
     var firstHomeTopNavItem by pref(
         PrefKeys.firstHomeTopNavItem,
         HomeTopNavItem.Dynamics,
         save = { it.code },
-        restore = { HomeTopNavItem.fromCode(it) }
+        restore = { HomeTopNavItem.fromCode(it) },
     )
+
     /** 个人页置顶 Tab。 */
     var firstPersonalTopNavItem by pref(
         PrefKeys.firstPersonalTopNavItem,
         PersonalTopNavItem.ToView,
         save = { it.ordinal },
-        restore = { PersonalTopNavItem.fromOrdinal(it) }
+        restore = { PersonalTopNavItem.fromOrdinal(it) },
     )
+
     /** 显示搜索热词。 */
     var showHotword by pref(PrefKeys.showHotword, true)
+
     /** 主题模式（跟随系统/深色/浅色）。 */
     var themeMode by pref(
         PrefKeys.themeMode,
         ThemeMode.FollowSystem,
         save = { it.ordinal },
-        restore = { ThemeMode.fromOrdinal(it) }
+        restore = { ThemeMode.fromOrdinal(it) },
     )
 
     // --- 存储设置（PRD 7.6） ---
 
     /** 缓存阈值（MB，0 = 无限制，默认无限制）。 */
     var cacheThreshold by pref(PrefKeys.cacheThreshold, 0)
+
     /** 缓存自动清空开关（关闭后不自动清理）。 */
     var cacheAutoClean by pref(PrefKeys.cacheAutoClean, true)
 
@@ -353,17 +402,21 @@ object Prefs {
 
     /** 主题模式 Flow（实时响应设置变更）。 */
     val themeModeFlow: StateFlow<ThemeMode>
-        get() = (delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>)
-            ?.flow?.map { ThemeMode.fromOrdinal(it as? Int ?: 0) }
-            ?.stateIn(scope, SharingStarted.Eagerly, ThemeMode.FollowSystem)
-            ?: MutableStateFlow(ThemeMode.FollowSystem)
+        get() =
+            (delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>)
+                ?.flow
+                ?.map { ThemeMode.fromOrdinal(it as? Int ?: 0) }
+                ?.stateIn(scope, SharingStarted.Eagerly, ThemeMode.FollowSystem)
+                ?: MutableStateFlow(ThemeMode.FollowSystem)
 
     /** Density Flow（实时响应设置变更）。 */
     val densityFlow: StateFlow<Float>
-        get() = (delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>)
-            ?.flow?.map { it as? Float ?: 2f }
-            ?.stateIn(scope, SharingStarted.Eagerly, 2f)
-            ?: MutableStateFlow(2f)
+        get() =
+            (delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>)
+                ?.flow
+                ?.map { it as? Float ?: 2f }
+                ?.stateIn(scope, SharingStarted.Eagerly, 2f)
+                ?: MutableStateFlow(2f)
 
     // ===== 初始化 =====
 
@@ -426,8 +479,7 @@ object Prefs {
 
     /** 获取指定偏好键对应的 [MutableStateFlow]（用于 Compose 观察偏好变化）。 */
     @Suppress("UNCHECKED_CAST")
-    fun <T> flowOf(key: Preferences.Key<T>): MutableStateFlow<Any?>? =
-        delegateMap[key]?.flow
+    fun <T> flowOf(key: Preferences.Key<T>): MutableStateFlow<Any?>? = delegateMap[key]?.flow
 
     // ===== 测试辅助 =====
 

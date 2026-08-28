@@ -45,18 +45,20 @@ fun StepLessMenuItem(
     onFocusBackToParent: () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .onPreviewKeyEvent {
-                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                if (it.key == Key.DirectionRight) onFocusBackToParent()
-                false
-            },
+        modifier =
+            modifier
+                .fillMaxHeight()
+                .onPreviewKeyEvent {
+                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                    if (it.key == Key.DirectionRight) onFocusBackToParent()
+                    false
+                },
     ) {
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 8.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Surface(
@@ -71,33 +73,34 @@ fun StepLessMenuItem(
                 Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
             }
             MenuListItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent {
-                        when (it.key) {
-                            Key.DirectionUp -> {
-                                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                if (value >= range.endInclusive - step) {
-                                    onValueChange(range.endInclusive)
-                                } else {
-                                    onValueChange(value + step)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .onPreviewKeyEvent {
+                            when (it.key) {
+                                Key.DirectionUp -> {
+                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                                    if (value >= range.endInclusive - step) {
+                                        onValueChange(range.endInclusive)
+                                    } else {
+                                        onValueChange(value + step)
+                                    }
+                                    true
                                 }
-                                true
-                            }
 
-                            Key.DirectionDown -> {
-                                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                if (value - step <= range.start) {
-                                    onValueChange(range.start)
-                                } else {
-                                    onValueChange(value - step)
+                                Key.DirectionDown -> {
+                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                                    if (value - step <= range.start) {
+                                        onValueChange(range.start)
+                                    } else {
+                                        onValueChange(value - step)
+                                    }
+                                    true
                                 }
-                                true
-                            }
 
-                            else -> false
-                        }
-                    },
+                                else -> false
+                            }
+                        },
                 text = text,
                 selected = false,
                 onClick = {},
@@ -139,18 +142,20 @@ fun StepLessMenuItem(
     onFocusBackToParent: () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .onPreviewKeyEvent {
-                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                if (it.key == Key.DirectionRight) onFocusBackToParent()
-                false
-            },
+        modifier =
+            modifier
+                .fillMaxHeight()
+                .onPreviewKeyEvent {
+                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                    if (it.key == Key.DirectionRight) onFocusBackToParent()
+                    false
+                },
     ) {
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 8.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Surface(
@@ -165,33 +170,34 @@ fun StepLessMenuItem(
                 Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
             }
             MenuListItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent {
-                        when (it.key) {
-                            Key.DirectionUp -> {
-                                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                if (value >= range.last - step) {
-                                    onValueChange(range.last)
-                                } else {
-                                    onValueChange(value + step)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .onPreviewKeyEvent {
+                            when (it.key) {
+                                Key.DirectionUp -> {
+                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                                    if (value >= range.last - step) {
+                                        onValueChange(range.last)
+                                    } else {
+                                        onValueChange(value + step)
+                                    }
+                                    true
                                 }
-                                true
-                            }
 
-                            Key.DirectionDown -> {
-                                if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                if (value - step <= range.first) {
-                                    onValueChange(range.first)
-                                } else {
-                                    onValueChange(value - step)
+                                Key.DirectionDown -> {
+                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
+                                    if (value - step <= range.first) {
+                                        onValueChange(range.first)
+                                    } else {
+                                        onValueChange(value - step)
+                                    }
+                                    true
                                 }
-                                true
-                            }
 
-                            else -> false
-                        }
-                    },
+                                else -> false
+                            }
+                        },
                 text = text,
                 selected = false,
                 onClick = {},

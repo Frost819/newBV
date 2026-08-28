@@ -2,24 +2,18 @@ package dev.frost819.newbv.app.ui.component.player
 
 import android.app.Activity
 import android.media.AudioManager
-import android.view.WindowManager
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.positionChanged
-import androidx.compose.ui.platform.LocalContext
 import kotlin.math.abs
 
 /**
@@ -104,120 +98,123 @@ fun Modifier.playerGestures(
     controllerVisible: () -> Boolean,
     callbacks: PlayerGestureCallbacks,
     gestureTipState: androidx.compose.runtime.MutableState<GestureTipState>,
-): Modifier = this.pointerInput(Unit) {
-    val doubleTapTimeout = 300L
-    val tapSlop = 40f
-    val dragThreshold = 10f
+): Modifier =
+    this.pointerInput(Unit) {
+        val doubleTapTimeout = 300L
+        val tapSlop = 40f
+        val dragThreshold = 10f
 
-    var lastTapTime = 0L
+        var lastTapTime = 0L
 
-    awaitEachGesture {
-        val firstDown = awaitFirstDown(requireUnconsumed = false)
-        val startTime = System.currentTimeMillis()
-        val startX = firstDown.position.x
-        val startY = firstDown.position.y
-        val width = this.size.width.toFloat()
+        awaitEachGesture {
+            val firstDown = awaitFirstDown(requireUnconsumed = false)
+            val startTime = System.currentTimeMillis()
+            val startX = firstDown.position.x
+            val startY = firstDown.position.y
+            val width = this.size.width.toFloat()
 
-        var isDragging = false
-        var totalDeltaX = 0f
-        var totalDeltaY = 0f
-        var isHorizontalDrag: Boolean? = null
+            var isDragging = false
+            var totalDeltaX = 0f
+            var totalDeltaY = 0f
+            var isHorizontalDrag: Boolean? = null
 
-        while (true) {
-            val event = awaitPointerEvent(PointerEventPass.Main)
-            val changes = event.changes
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Main)
+                val changes = event.changes
 
-            // 多指检测（捏合缩放）
-            if (changes.size >= 2) {
-                gestureTipState.value = GestureTipState(isActive = false)
-                changes.forEach { it.consume() }
-                if (changes.all { !it.pressed }) {
-                    callbacks.onCycleAspectRatio()
+                // 多指检测（捏合缩放）
+                if (changes.size >= 2) {
+                    gestureTipState.value = GestureTipState(isActive = false)
+                    changes.forEach { it.consume() }
+                    if (changes.all { !it.pressed }) {
+                        callbacks.onCycleAspectRatio()
+                        break
+                    }
+                    continue
+                }
+
+                val change = changes.firstOrNull() ?: continue
+
+                if (!change.pressed) {
+                    // 手指抬起
+                    val duration = System.currentTimeMillis() - startTime
+
+                    // 如果事件已被子组件消费（如按钮点击），跳过手势处理
+                    if (change.isConsumed) break
+
+                    if (isDragging) {
+                        if (isHorizontalDrag == true) {
+                            callbacks.onSeekCommit()
+                        }
+                        gestureTipState.value = GestureTipState(isActive = false)
+                    } else {
+                        // 判断是否为 tap
+                        val moved =
+                            abs(change.position.x - startX) > tapSlop ||
+                                abs(change.position.y - startY) > tapSlop
+                        if (!moved) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastTapTime < doubleTapTimeout) {
+                                callbacks.onDoubleTap()
+                                lastTapTime = 0L
+                            } else {
+                                lastTapTime = now
+                                callbacks.onSingleTap()
+                            }
+                        }
+                    }
+                    change.consume()
                     break
                 }
-                continue
-            }
 
-            val change = changes.firstOrNull() ?: continue
+                // 如果事件已被子组件消费（如进度条拖拽），跳过移动处理
+                if (change.isConsumed) continue
 
-            if (!change.pressed) {
-                // 手指抬起
-                val duration = System.currentTimeMillis() - startTime
+                // 手指移动中
+                if (change.positionChanged()) {
+                    val deltaX = change.positionChange().x
+                    val deltaY = change.positionChange().y
+                    totalDeltaX += deltaX
+                    totalDeltaY += deltaY
 
-                // 如果事件已被子组件消费（如按钮点击），跳过手势处理
-                if (change.isConsumed) break
+                    val absX = abs(totalDeltaX)
+                    val absY = abs(totalDeltaY)
 
-                if (isDragging) {
+                    // 判断拖拽方向（仅首次超过阈值时）
+                    if (isHorizontalDrag == null && (absX > dragThreshold || absY > dragThreshold)) {
+                        isHorizontalDrag = absX > absY
+                        isDragging = true
+                    }
+
                     if (isHorizontalDrag == true) {
-                        callbacks.onSeekCommit()
-                    }
-                    gestureTipState.value = GestureTipState(isActive = false)
-                } else {
-                    // 判断是否为 tap
-                    val moved = abs(change.position.x - startX) > tapSlop ||
-                        abs(change.position.y - startY) > tapSlop
-                    if (!moved) {
-                        val now = System.currentTimeMillis()
-                        if (now - lastTapTime < doubleTapTimeout) {
-                            callbacks.onDoubleTap()
-                            lastTapTime = 0L
+                        // 水平拖拽 → seek
+                        val durationMs = totalDuration()
+                        if (durationMs > 0) {
+                            val deltaMs = (deltaX / width * durationMs * 0.5f).toLong()
+                            if (deltaMs != 0L) {
+                                callbacks.onSeekDelta(deltaMs)
+                                gestureTipState.value =
+                                    GestureTipState(
+                                        isActive = true,
+                                        type = GestureTipType.Seek,
+                                    )
+                            }
+                        }
+                    } else if (isHorizontalDrag == false) {
+                        // 垂直拖拽 → 亮度/音量
+                        // Compose 中 y 向下为正，上滑（deltaY < 0）应增加亮度/音量，故取反
+                        val isLeftHalf = startX < width / 2
+                        if (isLeftHalf) {
+                            callbacks.onBrightnessChange(-deltaY)
                         } else {
-                            lastTapTime = now
-                            callbacks.onSingleTap()
+                            callbacks.onVolumeChange(-deltaY)
                         }
                     }
+                    change.consume()
                 }
-                change.consume()
-                break
-            }
-
-            // 如果事件已被子组件消费（如进度条拖拽），跳过移动处理
-            if (change.isConsumed) continue
-
-            // 手指移动中
-            if (change.positionChanged()) {
-                val deltaX = change.positionChange().x
-                val deltaY = change.positionChange().y
-                totalDeltaX += deltaX
-                totalDeltaY += deltaY
-
-                val absX = abs(totalDeltaX)
-                val absY = abs(totalDeltaY)
-
-                // 判断拖拽方向（仅首次超过阈值时）
-                if (isHorizontalDrag == null && (absX > dragThreshold || absY > dragThreshold)) {
-                    isHorizontalDrag = absX > absY
-                    isDragging = true
-                }
-
-                if (isHorizontalDrag == true) {
-                    // 水平拖拽 → seek
-                    val durationMs = totalDuration()
-                    if (durationMs > 0) {
-                        val deltaMs = (deltaX / width * durationMs * 0.5f).toLong()
-                        if (deltaMs != 0L) {
-                            callbacks.onSeekDelta(deltaMs)
-                            gestureTipState.value = GestureTipState(
-                                isActive = true,
-                                type = GestureTipType.Seek,
-                            )
-                        }
-                    }
-                } else if (isHorizontalDrag == false) {
-                    // 垂直拖拽 → 亮度/音量
-                    // Compose 中 y 向下为正，上滑（deltaY < 0）应增加亮度/音量，故取反
-                    val isLeftHalf = startX < width / 2
-                    if (isLeftHalf) {
-                        callbacks.onBrightnessChange(-deltaY)
-                    } else {
-                        callbacks.onVolumeChange(-deltaY)
-                    }
-                }
-                change.consume()
             }
         }
     }
-}
 
 /**
  * 亮度调节辅助函数。
@@ -234,11 +231,12 @@ fun adjustBrightness(
     deltaY: Float,
     currentBrightness: Float,
 ): Float {
-    val newBrightness = if (currentBrightness < 0) {
-        0.5f + deltaY / 1000f
-    } else {
-        currentBrightness + deltaY / 1000f
-    }
+    val newBrightness =
+        if (currentBrightness < 0) {
+            0.5f + deltaY / 1000f
+        } else {
+            currentBrightness + deltaY / 1000f
+        }
     val clamped = newBrightness.coerceIn(0.01f, 1f)
     val layoutParams = activity.window.attributes
     layoutParams.screenBrightness = clamped

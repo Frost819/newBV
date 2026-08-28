@@ -37,11 +37,12 @@ fun SettingListItem(
     var hasFocus by remember { mutableStateOf(false) }
 
     ListItem(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp)
-            .onFocusChanged { hasFocus = it.hasFocus }
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp)
+                .onFocusChanged { hasFocus = it.hasFocus }
+                .touchClickable(onClick = onClick),
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         trailingContent = trailingContent,

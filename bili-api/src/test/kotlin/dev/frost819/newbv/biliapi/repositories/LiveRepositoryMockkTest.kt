@@ -117,10 +117,22 @@ class LiveRepositoryUnitTest {
         runBlocking {
             val fakeData =
                 RoomInitData(
-                    roomId = 1718159119, shortId = 0, uid = 1, needP2P = 0, isHidden = false,
-                    isLocked = false, isPortrait = false, liveStatus = 1, hiddenTill = 0,
-                    lockTill = 0, encrypted = false, pwdVerified = false, liveTime = 0,
-                    roomShield = 0, isSp = 0, specialType = 0,
+                    roomId = 1718159119,
+                    shortId = 0,
+                    uid = 1,
+                    needP2P = 0,
+                    isHidden = false,
+                    isLocked = false,
+                    isPortrait = false,
+                    liveStatus = 1,
+                    hiddenTill = 0,
+                    lockTill = 0,
+                    encrypted = false,
+                    pwdVerified = false,
+                    liveTime = 0,
+                    roomShield = 0,
+                    isSp = 0,
+                    specialType = 0,
                 )
             coEvery { BiliLiveHttpApi.getRoomInit(any()) } returns fakeResponse(fakeData)
 
@@ -251,8 +263,10 @@ class LiveRepositoryUnitTest {
                             cid = 1718159119,
                             qnDesc =
                                 listOf(
-                                    dev.frost819.newbv.biliapi.http.entity.live.QnDesc(qn = 10000, desc = "原画"),
-                                    dev.frost819.newbv.biliapi.http.entity.live.QnDesc(qn = 400, desc = "蓝光"),
+                                    dev.frost819.newbv.biliapi.http.entity.live
+                                        .QnDesc(qn = 10000, desc = "原画"),
+                                    dev.frost819.newbv.biliapi.http.entity.live
+                                        .QnDesc(qn = 400, desc = "蓝光"),
                                 ),
                             stream =
                                 listOf(

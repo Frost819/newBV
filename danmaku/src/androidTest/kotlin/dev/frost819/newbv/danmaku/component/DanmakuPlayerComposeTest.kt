@@ -26,7 +26,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class DanmakuPlayerComposeTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 

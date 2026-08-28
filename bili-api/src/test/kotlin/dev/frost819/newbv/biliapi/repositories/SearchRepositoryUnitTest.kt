@@ -227,7 +227,8 @@ class SearchRepositoryUnitTest {
         runTest {
             val videoJson =
                 kotlinx.serialization.json.Json.encodeToString(
-                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult.serializer(),
+                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult
+                        .serializer(),
                     dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult(
                         type = "video",
                         id = 100L,
@@ -280,7 +281,11 @@ class SearchRepositoryUnitTest {
                     suggestKeyword = "",
                     rqtType = "",
                     eggHit = 0,
-                    result = listOf(kotlinx.serialization.json.Json.parseToJsonElement(videoJson)),
+                    result =
+                        listOf(
+                            kotlinx.serialization.json.Json
+                                .parseToJsonElement(videoJson),
+                        ),
                 )
             coEvery { BiliHttpApi.searchType(any(), any(), any(), any(), any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = searchResultData)
@@ -308,7 +313,8 @@ class SearchRepositoryUnitTest {
         runTest {
             val videoJson =
                 kotlinx.serialization.json.Json.encodeToString(
-                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult.serializer(),
+                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult
+                        .serializer(),
                     dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult(
                         type = "video",
                         id = 1L,
@@ -365,7 +371,11 @@ class SearchRepositoryUnitTest {
                             suggestKeyword = "",
                             rqtType = "",
                             eggHit = 0,
-                            result = listOf(kotlinx.serialization.json.Json.parseToJsonElement(videoJson)),
+                            result =
+                                listOf(
+                                    kotlinx.serialization.json.Json
+                                        .parseToJsonElement(videoJson),
+                                ),
                         ),
                 )
 
@@ -432,25 +442,65 @@ class SearchRepositoryUnitTest {
         runTest {
             val videoJson =
                 kotlinx.serialization.json.Json.encodeToString(
-                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult.serializer(),
+                    dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult
+                        .serializer(),
                     dev.frost819.newbv.biliapi.http.entity.search.SearchVideoResult(
-                        type = "video", id = 100L, author = "UP", mid = 1L, typeId = "1",
-                        typeName = "综合", arcUrl = "", aid = 100L, bvid = "BV100",
-                        title = "结果", description = "", pic = "//pic.test/1.jpg",
-                        play = 500, videoReview = 10, favorites = 20, tag = "", review = 0,
-                        pubDate = 1700000000, sendDate = 1700000000, duration = "5:00",
-                        badgePay = false, hitColumns = emptyList(), viewType = "",
-                        isPay = 0, isUnionVideo = 0, newRecTags = emptyList(), like = 50,
-                        upic = "", corner = "", cover = "", desc = "", url = "",
-                        recReason = "", danmaku = 5, vtDisplay = "", subtitle = "",
-                        episodeCountText = "", releaseStatus = 0, isIntervene = 0,
+                        type = "video",
+                        id = 100L,
+                        author = "UP",
+                        mid = 1L,
+                        typeId = "1",
+                        typeName = "综合",
+                        arcUrl = "",
+                        aid = 100L,
+                        bvid = "BV100",
+                        title = "结果",
+                        description = "",
+                        pic = "//pic.test/1.jpg",
+                        play = 500,
+                        videoReview = 10,
+                        favorites = 20,
+                        tag = "",
+                        review = 0,
+                        pubDate = 1700000000,
+                        sendDate = 1700000000,
+                        duration = "5:00",
+                        badgePay = false,
+                        hitColumns = emptyList(),
+                        viewType = "",
+                        isPay = 0,
+                        isUnionVideo = 0,
+                        newRecTags = emptyList(),
+                        like = 50,
+                        upic = "",
+                        corner = "",
+                        cover = "",
+                        desc = "",
+                        url = "",
+                        recReason = "",
+                        danmaku = 5,
+                        vtDisplay = "",
+                        subtitle = "",
+                        episodeCountText = "",
+                        releaseStatus = 0,
+                        isIntervene = 0,
                     ),
                 )
             val searchResultData =
                 dev.frost819.newbv.biliapi.http.entity.search.SearchResultData(
-                    seid = "seid", page = 1, pageSize = 20, numResults = 1, numPages = 2,
-                    suggestKeyword = "建议", rqtType = "", eggHit = 0,
-                    result = listOf(kotlinx.serialization.json.Json.parseToJsonElement(videoJson)),
+                    seid = "seid",
+                    page = 1,
+                    pageSize = 20,
+                    numResults = 1,
+                    numPages = 2,
+                    suggestKeyword = "建议",
+                    rqtType = "",
+                    eggHit = 0,
+                    result =
+                        listOf(
+                            kotlinx.serialization.json.Json
+                                .parseToJsonElement(videoJson),
+                        ),
                 )
             coEvery { BiliHttpApi.searchAll(any(), any(), any(), any(), any()) } returns
                 BiliResponse(code = 0, message = "", data = searchResultData)

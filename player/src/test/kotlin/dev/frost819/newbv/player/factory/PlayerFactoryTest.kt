@@ -13,24 +13,39 @@ import org.junit.jupiter.api.Test
  * 通过具体实现验证工厂模式的创建行为。
  */
 class PlayerFactoryTest {
-
     /** 用于测试的具体播放器实现 */
     private class DummyPlayer : AbstractVideoPlayer() {
         override fun initPlayer() {}
+
         override fun setHeader(headers: Map<String, String>) {}
-        override fun playUrl(videoUrl: String?, audioUrl: String?) {}
+
+        override fun playUrl(
+            videoUrl: String?,
+            audioUrl: String?,
+        ) {}
+
         override fun prepare() {}
+
         override fun start() {}
+
         override fun pause() {}
+
         override fun stop() {}
+
         override fun reset() {}
+
         override val isPlaying: Boolean = false
+
         override fun seekTo(time: Long) {}
+
         override fun release() {}
+
         override val currentPosition: Long = 0L
         override val duration: Long = 0L
         override val bufferedPercentage: Int = 0
+
         override fun setOptions() {}
+
         override var speed: Float = 1.0f
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "dummy"
@@ -42,7 +57,10 @@ class PlayerFactoryTest {
     private class DummyPlayerFactory : PlayerFactory<DummyPlayer>() {
         var lastOptions: VideoPlayerOptions? = null
 
-        override fun create(context: Context, options: VideoPlayerOptions): DummyPlayer {
+        override fun create(
+            context: Context,
+            options: VideoPlayerOptions,
+        ): DummyPlayer {
             lastOptions = options
             return DummyPlayer()
         }

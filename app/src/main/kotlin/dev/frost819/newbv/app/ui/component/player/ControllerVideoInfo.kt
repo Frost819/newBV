@@ -6,6 +6,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,17 +33,15 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -190,23 +190,24 @@ fun ControllerVideoInfoTop(
     onlineWatching: String,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(
-                MaterialTheme.shapes.large.copy(
-                    topStart = CornerSize(0.dp),
-                    topEnd = CornerSize(0.dp),
-                ),
-            )
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.5f),
-                        Color.Black.copy(alpha = 0f),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(
+                    MaterialTheme.shapes.large.copy(
+                        topStart = CornerSize(0.dp),
+                        topEnd = CornerSize(0.dp),
                     ),
-                ),
-            )
-            .padding(horizontal = 32.dp, vertical = 16.dp),
+                ).background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.5f),
+                                    Color.Black.copy(alpha = 0f),
+                                ),
+                        ),
+                ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -214,13 +215,15 @@ fun ControllerVideoInfoTop(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                 text = title,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    shadow = Shadow(color = Color.Black, blurRadius = 1f),
-                ),
+                style =
+                    MaterialTheme.typography.headlineSmall.copy(
+                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                    ),
                 color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -242,9 +245,10 @@ fun ControllerVideoInfoTop(
                 )
                 Text(
                     text = "${onlineWatching}人正在看",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
-                    ),
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                        ),
                     color = Color.White.copy(alpha = 0.85f),
                 )
             }
@@ -291,12 +295,13 @@ fun ControllerVideoInfoBottom(
     }
 
     Column(
-        modifier = modifier.clip(
-            MaterialTheme.shapes.large.copy(
-                bottomStart = CornerSize(0.dp),
-                bottomEnd = CornerSize(0.dp),
+        modifier =
+            modifier.clip(
+                MaterialTheme.shapes.large.copy(
+                    bottomStart = CornerSize(0.dp),
+                    bottomEnd = CornerSize(0.dp),
+                ),
             ),
-        ),
         verticalArrangement = Arrangement.Bottom,
     ) {
         // Seek 缩略图预览
@@ -313,9 +318,10 @@ fun ControllerVideoInfoBottom(
 
         // 时间显示
         Row(modifier = Modifier.fillMaxWidth()) {
+            val timeText = if (isSeeking) goTime.formatHourMinSec() else seekerState.currentTime.formatHourMinSec()
             Text(
                 modifier = Modifier.padding(bottom = 2.dp, start = 24.dp),
-                text = "${if (isSeeking) goTime.formatHourMinSec() else seekerState.currentTime.formatHourMinSec()} / ${seekerState.totalDuration.formatHourMinSec()}",
+                text = "$timeText / ${seekerState.totalDuration.formatHourMinSec()}",
                 color = Color.White,
                 style = TextStyle(shadow = Shadow(color = Color.Black, blurRadius = 1f)),
             )
@@ -323,81 +329,82 @@ fun ControllerVideoInfoBottom(
 
         // Seek bar（可聚焦，处理方向键 + 触屏拖拽）
         Row(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = if (isSeekFocused) 1f else 0f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                )
-                .focusable()
-                .focusRequester(seekFocusRequester)
-                .pointerInput(seekerState.totalDuration) {
-                    awaitEachGesture {
-                        val firstDown = awaitFirstDown(
-                            requireUnconsumed = false,
-                            pass = PointerEventPass.Initial,
-                        )
-                        firstDown.consume()
+            modifier =
+                Modifier
+                    .padding(horizontal = 24.dp)
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = if (isSeekFocused) 1f else 0f),
+                        shape =
+                            androidx.compose.foundation.shape
+                                .RoundedCornerShape(8.dp),
+                    ).focusable()
+                    .focusRequester(seekFocusRequester)
+                    .pointerInput(seekerState.totalDuration) {
+                        awaitEachGesture {
+                            val firstDown =
+                                awaitFirstDown(
+                                    requireUnconsumed = false,
+                                    pass = PointerEventPass.Initial,
+                                )
+                            firstDown.consume()
 
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            val change = event.changes.firstOrNull() ?: break
-                            val w = this.size.width.toFloat()
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull() ?: break
+                                val w = this.size.width.toFloat()
 
-                            if (!change.pressed) {
-                                // 手指抬起：seek 到最终位置
-                                if (w > 0 && seekerState.totalDuration > 0) {
-                                    val ratio = (change.position.x / w).coerceIn(0f, 1f)
-                                    val targetTime = (ratio * seekerState.totalDuration).toLong()
-                                    onSeekToPosition(targetTime)
+                                if (!change.pressed) {
+                                    // 手指抬起：seek 到最终位置
+                                    if (w > 0 && seekerState.totalDuration > 0) {
+                                        val ratio = (change.position.x / w).coerceIn(0f, 1f)
+                                        val targetTime = (ratio * seekerState.totalDuration).toLong()
+                                        onSeekToPosition(targetTime)
+                                    }
+                                    change.consume()
+                                    break
                                 }
-                                change.consume()
-                                break
+
+                                if (change.positionChanged()) {
+                                    // 拖拽中：持续 seek 到触摸位置
+                                    if (w > 0 && seekerState.totalDuration > 0) {
+                                        val ratio = (change.position.x / w).coerceIn(0f, 1f)
+                                        val targetTime = (ratio * seekerState.totalDuration).toLong()
+                                        onSeekToPosition(targetTime)
+                                    }
+                                    change.consume()
+                                }
+                            }
+                        }
+                    }.onKeyEvent {
+                        when (it.key) {
+                            Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
+                                if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                                if (isSeeking) onSeekGoTime() else onPlayPause()
+                                true
                             }
 
-                            if (change.positionChanged()) {
-                                // 拖拽中：持续 seek 到触摸位置
-                                if (w > 0 && seekerState.totalDuration > 0) {
-                                    val ratio = (change.position.x / w).coerceIn(0f, 1f)
-                                    val targetTime = (ratio * seekerState.totalDuration).toLong()
-                                    onSeekToPosition(targetTime)
-                                }
-                                change.consume()
+                            Key.DirectionLeft, Key.MediaRewind -> {
+                                if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                                onDirectionLeft()
+                                true
                             }
-                        }
-                    }
-                }
-                .onKeyEvent {
-                    when (it.key) {
-                        Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
-                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                            if (isSeeking) onSeekGoTime() else onPlayPause()
-                            true
-                        }
 
-                        Key.DirectionLeft, Key.MediaRewind -> {
-                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                            onDirectionLeft()
-                            true
-                        }
+                            Key.DirectionRight, Key.MediaFastForward -> {
+                                if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                                onDirectionRight()
+                                true
+                            }
 
-                        Key.DirectionRight, Key.MediaFastForward -> {
-                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                            onDirectionRight()
-                            true
-                        }
+                            Key.DirectionDown -> {
+                                if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                                buttonsFocusRequester.requestFocus()
+                                true
+                            }
 
-                        Key.DirectionDown -> {
-                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                            buttonsFocusRequester.requestFocus()
-                            true
+                            else -> false
                         }
-
-                        else -> false
-                    }
-                }
-                .onFocusChanged { isSeekFocused = it.isFocused },
+                    }.onFocusChanged { isSeekFocused = it.isFocused },
         ) {
             VideoProgressSeek(
                 modifier = Modifier.focusable().fillMaxWidth(),
@@ -409,65 +416,67 @@ fun ControllerVideoInfoBottom(
         }
 
         // 操作按钮行
-        val icons = buildList {
-            add(ControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
-            add(
-                ControllerIcon(
-                    if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
-                    "弹幕开关",
-                    onDanmakuSwitchChange,
-                ),
-            )
-            add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
-            if (!fromSeason) {
-                add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
-                add(ControllerIcon(R.drawable.contact_page_24px, "up主页", onGoToUpPage))
-                add(ControllerIcon(R.drawable.related_videos_24px, "相关视频", onShowRelatedVideos))
+        val icons =
+            buildList {
+                add(ControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
+                add(
+                    ControllerIcon(
+                        if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
+                        "弹幕开关",
+                        onDanmakuSwitchChange,
+                    ),
+                )
+                add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
+                if (!fromSeason) {
+                    add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
+                    add(ControllerIcon(R.drawable.contact_page_24px, "up主页", onGoToUpPage))
+                    add(ControllerIcon(R.drawable.related_videos_24px, "相关视频", onShowRelatedVideos))
+                }
+                add(
+                    ControllerIcon(
+                        if (isLooping) R.drawable.repeat_one_on_24px else R.drawable.repeat_one_24px,
+                        "循环播放",
+                        onToggleLoop,
+                    ),
+                )
+                add(
+                    ControllerIcon(
+                        icon = R.drawable.interaction_24px,
+                        description = "交互",
+                        action = onShowInteraction,
+                    ),
+                )
+                add(
+                    ControllerIcon(
+                        icon = R.drawable.comment,
+                        description = "评论",
+                        action = onShowComments,
+                    ),
+                )
             }
-            add(
-                ControllerIcon(
-                    if (isLooping) R.drawable.repeat_one_on_24px else R.drawable.repeat_one_24px,
-                    "循环播放",
-                    onToggleLoop,
-                ),
-            )
-            add(
-                ControllerIcon(
-                    icon = R.drawable.interaction_24px,
-                    description = "交互",
-                    action = onShowInteraction,
-                ),
-            )
-            add(
-                ControllerIcon(
-                    icon = R.drawable.comment,
-                    description = "评论",
-                    action = onShowComments,
-                ),
-            )
-        }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(buttonsFocusRequester)
-                .onKeyEvent {
-                    if (it.key == Key.DirectionUp) {
-                        if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                        seekFocusRequester.requestFocus()
-                        return@onKeyEvent true
-                    }
-                    false
-                }
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(buttonsFocusRequester)
+                    .onKeyEvent {
+                        if (it.key == Key.DirectionUp) {
+                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                            seekFocusRequester.requestFocus()
+                            return@onKeyEvent true
+                        }
+                        false
+                    }.padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
             icons.forEach { item ->
                 key(item.description) {
                     Surface(
-                        modifier = Modifier.touchClickable(
-                            onClick = item.action,
-                        ),
+                        modifier =
+                            Modifier.touchClickable(
+                                onClick = item.action,
+                            ),
                         onClick = item.action,
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     ) {
@@ -507,13 +516,14 @@ private fun Clock(
         color = Color.White,
         fontWeight = FontWeight.Bold,
         style = TextStyle(shadow = Shadow(color = Color.Black, blurRadius = 1f)),
-        text = buildAnnotatedString {
-            withStyle(SpanStyle(fontSize = 32.sp)) {
-                append("$hour".padStart(2, '0'))
-                append(":")
-                append("$minute".padStart(2, '0'))
-            }
-        },
+        text =
+            buildAnnotatedString {
+                withStyle(SpanStyle(fontSize = 32.sp)) {
+                    append("$hour".padStart(2, '0'))
+                    append(":")
+                    append("$minute".padStart(2, '0'))
+                }
+            },
     )
 }
 
@@ -527,11 +537,12 @@ private fun ControllerVideoInfoPreview() {
             show = true,
             isSeeking = false,
             goTime = 0L,
-            seekerState = SeekerState(
-                totalDuration = 600_000L,
-                currentTime = 120_000L,
-                bufferedPercentage = 50,
-            ),
+            seekerState =
+                SeekerState(
+                    totalDuration = 600_000L,
+                    currentTime = 120_000L,
+                    bufferedPercentage = 50,
+                ),
             title = "示例视频标题",
             clock = Pair(14, 30),
             onlineWatching = "9.4万+",

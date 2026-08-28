@@ -6,16 +6,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * 焦点恢复状态。
@@ -44,9 +40,7 @@ class FocusSaver(
      * 获取指定 index 的 FocusRequester。
      * 每个 index 独立一个 requester，在组合恢复后仍有效。
      */
-    fun focusRequesterFor(index: Int): FocusRequester {
-        return requesters.getOrPut(index) { FocusRequester() }
-    }
+    fun focusRequesterFor(index: Int): FocusRequester = requesters.getOrPut(index) { FocusRequester() }
 
     /**
      * 保存当前聚焦的 index。
@@ -105,8 +99,7 @@ class ScreenFocusSaver(
 ) {
     private val requesters = mutableMapOf<String, FocusRequester>()
 
-    fun focusRequesterFor(key: String): FocusRequester =
-        requesters.getOrPut(key) { FocusRequester() }
+    fun focusRequesterFor(key: String): FocusRequester = requesters.getOrPut(key) { FocusRequester() }
 
     fun saveFocusedKey(key: String) {
         savedKey.value = key
@@ -156,9 +149,10 @@ fun rememberScreenFocusSaver(): ScreenFocusSaver {
 fun Modifier.focusSaverItem(
     focusSaver: FocusSaver,
     index: Int,
-): Modifier = this
-    .focusRequester(focusSaver.focusRequesterFor(index))
-    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedIndex(index) }
+): Modifier =
+    this
+        .focusRequester(focusSaver.focusRequesterFor(index))
+        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedIndex(index) }
 
 /**
  * 将 [ScreenFocusSaver] 绑定到可聚焦元素（String key 版）。
@@ -180,8 +174,9 @@ fun Modifier.focusSaverItem(
 fun Modifier.focusSaverItem(
     focusSaver: ScreenFocusSaver,
     key: String,
-): Modifier = this
-    .focusRequester(focusSaver.focusRequesterFor(key))
-    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(key) }
+): Modifier =
+    this
+        .focusRequester(focusSaver.focusRequesterFor(key))
+        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(key) }
 
 // endregion

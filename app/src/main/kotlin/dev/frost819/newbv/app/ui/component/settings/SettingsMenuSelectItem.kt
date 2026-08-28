@@ -34,27 +34,31 @@ fun SettingsMenuSelectItem(
     var hasFocus by remember { mutableStateOf(false) }
 
     ListItem(
-        modifier = modifier
-            .onFocusChanged { hasFocus = it.hasFocus }
-            .touchClickable(onClick = onClick),
+        modifier =
+            modifier
+                .onFocusChanged { hasFocus = it.hasFocus }
+                .touchClickable(onClick = onClick),
         headlineContent = { Text(text = text) },
         trailingContent = {
             RadioButton(
                 modifier = Modifier.focusable(false),
                 selected = selected,
                 onClick = { },
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = if (hasFocus) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                    unselectedColor = if (hasFocus) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.border
-                    },
-                ),
+                colors =
+                    RadioButtonDefaults.colors(
+                        selectedColor =
+                            if (hasFocus) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        unselectedColor =
+                            if (hasFocus) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.border
+                            },
+                    ),
             )
         },
         onClick = onClick,

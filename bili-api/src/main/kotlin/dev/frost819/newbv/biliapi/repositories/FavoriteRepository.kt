@@ -12,12 +12,11 @@ class FavoriteRepository(
     suspend fun checkVideoFavoured(
         aid: Long,
         preferApiType: ApiType,
-    ): Boolean {
-        return BiliHttpApi.checkVideoFavoured(
+    ): Boolean =
+        BiliHttpApi.checkVideoFavoured(
             avid = aid,
             accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
         )
-    }
 
     suspend fun addVideoToFavoriteFolder(
         aid: Long,
@@ -70,12 +69,13 @@ class FavoriteRepository(
         preferApiType: ApiType,
     ): List<FavoriteFolderMetadata> {
         val userFavoriteFoldersData =
-            BiliHttpApi.getAllFavoriteFoldersInfo(
-                mid = mid,
-                type = type.value,
-                rid = rid,
-                accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
-            ).getResponseData()
+            BiliHttpApi
+                .getAllFavoriteFoldersInfo(
+                    mid = mid,
+                    type = type.value,
+                    rid = rid,
+                    accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+                ).getResponseData()
         return userFavoriteFoldersData.list.map {
             FavoriteFolderMetadata.fromHttpUserFavoriteFolder(it)
         }
@@ -88,12 +88,13 @@ class FavoriteRepository(
         preferApiType: ApiType,
     ): FavoriteFolderData {
         val favoriteFolderListData =
-            BiliHttpApi.getFavoriteList(
-                mediaId = mediaId,
-                pageSize = pageSize,
-                pageNumber = pageNumber,
-                accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
-            ).getResponseData()
+            BiliHttpApi
+                .getFavoriteList(
+                    mediaId = mediaId,
+                    pageSize = pageSize,
+                    pageNumber = pageNumber,
+                    accessKey = authRepository.accessToken.takeIf { preferApiType == ApiType.App },
+                ).getResponseData()
         return FavoriteFolderData.fromHttpFavoriteFolderInfoListData(favoriteFolderListData)
     }
 }

@@ -10,10 +10,13 @@ import dev.frost819.newbv.data.datastore.HomeTopNavItem
  *
  * @property item 原始 [HomeTopNavItem] 枚举。
  */
-data class HomeTabItem(val item: HomeTopNavItem) : TopNavItem {
-    override val displayName: String = when (item) {
-        HomeTopNavItem.Dynamics -> "动态"
-        HomeTopNavItem.Recommend -> "推荐"
-        HomeTopNavItem.Popular -> "热门"
-    }
+data class HomeTabItem(
+    val item: HomeTopNavItem,
+) : TopNavItem {
+    override val displayName: String =
+        when (item) {
+            HomeTopNavItem.Dynamics -> "动态"
+            HomeTopNavItem.Recommend -> "推荐"
+            HomeTopNavItem.Popular -> "热门"
+        }
 }

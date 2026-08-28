@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ExtendsTest {
-
     @Test
     fun `formatMinSec formats milliseconds correctly`() {
         assertEquals("00:00", 0L.formatMinSec())

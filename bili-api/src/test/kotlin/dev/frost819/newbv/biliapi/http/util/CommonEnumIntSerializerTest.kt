@@ -11,7 +11,9 @@ import org.junit.jupiter.api.assertThrows
  * 验证枚举与 Int 之间的序列化/反序列化及异常处理。
  */
 class CommonEnumIntSerializerTest {
-    enum class TestEnum(override val serialNumber: Int?) : SerialEnum {
+    enum class TestEnum(
+        override val serialNumber: Int?,
+    ) : SerialEnum {
         ALPHA(10),
         BETA(20),
         GAMMA(null),

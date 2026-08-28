@@ -15,7 +15,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -52,73 +51,75 @@ import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
-class LiveAreaListViewModel @Inject constructor(
-    private val liveRepository: LiveRepository,
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
-
-    companion object {
-        private const val LOAD_TIMEOUT_MS = 10_000L
-    }
-
-    private val route = savedStateHandle.toRoute<LiveAreaRoute>()
-
-    private val logger = Loggers.get("LiveAreaListScreen")
-
-    private val _uiState = MutableStateFlow(LiveAreaListUiState())
-    val uiState: StateFlow<LiveAreaListUiState> = _uiState.asStateFlow()
-
-    private var currentPage = 1
-
-    init {
-        loadFirstPage()
-    }
-
-    fun loadFirstPage() {
-        currentPage = 1
-        _uiState.update {
-            it.copy(items = emptyList(), hasMore = true, isLoading = false, isError = false)
+class LiveAreaListViewModel
+    @Inject
+    constructor(
+        private val liveRepository: LiveRepository,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        companion object {
+            private const val LOAD_TIMEOUT_MS = 10_000L
         }
-        loadMore()
-    }
 
-    fun loadMore() {
-        if (_uiState.value.isLoading || !_uiState.value.hasMore) return
+        private val route = savedStateHandle.toRoute<LiveAreaRoute>()
 
-        _uiState.update { it.copy(isLoading = true, isError = false) }
+        private val logger = Loggers.get("LiveAreaListScreen")
 
-        viewModelScope.launch {
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val result = liveRepository.getAreaLiveList(
-                        parentAreaId = route.parentAreaId,
-                        areaId = route.areaId,
-                        page = currentPage,
-                    )
-                    val newItems = result.list.map { it.toCardData() }
-                    currentPage to (newItems to result.hasMore)
+        private val _uiState = MutableStateFlow(LiveAreaListUiState())
+        val uiState: StateFlow<LiveAreaListUiState> = _uiState.asStateFlow()
+
+        private var currentPage = 1
+
+        init {
+            loadFirstPage()
+        }
+
+        fun loadFirstPage() {
+            currentPage = 1
+            _uiState.update {
+                it.copy(items = emptyList(), hasMore = true, isLoading = false, isError = false)
+            }
+            loadMore()
+        }
+
+        fun loadMore() {
+            if (_uiState.value.isLoading || !_uiState.value.hasMore) return
+
+            _uiState.update { it.copy(isLoading = true, isError = false) }
+
+            viewModelScope.launch {
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val result =
+                            liveRepository.getAreaLiveList(
+                                parentAreaId = route.parentAreaId,
+                                areaId = route.areaId,
+                                page = currentPage,
+                            )
+                        val newItems = result.list.map { it.toCardData() }
+                        currentPage to (newItems to result.hasMore)
+                    }
+                }.onSuccess { (page, pair) ->
+                    val (newItems, hasMore) = pair
+                    _uiState.update {
+                        it.copy(
+                            items = it.items + newItems,
+                            hasMore = hasMore,
+                            isLoading = false,
+                            isError = false,
+                        )
+                    }
+                    currentPage = page + 1
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.warn(error) { "Failed to load area live list" }
+                    _uiState.update { it.copy(isLoading = false, isError = true) }
                 }
-            }.onSuccess { (page, pair) ->
-                val (newItems, hasMore) = pair
-                _uiState.update {
-                    it.copy(
-                        items = it.items + newItems,
-                        hasMore = hasMore,
-                        isLoading = false,
-                        isError = false,
-                    )
-                }
-                currentPage = page + 1
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.warn(error) { "Failed to load area live list" }
-                _uiState.update { it.copy(isLoading = false, isError = true) }
             }
         }
     }
-}
 
 private fun LiveRoomItem.toCardData(): LiveRoomCardData {
     val coverUrl = cover.ifBlank { keyframe.ifBlank { userCover } }
@@ -168,8 +169,11 @@ private fun LiveAreaListScreen(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .collect { index ->
                 if (index != null && index >= state.items.size - 5 && state.hasMore && !state.isLoading) {
                     viewModel.loadMore()

@@ -8,7 +8,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold as Material3Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +30,7 @@ import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 import dev.frost819.newbv.data.datastore.PersonalTopNavItem
 import dev.frost819.newbv.data.datastore.Prefs
+import androidx.compose.material3.Scaffold as Material3Scaffold
 
 /**
  * 个人页内容（TopNav + 4 个子 Tab）。
@@ -52,15 +52,16 @@ fun PersonalContent(
     var selectedTab by rememberSaveable { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
 
-    val reorderedItems = remember {
-        val allItems = PersonalTopNavItem.entries
-        val startIndex = allItems.indexOf(firstTab)
-        if (startIndex == -1) {
-            allItems.map { PersonalTabItem(it) }
-        } else {
-            (allItems.drop(startIndex) + allItems.take(startIndex)).map { PersonalTabItem(it) }
+    val reorderedItems =
+        remember {
+            val allItems = PersonalTopNavItem.entries
+            val startIndex = allItems.indexOf(firstTab)
+            if (startIndex == -1) {
+                allItems.map { PersonalTabItem(it) }
+            } else {
+                (allItems.drop(startIndex) + allItems.take(startIndex)).map { PersonalTabItem(it) }
+            }
         }
-    }
 
     Material3Scaffold(
         topBar = {
@@ -81,17 +82,18 @@ fun PersonalContent(
         },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .onFocusChanged { focusOnContent = it.hasFocus }
-                .onPreviewKeyEvent { event ->
-                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                        viewModel.refresh(selectedTab)
-                        navFocusRequester.requestFocus()
-                        return@onPreviewKeyEvent true
-                    }
-                    false
-                },
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .onFocusChanged { focusOnContent = it.hasFocus }
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                            viewModel.refresh(selectedTab)
+                            navFocusRequester.requestFocus()
+                            return@onPreviewKeyEvent true
+                        }
+                        false
+                    },
         ) {
             AnimatedContent(
                 targetState = selectedTab,
@@ -113,7 +115,11 @@ fun PersonalContent(
                     PersonalTopNavItem.ToView -> ToViewScreen(viewModel = viewModel, navController = navController)
                     PersonalTopNavItem.History -> HistoryScreen(viewModel = viewModel, navController = navController)
                     PersonalTopNavItem.Favorite -> FavoriteScreen(viewModel = viewModel, navController = navController)
-                    PersonalTopNavItem.FollowingSeason -> FollowingSeasonScreen(viewModel = viewModel, navController = navController)
+                    PersonalTopNavItem.FollowingSeason ->
+                        FollowingSeasonScreen(
+                            viewModel = viewModel,
+                            navController = navController,
+                        )
                 }
             }
         }

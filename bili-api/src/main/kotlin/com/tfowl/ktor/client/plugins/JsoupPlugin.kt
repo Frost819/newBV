@@ -27,7 +27,9 @@ import org.jsoup.parser.Parser
  *
  * @property parsers Registered parsers for content types
  */
-class JsoupPlugin internal constructor(val parsers: Map<ContentType, Parser>) {
+class JsoupPlugin internal constructor(
+    val parsers: Map<ContentType, Parser>,
+) {
     /**
      * [JsoupPlugin] configuration that is used during installation
      */

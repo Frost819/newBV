@@ -77,27 +77,30 @@ object BiliLiveHttpApi {
      * 否则 B 站风控会返回 -352。
      */
     suspend fun getLiveDanmuInfo(roomId: Int): BiliResponse<DanmuInfoData> =
-        client.get("/xlive/web-room/v1/index/getDanmuInfo") {
-            parameter("id", roomId)
-            parameter("type", 0)
-            parameter("web_location", "444.8")
-        }.body()
+        client
+            .get("/xlive/web-room/v1/index/getDanmuInfo") {
+                parameter("id", roomId)
+                parameter("type", 0)
+                parameter("web_location", "444.8")
+            }.body()
 
     /**
      * 获取直播间[roomId]的信息
      */
     suspend fun getLiveRoomPlayInfo(roomId: Int): BiliResponse<RoomPlayInfoData> =
-        client.get("/xlive/web-room/v1/index/getRoomPlayInfo") {
-            parameter("room_id", roomId)
-        }.body()
+        client
+            .get("/xlive/web-room/v1/index/getRoomPlayInfo") {
+                parameter("room_id", roomId)
+            }.body()
 
     /**
      * 获取直播间[roomId]的历史弹幕
      */
     suspend fun getLiveDanmuHistory(roomId: Int): BiliResponse<HistoryDanmaku> =
-        client.get("/xlive/web-room/v1/dM/gethistory") {
-            parameter("roomid", roomId)
-        }.body()
+        client
+            .get("/xlive/web-room/v1/dM/gethistory") {
+                parameter("roomid", roomId)
+            }.body()
 
     /**
      * 获取直播首页模块化列表（分区入口 + 推荐模块 + Banner）。
@@ -105,9 +108,10 @@ object BiliLiveHttpApi {
      * 端点: `GET /xlive/web-interface/v1/index/getList`
      */
     suspend fun getLiveList(): BiliResponse<LiveListResponse> =
-        client.get("/xlive/web-interface/v1/index/getList") {
-            parameter("platform", "web")
-        }.body()
+        client
+            .get("/xlive/web-interface/v1/index/getList") {
+                parameter("platform", "web")
+            }.body()
 
     /**
      * 获取推荐直播间列表。
@@ -115,9 +119,10 @@ object BiliLiveHttpApi {
      * 端点: `GET /xlive/web-interface/v1/webMain/getMoreRecList`
      */
     suspend fun getLiveRecommend(): BiliResponse<LiveRecommendResponse> =
-        client.get("/xlive/web-interface/v1/webMain/getMoreRecList") {
-            parameter("platform", "web")
-        }.body()
+        client
+            .get("/xlive/web-interface/v1/webMain/getMoreRecList") {
+                parameter("platform", "web")
+            }.body()
 
     /**
      * 获取用户关注的主播正在直播的房间列表。
@@ -127,9 +132,10 @@ object BiliLiveHttpApi {
      * 参数 hit_ab=false 以获取真实在线人数和封面 URL
      */
     suspend fun getFollowLive(): BiliResponse<FollowLiveResponse> =
-        client.get("/xlive/web-ucenter/v1/xfetter/GetWebList") {
-            parameter("hit_ab", false)
-        }.body()
+        client
+            .get("/xlive/web-ucenter/v1/xfetter/GetWebList") {
+                parameter("hit_ab", false)
+            }.body()
 
     /**
      * 获取两级直播分区列表。
@@ -137,7 +143,8 @@ object BiliLiveHttpApi {
      * 端点: `GET /room/v1/area/getList`
      */
     suspend fun getLiveAreaList(): BiliResponse<List<LiveAreaParent>> =
-        client.get("/room/v1/area/getList")
+        client
+            .get("/room/v1/area/getList")
             .body()
 
     /**
@@ -159,13 +166,14 @@ object BiliLiveHttpApi {
         pageSize: Int = 30,
         sortType: String = "online",
     ): BiliResponse<List<LiveRoomItem>> =
-        client.get("/room/v1/Area/getRoomList") {
-            parameter("parent_area_id", parentAreaId)
-            parameter("area_id", areaId)
-            parameter("page", page)
-            parameter("page_size", pageSize)
-            parameter("sort_type", sortType)
-        }.body()
+        client
+            .get("/room/v1/Area/getRoomList") {
+                parameter("parent_area_id", parentAreaId)
+                parameter("area_id", areaId)
+                parameter("page", page)
+                parameter("page_size", pageSize)
+                parameter("sort_type", sortType)
+            }.body()
 
     /**
      * 直播间短号→长号转换。
@@ -175,9 +183,10 @@ object BiliLiveHttpApi {
      * @param roomId 直播间号（可能是短号或长号）
      */
     suspend fun getRoomInit(roomId: Int): BiliResponse<RoomInitData> =
-        client.get("/room/v1/Room/room_init") {
-            parameter("id", roomId)
-        }.body()
+        client
+            .get("/room/v1/Room/room_init") {
+                parameter("id", roomId)
+            }.body()
 
     /**
      * 获取直播间完整信息（标题/封面/在线人数/分区等）。
@@ -190,9 +199,10 @@ object BiliLiveHttpApi {
      * @param roomId 真实房间号（长号，需先通过 [getRoomInit] 转换）
      */
     suspend fun getRoomInfo(roomId: Int): BiliResponse<RoomInfoData> =
-        client.get("/room/v1/Room/get_info") {
-            parameter("room_id", roomId)
-        }.body()
+        client
+            .get("/room/v1/Room/get_info") {
+                parameter("room_id", roomId)
+            }.body()
 
     /**
      * 获取直播流地址 v2（多协议多画质）。
@@ -206,15 +216,16 @@ object BiliLiveHttpApi {
         roomId: Int,
         qn: Int = 0,
     ): BiliResponse<RoomPlayInfoV2Data> =
-        client.get("/xlive/web-room/v2/index/getRoomPlayInfo") {
-            parameter("room_id", roomId)
-            parameter("protocol", "0,1")
-            parameter("format", "0,1,2")
-            parameter("codec", "0,1,2")
-            parameter("qn", qn)
-            parameter("platform", "web")
-            parameter("ptype", 8)
-        }.body()
+        client
+            .get("/xlive/web-room/v2/index/getRoomPlayInfo") {
+                parameter("room_id", roomId)
+                parameter("protocol", "0,1")
+                parameter("format", "0,1,2")
+                parameter("codec", "0,1,2")
+                parameter("qn", qn)
+                parameter("platform", "web")
+                parameter("ptype", 8)
+            }.body()
 
     /**
      * 获取简单单画质流地址（fallback）。
@@ -228,9 +239,10 @@ object BiliLiveHttpApi {
         cid: Int,
         qn: Int = 0,
     ): BiliResponse<SimplePlayUrlData> =
-        client.get("/room/v1/Room/playUrl") {
-            parameter("cid", cid)
-            parameter("platform", "web")
-            parameter("qn", qn)
-        }.body()
+        client
+            .get("/room/v1/Room/playUrl") {
+                parameter("cid", cid)
+                parameter("platform", "web")
+                parameter("qn", qn)
+            }.body()
 }

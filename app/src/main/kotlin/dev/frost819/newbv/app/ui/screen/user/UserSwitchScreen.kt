@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.user
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +15,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -73,9 +72,10 @@ fun UserSwitchScreen(
 
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(48.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -152,29 +152,34 @@ private fun UserListItem(
     onDelete: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .width(500.dp)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .width(500.dp)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         Surface(
-            modifier = Modifier
-                .weight(1f)
-                .touchClickable(onClick = onClick),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .touchClickable(onClick = onClick),
             onClick = onClick,
-            colors = ClickableSurfaceDefaults.colors(
-                containerColor = if (isCurrentUser) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
-                contentColor = if (isCurrentUser) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-            ),
+            colors =
+                ClickableSurfaceDefaults.colors(
+                    containerColor =
+                        if (isCurrentUser) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                    contentColor =
+                        if (isCurrentUser) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                ),
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
@@ -186,16 +191,18 @@ private fun UserListItem(
                         model = user.avatar,
                         contentDescription = user.username,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape),
+                        modifier =
+                            Modifier
+                                .size(48.dp)
+                                .clip(CircleShape),
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        modifier =
+                            Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -264,12 +271,13 @@ private fun AddUserButton(onClick: () -> Unit) {
 private fun UserListItemPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         UserListItem(
-            user = UserEntity(
-                uid = 12345L,
-                username = "测试用户",
-                avatar = "",
-                auth = "",
-            ),
+            user =
+                UserEntity(
+                    uid = 12345L,
+                    username = "测试用户",
+                    avatar = "",
+                    auth = "",
+                ),
             isCurrentUser = true,
             onClick = {},
             onDelete = {},

@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
  * [UpdateStatus] 枚举的单元测试。
  */
 class UpdateStatusTest {
-
     @Test
     fun enum_hasEightEntries() {
         assertThat(UpdateStatus.entries).hasSize(8)

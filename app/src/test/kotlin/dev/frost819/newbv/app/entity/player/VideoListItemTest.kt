@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * 验证默认值、相等性、copy 及 ugcPages 字段。
  */
 class VideoListItemTest {
-
     @Test
     fun `default values for optional fields are null`() {
         val item = VideoListItem(aid = 1L, cid = 10L, title = "test")
@@ -32,17 +31,19 @@ class VideoListItemTest {
 
     @Test
     fun `all fields set correctly`() {
-        val pages = listOf(
-            VideoPage(cid = 10L, index = 1, title = "P1", duration = 60, dimension = Dimension(1920, 1080)),
-        )
-        val item = VideoListItem(
-            aid = 1L,
-            cid = 10L,
-            epid = 100,
-            seasonId = 200,
-            title = "番剧分集",
-            ugcPages = pages,
-        )
+        val pages =
+            listOf(
+                VideoPage(cid = 10L, index = 1, title = "P1", duration = 60, dimension = Dimension(1920, 1080)),
+            )
+        val item =
+            VideoListItem(
+                aid = 1L,
+                cid = 10L,
+                epid = 100,
+                seasonId = 200,
+                title = "番剧分集",
+                ugcPages = pages,
+            )
 
         assertThat(item.epid).isEqualTo(100)
         assertThat(item.seasonId).isEqualTo(200)
@@ -69,13 +70,14 @@ class VideoListItemTest {
 
     @Test
     fun `copy with different cid preserves other fields`() {
-        val original = VideoListItem(
-            aid = 1L,
-            cid = 10L,
-            epid = 100,
-            seasonId = 200,
-            title = "original",
-        )
+        val original =
+            VideoListItem(
+                aid = 1L,
+                cid = 10L,
+                epid = 100,
+                seasonId = 200,
+                title = "original",
+            )
         val copied = original.copy(cid = 20L)
 
         assertThat(copied.cid).isEqualTo(20L)

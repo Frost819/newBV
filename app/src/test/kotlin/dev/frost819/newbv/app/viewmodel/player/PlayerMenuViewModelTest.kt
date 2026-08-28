@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * 不依赖外部数据源，纯 UI 状态管理。
  */
 class PlayerMenuViewModelTest {
-
     private lateinit var viewModel: PlayerMenuViewModel
 
     @BeforeEach

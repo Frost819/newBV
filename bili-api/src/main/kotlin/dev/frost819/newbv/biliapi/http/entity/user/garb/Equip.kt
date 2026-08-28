@@ -25,7 +25,9 @@ data class Equip(
     val previousCardBg: CardBg? = null,
 )
 
-enum class EquipPart(val value: String) {
+enum class EquipPart(
+    val value: String,
+) {
     Card("card"),
     CardBg("card_bg"),
     Loading("loading"),

@@ -41,27 +41,28 @@ fun CheckBoxMenuList(
 ) {
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
-        modifier = modifier
-            .onPreviewKeyEvent {
-                if (it.type == KeyEventType.KeyUp) {
-                    if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                        return@onPreviewKeyEvent false
+        modifier =
+            modifier
+                .onPreviewKeyEvent {
+                    if (it.type == KeyEventType.KeyUp) {
+                        if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                            return@onPreviewKeyEvent false
+                        }
+                        return@onPreviewKeyEvent true
                     }
-                    return@onPreviewKeyEvent true
-                }
-                val result = it.key == Key.DirectionRight
-                if (result) onFocusBackToParent()
-                result
-            }
-            .focusRestorer(focusRequester),
+                    val result = it.key == Key.DirectionRight
+                    if (result) onFocusBackToParent()
+                    result
+                }.focusRestorer(focusRequester),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 120.dp, horizontal = 8.dp),
     ) {
         itemsIndexed(items) { index, item ->
             MenuListItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .ifElse(index == 0, Modifier.focusRequester(focusRequester)),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .ifElse(index == 0, Modifier.focusRequester(focusRequester)),
                 text = item,
                 selected = selected.contains(index),
                 onClick = {

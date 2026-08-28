@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test
  * 验证账户列表加载、切换账户、删除账户逻辑。
  */
 class UserSwitchViewModelTest {
-
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var accountRepository: AccountRepositoryImpl
@@ -43,59 +42,65 @@ class UserSwitchViewModelTest {
     }
 
     @Test
-    fun `init loads users and current uid`() = runTest(testDispatcher) {
-        coEvery { accountRepository.getAllUsers() } returns listOf(user1, user2)
-        coEvery { accountRepository.currentUid() } returns 100L
+    fun `init loads users and current uid`() =
+        runTest(testDispatcher) {
+            coEvery { accountRepository.getAllUsers() } returns listOf(user1, user2)
+            coEvery { accountRepository.currentUid() } returns 100L
 
-        viewModel = UserSwitchViewModel(accountRepository)
+            viewModel = UserSwitchViewModel(accountRepository)
 
-        viewModel.uiState.test {
-            val state = awaitItem()
-            assertThat(state.loading).isFalse()
-            assertThat(state.users).hasSize(2)
-            assertThat(state.currentUid).isEqualTo(100L)
-            cancelAndIgnoreRemainingEvents()
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertThat(state.loading).isFalse()
+                assertThat(state.users).hasSize(2)
+                assertThat(state.currentUid).isEqualTo(100L)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
     @Test
-    fun `switchUser calls setCurrentUser and refreshes`() = runTest(testDispatcher) {
-        coEvery { accountRepository.getAllUsers() } returns listOf(user1, user2)
-        coEvery { accountRepository.currentUid() } returns 100L
-        viewModel = UserSwitchViewModel(accountRepository)
+    fun `switchUser calls setCurrentUser and refreshes`() =
+        runTest(testDispatcher) {
+            coEvery { accountRepository.getAllUsers() } returns listOf(user1, user2)
+            coEvery { accountRepository.currentUid() } returns 100L
+            viewModel = UserSwitchViewModel(accountRepository)
 
-        viewModel.switchUser(user2)
+            viewModel.switchUser(user2)
 
-        coVerify { accountRepository.setCurrentUser(user2) }
-    }
-
-    @Test
-    fun `deleteUser switches to first remaining when deleting current`() = runTest(testDispatcher) {
-        coEvery { accountRepository.getAllUsers() } returnsMany listOf(
-            listOf(user1, user2),
-            listOf(user2),
-        )
-        coEvery { accountRepository.currentUid() } returns 100L
-        viewModel = UserSwitchViewModel(accountRepository)
-
-        viewModel.deleteUser(user1)
-
-        coVerify { accountRepository.deleteUser(user1) }
-        coVerify { accountRepository.setCurrentUser(user2) }
-    }
+            coVerify { accountRepository.setCurrentUser(user2) }
+        }
 
     @Test
-    fun `deleteUser logs out when no remaining users`() = runTest(testDispatcher) {
-        coEvery { accountRepository.getAllUsers() } returnsMany listOf(
-            listOf(user1),
-            emptyList(),
-        )
-        coEvery { accountRepository.currentUid() } returns 100L
-        viewModel = UserSwitchViewModel(accountRepository)
+    fun `deleteUser switches to first remaining when deleting current`() =
+        runTest(testDispatcher) {
+            coEvery { accountRepository.getAllUsers() } returnsMany
+                listOf(
+                    listOf(user1, user2),
+                    listOf(user2),
+                )
+            coEvery { accountRepository.currentUid() } returns 100L
+            viewModel = UserSwitchViewModel(accountRepository)
 
-        viewModel.deleteUser(user1)
+            viewModel.deleteUser(user1)
 
-        coVerify { accountRepository.deleteUser(user1) }
-        coVerify { accountRepository.logout() }
-    }
+            coVerify { accountRepository.deleteUser(user1) }
+            coVerify { accountRepository.setCurrentUser(user2) }
+        }
+
+    @Test
+    fun `deleteUser logs out when no remaining users`() =
+        runTest(testDispatcher) {
+            coEvery { accountRepository.getAllUsers() } returnsMany
+                listOf(
+                    listOf(user1),
+                    emptyList(),
+                )
+            coEvery { accountRepository.currentUid() } returns 100L
+            viewModel = UserSwitchViewModel(accountRepository)
+
+            viewModel.deleteUser(user1)
+
+            coVerify { accountRepository.deleteUser(user1) }
+            coVerify { accountRepository.logout() }
+        }
 }

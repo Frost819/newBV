@@ -9,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.material3.ShapeDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,13 +21,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
-import dev.frost819.newbv.core.interaction.LocalInteractionTracker
-import dev.frost819.newbv.core.interaction.currentInputMethod
 import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -51,36 +48,42 @@ fun Modifier.focusedBorder(
     shape: Shape = ShapeDefaults.Large,
     animate: Boolean = false,
     color: Color? = null,
-    width: Dp = 3.dp
-): Modifier = composed {
-    val tracker = LocalInteractionTracker.current
-    val resolvedColor = color ?: MaterialTheme.colorScheme.border
-    var hasFocus by remember { mutableStateOf(false) }
+    width: Dp = 3.dp,
+): Modifier =
+    composed {
+        val tracker = LocalInteractionTracker.current
+        val resolvedColor = color ?: MaterialTheme.colorScheme.border
+        var hasFocus by remember { mutableStateOf(false) }
 
-    val showBorder = if (tracker != null) {
-        val method by tracker.inputMethod.collectAsState()
-        hasFocus && method == InputMethod.DPad
-    } else {
-        hasFocus
+        val showBorder =
+            if (tracker != null) {
+                val method by tracker.inputMethod.collectAsState()
+                hasFocus && method == InputMethod.DPad
+            } else {
+                hasFocus
+            }
+
+        val infiniteTransition = rememberInfiniteTransition(label = "focused-border-transition")
+        val animateColor by infiniteTransition.animateColor(
+            initialValue = resolvedColor.copy(alpha = 1f),
+            targetValue = resolvedColor.copy(alpha = 0.1f),
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            label = "focused-border-color",
+        )
+        val borderColor =
+            if (showBorder) {
+                if (animate) animateColor else resolvedColor
+            } else {
+                Color.Transparent
+            }
+
+        onFocusChanged { hasFocus = it.hasFocus }
+            .border(width = width, color = borderColor, shape = shape)
     }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "focused-border-transition")
-    val animateColor by infiniteTransition.animateColor(
-        initialValue = resolvedColor.copy(alpha = 1f),
-        targetValue = resolvedColor.copy(alpha = 0.1f),
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "focused-border-color"
-    )
-    val borderColor = if (showBorder) {
-        if (animate) animateColor else resolvedColor
-    } else Color.Transparent
-
-    onFocusChanged { hasFocus = it.hasFocus }
-        .border(width = width, color = borderColor, shape = shape)
-}
 
 /**
  * 未获焦点时缩小，获焦点时恢复原大小。
@@ -90,16 +93,17 @@ fun Modifier.focusedBorder(
  *
  * @param scale 未获焦点时的缩放比例，默认 0.9。
  */
-fun Modifier.focusedScale(scale: Float = 0.9f): Modifier = composed {
-    var hasFocus by remember { mutableStateOf(false) }
-    val scaleValue by animateFloatAsState(
-        targetValue = if (hasFocus) 1f else scale,
-        label = "focused-scale"
-    )
+fun Modifier.focusedScale(scale: Float = 0.9f): Modifier =
+    composed {
+        var hasFocus by remember { mutableStateOf(false) }
+        val scaleValue by animateFloatAsState(
+            targetValue = if (hasFocus) 1f else scale,
+            label = "focused-scale",
+        )
 
-    onFocusChanged { hasFocus = it.hasFocus }
-        .scale(scaleValue)
-}
+        onFocusChanged { hasFocus = it.hasFocus }
+            .scale(scaleValue)
+    }
 
 /**
  * 改进的请求焦点方法。

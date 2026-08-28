@@ -14,14 +14,16 @@ import android.widget.Toast
  * ```
  */
 object ToastUtils {
-
     /**
      * 显示短时间 Toast。
      *
      * @param context 任意 [Context]。
      * @param message 要显示的消息。
      */
-    fun show(context: Context, message: String) {
+    fun show(
+        context: Context,
+        message: String,
+    ) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 }

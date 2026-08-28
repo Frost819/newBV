@@ -597,7 +597,9 @@ class UserRepositoryUnitTest {
                 repository.getSpaceVideos(
                     mid = MID,
                     order = dev.frost819.newbv.biliapi.entity.user.SpaceVideoOrder.PubDate,
-                    page = dev.frost819.newbv.biliapi.entity.user.SpaceVideoPage(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.user
+                            .SpaceVideoPage(),
                     preferApiType = ApiType.Web,
                 )
 
@@ -1067,7 +1069,9 @@ class UserRepositoryUnitTest {
         uname = uname,
         face = "http://face.test",
         sign = "",
-        officialVerify = dev.frost819.newbv.biliapi.http.entity.user.OfficialVerify(type = -1, desc = ""),
+        officialVerify =
+            dev.frost819.newbv.biliapi.http.entity.user
+                .OfficialVerify(type = -1, desc = ""),
         vip =
             dev.frost819.newbv.biliapi.http.entity.user.UserFollowData.FollowedUser.Vip(
                 vipType = 0,

@@ -55,9 +55,7 @@ private val CACHE_THRESHOLD_OPTIONS = listOf(50, 100, 200, 500, CacheManager.THR
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StorageSetting(
-    modifier: Modifier = Modifier,
-) {
+fun StorageSetting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val cacheManager = remember { CacheManager(context) }
@@ -74,9 +72,10 @@ fun StorageSetting(
 
     val calSize = {
         cacheSize = cacheManager.cacheSize()
-        crashLogsSize = CacheManager.folderSize(
-            File(context.filesDir, CrashHandler.LOG_DIR)
-        )
+        crashLogsSize =
+            CacheManager.folderSize(
+                File(context.filesDir, CrashHandler.LOG_DIR),
+            )
     }
 
     LaunchedEffect(Unit) {
@@ -89,9 +88,10 @@ fun StorageSetting(
 
     Box(modifier = modifier) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 48.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -106,12 +106,13 @@ fun StorageSetting(
                 item {
                     SettingListItem(
                         title = "缓存上限",
-                        supportText = "当前：" +
-                            if (cacheThreshold == CacheManager.THRESHOLD_UNLIMITED) {
-                                "无限制"
-                            } else {
-                                "$cacheThreshold MB"
-                            },
+                        supportText =
+                            "当前：" +
+                                if (cacheThreshold == CacheManager.THRESHOLD_UNLIMITED) {
+                                    "无限制"
+                                } else {
+                                    "$cacheThreshold MB"
+                                },
                         onClick = { showThresholdDialog = true },
                     )
                 }
@@ -223,18 +224,20 @@ private fun ThresholdOptionDialog(
         onDismissRequest = onDismiss,
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.9f)
+                    .wrapContentHeight(),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 4.dp,
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .heightIn(max = 360.dp)
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .wrapContentHeight()
+                        .heightIn(max = 360.dp)
+                        .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {

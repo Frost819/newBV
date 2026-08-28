@@ -39,7 +39,7 @@ fun BvVideoPlayer(
             },
             onRelease = { playerView ->
                 playerView.player = null
-            }
+            },
         )
     }
 }

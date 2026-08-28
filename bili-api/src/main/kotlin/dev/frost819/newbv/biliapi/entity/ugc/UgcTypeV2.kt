@@ -1,6 +1,10 @@
 package dev.frost819.newbv.biliapi.entity.ugc
 
-enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = null) {
+enum class UgcTypeV2(
+    val tid: Int,
+    val codename: String,
+    val channelId: Int? = null,
+) {
     // 动画
     Douga(1005, "douga", 7),
     DougaFanAnime(2037, "fan_anime"),
@@ -303,15 +307,43 @@ enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = n
     companion object {
         val dougaList =
             listOf(
-                DougaFanAnime, DougaGarageKit, DougaCosplay, DougaOffline, DougaEditing,
-                DougaCommentary, DougaQuickView, DougaVoice, DougaInformation, DougaInterpret,
-                DougaVup, DougaTokusatsu, DougaPuppetry, DougaComic, DougaMotion, DougaReaction,
-                DougaTutorial, DougaOther,
+                DougaFanAnime,
+                DougaGarageKit,
+                DougaCosplay,
+                DougaOffline,
+                DougaEditing,
+                DougaCommentary,
+                DougaQuickView,
+                DougaVoice,
+                DougaInformation,
+                DougaInterpret,
+                DougaVup,
+                DougaTokusatsu,
+                DougaPuppetry,
+                DougaComic,
+                DougaMotion,
+                DougaReaction,
+                DougaTutorial,
+                DougaOther,
             )
         val gameList =
             listOf(
-                GameRpg, GameMmorpg, GameStandAlone, GameSlg, GameTbs, GameRts, GameMoba, GameStg,
-                GameSpg, GameAct, GameMsc, GameSim, GameOtome, GamePuz, GameSandbox, GameOther,
+                GameRpg,
+                GameMmorpg,
+                GameStandAlone,
+                GameSlg,
+                GameTbs,
+                GameRts,
+                GameMoba,
+                GameStg,
+                GameSpg,
+                GameAct,
+                GameMsc,
+                GameSim,
+                GameOtome,
+                GamePuz,
+                GameSandbox,
+                GameOther,
             )
         val kichikuList =
             listOf(
@@ -323,13 +355,30 @@ enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = n
             )
         val musicList =
             listOf(
-                MusicOriginal, MusicMv, MusicLive, MusicFanVideos, MusicCover, MusicPerform,
-                MusicVocaloid, MusicAiMusic, MusicRadio, MusicTutorial, MusicCommentary, MusicOther,
+                MusicOriginal,
+                MusicMv,
+                MusicLive,
+                MusicFanVideos,
+                MusicCover,
+                MusicPerform,
+                MusicVocaloid,
+                MusicAiMusic,
+                MusicRadio,
+                MusicTutorial,
+                MusicCommentary,
+                MusicOther,
             )
         val danceList =
             listOf(
-                DanceOtaku, DanceHiphop, DanceGestures, DanceStar, DanceChina,
-                DanceTutorial, DanceBallet, DanceWota, DanceOther,
+                DanceOtaku,
+                DanceHiphop,
+                DanceGestures,
+                DanceStar,
+                DanceChina,
+                DanceTutorial,
+                DanceBallet,
+                DanceWota,
+                DanceOther,
             )
         val cinephileList =
             listOf(
@@ -354,9 +403,17 @@ enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = n
             )
         val knowledgeList =
             listOf(
-                KnowledgeExam, KnowledgeLangSkill, KnowledgeCampus, KnowledgeBusiness,
-                KnowledgeSocialObservation, KnowledgePolitics, KnowledgeHumanityHistory,
-                KnowledgeDesign, KnowledgePsychology, KnowledgeCareer, KnowledgeScience,
+                KnowledgeExam,
+                KnowledgeLangSkill,
+                KnowledgeCampus,
+                KnowledgeBusiness,
+                KnowledgeSocialObservation,
+                KnowledgePolitics,
+                KnowledgeHumanityHistory,
+                KnowledgeDesign,
+                KnowledgePsychology,
+                KnowledgeCareer,
+                KnowledgeScience,
                 KnowledgeOther,
             )
         val techList =
@@ -401,13 +458,28 @@ enum class UgcTypeV2(val tid: Int, val codename: String, val channelId: Int? = n
             )
         val fashionList =
             listOf(
-                FashionMakeup, FashionSkincare, FashionCos, FashionOutfits, FashionAccessories,
-                FashionJewelry, FashionTrick, FashionCommentary, FashionOther,
+                FashionMakeup,
+                FashionSkincare,
+                FashionCos,
+                FashionOutfits,
+                FashionAccessories,
+                FashionJewelry,
+                FashionTrick,
+                FashionCommentary,
+                FashionOther,
             )
         val sportsList =
             listOf(
-                SportsTrend, SportsFootball, SportsBasketball, SportsRunning, SportsKungfu,
-                SportsFighting, SportsBadminton, SportsInformation, SportsMatch, SportsOther,
+                SportsTrend,
+                SportsFootball,
+                SportsBasketball,
+                SportsRunning,
+                SportsKungfu,
+                SportsFighting,
+                SportsBadminton,
+                SportsInformation,
+                SportsMatch,
+                SportsOther,
             )
         val animalList =
             listOf(

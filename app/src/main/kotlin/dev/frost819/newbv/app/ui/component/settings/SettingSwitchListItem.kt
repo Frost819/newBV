@@ -42,32 +42,36 @@ fun SettingSwitchListItem(
     var switchChecked by remember(checked) { mutableStateOf(checked) }
 
     ListItem(
-        modifier = modifier
-            .padding(horizontal = 12.dp)
-            .onFocusChanged { hasFocus = it.hasFocus }
-            .touchClickable(onClick = {
-                switchChecked = !switchChecked
-                onCheckedChange(switchChecked)
-            }),
+        modifier =
+            modifier
+                .padding(horizontal = 12.dp)
+                .onFocusChanged { hasFocus = it.hasFocus }
+                .touchClickable(onClick = {
+                    switchChecked = !switchChecked
+                    onCheckedChange(switchChecked)
+                }),
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         trailingContent = {
             Box(
-                modifier = Modifier
-                    .border(2.dp, MaterialTheme.colorScheme.border, CircleShape),
+                modifier =
+                    Modifier
+                        .border(2.dp, MaterialTheme.colorScheme.border, CircleShape),
             ) {
                 Switch(
-                    modifier = Modifier
-                        .focusable(false)
-                        .padding(2.dp),
+                    modifier =
+                        Modifier
+                            .focusable(false)
+                            .padding(2.dp),
                     checked = switchChecked,
                     onCheckedChange = null,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    ),
+                    colors =
+                        SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
                 )
             }
         },

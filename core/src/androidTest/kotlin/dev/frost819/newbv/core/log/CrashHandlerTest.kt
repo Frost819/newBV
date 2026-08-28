@@ -18,7 +18,6 @@ import java.io.File
  */
 @RunWith(AndroidJUnit4::class)
 class CrashHandlerTest {
-
     private lateinit var context: Context
     private lateinit var crashHandler: CrashHandler
     private lateinit var logDir: File
@@ -30,10 +29,11 @@ class CrashHandlerTest {
         logDir.deleteRecursively()
         logDir.mkdirs()
 
-        crashHandler = CrashHandler(
-            context = context,
-            maxLogCount = 3
-        )
+        crashHandler =
+            CrashHandler(
+                context = context,
+                maxLogCount = 3,
+            )
     }
 
     @After

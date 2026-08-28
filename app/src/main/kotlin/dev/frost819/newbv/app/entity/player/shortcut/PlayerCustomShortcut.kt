@@ -28,15 +28,16 @@ data class PlayerCustomShortcut(
  * 禁止将系统关键键（BACK、ENTER 等）绑定为自定义快捷键。
  */
 object PlayerCustomShortcutKeys {
-    private val forbiddenKeyCodes = setOf(
-        KeyEvent.KEYCODE_UNKNOWN,
-        KeyEvent.KEYCODE_BACK,
-        KeyEvent.KEYCODE_ESCAPE,
-        KeyEvent.KEYCODE_BUTTON_B,
-        KeyEvent.KEYCODE_DPAD_CENTER,
-        KeyEvent.KEYCODE_ENTER,
-        KeyEvent.KEYCODE_NUMPAD_ENTER,
-    )
+    private val forbiddenKeyCodes =
+        setOf(
+            KeyEvent.KEYCODE_UNKNOWN,
+            KeyEvent.KEYCODE_BACK,
+            KeyEvent.KEYCODE_ESCAPE,
+            KeyEvent.KEYCODE_BUTTON_B,
+            KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER,
+        )
 
     /** 检查键码是否允许绑定。 */
     fun isAllowedKeyCode(keyCode: Int): Boolean = keyCode > 0 && keyCode !in forbiddenKeyCodes
@@ -48,22 +49,25 @@ object PlayerCustomShortcutKeys {
             keyCode == KeyEvent.KEYCODE_BUTTON_B
 
     /** 获取键码的可读名称。 */
-    fun getDisplayName(keyCode: Int): String = when (keyCode) {
-        KeyEvent.KEYCODE_DPAD_UP -> "方向上"
-        KeyEvent.KEYCODE_DPAD_DOWN -> "方向下"
-        KeyEvent.KEYCODE_DPAD_LEFT -> "方向左"
-        KeyEvent.KEYCODE_DPAD_RIGHT -> "方向右"
-        KeyEvent.KEYCODE_MENU -> "菜单键"
-        KeyEvent.KEYCODE_SPACE -> "空格"
-        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> "媒体播放/暂停"
-        KeyEvent.KEYCODE_MEDIA_PLAY -> "媒体播放"
-        KeyEvent.KEYCODE_MEDIA_PAUSE -> "媒体暂停"
-        KeyEvent.KEYCODE_MEDIA_REWIND -> "媒体快退"
-        KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> "媒体快进"
-        else -> KeyEvent.keyCodeToString(keyCode)
-            .removePrefix("KEYCODE_")
-            .replace('_', ' ')
-    }
+    fun getDisplayName(keyCode: Int): String =
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP -> "方向上"
+            KeyEvent.KEYCODE_DPAD_DOWN -> "方向下"
+            KeyEvent.KEYCODE_DPAD_LEFT -> "方向左"
+            KeyEvent.KEYCODE_DPAD_RIGHT -> "方向右"
+            KeyEvent.KEYCODE_MENU -> "菜单键"
+            KeyEvent.KEYCODE_SPACE -> "空格"
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> "媒体播放/暂停"
+            KeyEvent.KEYCODE_MEDIA_PLAY -> "媒体播放"
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> "媒体暂停"
+            KeyEvent.KEYCODE_MEDIA_REWIND -> "媒体快退"
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> "媒体快进"
+            else ->
+                KeyEvent
+                    .keyCodeToString(keyCode)
+                    .removePrefix("KEYCODE_")
+                    .replace('_', ' ')
+        }
 }
 
 /**
@@ -79,31 +83,34 @@ object PlayerCustomShortcutKeys {
 object PlayerCustomShortcutsCodec {
     private const val VERSION = 1
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
 
     /** 从 JSON 字符串解析快捷键列表。空字符串或解析失败返回空列表。 */
     fun parse(raw: String): List<PlayerCustomShortcut> {
         if (raw.isBlank()) return emptyList()
 
         return runCatching {
-            val items = if (raw.trimStart().startsWith("[")) {
-                json.decodeFromString<List<PlayerCustomShortcutDto>>(raw)
-            } else {
-                json.decodeFromString<PlayerCustomShortcutsPayload>(raw).items
-            }
+            val items =
+                if (raw.trimStart().startsWith("[")) {
+                    json.decodeFromString<List<PlayerCustomShortcutDto>>(raw)
+                } else {
+                    json.decodeFromString<PlayerCustomShortcutsPayload>(raw).items
+                }
             normalize(items.mapNotNull { it.toShortcutOrNull() })
         }.getOrDefault(emptyList())
     }
 
     /** 将快捷键列表序列化为 JSON 字符串。 */
     fun serialize(shortcuts: List<PlayerCustomShortcut>): String {
-        val dto = PlayerCustomShortcutsPayload(
-            version = VERSION,
-            items = normalize(shortcuts).map { it.toDto() },
-        )
+        val dto =
+            PlayerCustomShortcutsPayload(
+                version = VERSION,
+                items = normalize(shortcuts).map { it.toDto() },
+            )
         return json.encodeToString(dto)
     }
 
@@ -117,8 +124,7 @@ object PlayerCustomShortcutsCodec {
                 if (!PlayerCustomShortcutKeys.isAllowedKeyCode(shortcut.keyCode)) return@mapNotNull null
                 if (!seen.add(shortcut.keyCode)) return@mapNotNull null
                 shortcut.copy(action = normalizedAction)
-            }
-            .asReversed()
+            }.asReversed()
     }
 
     private fun PlayerCustomShortcut.toDto(): PlayerCustomShortcutDto {
@@ -131,17 +137,16 @@ object PlayerCustomShortcutsCodec {
         return PlayerCustomShortcut(keyCode = keyCode, action = decodedAction)
     }
 
-    private fun PlayerCustomShortcutAction.normalized(): PlayerCustomShortcutAction? {
-        return when (this) {
+    private fun PlayerCustomShortcutAction.normalized(): PlayerCustomShortcutAction? =
+        when (this) {
             is PlayerCustomShortcutAction.TogglePlaybackSpeed ->
                 copy(speed = speed.coerceIn(0.25f, 4f))
 
             else -> this
         }
-    }
 
-    private fun PlayerCustomShortcutAction.toStorage(): Pair<String, JsonObject> {
-        return when (this) {
+    private fun PlayerCustomShortcutAction.toStorage(): Pair<String, JsonObject> =
+        when (this) {
             PlayerCustomShortcutAction.OpenSettings -> "open_settings" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenRelatedVideos -> "open_related_videos" to buildJsonObject { }
             PlayerCustomShortcutAction.PlayPrevious -> "play_previous" to buildJsonObject { }
@@ -158,7 +163,6 @@ object PlayerCustomShortcutsCodec {
             is PlayerCustomShortcutAction.TogglePlaybackSpeed ->
                 "set_playback_speed" to buildJsonObject { put("speed", speed) }
         }
-    }
 
     private fun actionFromStorage(
         action: String,
@@ -177,17 +181,17 @@ object PlayerCustomShortcutsCodec {
             "toggle_subtitle" -> PlayerCustomShortcutAction.ToggleSubtitle
             "toggle_persistent_bottom_progress" -> PlayerCustomShortcutAction.TogglePersistentBottomProgress
 
-            "set_playback_speed" -> PlayerCustomShortcutAction.TogglePlaybackSpeed(
-                params.float("speed") ?: return null,
-            )
+            "set_playback_speed" ->
+                PlayerCustomShortcutAction.TogglePlaybackSpeed(
+                    params.float("speed") ?: return null,
+                )
 
             // 已移除的历史动作返回 null，解析时被静默丢弃
             else -> null
         }?.normalized()
     }
 
-    private fun JsonObject.float(name: String): Float? =
-        this[name]?.jsonPrimitive?.floatOrNull
+    private fun JsonObject.float(name: String): Float? = this[name]?.jsonPrimitive?.floatOrNull
 
     @Serializable
     private data class PlayerCustomShortcutsPayload(

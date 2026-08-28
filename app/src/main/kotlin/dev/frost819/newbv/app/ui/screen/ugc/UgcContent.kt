@@ -1,11 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.ugc
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,7 +28,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.material3.Scaffold as Material3Scaffold
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TopNav
@@ -51,6 +44,7 @@ import dev.frost819.newbv.app.viewmodel.ugc.UgcViewModel
 import dev.frost819.newbv.biliapi.entity.ugc.UgcTypeV2
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import androidx.compose.material3.Scaffold as Material3Scaffold
 
 /**
  * UGC 分区顶部导航项。
@@ -59,7 +53,10 @@ import kotlinx.coroutines.flow.filter
  *
  * @property ugcTypeV2 对应的 UGC 分区类型。
  */
-enum class UgcTabItem(val ugcTypeV2: UgcTypeV2, override val displayName: String) : TopNavItem {
+enum class UgcTabItem(
+    val ugcTypeV2: UgcTypeV2,
+    override val displayName: String,
+) : TopNavItem {
     Douga(UgcTypeV2.Douga, "动画"),
     Game(UgcTypeV2.Game, "游戏"),
     Kichiku(UgcTypeV2.Kichiku, "鬼畜"),
@@ -75,7 +72,6 @@ enum class UgcTabItem(val ugcTypeV2: UgcTypeV2, override val displayName: String
     Fashion(UgcTypeV2.Fashion, "时尚美妆"),
     Sports(UgcTypeV2.Sports, "体育运动"),
     Animal(UgcTypeV2.Animal, "动物"),
-    ;
 }
 
 /**
@@ -120,17 +116,18 @@ fun UgcContent(
         },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .onFocusChanged { focusOnContent = it.hasFocus }
-                .onPreviewKeyEvent { event ->
-                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                        viewModel.refresh()
-                        navFocusRequester.requestFocus()
-                        return@onPreviewKeyEvent true
-                    }
-                    false
-                },
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .onFocusChanged { focusOnContent = it.hasFocus }
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                            viewModel.refresh()
+                            navFocusRequester.requestFocus()
+                            return@onPreviewKeyEvent true
+                        }
+                        false
+                    },
         ) {
             UgcGrid(
                 viewModel = viewModel,
@@ -157,12 +154,14 @@ private fun UgcGrid(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.items.size - 20
-            }
-            .collect {
+            }.collect {
                 viewModel.loadMore()
             }
     }
@@ -178,19 +177,20 @@ private fun UgcGrid(
             items = state.items,
             key = { index, _ -> index },
         ) { index, item ->
-            val cardData = remember(item) {
-                VideoCardData(
-                    avid = item.aid,
-                    title = item.title,
-                    cover = item.cover,
-                    playString = item.play.takeIf { it != -1 }.toWanString(),
-                    danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
-                    timeString = (item.duration * 1000L).formatHourMinSec(),
-                    upName = item.author,
-                    upMid = item.authorMid,
-                    pubTime = item.pubTime,
-                )
-            }
+            val cardData =
+                remember(item) {
+                    VideoCardData(
+                        avid = item.aid,
+                        title = item.title,
+                        cover = item.cover,
+                        playString = item.play.takeIf { it != -1 }.toWanString(),
+                        danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
+                        timeString = (item.duration * 1000L).formatHourMinSec(),
+                        upName = item.author,
+                        upMid = item.authorMid,
+                        pubTime = item.pubTime,
+                    )
+                }
             SmallVideoCard(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,

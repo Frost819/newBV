@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
  * @see VideoPlayerListener
  */
 class AbstractVideoPlayerTest {
-
     // ------------------------------------------------------------------
     //  Test doubles
     // ------------------------------------------------------------------
@@ -25,20 +24,36 @@ class AbstractVideoPlayerTest {
     /** 用于测试的抽象类具体实现，仅覆盖必要方法 */
     private class TestVideoPlayer : AbstractVideoPlayer() {
         override fun initPlayer() {}
+
         override fun setHeader(headers: Map<String, String>) {}
-        override fun playUrl(videoUrl: String?, audioUrl: String?) {}
+
+        override fun playUrl(
+            videoUrl: String?,
+            audioUrl: String?,
+        ) {}
+
         override fun prepare() {}
+
         override fun start() {}
+
         override fun pause() {}
+
         override fun stop() {}
+
         override fun reset() {}
+
         override val isPlaying: Boolean = false
+
         override fun seekTo(time: Long) {}
+
         override fun release() {}
+
         override val currentPosition: Long = 0L
         override val duration: Long = 0L
         override val bufferedPercentage: Int = 0
+
         override fun setOptions() {}
+
         override var speed: Float = 1.0f
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "test"
@@ -69,15 +84,37 @@ class AbstractVideoPlayerTest {
             lastError = error
             callbackOrder.add("onError")
         }
-        override fun onReady() { onReadyCalled = true; callbackOrder.add("onReady") }
-        override fun onPlay() { onPlayCalled = true; callbackOrder.add("onPlay") }
-        override fun onPause() { onPauseCalled = true; callbackOrder.add("onPause") }
-        override fun onBuffering() { onBufferingCalled = true; callbackOrder.add("onBuffering") }
-        override fun onEnd() { onEndCalled = true; callbackOrder.add("onEnd") }
+
+        override fun onReady() {
+            onReadyCalled = true
+            callbackOrder.add("onReady")
+        }
+
+        override fun onPlay() {
+            onPlayCalled = true
+            callbackOrder.add("onPlay")
+        }
+
+        override fun onPause() {
+            onPauseCalled = true
+            callbackOrder.add("onPause")
+        }
+
+        override fun onBuffering() {
+            onBufferingCalled = true
+            callbackOrder.add("onBuffering")
+        }
+
+        override fun onEnd() {
+            onEndCalled = true
+            callbackOrder.add("onEnd")
+        }
+
         override fun onSeekBack(seekBackIncrementMs: Long) {
             seekBackMs = seekBackIncrementMs
             callbackOrder.add("onSeekBack")
         }
+
         override fun onSeekForward(seekForwardIncrementMs: Long) {
             seekForwardMs = seekForwardIncrementMs
             callbackOrder.add("onSeekForward")
@@ -119,60 +156,135 @@ class AbstractVideoPlayerTest {
         private var _videoWidth = 0
         private var _videoHeight = 0
 
-        override fun initPlayer() { calls.add("initPlayer") }
+        override fun initPlayer() {
+            calls.add("initPlayer")
+        }
+
         override fun setHeader(headers: Map<String, String>) {
             calls.add("setHeader")
             lastHeaders = headers
         }
-        override fun playUrl(videoUrl: String?, audioUrl: String?) {
+
+        override fun playUrl(
+            videoUrl: String?,
+            audioUrl: String?,
+        ) {
             calls.add("playUrl")
             lastVideoUrl = videoUrl
             lastAudioUrl = audioUrl
         }
-        override fun prepare() { calls.add("prepare") }
-        override fun start() { calls.add("start"); _isPlaying = true }
-        override fun pause() { calls.add("pause"); _isPlaying = false }
-        override fun stop() { calls.add("stop"); _isPlaying = false }
+
+        override fun prepare() {
+            calls.add("prepare")
+        }
+
+        override fun start() {
+            calls.add("start")
+            _isPlaying = true
+        }
+
+        override fun pause() {
+            calls.add("pause")
+            _isPlaying = false
+        }
+
+        override fun stop() {
+            calls.add("stop")
+            _isPlaying = false
+        }
+
         override fun reset() {
             calls.add("reset")
             _isPlaying = false
             _currentPosition = 0
             _duration = 0
         }
+
         override val isPlaying: Boolean get() = _isPlaying
+
         override fun seekTo(time: Long) {
             calls.add("seekTo")
             lastSeekTime = time
             _currentPosition = time
         }
-        override fun release() { calls.add("release") }
+
+        override fun release() {
+            calls.add("release")
+        }
+
         override val currentPosition: Long get() = _currentPosition
         override val duration: Long get() = _duration
         override val bufferedPercentage: Int get() = _bufferedPercentage
-        override fun setOptions() { calls.add("setOptions") }
+
+        override fun setOptions() {
+            calls.add("setOptions")
+        }
+
         override var speed: Float
             get() = _speed
-            set(value) { _speed = value; lastSpeed = value; calls.add("speed=$value") }
+            set(value) {
+                _speed = value
+                lastSpeed = value
+                calls.add("speed=$value")
+            }
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "spy-debug"
         override val videoWidth: Int get() = _videoWidth
         override val videoHeight: Int get() = _videoHeight
 
-        fun setTestDuration(d: Long) { _duration = d }
-        fun setTestBufferedPercentage(p: Int) { _bufferedPercentage = p }
-        fun setTestVideoSize(w: Int, h: Int) { _videoWidth = w; _videoHeight = h }
-        fun setTestCurrentPosition(p: Long) { _currentPosition = p }
+        fun setTestDuration(d: Long) {
+            _duration = d
+        }
+
+        fun setTestBufferedPercentage(p: Int) {
+            _bufferedPercentage = p
+        }
+
+        fun setTestVideoSize(
+            w: Int,
+            h: Int,
+        ) {
+            _videoWidth = w
+            _videoHeight = h
+        }
+
+        fun setTestCurrentPosition(p: Long) {
+            _currentPosition = p
+        }
 
         // --- Callback dispatch simulation (mirrors ExoMediaPlayer Player.Listener) ---
 
-        fun simulateBuffering() { mPlayerEventListener?.onBuffering() }
-        fun simulateReady() { mPlayerEventListener?.onReady() }
-        fun simulatePlay() { mPlayerEventListener?.onPlay() }
-        fun simulatePause() { mPlayerEventListener?.onPause() }
-        fun simulateEnd() { mPlayerEventListener?.onEnd() }
-        fun simulateError(e: Exception) { mPlayerEventListener?.onError(e) }
-        fun simulateSeekBack(ms: Long) { mPlayerEventListener?.onSeekBack(ms) }
-        fun simulateSeekForward(ms: Long) { mPlayerEventListener?.onSeekForward(ms) }
+        fun simulateBuffering() {
+            mPlayerEventListener?.onBuffering()
+        }
+
+        fun simulateReady() {
+            mPlayerEventListener?.onReady()
+        }
+
+        fun simulatePlay() {
+            mPlayerEventListener?.onPlay()
+        }
+
+        fun simulatePause() {
+            mPlayerEventListener?.onPause()
+        }
+
+        fun simulateEnd() {
+            mPlayerEventListener?.onEnd()
+        }
+
+        fun simulateError(e: Exception) {
+            mPlayerEventListener?.onError(e)
+        }
+
+        fun simulateSeekBack(ms: Long) {
+            mPlayerEventListener?.onSeekBack(ms)
+        }
+
+        fun simulateSeekForward(ms: Long) {
+            mPlayerEventListener?.onSeekForward(ms)
+        }
 
         fun listener(): VideoPlayerListener? = mPlayerEventListener
     }
@@ -506,9 +618,14 @@ class AbstractVideoPlayerTest {
         player.simulatePause()
         player.simulateEnd()
 
-        assertThat(listener.callbackOrder).containsExactly(
-            "onBuffering", "onReady", "onPlay", "onPause", "onEnd"
-        ).inOrder()
+        assertThat(listener.callbackOrder)
+            .containsExactly(
+                "onBuffering",
+                "onReady",
+                "onPlay",
+                "onPause",
+                "onEnd",
+            ).inOrder()
     }
 
     @Test
@@ -548,19 +665,20 @@ class AbstractVideoPlayerTest {
         player.reset()
         player.release()
 
-        assertThat(player.calls).containsExactly(
-            "initPlayer",
-            "setHeader",
-            "playUrl",
-            "prepare",
-            "start",
-            "pause",
-            "seekTo",
-            "start",
-            "stop",
-            "reset",
-            "release",
-        ).inOrder()
+        assertThat(player.calls)
+            .containsExactly(
+                "initPlayer",
+                "setHeader",
+                "playUrl",
+                "prepare",
+                "start",
+                "pause",
+                "seekTo",
+                "start",
+                "stop",
+                "reset",
+                "release",
+            ).inOrder()
     }
 
     @Test
@@ -910,9 +1028,15 @@ class AbstractVideoPlayerTest {
         player.simulatePlay()
         player.simulateEnd()
 
-        assertThat(listener.callbackOrder).containsExactly(
-            "onBuffering", "onReady", "onPlay", "onPause", "onPlay", "onEnd"
-        ).inOrder()
+        assertThat(listener.callbackOrder)
+            .containsExactly(
+                "onBuffering",
+                "onReady",
+                "onPlay",
+                "onPause",
+                "onPlay",
+                "onEnd",
+            ).inOrder()
     }
 
     @Test
@@ -949,8 +1073,14 @@ class AbstractVideoPlayerTest {
         val methods = VideoPlayerListener::class.java.declaredMethods
 
         assertThat(methods.map { it.name }).containsExactly(
-            "onError", "onReady", "onPlay", "onPause",
-            "onBuffering", "onEnd", "onSeekBack", "onSeekForward"
+            "onError",
+            "onReady",
+            "onPlay",
+            "onPause",
+            "onBuffering",
+            "onEnd",
+            "onSeekBack",
+            "onSeekForward",
         )
     }
 

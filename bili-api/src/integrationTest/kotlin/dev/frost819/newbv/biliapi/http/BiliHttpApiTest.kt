@@ -254,7 +254,11 @@ internal class BiliHttpApiTest {
                 println(response)
                 assertThat(response.code).isEqualTo(0)
                 assertThat(response.data).isNotNull()
-                assertThat(response.data!!.card.mid.toLong()).isEqualTo(163637592L)
+                assertThat(
+                    response.data!!
+                        .card.mid
+                        .toLong(),
+                ).isEqualTo(163637592L)
             }
         }
     }
@@ -449,11 +453,12 @@ internal class BiliHttpApiTest {
         assertDoesNotThrow {
             runBlocking {
                 val folders =
-                    BiliHttpApi.getAllFavoriteFoldersInfo(
-                        mid = UID,
-                        type = 2,
-                        rid = 170001,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getAllFavoriteFoldersInfo(
+                            mid = UID,
+                            type = 2,
+                            rid = 170001,
+                        ).getResponseData()
                 val mediaId = folders.list.firstOrNull()?.id
                 requireNotNull(mediaId) { "当前账号没有收藏夹，请先创建一个" }
                 println("using favorite folder: $mediaId")
@@ -473,11 +478,12 @@ internal class BiliHttpApiTest {
         assertDoesNotThrow {
             runBlocking {
                 val folders =
-                    BiliHttpApi.getAllFavoriteFoldersInfo(
-                        mid = UID,
-                        type = 2,
-                        rid = 170001,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getAllFavoriteFoldersInfo(
+                            mid = UID,
+                            type = 2,
+                            rid = 170001,
+                        ).getResponseData()
                 val mediaId = folders.list.firstOrNull()?.id
                 requireNotNull(mediaId) { "当前账号没有收藏夹，请先创建一个" }
                 println("using favorite folder: $mediaId")
@@ -1006,8 +1012,27 @@ internal class BiliHttpApiTest {
         runBlocking {
             val rids =
                 listOf(
-                    1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
-                    211, 217, 119, 155, 202, 5, 181, 177, 23, 11,
+                    1,
+                    13,
+                    167,
+                    3,
+                    129,
+                    4,
+                    36,
+                    188,
+                    234,
+                    223,
+                    160,
+                    211,
+                    217,
+                    119,
+                    155,
+                    202,
+                    5,
+                    181,
+                    177,
+                    23,
+                    11,
                 )
             rids
                 .shuffled()
@@ -1032,8 +1057,27 @@ internal class BiliHttpApiTest {
         runBlocking {
             val rids =
                 listOf(
-                    1, 13, 167, 3, 129, 4, 36, 188, 234, 223, 160,
-                    211, 217, 119, 155, 202, 5, 181, 177, 23, 11,
+                    1,
+                    13,
+                    167,
+                    3,
+                    129,
+                    4,
+                    36,
+                    188,
+                    234,
+                    223,
+                    160,
+                    211,
+                    217,
+                    119,
+                    155,
+                    202,
+                    5,
+                    181,
+                    177,
+                    23,
+                    11,
                 )
             rids
                 .shuffled()
@@ -1058,8 +1102,22 @@ internal class BiliHttpApiTest {
         runBlocking {
             val locIds =
                 listOf(
-                    4973, 4991, 5004, 4979, 4985, 5008, 5007, 4997,
-                    4998, 5005, 5002, 5001, 5000, 5006, 4999, 5003,
+                    4973,
+                    4991,
+                    5004,
+                    4979,
+                    4985,
+                    5008,
+                    5007,
+                    4997,
+                    4998,
+                    5005,
+                    5002,
+                    5001,
+                    5000,
+                    5006,
+                    4999,
+                    5003,
                 )
 
             locIds.chunked(3).forEach { locs ->
@@ -1192,7 +1250,12 @@ internal class BiliHttpApiTest {
             val replies = data["replies"]?.jsonArray
             assertThat(replies).isNotNull()
             assertThat(replies!!.size).isGreaterThan(0)
-            val rootRpid = replies.first().jsonObject["rpid"]!!.jsonPrimitive.content.toLong()
+            val rootRpid =
+                replies
+                    .first()
+                    .jsonObject["rpid"]!!
+                    .jsonPrimitive.content
+                    .toLong()
             val response = BiliHttpApi.getVideoCommentReplies(aid = 170001, rootRpid = rootRpid, page = 1)
             println(response)
             assertThat(response.code).isEqualTo(0)
@@ -1208,7 +1271,12 @@ internal class BiliHttpApiTest {
             val replies = data["replies"]?.jsonArray
             assertThat(replies).isNotNull()
             assertThat(replies!!.size).isGreaterThan(0)
-            val rootRpid = replies.first().jsonObject["rpid"]!!.jsonPrimitive.content.toLong()
+            val rootRpid =
+                replies
+                    .first()
+                    .jsonObject["rpid"]!!
+                    .jsonPrimitive.content
+                    .toLong()
             val likeResult = BiliHttpApi.updateCommentLiked(aid = 170001, rpid = rootRpid, like = true, csrf = BILI_JCT)
             println("like: $likeResult")
             assertThat(likeResult.first).isTrue()

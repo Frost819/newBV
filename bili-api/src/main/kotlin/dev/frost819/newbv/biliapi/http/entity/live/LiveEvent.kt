@@ -17,7 +17,9 @@ data class InteractWordEvent(
     val interactType: InteractType,
 ) : LiveEvent
 
-enum class InteractType(val code: Int) {
+enum class InteractType(
+    val code: Int,
+) {
     Enter(1),
     Follow(2),
     Share(3),

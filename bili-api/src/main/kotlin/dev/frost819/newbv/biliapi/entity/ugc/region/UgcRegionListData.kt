@@ -10,11 +10,10 @@ data class UgcRegionListData(
     companion object {
         fun fromRegionDynamicList(
             data: dev.frost819.newbv.biliapi.http.entity.region.RegionDynamicList,
-        ): UgcRegionListData {
-            return UgcRegionListData(
+        ): UgcRegionListData =
+            UgcRegionListData(
                 items = data.new.map { UgcItem.fromRegionDynamicListItem(it) },
                 next = UgcRegionPage(data.cBottom),
             )
-        }
     }
 }

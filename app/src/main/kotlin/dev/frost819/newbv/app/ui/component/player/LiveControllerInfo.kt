@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -28,7 +27,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -136,36 +134,39 @@ private fun LiveControllerInfoTop(
     clock: Pair<Int, Int>,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(
-                MaterialTheme.shapes.large.copy(
-                    topStart = CornerSize(0.dp),
-                    topEnd = CornerSize(0.dp),
-                ),
-            )
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.5f),
-                        Color.Black.copy(alpha = 0f),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(
+                    MaterialTheme.shapes.large.copy(
+                        topStart = CornerSize(0.dp),
+                        topEnd = CornerSize(0.dp),
                     ),
-                ),
-            )
-            .padding(horizontal = 32.dp, vertical = 16.dp),
+                ).background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.5f),
+                                    Color.Black.copy(alpha = 0f),
+                                ),
+                        ),
+                ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                 text = title,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    shadow = Shadow(color = Color.Black, blurRadius = 1f),
-                ),
+                style =
+                    MaterialTheme.typography.headlineSmall.copy(
+                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                    ),
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -195,9 +196,10 @@ private fun LiveControllerInfoTop(
                 )
                 Text(
                     text = "人气 $onlineCount",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        shadow = Shadow(color = Color.Black, blurRadius = 1f),
-                    ),
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            shadow = Shadow(color = Color.Black, blurRadius = 1f),
+                        ),
                     color = Color.White.copy(alpha = 0.85f),
                 )
             }
@@ -226,39 +228,41 @@ private fun LiveControllerInfoBottom(
     }
 
     Column(
-        modifier = modifier.clip(
-            MaterialTheme.shapes.large.copy(
-                bottomStart = CornerSize(0.dp),
-                bottomEnd = CornerSize(0.dp),
+        modifier =
+            modifier.clip(
+                MaterialTheme.shapes.large.copy(
+                    bottomStart = CornerSize(0.dp),
+                    bottomEnd = CornerSize(0.dp),
+                ),
             ),
-        ),
         verticalArrangement = Arrangement.Bottom,
     ) {
-        val icons = buildList {
-            add(LiveControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
-            add(LiveControllerIcon(R.drawable.baseline_refresh_24, "刷新", onRefresh))
-            add(
-                LiveControllerIcon(
-                    if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
-                    "弹幕开关",
-                    onDanmakuSwitchChange,
-                ),
-            )
-            add(LiveControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
-        }
+        val icons =
+            buildList {
+                add(LiveControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
+                add(LiveControllerIcon(R.drawable.baseline_refresh_24, "刷新", onRefresh))
+                add(
+                    LiveControllerIcon(
+                        if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
+                        "弹幕开关",
+                        onDanmakuSwitchChange,
+                    ),
+                )
+                add(LiveControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
+            }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(buttonsFocusRequester)
-                .onKeyEvent {
-                    if (it.key == Key.DirectionUp) {
-                        if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
-                        return@onKeyEvent false
-                    }
-                    false
-                }
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(buttonsFocusRequester)
+                    .onKeyEvent {
+                        if (it.key == Key.DirectionUp) {
+                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                            return@onKeyEvent false
+                        }
+                        false
+                    }.padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
             icons.forEachIndexed { index, (icon, desc, action) ->
@@ -304,12 +308,13 @@ private fun Clock(
         color = Color.White,
         fontWeight = FontWeight.Bold,
         style = TextStyle(shadow = Shadow(color = Color.Black, blurRadius = 1f)),
-        text = buildAnnotatedString {
-            withStyle(SpanStyle(fontSize = 32.sp)) {
-                append("$hour".padStart(2, '0'))
-                append(":")
-                append("$minute".padStart(2, '0'))
-            }
-        },
+        text =
+            buildAnnotatedString {
+                withStyle(SpanStyle(fontSize = 32.sp)) {
+                    append("$hour".padStart(2, '0'))
+                    append(":")
+                    append("$minute".padStart(2, '0'))
+                }
+            },
     )
 }

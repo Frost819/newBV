@@ -68,10 +68,11 @@ fun MainScreen(
 
     val homeFocusRequester = remember { FocusRequester() }
 
-    val handleBack = rememberDoublePressExit(
-        onExit = { (context as? android.app.Activity)?.finish() },
-        message = "再按一次退出",
-    )
+    val handleBack =
+        rememberDoublePressExit(
+            onExit = { (context as? android.app.Activity)?.finish() },
+            message = "再按一次退出",
+        )
 
     val onFocusToContent: () -> Unit = {
         runCatching { homeFocusRequester.requestFocus() }
@@ -126,41 +127,48 @@ fun MainScreen(
                 },
             ) { screen ->
                 when (screen) {
-                    LeftNaviItem.Home -> HomeContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
+                    LeftNaviItem.Home ->
+                        HomeContent(
+                            navFocusRequester = homeFocusRequester,
+                            navController = navController,
+                        )
                     LeftNaviItem.Search -> {
                         val searchInputViewModel: dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel =
-                            androidx.hilt.navigation.compose.hiltViewModel()
+                            androidx.hilt.navigation.compose
+                                .hiltViewModel()
                         dev.frost819.newbv.app.ui.screen.search.SearchInputContent(
                             viewModel = searchInputViewModel,
                             focusRequester = homeFocusRequester,
                             onSearch = { keyword ->
                                 searchInputViewModel.commitSearch(keyword) {
                                     navController.navigate(
-                                        dev.frost819.newbv.app.ui.navigation.SearchResultRoute(keyword = keyword),
+                                        dev.frost819.newbv.app.ui.navigation
+                                            .SearchResultRoute(keyword = keyword),
                                     )
                                 }
                             },
                         )
                     }
-                    LeftNaviItem.Personal -> dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
-                    LeftNaviItem.UGC -> dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
-                    LeftNaviItem.PGC -> dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
-                    LeftNaviItem.Live -> dev.frost819.newbv.app.ui.screen.live.LiveContent(
-                        navFocusRequester = homeFocusRequester,
-                        navController = navController,
-                    )
+                    LeftNaviItem.Personal ->
+                        dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
+                            navFocusRequester = homeFocusRequester,
+                            navController = navController,
+                        )
+                    LeftNaviItem.UGC ->
+                        dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
+                            navFocusRequester = homeFocusRequester,
+                            navController = navController,
+                        )
+                    LeftNaviItem.PGC ->
+                        dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
+                            navFocusRequester = homeFocusRequester,
+                            navController = navController,
+                        )
+                    LeftNaviItem.Live ->
+                        dev.frost819.newbv.app.ui.screen.live.LiveContent(
+                            navFocusRequester = homeFocusRequester,
+                            navController = navController,
+                        )
                 }
             }
 
@@ -172,21 +180,24 @@ fun MainScreen(
                 BackHandler { showUserPanel = false }
                 Dialog(
                     onDismissRequest = { showUserPanel = false },
-                    properties = DialogProperties(
-                        usePlatformDefaultWidth = false,
-                        dismissOnBackPress = true,
-                    ),
+                    properties =
+                        DialogProperties(
+                            usePlatformDefaultWidth = false,
+                            dismissOnBackPress = true,
+                        ),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.6f)),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.6f)),
                     ) {
                         UserPanel(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .width(400.dp)
-                                .padding(12.dp),
+                            modifier =
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .width(400.dp)
+                                    .padding(12.dp),
                             focusRequester = userPanelFocusRequester,
                             onHide = { showUserPanel = false },
                             onGoUserSwitch = {
@@ -198,7 +209,8 @@ fun MainScreen(
                                 val uid = userUiState.uid
                                 if (uid != 0L) {
                                     navController.navigate(
-                                        dev.frost819.newbv.app.ui.navigation.FollowRoute(mid = uid)
+                                        dev.frost819.newbv.app.ui.navigation
+                                            .FollowRoute(mid = uid),
                                     )
                                 }
                             },

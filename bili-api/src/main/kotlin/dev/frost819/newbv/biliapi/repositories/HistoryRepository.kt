@@ -20,13 +20,14 @@ class HistoryRepository(
     suspend fun getHistories(
         cursor: Long,
         preferApiType: ApiType,
-    ): HistoryData {
-        return when (preferApiType) {
+    ): HistoryData =
+        when (preferApiType) {
             ApiType.Web -> {
                 val data =
-                    BiliHttpApi.getHistories(
-                        viewAt = cursor,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getHistories(
+                            viewAt = cursor,
+                        ).getResponseData()
                 HistoryData.fromHistoryResponse(data)
             }
 
@@ -44,5 +45,4 @@ class HistoryRepository(
                 HistoryData.fromHistoryResponse(reply!!)
             }
         }
-    }
 }

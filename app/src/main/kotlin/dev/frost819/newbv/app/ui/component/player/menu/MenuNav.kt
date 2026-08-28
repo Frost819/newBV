@@ -42,16 +42,18 @@ fun MenuNavList(
     }
 
     LazyColumn(
-        modifier = modifier
-            .focusRestorer(restorerFocusRequester)
-            .focusRequester(focusRequester),
+        modifier =
+            modifier
+                .focusRestorer(restorerFocusRequester)
+                .focusRequester(focusRequester),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(16.dp),
     ) {
         itemsIndexed(VideoPlayerMenuNavItem.entries) { index, item ->
             MenuListItem(
-                modifier = Modifier
-                    .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
+                modifier =
+                    Modifier
+                        .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                 text = item.displayName,
                 icon = item.icon,
                 expanded = isFocusing,

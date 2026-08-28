@@ -38,28 +38,30 @@ import androidx.compose.ui.input.pointer.pointerInput
 fun Modifier.touchClickable(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
-): Modifier = composed {
-    val currentOnClick by rememberUpdatedState(onClick)
-    val currentOnLongClick by rememberUpdatedState(onLongClick)
-    val hasLongClick = onLongClick != null
-    val focusRequester = remember { FocusRequester() }
+): Modifier =
+    composed {
+        val currentOnClick by rememberUpdatedState(onClick)
+        val currentOnLongClick by rememberUpdatedState(onLongClick)
+        val hasLongClick = onLongClick != null
+        val focusRequester = remember { FocusRequester() }
 
-    this
-        .focusRequester(focusRequester)
-        .pointerInput(hasLongClick) {
-            detectTapGestures(
-                onTap = {
-                    runCatching { focusRequester.requestFocus() }
-                    currentOnClick()
-                },
-                onLongPress = if (hasLongClick) {
-                    {
+        this
+            .focusRequester(focusRequester)
+            .pointerInput(hasLongClick) {
+                detectTapGestures(
+                    onTap = {
                         runCatching { focusRequester.requestFocus() }
-                        currentOnLongClick?.invoke()
-                    }
-                } else {
-                    null
-                },
-            )
-        }
-}
+                        currentOnClick()
+                    },
+                    onLongPress =
+                        if (hasLongClick) {
+                            {
+                                runCatching { focusRequester.requestFocus() }
+                                currentOnLongClick?.invoke()
+                            }
+                        } else {
+                            null
+                        },
+                )
+            }
+    }

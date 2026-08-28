@@ -24,24 +24,34 @@ class ToViewEntityTest {
                 list =
                     listOf(
                         dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem(
-                            aid = 100L, bvid = "BV100", cid = 200L,
+                            aid = 100L,
+                            bvid = "BV100",
+                            cid = 200L,
                             owner =
                                 dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem.Owner(
                                     name = "up1",
                                     mid = 1L,
                                 ),
-                            title = "video-1", pic = "http://pic.test/1",
-                            videos = 3, progress = 60, duration = 300,
+                            title = "video-1",
+                            pic = "http://pic.test/1",
+                            videos = 3,
+                            progress = 60,
+                            duration = 300,
                         ),
                         dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem(
-                            aid = 200L, bvid = "BV200", cid = 400L,
+                            aid = 200L,
+                            bvid = "BV200",
+                            cid = 400L,
                             owner =
                                 dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem.Owner(
                                     name = "up2",
                                     mid = 2L,
                                 ),
-                            title = "video-2", pic = "http://pic.test/2",
-                            videos = 1, progress = 0, duration = 600,
+                            title = "video-2",
+                            pic = "http://pic.test/2",
+                            videos = 1,
+                            progress = 0,
+                            duration = 600,
                         ),
                     ),
             )
@@ -93,10 +103,17 @@ class ToViewEntityTest {
     fun `fromToViewItem maps all fields correctly`() {
         val httpItem =
             dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem(
-                aid = 999L, bvid = "BV999", cid = 888L,
-                owner = dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem.Owner(name = "test-up", mid = 777L),
-                title = "test-title", pic = "http://cover.test",
-                videos = 5, progress = 120, duration = 900,
+                aid = 999L,
+                bvid = "BV999",
+                cid = 888L,
+                owner =
+                    dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem
+                        .Owner(name = "test-up", mid = 777L),
+                title = "test-title",
+                pic = "http://cover.test",
+                videos = 5,
+                progress = 120,
+                duration = 900,
             )
 
         val result = ToViewItem.fromToViewItem(httpItem)
@@ -120,9 +137,17 @@ class ToViewEntityTest {
     fun `fromToViewItem always maps type to Archive`() {
         val httpItem =
             dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem(
-                aid = 1L, bvid = "BV1", cid = 1L,
-                owner = dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem.Owner(name = "u", mid = 1L),
-                title = "t", pic = "p", videos = 1, progress = 0, duration = 1,
+                aid = 1L,
+                bvid = "BV1",
+                cid = 1L,
+                owner =
+                    dev.frost819.newbv.biliapi.http.entity.toview.ToViewItem
+                        .Owner(name = "u", mid = 1L),
+                title = "t",
+                pic = "p",
+                videos = 1,
+                progress = 0,
+                duration = 1,
             )
 
         val result = ToViewItem.fromToViewItem(httpItem)

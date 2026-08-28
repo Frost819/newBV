@@ -52,7 +52,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
     /**
      * 提供 [CrashUploader] 单例。
      *
@@ -62,10 +61,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideCrashUploader(
-        @ApplicationContext context: Context
-    ): CrashUploader {
-        return CrashUploader(context, BuildConfig.CRASH_REPORT_TOKEN)
-    }
+        @ApplicationContext context: Context,
+    ): CrashUploader = CrashUploader(context, BuildConfig.CRASH_REPORT_TOKEN)
 
     /**
      * 提供 [CrashHandler] 单例。
@@ -78,12 +75,11 @@ object NetworkModule {
     fun provideCrashHandler(
         @ApplicationContext context: Context,
         crashUploader: CrashUploader,
-    ): CrashHandler {
-        return CrashHandler(context).apply {
+    ): CrashHandler =
+        CrashHandler(context).apply {
             this.crashUploader = crashUploader
             install()
         }
-    }
 
     /**
      * 提供 [AuthRepository] 单例。
@@ -175,8 +171,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideUgcRepository(authRepository: AuthRepository): UgcRepository =
-        UgcRepository(authRepository)
+    fun provideUgcRepository(authRepository: AuthRepository): UgcRepository = UgcRepository(authRepository)
 
     /**
      * 提供 [PgcRepository] 单例。
@@ -194,8 +189,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideSeasonRepository(authRepository: AuthRepository): SeasonRepository =
-        SeasonRepository(authRepository)
+    fun provideSeasonRepository(authRepository: AuthRepository): SeasonRepository = SeasonRepository(authRepository)
 
     /**
      * 提供 [LikeRepository] 单例。
@@ -204,8 +198,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideLikeRepository(authRepository: AuthRepository): LikeRepository =
-        LikeRepository(authRepository)
+    fun provideLikeRepository(authRepository: AuthRepository): LikeRepository = LikeRepository(authRepository)
 
     /**
      * 提供 [CoinRepository] 单例。
@@ -214,8 +207,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideCoinRepository(authRepository: AuthRepository): CoinRepository =
-        CoinRepository(authRepository)
+    fun provideCoinRepository(authRepository: AuthRepository): CoinRepository = CoinRepository(authRepository)
 
     /**
      * 提供 [FavoriteRepository] 单例。
@@ -234,9 +226,8 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideOneClickTripleActionRepository(
-        authRepository: AuthRepository,
-    ): OneClickTripleActionRepository = OneClickTripleActionRepository(authRepository)
+    fun provideOneClickTripleActionRepository(authRepository: AuthRepository): OneClickTripleActionRepository =
+        OneClickTripleActionRepository(authRepository)
 
     /**
      * 提供 [ToViewRepository] 单例。
@@ -245,9 +236,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideToViewRepository(
-        authRepository: AuthRepository,
-    ): ToViewRepository = ToViewRepository(authRepository)
+    fun provideToViewRepository(authRepository: AuthRepository): ToViewRepository = ToViewRepository(authRepository)
 
     /**
      * 提供 [HistoryRepository] 单例。
@@ -275,13 +264,14 @@ object NetworkModule {
         favoriteRepository: FavoriteRepository,
         likeRepository: LikeRepository,
         coinRepository: CoinRepository,
-    ): VideoDetailRepository = VideoDetailRepository(
-        authRepository = authRepository,
-        channelRepository = channelRepository,
-        favoriteRepository = favoriteRepository,
-        likeRepository = likeRepository,
-        coinRepository = coinRepository,
-    )
+    ): VideoDetailRepository =
+        VideoDetailRepository(
+            authRepository = authRepository,
+            channelRepository = channelRepository,
+            favoriteRepository = favoriteRepository,
+            likeRepository = likeRepository,
+            coinRepository = coinRepository,
+        )
 
     /**
      * 提供 [VideoPlayRepository] 单例。
@@ -350,16 +340,17 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient = HttpClient(OkHttp) {
-        engine {
-            config {
-                connectTimeout(10, TimeUnit.SECONDS)
-                readTimeout(15, TimeUnit.SECONDS)
-                writeTimeout(15, TimeUnit.SECONDS)
+    fun provideHttpClient(): HttpClient =
+        HttpClient(OkHttp) {
+            engine {
+                config {
+                    connectTimeout(10, TimeUnit.SECONDS)
+                    readTimeout(15, TimeUnit.SECONDS)
+                    writeTimeout(15, TimeUnit.SECONDS)
+                }
             }
+            install(HttpTimeout)
         }
-        install(HttpTimeout)
-    }
 
     /**
      * 提供 [HttpServer] 单例。
@@ -396,7 +387,7 @@ object NetworkModule {
         return HttpServer(
             assetProvider = assetProvider,
             logFileProvider = logFileProvider,
-            manualLogCreator = manualLogCreator
+            manualLogCreator = manualLogCreator,
         )
     }
 }

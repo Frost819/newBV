@@ -20,13 +20,14 @@ data class VideoShot(
         suspend fun fromVideoShot(videoShot: dev.frost819.newbv.biliapi.http.entity.video.VideoShot): VideoShot? =
             withContext(Dispatchers.IO) {
                 val images =
-                    videoShot.image.map { imageUrl ->
-                        async {
-                            runCatching {
-                                BiliHttpApi.download(imageUrl)
-                            }.getOrNull()
-                        }
-                    }.awaitAll()
+                    videoShot.image
+                        .map { imageUrl ->
+                            async {
+                                runCatching {
+                                    BiliHttpApi.download(imageUrl)
+                                }.getOrNull()
+                            }
+                        }.awaitAll()
                 if (images.contains(null)) {
                     println("download video shot images failed")
                     return@withContext null

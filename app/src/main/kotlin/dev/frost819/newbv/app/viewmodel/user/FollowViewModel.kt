@@ -38,50 +38,51 @@ data class FollowUiState(
  * @param userRepository 用户数据仓库。
  */
 @HiltViewModel
-class FollowViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-) : ViewModel() {
+class FollowViewModel
+    @Inject
+    constructor(
+        private val userRepository: UserRepository,
+    ) : ViewModel() {
+        private val logger = Loggers.get("FollowViewModel")
 
-    private val logger = Loggers.get("FollowViewModel")
+        private fun prefApiType(): ApiType =
+            if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
 
-    private fun prefApiType(): ApiType =
-        if (Prefs.apiType == dev.frost819.newbv.data.datastore.ApiType.App) ApiType.App else ApiType.Web
+        private val _uiState = MutableStateFlow(FollowUiState())
+        val uiState: StateFlow<FollowUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(FollowUiState())
-    val uiState: StateFlow<FollowUiState> = _uiState.asStateFlow()
+        fun init(mid: Long) {
+            if (_uiState.value.mid == mid && _uiState.value.users.isNotEmpty()) return
+            _uiState.update { it.copy(mid = mid, loading = true, error = false, users = emptyList()) }
+            load(mid)
+        }
 
-    fun init(mid: Long) {
-        if (_uiState.value.mid == mid && _uiState.value.users.isNotEmpty()) return
-        _uiState.update { it.copy(mid = mid, loading = true, error = false, users = emptyList()) }
-        load(mid)
-    }
+        fun refresh(mid: Long) {
+            _uiState.update { it.copy(mid = mid, loading = true, error = false, users = emptyList()) }
+            load(mid)
+        }
 
-    fun refresh(mid: Long) {
-        _uiState.update { it.copy(mid = mid, loading = true, error = false, users = emptyList()) }
-        load(mid)
-    }
-
-    private fun load(mid: Long) {
-        viewModelScope.launch {
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    userRepository.getFollowedUsers(mid, preferApiType = prefApiType())
+        private fun load(mid: Long) {
+            viewModelScope.launch {
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        userRepository.getFollowedUsers(mid, preferApiType = prefApiType())
+                    }
+                }.onSuccess { users ->
+                    _uiState.update {
+                        it.copy(
+                            users = users,
+                            loading = false,
+                            error = false,
+                        )
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to load followed users" }
+                    _uiState.update { it.copy(loading = false, error = true) }
                 }
-            }.onSuccess { users ->
-                _uiState.update {
-                    it.copy(
-                        users = users,
-                        loading = false,
-                        error = false,
-                    )
-                }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to load followed users" }
-                _uiState.update { it.copy(loading = false, error = true) }
             }
         }
     }
-}

@@ -7,14 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 /**
  * [ListFooterTip] 的插桩测试。
@@ -23,7 +21,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class ListFooterTipTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 

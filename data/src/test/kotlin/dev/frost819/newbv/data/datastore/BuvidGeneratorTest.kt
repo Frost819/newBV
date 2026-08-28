@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证 buvid / buvid3 生成格式与 MD5 算法正确性。
  */
 class BuvidGeneratorTest {
-
     @Test
     fun `generateBuvid starts with XY prefix`() {
         val buvid = BuvidGenerator.generateBuvid()

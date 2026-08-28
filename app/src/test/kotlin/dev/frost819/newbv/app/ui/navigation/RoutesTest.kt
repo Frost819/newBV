@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * 确保 Navigation-Compose 类型安全路由可正常工作。
  */
 class RoutesTest {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     // ── object 路由 ──────────────────────────────────────────────────
@@ -73,12 +72,13 @@ class RoutesTest {
 
     @Test
     fun `VideoPlayerRoute serializes with all fields`() {
-        val route = VideoPlayerRoute(
-            aid = 100L,
-            cid = 200L,
-            title = "Test Video",
-            cover = "https://example.com/cover.jpg"
-        )
+        val route =
+            VideoPlayerRoute(
+                aid = 100L,
+                cid = 200L,
+                title = "Test Video",
+                cover = "https://example.com/cover.jpg",
+            )
         val encoded = json.encodeToString(route)
         val decoded = json.decodeFromString<VideoPlayerRoute>(encoded)
         assertThat(decoded.aid).isEqualTo(100L)

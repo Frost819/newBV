@@ -11,8 +11,8 @@ import dev.frost819.newbv.biliapi.entity.home.RecommendPage
 import dev.frost819.newbv.biliapi.entity.rank.PopularVideoData
 import dev.frost819.newbv.biliapi.entity.rank.PopularVideoPage
 import dev.frost819.newbv.biliapi.entity.ugc.UgcItem
-import dev.frost819.newbv.biliapi.entity.user.DynamicVideoData
 import dev.frost819.newbv.biliapi.entity.user.DynamicVideo
+import dev.frost819.newbv.biliapi.entity.user.DynamicVideoData
 import dev.frost819.newbv.biliapi.repositories.RecommendVideoRepository
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.data.datastore.Prefs
@@ -23,7 +23,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -38,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.io.File
+import java.io.IOException
 
 /**
  * [HomeViewModel] 的单元测试。
@@ -48,7 +48,6 @@ import java.io.File
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HomeViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var recommendRepo: RecommendVideoRepository
@@ -66,10 +65,11 @@ class HomeViewModelTest {
             val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             val file = File.createTempFile("test_home_vm", ".preferences_pb")
             file.deleteOnExit()
-            testDataStore = PreferenceDataStoreFactory.create(
-                scope = scope,
-                produceFile = { file },
-            )
+            testDataStore =
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { file },
+                )
             Prefs.init(testDataStore)
         }
 
@@ -80,28 +80,30 @@ class HomeViewModelTest {
         }
     }
 
-    private fun fakeUgcItem(aid: Long) = UgcItem(
-        aid = aid,
-        title = "video $aid",
-        cover = "http://example.com/cover.jpg",
-        author = "up",
-        authorMid = 100L,
-        play = 10000,
-        danmaku = 500,
-        duration = 120,
-    )
+    private fun fakeUgcItem(aid: Long) =
+        UgcItem(
+            aid = aid,
+            title = "video $aid",
+            cover = "http://example.com/cover.jpg",
+            author = "up",
+            authorMid = 100L,
+            play = 10000,
+            danmaku = 500,
+            duration = 120,
+        )
 
-    private fun fakeDynamicVideo(aid: Long) = DynamicVideo(
-        aid = aid,
-        cid = aid * 10,
-        title = "dynamic $aid",
-        cover = "http://example.com/cover.jpg",
-        author = "up",
-        authorMid = 100L,
-        duration = 120,
-        play = 10000,
-        danmaku = 500,
-    )
+    private fun fakeDynamicVideo(aid: Long) =
+        DynamicVideo(
+            aid = aid,
+            cid = aid * 10,
+            title = "dynamic $aid",
+            cover = "http://example.com/cover.jpg",
+            author = "up",
+            authorMid = 100L,
+            duration = 120,
+            play = 10000,
+            danmaku = 500,
+        )
 
     @BeforeEach
     fun setUp() {
@@ -113,21 +115,24 @@ class HomeViewModelTest {
         accountRepo = mockk()
         every { accountRepo.uiState } returns MutableStateFlow(AccountUiState())
 
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
-            items = listOf(fakeUgcItem(1), fakeUgcItem(2)),
-            nextPage = RecommendPage(),
-        )
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
-            list = listOf(fakeUgcItem(3), fakeUgcItem(4)),
-            nextPage = PopularVideoPage(),
-            noMore = false,
-        )
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(5), fakeDynamicVideo(6)),
-            hasMore = true,
-            historyOffset = "offset1",
-            updateBaseline = "baseline1",
-        )
+        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+            RecommendData(
+                items = listOf(fakeUgcItem(1), fakeUgcItem(2)),
+                nextPage = RecommendPage(),
+            )
+        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns
+            PopularVideoData(
+                list = listOf(fakeUgcItem(3), fakeUgcItem(4)),
+                nextPage = PopularVideoPage(),
+                noMore = false,
+            )
+        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+            DynamicVideoData(
+                videos = listOf(fakeDynamicVideo(5), fakeDynamicVideo(6)),
+                hasMore = true,
+                historyOffset = "offset1",
+                updateBaseline = "baseline1",
+            )
     }
 
     private fun createViewModel() = HomeViewModel(recommendRepo, userRepo, accountRepo)
@@ -138,415 +143,466 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `init loads recommend and popular`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `init loads recommend and popular`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.recommendItems).isNotEmpty()
-        assertThat(state.popularItems).isNotEmpty()
-    }
-
-    @Test
-    fun `init does not load dynamics when not logged in`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertThat(state.dynamicItems).isEmpty()
-        assertThat(state.isLogin).isFalse()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.recommendItems).isNotEmpty()
+            assertThat(state.popularItems).isNotEmpty()
+        }
 
     @Test
-    fun `refreshRecommend clears and reloads`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `init does not load dynamics when not logged in`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
-            items = listOf(fakeUgcItem(100)),
-            nextPage = RecommendPage(),
-        )
-
-        viewModel.refreshRecommend()
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        // loadRecommend loops until 24 items or 3 loads, so 3 × 1 = 3 items
-        assertThat(state.recommendItems).isNotEmpty()
-        assertThat(state.recommendItems[0].aid).isEqualTo(100)
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.dynamicItems).isEmpty()
+            assertThat(state.isLogin).isFalse()
+        }
 
     @Test
-    fun `refreshPopular clears and reloads`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `refreshRecommend clears and reloads`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
-            list = listOf(fakeUgcItem(200)),
-            nextPage = PopularVideoPage(),
-            noMore = true,
-        )
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = listOf(fakeUgcItem(100)),
+                    nextPage = RecommendPage(),
+                )
 
-        viewModel.refreshPopular()
-        advanceUntilIdle()
+            viewModel.refreshRecommend()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.popularItems).hasSize(1)
-        assertThat(state.popularItems[0].aid).isEqualTo(200)
-        assertThat(state.popularHasMore).isFalse()
-    }
-
-    @Test
-    fun `loadRecommend on error sets loading false and error true`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("Network error")
-
-        viewModel.refreshRecommend()
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertThat(state.recommendLoading).isFalse()
-        assertThat(state.recommendError).isTrue()
-    }
+            val state = viewModel.uiState.value
+            // loadRecommend loops until 24 items or 3 loads, so 3 × 1 = 3 items
+            assertThat(state.recommendItems).isNotEmpty()
+            assertThat(state.recommendItems[0].aid).isEqualTo(100)
+        }
 
     @Test
-    fun `loadPopular on error sets loading false and error true`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `refreshPopular clears and reloads`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } throws RuntimeException("Network error")
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } returns
+                PopularVideoData(
+                    list = listOf(fakeUgcItem(200)),
+                    nextPage = PopularVideoPage(),
+                    noMore = true,
+                )
 
-        viewModel.refreshPopular()
-        advanceUntilIdle()
+            viewModel.refreshPopular()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.popularLoading).isFalse()
-        assertThat(state.popularError).isTrue()
-    }
-
-    @Test
-    fun `loadRecommend on timeout sets error true`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws IOException("timeout")
-
-        viewModel.refreshRecommend()
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertThat(state.recommendLoading).isFalse()
-        assertThat(state.recommendError).isTrue()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.popularItems).hasSize(1)
+            assertThat(state.popularItems[0].aid).isEqualTo(200)
+            assertThat(state.popularHasMore).isFalse()
+        }
 
     @Test
-    fun `loadPopular on timeout sets error true`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadRecommend on error sets loading false and error true`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } throws IOException("timeout")
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("Network error")
 
-        viewModel.refreshPopular()
-        advanceUntilIdle()
+            viewModel.refreshRecommend()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.popularLoading).isFalse()
-        assertThat(state.popularError).isTrue()
-    }
-
-    @Test
-    fun `refreshRecommend clears error`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("error")
-        viewModel.refreshRecommend()
-        advanceUntilIdle()
-        assertThat(viewModel.uiState.value.recommendError).isTrue()
-
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
-            items = listOf(fakeUgcItem(1)),
-            nextPage = RecommendPage(),
-        )
-        viewModel.refreshRecommend()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.recommendError).isFalse()
-        assertThat(viewModel.uiState.value.recommendItems).isNotEmpty()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.recommendLoading).isFalse()
+            assertThat(state.recommendError).isTrue()
+        }
 
     @Test
-    fun `refreshDynamic does nothing when not logged in`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadPopular on error sets loading false and error true`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        viewModel.refreshDynamic()
-        advanceUntilIdle()
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } throws RuntimeException("Network error")
 
-        val state = viewModel.uiState.value
-        assertThat(state.dynamicItems).isEmpty()
-    }
+            viewModel.refreshPopular()
+            advanceUntilIdle()
 
-    @Test
-    fun `updateLoginState to true triggers dynamic load`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10)),
-            hasMore = false,
-            historyOffset = "offset",
-            updateBaseline = "baseline",
-        )
-
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertThat(state.isLogin).isTrue()
-        assertThat(state.dynamicItems).isNotEmpty()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.popularLoading).isFalse()
+            assertThat(state.popularError).isTrue()
+        }
 
     @Test
-    fun `updateLoginState to false clears dynamics`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadRecommend on timeout sets error true`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
-        viewModel.updateLoginState(false)
-        advanceUntilIdle()
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws IOException("timeout")
 
-        val state = viewModel.uiState.value
-        assertThat(state.isLogin).isFalse()
-        assertThat(state.dynamicItems).isEmpty()
-    }
+            viewModel.refreshRecommend()
+            advanceUntilIdle()
 
-    @Test
-    fun `refresh dispatches correct tab`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
-            items = listOf(fakeUgcItem(999)),
-            nextPage = RecommendPage(),
-        )
-
-        viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Recommend)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.recommendItems[0].aid).isEqualTo(999)
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.recommendLoading).isFalse()
+            assertThat(state.recommendError).isTrue()
+        }
 
     @Test
-    fun `loadMore dispatches correct tab`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadPopular on timeout sets error true`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
-            list = listOf(fakeUgcItem(888)),
-            nextPage = PopularVideoPage(),
-            noMore = false,
-        )
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } throws IOException("timeout")
 
-        viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular)
-        advanceUntilIdle()
+            viewModel.refreshPopular()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.popularItems.any { it.aid == 888L }).isTrue()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.popularLoading).isFalse()
+            assertThat(state.popularError).isTrue()
+        }
 
     @Test
-    fun `loadDynamic loads items when logged in`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `refreshRecommend clears error`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10), fakeDynamicVideo(11)),
-            hasMore = false,
-            historyOffset = "offset",
-            updateBaseline = "baseline",
-        )
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("error")
+            viewModel.refreshRecommend()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.recommendError).isTrue()
 
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = listOf(fakeUgcItem(1)),
+                    nextPage = RecommendPage(),
+                )
+            viewModel.refreshRecommend()
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.isLogin).isTrue()
-        assertThat(state.dynamicItems).hasSize(2)
-        assertThat(state.dynamicLoading).isFalse()
-        assertThat(state.dynamicHasMore).isFalse()
-    }
-
-    @Test
-    fun `loadDynamic sets error on failure`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } throws RuntimeException("network error")
-
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertThat(state.dynamicError).isTrue()
-        assertThat(state.dynamicLoading).isFalse()
-    }
+            assertThat(viewModel.uiState.value.recommendError).isFalse()
+            assertThat(viewModel.uiState.value.recommendItems).isNotEmpty()
+        }
 
     @Test
-    fun `loadDynamic is no-op when hasMore is false`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `refreshDynamic does nothing when not logged in`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10)),
-            hasMore = false,
-            historyOffset = "offset",
-            updateBaseline = "baseline",
-        )
+            viewModel.refreshDynamic()
+            advanceUntilIdle()
 
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
-        assertThat(viewModel.uiState.value.dynamicHasMore).isFalse()
-
-        viewModel.loadDynamic()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { userRepo.getDynamicVideos(any(), any(), any(), any()) }
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.dynamicItems).isEmpty()
+        }
 
     @Test
-    fun `loadRecommend loops until 24 items`() = runTest(testDispatcher) {
-        coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns RecommendData(
-            items = (1..10).map { fakeUgcItem(it.toLong()) },
-            nextPage = RecommendPage(),
-        )
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `updateLoginState to true triggers dynamic load`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.recommendItems.size).isAtLeast(20)
-    }
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10)),
+                    hasMore = false,
+                    historyOffset = "offset",
+                    updateBaseline = "baseline",
+                )
 
-    @Test
-    fun `refresh dispatches Popular tab`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
-            list = listOf(fakeUgcItem(777)),
-            nextPage = PopularVideoPage(),
-            noMore = true,
-        )
-
-        viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.popularItems[0].aid).isEqualTo(777)
-        assertThat(viewModel.uiState.value.popularHasMore).isFalse()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.isLogin).isTrue()
+            assertThat(state.dynamicItems).isNotEmpty()
+        }
 
     @Test
-    fun `refresh dispatches Dynamics tab when logged in`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `updateLoginState to false clears dynamics`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10)),
-            hasMore = false,
-            historyOffset = "o",
-            updateBaseline = "b",
-        )
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+            viewModel.updateLoginState(false)
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(66)),
-            hasMore = false,
-            historyOffset = "o2",
-            updateBaseline = "b2",
-        )
-
-        viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.dynamicItems[0].aid).isEqualTo(66)
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.isLogin).isFalse()
+            assertThat(state.dynamicItems).isEmpty()
+        }
 
     @Test
-    fun `loadMore dispatches Dynamics tab when logged in`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `refresh dispatches correct tab`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10)),
-            hasMore = true,
-            historyOffset = "offset1",
-            updateBaseline = "baseline1",
-        )
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = listOf(fakeUgcItem(999)),
+                    nextPage = RecommendPage(),
+                )
 
-        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+            viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Recommend)
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(20)),
-            hasMore = false,
-            historyOffset = "offset2",
-            updateBaseline = "baseline2",
-        )
-
-        viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.dynamicItems).hasSize(2)
-        assertThat(viewModel.uiState.value.dynamicItems[1].aid).isEqualTo(20)
-    }
+            assertThat(
+                viewModel.uiState.value.recommendItems[0]
+                    .aid,
+            ).isEqualTo(999)
+        }
 
     @Test
-    fun `updateLoginState to true with existing dynamics does not duplicate load`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadMore dispatches correct tab`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns DynamicVideoData(
-            videos = listOf(fakeDynamicVideo(10)),
-            hasMore = false,
-            historyOffset = "offset",
-            updateBaseline = "baseline",
-        )
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } returns
+                PopularVideoData(
+                    list = listOf(fakeUgcItem(888)),
+                    nextPage = PopularVideoPage(),
+                    noMore = false,
+                )
 
-        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+            viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular)
+            advanceUntilIdle()
 
-        viewModel.updateLoginState(true)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.popularItems.any { it.aid == 888L }).isTrue()
+        }
 
     @Test
-    fun `refreshPopular clears error`() = runTest(testDispatcher) {
-        viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `loadDynamic loads items when logged in`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } throws RuntimeException("error")
-        viewModel.refreshPopular()
-        advanceUntilIdle()
-        assertThat(viewModel.uiState.value.popularError).isTrue()
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10), fakeDynamicVideo(11)),
+                    hasMore = false,
+                    historyOffset = "offset",
+                    updateBaseline = "baseline",
+                )
 
-        coEvery { recommendRepo.getPopularVideos(any(), any()) } returns PopularVideoData(
-            list = listOf(fakeUgcItem(1)),
-            nextPage = PopularVideoPage(),
-            noMore = false,
-        )
-        viewModel.refreshPopular()
-        advanceUntilIdle()
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.popularError).isFalse()
-        assertThat(viewModel.uiState.value.popularItems).isNotEmpty()
-    }
+            val state = viewModel.uiState.value
+            assertThat(state.isLogin).isTrue()
+            assertThat(state.dynamicItems).hasSize(2)
+            assertThat(state.dynamicLoading).isFalse()
+            assertThat(state.dynamicHasMore).isFalse()
+        }
+
+    @Test
+    fun `loadDynamic sets error on failure`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } throws RuntimeException("network error")
+
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertThat(state.dynamicError).isTrue()
+            assertThat(state.dynamicLoading).isFalse()
+        }
+
+    @Test
+    fun `loadDynamic is no-op when hasMore is false`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10)),
+                    hasMore = false,
+                    historyOffset = "offset",
+                    updateBaseline = "baseline",
+                )
+
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+            assertThat(viewModel.uiState.value.dynamicHasMore).isFalse()
+
+            viewModel.loadDynamic()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userRepo.getDynamicVideos(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `loadRecommend loops until 24 items`() =
+        runTest(testDispatcher) {
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = (1..10).map { fakeUgcItem(it.toLong()) },
+                    nextPage = RecommendPage(),
+                )
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.recommendItems.size).isAtLeast(20)
+        }
+
+    @Test
+    fun `refresh dispatches Popular tab`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } returns
+                PopularVideoData(
+                    list = listOf(fakeUgcItem(777)),
+                    nextPage = PopularVideoPage(),
+                    noMore = true,
+                )
+
+            viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular)
+            advanceUntilIdle()
+
+            assertThat(
+                viewModel.uiState.value.popularItems[0]
+                    .aid,
+            ).isEqualTo(777)
+            assertThat(viewModel.uiState.value.popularHasMore).isFalse()
+        }
+
+    @Test
+    fun `refresh dispatches Dynamics tab when logged in`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10)),
+                    hasMore = false,
+                    historyOffset = "o",
+                    updateBaseline = "b",
+                )
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(66)),
+                    hasMore = false,
+                    historyOffset = "o2",
+                    updateBaseline = "b2",
+                )
+
+            viewModel.refresh(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
+            advanceUntilIdle()
+
+            assertThat(
+                viewModel.uiState.value.dynamicItems[0]
+                    .aid,
+            ).isEqualTo(66)
+        }
+
+    @Test
+    fun `loadMore dispatches Dynamics tab when logged in`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10)),
+                    hasMore = true,
+                    historyOffset = "offset1",
+                    updateBaseline = "baseline1",
+                )
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(20)),
+                    hasMore = false,
+                    historyOffset = "offset2",
+                    updateBaseline = "baseline2",
+                )
+
+            viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.dynamicItems).hasSize(2)
+            assertThat(
+                viewModel.uiState.value.dynamicItems[1]
+                    .aid,
+            ).isEqualTo(20)
+        }
+
+    @Test
+    fun `updateLoginState to true with existing dynamics does not duplicate load`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { userRepo.getDynamicVideos(any(), any(), any(), any()) } returns
+                DynamicVideoData(
+                    videos = listOf(fakeDynamicVideo(10)),
+                    hasMore = false,
+                    historyOffset = "offset",
+                    updateBaseline = "baseline",
+                )
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+
+            viewModel.updateLoginState(true)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.dynamicItems).hasSize(1)
+        }
+
+    @Test
+    fun `refreshPopular clears error`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } throws RuntimeException("error")
+            viewModel.refreshPopular()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.popularError).isTrue()
+
+            coEvery { recommendRepo.getPopularVideos(any(), any()) } returns
+                PopularVideoData(
+                    list = listOf(fakeUgcItem(1)),
+                    nextPage = PopularVideoPage(),
+                    noMore = false,
+                )
+            viewModel.refreshPopular()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.popularError).isFalse()
+            assertThat(viewModel.uiState.value.popularItems).isNotEmpty()
+        }
 }

@@ -1,10 +1,9 @@
 package dev.frost819.newbv.app.viewmodel.personal
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import com.google.common.truth.Truth.assertThat
-import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.FavoriteFolderData
 import dev.frost819.newbv.biliapi.entity.FavoriteFolderMetadata
 import dev.frost819.newbv.biliapi.entity.FavoriteItem
@@ -31,7 +30,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -53,7 +51,6 @@ import java.io.File
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PersonalViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var toViewRepo: ToViewRepository
@@ -72,10 +69,11 @@ class PersonalViewModelTest {
             val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             val file = File.createTempFile("test_personal_vm", ".preferences_pb")
             file.deleteOnExit()
-            testDataStore = PreferenceDataStoreFactory.create(
-                scope = scope,
-                produceFile = { file },
-            )
+            testDataStore =
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { file },
+                )
             Prefs.init(testDataStore)
             Prefs.isLogin = true
         }
@@ -102,60 +100,74 @@ class PersonalViewModelTest {
     }
 
     private fun createViewModel(): PersonalViewModel {
-        viewModel = PersonalViewModel(
-            toViewRepository = toViewRepo,
-            historyRepository = historyRepo,
-            favoriteRepository = favoriteRepo,
-            seasonRepository = seasonRepo,
-        )
+        viewModel =
+            PersonalViewModel(
+                toViewRepository = toViewRepo,
+                historyRepository = historyRepo,
+                favoriteRepository = favoriteRepo,
+                seasonRepository = seasonRepo,
+            )
         return viewModel
     }
 
-    private fun fakeToViewItem(aid: Long, progress: Int = 100, duration: Int = 300) =
-        ToViewItem(
-            oid = aid,
-            bvid = "BV$aid",
-            cid = aid * 10,
-            kid = 0,
-            epid = null,
-            seasonId = null,
-            title = "视频 $aid",
-            cover = "http://example.com/cover.jpg",
-            author = "UP主",
-            mid = 100L,
-            duration = duration,
-            progress = progress,
-            type = ToViewItemType.Archive,
-        )
-
-    private fun fakeToViewData(items: List<ToViewItem>) = ToViewData(
-        cursor = 0,
-        data = items,
+    private fun fakeToViewItem(
+        aid: Long,
+        progress: Int = 100,
+        duration: Int = 300,
+    ) = ToViewItem(
+        oid = aid,
+        bvid = "BV$aid",
+        cid = aid * 10,
+        kid = 0,
+        epid = null,
+        seasonId = null,
+        title = "视频 $aid",
+        cover = "http://example.com/cover.jpg",
+        author = "UP主",
+        mid = 100L,
+        duration = duration,
+        progress = progress,
+        type = ToViewItemType.Archive,
     )
 
-    private fun fakeHistoryItem(aid: Long, progress: Int = 100, duration: Int = 300) =
-        HistoryItem(
-            oid = aid,
-            bvid = "BV$aid",
-            cid = aid * 10,
-            kid = 0,
-            epid = null,
-            seasonId = null,
-            title = "历史 $aid",
-            cover = "http://example.com/cover.jpg",
-            author = "UP主",
-            mid = 100L,
-            duration = duration,
-            progress = progress,
-            type = HistoryItemType.Archive,
+    private fun fakeToViewData(items: List<ToViewItem>) =
+        ToViewData(
+            cursor = 0,
+            data = items,
         )
 
-    private fun fakeHistoryData(items: List<HistoryItem>, cursor: Long) = HistoryData(
+    private fun fakeHistoryItem(
+        aid: Long,
+        progress: Int = 100,
+        duration: Int = 300,
+    ) = HistoryItem(
+        oid = aid,
+        bvid = "BV$aid",
+        cid = aid * 10,
+        kid = 0,
+        epid = null,
+        seasonId = null,
+        title = "历史 $aid",
+        cover = "http://example.com/cover.jpg",
+        author = "UP主",
+        mid = 100L,
+        duration = duration,
+        progress = progress,
+        type = HistoryItemType.Archive,
+    )
+
+    private fun fakeHistoryData(
+        items: List<HistoryItem>,
+        cursor: Long,
+    ) = HistoryData(
         cursor = cursor,
         data = items,
     )
 
-    private fun fakeFolder(id: Long, title: String = "收藏夹$id") = FavoriteFolderMetadata(
+    private fun fakeFolder(
+        id: Long,
+        title: String = "收藏夹$id",
+    ) = FavoriteFolderMetadata(
         id = id,
         fid = id,
         mid = 1L,
@@ -165,540 +177,612 @@ class PersonalViewModelTest {
         mediaCount = 10,
     )
 
-    private fun fakeFavoriteItem(id: Long) = FavoriteItem(
-        id = id,
-        type = FavoriteItemType.Video,
-        title = "收藏 $id",
-        cover = "http://example.com/cover.jpg",
-        intro = "",
-        page = 1,
-        duration = 300,
-        upper = Upper(mid = 100L, name = "UP主", face = ""),
-        link = "",
-        pubtime = 0L,
-        bvid = "BV$id",
-    )
-
-    private fun fakeFavoriteFolderData(items: List<FavoriteItem>, hasMore: Boolean) =
-        FavoriteFolderData(
-            info = fakeFolder(1),
-            medias = items,
-            hasMore = hasMore,
+    private fun fakeFavoriteItem(id: Long) =
+        FavoriteItem(
+            id = id,
+            type = FavoriteItemType.Video,
+            title = "收藏 $id",
+            cover = "http://example.com/cover.jpg",
+            intro = "",
+            page = 1,
+            duration = 300,
+            upper = Upper(mid = 100L, name = "UP主", face = ""),
+            link = "",
+            pubtime = 0L,
+            bvid = "BV$id",
         )
 
-    private fun fakeFollowingSeason(id: Int) = FollowingSeason(
-        seasonId = id,
-        title = "番剧 $id",
-        cover = "http://example.com/cover.jpg",
+    private fun fakeFavoriteFolderData(
+        items: List<FavoriteItem>,
+        hasMore: Boolean,
+    ) = FavoriteFolderData(
+        info = fakeFolder(1),
+        medias = items,
+        hasMore = hasMore,
     )
 
-    private fun fakeFollowingSeasonData(items: List<FollowingSeason>, total: Int) =
-        FollowingSeasonData(
-            list = items,
-            total = total,
+    private fun fakeFollowingSeason(id: Int) =
+        FollowingSeason(
+            seasonId = id,
+            title = "番剧 $id",
+            cover = "http://example.com/cover.jpg",
         )
+
+    private fun fakeFollowingSeasonData(
+        items: List<FollowingSeason>,
+        total: Int,
+    ) = FollowingSeasonData(
+        list = items,
+        total = total,
+    )
 
     // region ToView
 
     @Test
-    fun `loadToView loads items successfully`() = runTest(testDispatcher) {
-        val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
+    fun `loadToView loads items successfully`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.toViewItems).hasSize(2)
-        assertThat(vm.uiState.value.toViewLoading).isFalse()
-        assertThat(vm.uiState.value.toViewError).isFalse()
-    }
-
-    @Test
-    fun `loadToView sets error on failure`() = runTest(testDispatcher) {
-        coEvery { toViewRepo.getToView(any(), any()) } throws RuntimeException("network error")
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.toViewItems).isEmpty()
-        assertThat(vm.uiState.value.toViewError).isTrue()
-        assertThat(vm.uiState.value.toViewLoading).isFalse()
-    }
+            assertThat(vm.toViewItems).hasSize(2)
+            assertThat(vm.uiState.value.toViewLoading).isFalse()
+            assertThat(vm.uiState.value.toViewError).isFalse()
+        }
 
     @Test
-    fun `delToView removes item from list`() = runTest(testDispatcher) {
-        val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
-        coEvery { toViewRepo.delToView(any(), any(), any()) } returns Unit
+    fun `loadToView sets error on failure`() =
+        runTest(testDispatcher) {
+            coEvery { toViewRepo.getToView(any(), any()) } throws RuntimeException("network error")
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        vm.delToView(aid = 1)
-        advanceUntilIdle()
-
-        assertThat(vm.toViewItems).hasSize(1)
-        assertThat(vm.toViewItems[0].oid).isEqualTo(2)
-    }
+            assertThat(vm.toViewItems).isEmpty()
+            assertThat(vm.uiState.value.toViewError).isTrue()
+            assertThat(vm.uiState.value.toViewLoading).isFalse()
+        }
 
     @Test
-    fun `refreshToView clears and reloads`() = runTest(testDispatcher) {
-        val items1 = listOf(fakeToViewItem(1))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items1)
+    fun `delToView removes item from list`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
+            coEvery { toViewRepo.delToView(any(), any(), any()) } returns Unit
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.toViewItems).hasSize(1)
+            vm.delToView(aid = 1)
+            advanceUntilIdle()
 
-        val items2 = listOf(fakeToViewItem(3), fakeToViewItem(4))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items2)
+            assertThat(vm.toViewItems).hasSize(1)
+            assertThat(vm.toViewItems[0].oid).isEqualTo(2)
+        }
 
-        vm.refreshToView()
-        advanceUntilIdle()
+    @Test
+    fun `refreshToView clears and reloads`() =
+        runTest(testDispatcher) {
+            val items1 = listOf(fakeToViewItem(1))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items1)
 
-        assertThat(vm.toViewItems).hasSize(2)
-        assertThat(vm.toViewItems[0].oid).isEqualTo(3)
-    }
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            assertThat(vm.toViewItems).hasSize(1)
+
+            val items2 = listOf(fakeToViewItem(3), fakeToViewItem(4))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items2)
+
+            vm.refreshToView()
+            advanceUntilIdle()
+
+            assertThat(vm.toViewItems).hasSize(2)
+            assertThat(vm.toViewItems[0].oid).isEqualTo(3)
+        }
 
     // endregion
 
     // region History
 
     @Test
-    fun `loadHistory loads items with cursor pagination`() = runTest(testDispatcher) {
-        val items1 = listOf(fakeHistoryItem(1), fakeHistoryItem(2))
-        coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items1, cursor = 100)
+    fun `loadHistory loads items with cursor pagination`() =
+        runTest(testDispatcher) {
+            val items1 = listOf(fakeHistoryItem(1), fakeHistoryItem(2))
+            coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items1, cursor = 100)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.historyItems).hasSize(2)
-        assertThat(vm.uiState.value.historyHasMore).isTrue()
-    }
-
-    @Test
-    fun `loadHistory stops when cursor is 0`() = runTest(testDispatcher) {
-        val items = listOf(fakeHistoryItem(1))
-        coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(items, cursor = 0)
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.historyItems).hasSize(1)
-        assertThat(vm.uiState.value.historyHasMore).isFalse()
-    }
+            assertThat(vm.uiState.value.historyItems).hasSize(2)
+            assertThat(vm.uiState.value.historyHasMore).isTrue()
+        }
 
     @Test
-    fun `loadHistory sets error on failure`() = runTest(testDispatcher) {
-        coEvery { historyRepo.getHistories(any(), any()) } throws RuntimeException("error")
+    fun `loadHistory stops when cursor is 0`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakeHistoryItem(1))
+            coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(items, cursor = 0)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.historyItems).isEmpty()
-        assertThat(vm.uiState.value.historyError).isTrue()
-    }
+            assertThat(vm.uiState.value.historyItems).hasSize(1)
+            assertThat(vm.uiState.value.historyHasMore).isFalse()
+        }
 
     @Test
-    fun `refreshHistory resets cursor and reloads`() = runTest(testDispatcher) {
-        val items1 = listOf(fakeHistoryItem(1))
-        coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items1, cursor = 100)
+    fun `loadHistory sets error on failure`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepo.getHistories(any(), any()) } throws RuntimeException("error")
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        val items2 = listOf(fakeHistoryItem(2))
-        coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items2, cursor = 0)
+            assertThat(vm.uiState.value.historyItems).isEmpty()
+            assertThat(vm.uiState.value.historyError).isTrue()
+        }
 
-        vm.refreshHistory()
-        advanceUntilIdle()
+    @Test
+    fun `refreshHistory resets cursor and reloads`() =
+        runTest(testDispatcher) {
+            val items1 = listOf(fakeHistoryItem(1))
+            coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items1, cursor = 100)
 
-        assertThat(vm.uiState.value.historyItems).hasSize(1)
-        assertThat(vm.uiState.value.historyItems[0].oid).isEqualTo(2)
-        assertThat(vm.uiState.value.historyHasMore).isFalse()
-    }
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            val items2 = listOf(fakeHistoryItem(2))
+            coEvery { historyRepo.getHistories(0, any()) } returns fakeHistoryData(items2, cursor = 0)
+
+            vm.refreshHistory()
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.historyItems).hasSize(1)
+            assertThat(
+                vm.uiState.value.historyItems[0]
+                    .oid,
+            ).isEqualTo(2)
+            assertThat(vm.uiState.value.historyHasMore).isFalse()
+        }
 
     // endregion
 
     // region Favorite
 
     @Test
-    fun `loadFavoriteFolders loads folders and first folder items`() = runTest(testDispatcher) {
-        val folders = listOf(fakeFolder(1), fakeFolder(2))
-        val items = listOf(fakeFavoriteItem(10), fakeFavoriteItem(11))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(items, hasMore = false)
+    fun `loadFavoriteFolders loads folders and first folder items`() =
+        runTest(testDispatcher) {
+            val folders = listOf(fakeFolder(1), fakeFolder(2))
+            val items = listOf(fakeFavoriteItem(10), fakeFavoriteItem(11))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(items, hasMore = false)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.favoriteFolders).hasSize(2)
-        assertThat(vm.uiState.value.currentFolderId).isEqualTo(1)
-        assertThat(vm.uiState.value.favoriteItems).hasSize(2)
-    }
-
-    @Test
-    fun `loadFavoriteItems switches folder and loads new items`() = runTest(testDispatcher) {
-        val folders = listOf(fakeFolder(1), fakeFolder(2))
-        val items1 = listOf(fakeFavoriteItem(10))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(items1, hasMore = false)
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.currentFolderId).isEqualTo(1)
-        assertThat(vm.uiState.value.favoriteItems).hasSize(1)
-
-        val items2 = listOf(fakeFavoriteItem(20), fakeFavoriteItem(21))
-        coEvery { favoriteRepo.getFavoriteFolderData(2, any(), any(), any()) } returns
-            fakeFavoriteFolderData(items2, hasMore = false)
-
-        vm.loadFavoriteItems(2, forceRefresh = true)
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.currentFolderId).isEqualTo(2)
-        assertThat(vm.uiState.value.favoriteItems).hasSize(2)
-        assertThat(vm.uiState.value.favoriteItems[0].id).isEqualTo(20)
-    }
+            assertThat(vm.uiState.value.favoriteFolders).hasSize(2)
+            assertThat(vm.uiState.value.currentFolderId).isEqualTo(1)
+            assertThat(vm.uiState.value.favoriteItems).hasSize(2)
+        }
 
     @Test
-    fun `loadFavoriteFolders sets error on failure`() = runTest(testDispatcher) {
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } throws
-            RuntimeException("error")
+    fun `loadFavoriteItems switches folder and loads new items`() =
+        runTest(testDispatcher) {
+            val folders = listOf(fakeFolder(1), fakeFolder(2))
+            val items1 = listOf(fakeFavoriteItem(10))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(items1, hasMore = false)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.favoriteFolders).isEmpty()
-        assertThat(vm.uiState.value.favoriteError).isTrue()
-    }
+            assertThat(vm.uiState.value.currentFolderId).isEqualTo(1)
+            assertThat(vm.uiState.value.favoriteItems).hasSize(1)
+
+            val items2 = listOf(fakeFavoriteItem(20), fakeFavoriteItem(21))
+            coEvery { favoriteRepo.getFavoriteFolderData(2, any(), any(), any()) } returns
+                fakeFavoriteFolderData(items2, hasMore = false)
+
+            vm.loadFavoriteItems(2, forceRefresh = true)
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.currentFolderId).isEqualTo(2)
+            assertThat(vm.uiState.value.favoriteItems).hasSize(2)
+            assertThat(
+                vm.uiState.value.favoriteItems[0]
+                    .id,
+            ).isEqualTo(20)
+        }
+
+    @Test
+    fun `loadFavoriteFolders sets error on failure`() =
+        runTest(testDispatcher) {
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } throws
+                RuntimeException("error")
+
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.favoriteFolders).isEmpty()
+            assertThat(vm.uiState.value.favoriteError).isTrue()
+        }
 
     // endregion
 
     // region FollowingSeason
 
     @Test
-    fun `loadFollowingSeasons loads items with pagination`() = runTest(testDispatcher) {
-        val seasons = listOf(fakeFollowingSeason(1), fakeFollowingSeason(2))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons, total = 5)
+    fun `loadFollowingSeasons loads items with pagination`() =
+        runTest(testDispatcher) {
+            val seasons = listOf(fakeFollowingSeason(1), fakeFollowingSeason(2))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons, total = 5)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.followingSeasons).hasSize(2)
-        assertThat(vm.uiState.value.followingHasMore).isTrue()
-    }
-
-    @Test
-    fun `loadFollowingSeasons stops when all loaded`() = runTest(testDispatcher) {
-        val seasons = listOf(fakeFollowingSeason(1), fakeFollowingSeason(2))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons, total = 2)
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.followingSeasons).hasSize(2)
-        assertThat(vm.uiState.value.followingHasMore).isFalse()
-    }
+            assertThat(vm.uiState.value.followingSeasons).hasSize(2)
+            assertThat(vm.uiState.value.followingHasMore).isTrue()
+        }
 
     @Test
-    fun `loadFollowingSeasons sets error on failure`() = runTest(testDispatcher) {
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } throws
-            RuntimeException("error")
+    fun `loadFollowingSeasons stops when all loaded`() =
+        runTest(testDispatcher) {
+            val seasons = listOf(fakeFollowingSeason(1), fakeFollowingSeason(2))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons, total = 2)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.followingSeasons).isEmpty()
-        assertThat(vm.uiState.value.followingError).isTrue()
-    }
+            assertThat(vm.uiState.value.followingSeasons).hasSize(2)
+            assertThat(vm.uiState.value.followingHasMore).isFalse()
+        }
 
     @Test
-    fun `setFollowingFilter resets and reloads with new filter`() = runTest(testDispatcher) {
-        val seasons1 = listOf(fakeFollowingSeason(1))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons1, total = 1)
+    fun `loadFollowingSeasons sets error on failure`() =
+        runTest(testDispatcher) {
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } throws
+                RuntimeException("error")
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.followingSeasons).hasSize(1)
+            assertThat(vm.uiState.value.followingSeasons).isEmpty()
+            assertThat(vm.uiState.value.followingError).isTrue()
+        }
 
-        val seasons2 = listOf(fakeFollowingSeason(10), fakeFollowingSeason(11))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons2, total = 2)
+    @Test
+    fun `setFollowingFilter resets and reloads with new filter`() =
+        runTest(testDispatcher) {
+            val seasons1 = listOf(fakeFollowingSeason(1))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons1, total = 1)
 
-        vm.setFollowingFilter(FollowingSeasonType.Cinema, FollowingSeasonStatus.Watching)
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.followingType).isEqualTo(FollowingSeasonType.Cinema)
-        assertThat(vm.uiState.value.followingStatus).isEqualTo(FollowingSeasonStatus.Watching)
-        assertThat(vm.uiState.value.followingSeasons).hasSize(2)
-    }
+            assertThat(vm.uiState.value.followingSeasons).hasSize(1)
+
+            val seasons2 = listOf(fakeFollowingSeason(10), fakeFollowingSeason(11))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons2, total = 2)
+
+            vm.setFollowingFilter(FollowingSeasonType.Cinema, FollowingSeasonStatus.Watching)
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.followingType).isEqualTo(FollowingSeasonType.Cinema)
+            assertThat(vm.uiState.value.followingStatus).isEqualTo(FollowingSeasonStatus.Watching)
+            assertThat(vm.uiState.value.followingSeasons).hasSize(2)
+        }
 
     // endregion
 
     // region refresh(tab)
 
     @Test
-    fun `refresh dispatches to correct tab method`() = runTest(testDispatcher) {
-        val items = listOf(fakeToViewItem(1))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
+    fun `refresh dispatches to correct tab method`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakeToViewItem(1))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        val newItems = listOf(fakeToViewItem(99))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(newItems)
+            val newItems = listOf(fakeToViewItem(99))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(newItems)
 
-        vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.ToView)
-        advanceUntilIdle()
+            vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.ToView)
+            advanceUntilIdle()
 
-        assertThat(vm.toViewItems[0].oid).isEqualTo(99)
-    }
+            assertThat(vm.toViewItems[0].oid).isEqualTo(99)
+        }
 
     // endregion
 
     @Test
-    fun `delToView with viewed true removes item from list`() = runTest(testDispatcher) {
-        val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
-        coEvery { toViewRepo.delToView(any(), any(), any()) } returns Unit
+    fun `delToView with viewed true removes item from list`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakeToViewItem(1), fakeToViewItem(2))
+            coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(items)
+            coEvery { toViewRepo.delToView(any(), any(), any()) } returns Unit
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        vm.delToView(aid = 1, viewed = true)
-        advanceUntilIdle()
+            vm.delToView(aid = 1, viewed = true)
+            advanceUntilIdle()
 
-        coVerify { toViewRepo.delToView(aid = 1, viewed = true, preferApiType = any()) }
-        assertThat(vm.toViewItems).hasSize(1)
-        assertThat(vm.toViewItems[0].oid).isEqualTo(2)
-    }
-
-    @Test
-    fun `loadHistory is no-op when already loading`() = runTest(testDispatcher) {
-        coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(
-            listOf(fakeHistoryItem(1)), cursor = 100,
-        )
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        vm.loadHistory()
-        advanceUntilIdle()
-
-        coVerify(exactly = 2) { historyRepo.getHistories(any(), any()) }
-    }
+            coVerify { toViewRepo.delToView(aid = 1, viewed = true, preferApiType = any()) }
+            assertThat(vm.toViewItems).hasSize(1)
+            assertThat(vm.toViewItems[0].oid).isEqualTo(2)
+        }
 
     @Test
-    fun `loadHistory is no-op when hasMore is false`() = runTest(testDispatcher) {
-        coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(
-            listOf(fakeHistoryItem(1)), cursor = 0,
-        )
-        val vm = createViewModel()
-        advanceUntilIdle()
+    fun `loadHistory is no-op when already loading`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepo.getHistories(any(), any()) } returns
+                fakeHistoryData(
+                    listOf(fakeHistoryItem(1)),
+                    cursor = 100,
+                )
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.historyHasMore).isFalse()
+            vm.loadHistory()
+            advanceUntilIdle()
 
-        vm.loadHistory()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { historyRepo.getHistories(any(), any()) }
-    }
-
-    @Test
-    fun `loadFavoriteItems pagination loads multiple pages`() = runTest(testDispatcher) {
-        val folders = listOf(fakeFolder(1))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = true)
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.favoriteItems).hasSize(1)
-
-        vm.loadFavoriteItems(1)
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.favoriteItems).hasSize(2)
-    }
+            coVerify(exactly = 2) { historyRepo.getHistories(any(), any()) }
+        }
 
     @Test
-    fun `loadFavoriteItems filters non-video items`() = runTest(testDispatcher) {
-        val folders = listOf(fakeFolder(1))
-        val videoItem = fakeFavoriteItem(10)
-        val nonVideoItem = fakeFavoriteItem(11).copy(type = FavoriteItemType.Audio)
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            FavoriteFolderData(info = fakeFolder(1), medias = listOf(videoItem, nonVideoItem), hasMore = false)
+    fun `loadHistory is no-op when hasMore is false`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepo.getHistories(any(), any()) } returns
+                fakeHistoryData(
+                    listOf(fakeHistoryItem(1)),
+                    cursor = 0,
+                )
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            assertThat(vm.uiState.value.historyHasMore).isFalse()
 
-        assertThat(vm.uiState.value.favoriteItems).hasSize(1)
-        assertThat(vm.uiState.value.favoriteItems[0].id).isEqualTo(10)
-    }
+            vm.loadHistory()
+            advanceUntilIdle()
 
-    @Test
-    fun `loadFavoriteItems failure sets error`() = runTest(testDispatcher) {
-        val folders = listOf(fakeFolder(1))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } throws RuntimeException("error")
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.favoriteError).isTrue()
-        assertThat(vm.uiState.value.favoriteLoading).isFalse()
-    }
+            coVerify(exactly = 1) { historyRepo.getHistories(any(), any()) }
+        }
 
     @Test
-    fun `refreshFavorite clears and reloads`() = runTest(testDispatcher) {
-        val folders1 = listOf(fakeFolder(1))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders1
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = false)
+    fun `loadFavoriteItems pagination loads multiple pages`() =
+        runTest(testDispatcher) {
+            val folders = listOf(fakeFolder(1))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = true)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.favoriteFolders).hasSize(1)
+            assertThat(vm.uiState.value.favoriteItems).hasSize(1)
 
-        val folders2 = listOf(fakeFolder(2, "新收藏夹"))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders2
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(listOf(fakeFavoriteItem(20)), hasMore = false)
+            vm.loadFavoriteItems(1)
+            advanceUntilIdle()
 
-        vm.refreshFavorite()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.favoriteFolders[0].id).isEqualTo(2)
-        assertThat(vm.uiState.value.favoriteItems[0].id).isEqualTo(20)
-    }
+            assertThat(vm.uiState.value.favoriteItems).hasSize(2)
+        }
 
     @Test
-    fun `refreshFollowingSeasons clears and reloads`() = runTest(testDispatcher) {
-        val seasons1 = listOf(fakeFollowingSeason(1))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons1, total = 1)
+    fun `loadFavoriteItems filters non-video items`() =
+        runTest(testDispatcher) {
+            val folders = listOf(fakeFolder(1))
+            val videoItem = fakeFavoriteItem(10)
+            val nonVideoItem = fakeFavoriteItem(11).copy(type = FavoriteItemType.Audio)
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                FavoriteFolderData(info = fakeFolder(1), medias = listOf(videoItem, nonVideoItem), hasMore = false)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        assertThat(vm.uiState.value.followingSeasons).hasSize(1)
-
-        val seasons2 = listOf(fakeFollowingSeason(10), fakeFollowingSeason(11))
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(seasons2, total = 2)
-
-        vm.refreshFollowingSeasons()
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.followingSeasons).hasSize(2)
-        assertThat(vm.uiState.value.followingSeasons[0].seasonId).isEqualTo(10)
-    }
+            assertThat(vm.uiState.value.favoriteItems).hasSize(1)
+            assertThat(
+                vm.uiState.value.favoriteItems[0]
+                    .id,
+            ).isEqualTo(10)
+        }
 
     @Test
-    fun `loadFollowingSeasons is no-op when already loading`() = runTest(testDispatcher) {
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(listOf(fakeFollowingSeason(1)), total = 1)
+    fun `loadFavoriteItems failure sets error`() =
+        runTest(testDispatcher) {
+            val folders = listOf(fakeFolder(1))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } throws RuntimeException("error")
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        vm.loadFollowingSeasons()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) }
-    }
-
-    @Test
-    fun `refresh History tab resets cursor and reloads`() = runTest(testDispatcher) {
-        coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(
-            listOf(fakeHistoryItem(1)), cursor = 100,
-        )
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { historyRepo.getHistories(any(), any()) } returns fakeHistoryData(
-            listOf(fakeHistoryItem(99)), cursor = 0,
-        )
-
-        vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.History)
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.historyItems[0].oid).isEqualTo(99)
-        assertThat(vm.uiState.value.historyHasMore).isFalse()
-    }
+            assertThat(vm.uiState.value.favoriteError).isTrue()
+            assertThat(vm.uiState.value.favoriteLoading).isFalse()
+        }
 
     @Test
-    fun `refresh Favorite tab clears and reloads`() = runTest(testDispatcher) {
-        val folders1 = listOf(fakeFolder(1))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders1
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = false)
+    fun `refreshFavorite clears and reloads`() =
+        runTest(testDispatcher) {
+            val folders1 = listOf(fakeFolder(1))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders1
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = false)
 
-        val vm = createViewModel()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        val folders2 = listOf(fakeFolder(2))
-        coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders2
-        coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
-            fakeFavoriteFolderData(listOf(fakeFavoriteItem(20)), hasMore = false)
+            assertThat(vm.uiState.value.favoriteFolders).hasSize(1)
 
-        vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.Favorite)
-        advanceUntilIdle()
+            val folders2 = listOf(fakeFolder(2, "新收藏夹"))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders2
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(listOf(fakeFavoriteItem(20)), hasMore = false)
 
-        assertThat(vm.uiState.value.favoriteFolders[0].id).isEqualTo(2)
-    }
+            vm.refreshFavorite()
+            advanceUntilIdle()
 
-    @Test
-    fun `refresh FollowingSeason tab clears and reloads`() = runTest(testDispatcher) {
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(listOf(fakeFollowingSeason(1)), total = 1)
-
-        val vm = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
-            fakeFollowingSeasonData(listOf(fakeFollowingSeason(99)), total = 1)
-
-        vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.FollowingSeason)
-        advanceUntilIdle()
-
-        assertThat(vm.uiState.value.followingSeasons[0].seasonId).isEqualTo(99)
-    }
+            assertThat(
+                vm.uiState.value.favoriteFolders[0]
+                    .id,
+            ).isEqualTo(2)
+            assertThat(
+                vm.uiState.value.favoriteItems[0]
+                    .id,
+            ).isEqualTo(20)
+        }
 
     @Test
-    fun `init does not load data when not logged in`() = runTest(testDispatcher) {
-        Prefs.isLogin = false
-        val vm = createViewModel()
-        advanceUntilIdle()
+    fun `refreshFollowingSeasons clears and reloads`() =
+        runTest(testDispatcher) {
+            val seasons1 = listOf(fakeFollowingSeason(1))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons1, total = 1)
 
-        coVerify(exactly = 0) { toViewRepo.getToView(any(), any()) }
-        coVerify(exactly = 0) { historyRepo.getHistories(any(), any()) }
-        coVerify(exactly = 0) { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) }
-        coVerify(exactly = 0) { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) }
-    }
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.followingSeasons).hasSize(1)
+
+            val seasons2 = listOf(fakeFollowingSeason(10), fakeFollowingSeason(11))
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(seasons2, total = 2)
+
+            vm.refreshFollowingSeasons()
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.followingSeasons).hasSize(2)
+            assertThat(
+                vm.uiState.value.followingSeasons[0]
+                    .seasonId,
+            ).isEqualTo(10)
+        }
 
     @Test
-    fun `loadToView is no-op when already loading`() = runTest(testDispatcher) {
-        coEvery { toViewRepo.getToView(any(), any()) } returns fakeToViewData(
-            listOf(fakeToViewItem(1)),
-        )
-        val vm = createViewModel()
-        advanceUntilIdle()
+    fun `loadFollowingSeasons is no-op when already loading`() =
+        runTest(testDispatcher) {
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(listOf(fakeFollowingSeason(1)), total = 1)
 
-        vm.loadToView()
-        advanceUntilIdle()
+            val vm = createViewModel()
+            advanceUntilIdle()
 
-        coVerify(exactly = 2) { toViewRepo.getToView(any(), any()) }
-    }
+            vm.loadFollowingSeasons()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `refresh History tab resets cursor and reloads`() =
+        runTest(testDispatcher) {
+            coEvery { historyRepo.getHistories(any(), any()) } returns
+                fakeHistoryData(
+                    listOf(fakeHistoryItem(1)),
+                    cursor = 100,
+                )
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { historyRepo.getHistories(any(), any()) } returns
+                fakeHistoryData(
+                    listOf(fakeHistoryItem(99)),
+                    cursor = 0,
+                )
+
+            vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.History)
+            advanceUntilIdle()
+
+            assertThat(
+                vm.uiState.value.historyItems[0]
+                    .oid,
+            ).isEqualTo(99)
+            assertThat(vm.uiState.value.historyHasMore).isFalse()
+        }
+
+    @Test
+    fun `refresh Favorite tab clears and reloads`() =
+        runTest(testDispatcher) {
+            val folders1 = listOf(fakeFolder(1))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders1
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(listOf(fakeFavoriteItem(10)), hasMore = false)
+
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            val folders2 = listOf(fakeFolder(2))
+            coEvery { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) } returns folders2
+            coEvery { favoriteRepo.getFavoriteFolderData(any(), any(), any(), any()) } returns
+                fakeFavoriteFolderData(listOf(fakeFavoriteItem(20)), hasMore = false)
+
+            vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.Favorite)
+            advanceUntilIdle()
+
+            assertThat(
+                vm.uiState.value.favoriteFolders[0]
+                    .id,
+            ).isEqualTo(2)
+        }
+
+    @Test
+    fun `refresh FollowingSeason tab clears and reloads`() =
+        runTest(testDispatcher) {
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(listOf(fakeFollowingSeason(1)), total = 1)
+
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            coEvery { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) } returns
+                fakeFollowingSeasonData(listOf(fakeFollowingSeason(99)), total = 1)
+
+            vm.refresh(dev.frost819.newbv.data.datastore.PersonalTopNavItem.FollowingSeason)
+            advanceUntilIdle()
+
+            assertThat(
+                vm.uiState.value.followingSeasons[0]
+                    .seasonId,
+            ).isEqualTo(99)
+        }
+
+    @Test
+    fun `init does not load data when not logged in`() =
+        runTest(testDispatcher) {
+            Prefs.isLogin = false
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { toViewRepo.getToView(any(), any()) }
+            coVerify(exactly = 0) { historyRepo.getHistories(any(), any()) }
+            coVerify(exactly = 0) { favoriteRepo.getAllFavoriteFolderMetadataList(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { seasonRepo.getFollowingSeasons(any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `loadToView is no-op when already loading`() =
+        runTest(testDispatcher) {
+            coEvery { toViewRepo.getToView(any(), any()) } returns
+                fakeToViewData(
+                    listOf(fakeToViewItem(1)),
+                )
+            val vm = createViewModel()
+            advanceUntilIdle()
+
+            vm.loadToView()
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { toViewRepo.getToView(any(), any()) }
+        }
 }

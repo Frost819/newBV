@@ -77,95 +77,103 @@ fun PictureMenuList(
     val focusRequester = remember { FocusRequester() }
     var selectedPictureMenuItem by remember { mutableStateOf(VideoPlayerPictureMenuItem.Resolution) }
 
-    val qualityIdList = remember(availableQualityIds) {
-        availableQualityIds.sortedByDescending { it }
-    }
+    val qualityIdList =
+        remember(availableQualityIds) {
+            availableQualityIds.sortedByDescending { it }
+        }
     val audioList = remember(availableAudio) { availableAudio.sortedBy { it.ordinal } }
 
     Row(
         modifier = modifier.fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val menuItemsModifier = Modifier
-            .width(216.dp)
-            .padding(horizontal = 8.dp)
+        val menuItemsModifier =
+            Modifier
+                .width(216.dp)
+                .padding(horizontal = 8.dp)
 
         AnimatedVisibility(visible = focusState.focusState != MenuFocusState.MenuNav) {
             when (selectedPictureMenuItem) {
-                VideoPlayerPictureMenuItem.Resolution -> RadioMenuList(
-                    modifier = menuItemsModifier,
-                    items = qualityIdList.map { resolutionCode ->
-                        Resolution.fromCode(resolutionCode).displayName
-                    },
-                    selected = qualityIdList.indexOf(currentResolution),
-                    onSelectedChanged = { onResolutionChange(qualityIdList[it]) },
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerPictureMenuItem.Resolution ->
+                    RadioMenuList(
+                        modifier = menuItemsModifier,
+                        items =
+                            qualityIdList.map { resolutionCode ->
+                                Resolution.fromCode(resolutionCode).displayName
+                            },
+                        selected = qualityIdList.indexOf(currentResolution),
+                        onSelectedChanged = { onResolutionChange(qualityIdList[it]) },
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerPictureMenuItem.Codec -> RadioMenuList(
-                    modifier = menuItemsModifier,
-                    items = availableVideoCodec.map { it.displayName },
-                    selected = availableVideoCodec.indexOf(currentVideoCodec),
-                    onSelectedChanged = { onCodecChange(availableVideoCodec[it]) },
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerPictureMenuItem.Codec ->
+                    RadioMenuList(
+                        modifier = menuItemsModifier,
+                        items = availableVideoCodec.map { it.displayName },
+                        selected = availableVideoCodec.indexOf(currentVideoCodec),
+                        onSelectedChanged = { onCodecChange(availableVideoCodec[it]) },
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerPictureMenuItem.AspectRatio -> RadioMenuList(
-                    modifier = menuItemsModifier,
-                    items = VideoAspectRatio.entries.map { it.displayName },
-                    selected = VideoAspectRatio.entries.indexOf(currentVideoAspectRatio),
-                    onSelectedChanged = { onAspectRatioChange(VideoAspectRatio.entries[it]) },
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerPictureMenuItem.AspectRatio ->
+                    RadioMenuList(
+                        modifier = menuItemsModifier,
+                        items = VideoAspectRatio.entries.map { it.displayName },
+                        selected = VideoAspectRatio.entries.indexOf(currentVideoAspectRatio),
+                        onSelectedChanged = { onAspectRatioChange(VideoAspectRatio.entries[it]) },
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
 
-                VideoPlayerPictureMenuItem.Audio -> RadioMenuList(
-                    modifier = menuItemsModifier,
-                    items = audioList.map { it.displayName },
-                    selected = audioList.indexOf(currentAudio),
-                    onSelectedChanged = { onAudioChange(audioList[it]) },
-                    onFocusBackToParent = {
-                        onFocusStateChange(MenuFocusState.Menu)
-                        focusRequester.requestFocus()
-                    },
-                )
+                VideoPlayerPictureMenuItem.Audio ->
+                    RadioMenuList(
+                        modifier = menuItemsModifier,
+                        items = audioList.map { it.displayName },
+                        selected = audioList.indexOf(currentAudio),
+                        onSelectedChanged = { onAudioChange(audioList[it]) },
+                        onFocusBackToParent = {
+                            onFocusStateChange(MenuFocusState.Menu)
+                            focusRequester.requestFocus()
+                        },
+                    )
             }
         }
 
         LazyColumn(
-            modifier = Modifier
-                .focusRequester(focusRequester)
-                .padding(horizontal = 8.dp)
-                .onPreviewKeyEvent {
-                    if (it.type == KeyEventType.KeyUp) {
-                        if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                            return@onPreviewKeyEvent false
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester)
+                    .padding(horizontal = 8.dp)
+                    .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyUp) {
+                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                                return@onPreviewKeyEvent false
+                            }
+                            return@onPreviewKeyEvent true
                         }
-                        return@onPreviewKeyEvent true
-                    }
-                    when (it.key) {
-                        Key.DirectionRight -> onFocusStateChange(MenuFocusState.MenuNav)
-                        Key.DirectionLeft -> onFocusStateChange(MenuFocusState.Items)
-                        else -> {}
-                    }
-                    false
-                }
-                .focusRestorer(restorerFocusRequester),
+                        when (it.key) {
+                            Key.DirectionRight -> onFocusStateChange(MenuFocusState.MenuNav)
+                            Key.DirectionLeft -> onFocusStateChange(MenuFocusState.Items)
+                            else -> {}
+                        }
+                        false
+                    }.focusRestorer(restorerFocusRequester),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(8.dp),
         ) {
             itemsIndexed(VideoPlayerPictureMenuItem.entries.toMutableList()) { index, item ->
                 MenuListItem(
-                    modifier = Modifier
-                        .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
+                    modifier =
+                        Modifier
+                            .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
                     text = item.displayName,
                     selected = selectedPictureMenuItem == item,
                     onClick = {
@@ -181,44 +189,48 @@ fun PictureMenuList(
 
 /** 画质显示名称。 */
 private val Resolution.displayName: String
-    get() = when (this) {
-        Resolution.R240P -> "240P"
-        Resolution.R360P -> "360P"
-        Resolution.R480P -> "480P"
-        Resolution.R720P -> "720P"
-        Resolution.R720P60 -> "720P60"
-        Resolution.R1080P -> "1080P"
-        Resolution.R1080PPlus -> "1080P+"
-        Resolution.R1080P60 -> "1080P60"
-        Resolution.R4K -> "4K"
-        Resolution.RHdr -> "HDR"
-        Resolution.RDolby -> "Dolby"
-        Resolution.R8K -> "8K"
-    }
+    get() =
+        when (this) {
+            Resolution.R240P -> "240P"
+            Resolution.R360P -> "360P"
+            Resolution.R480P -> "480P"
+            Resolution.R720P -> "720P"
+            Resolution.R720P60 -> "720P60"
+            Resolution.R1080P -> "1080P"
+            Resolution.R1080PPlus -> "1080P+"
+            Resolution.R1080P60 -> "1080P60"
+            Resolution.R4K -> "4K"
+            Resolution.RHdr -> "HDR"
+            Resolution.RDolby -> "Dolby"
+            Resolution.R8K -> "8K"
+        }
 
 /** 编码显示名称。 */
 private val VideoCodec.displayName: String
-    get() = when (this) {
-        VideoCodec.AVC -> "AVC/H.264"
-        VideoCodec.HEVC -> "HEVC/H.265"
-        VideoCodec.AV1 -> "AV1"
-        VideoCodec.DVH1 -> "DV H.1"
-    }
+    get() =
+        when (this) {
+            VideoCodec.AVC -> "AVC/H.264"
+            VideoCodec.HEVC -> "HEVC/H.265"
+            VideoCodec.AV1 -> "AV1"
+            VideoCodec.DVH1 -> "DV H.1"
+        }
 
 /** 音轨显示名称。 */
 private val Audio.displayName: String
-    get() = when (this) {
-        Audio.A64K -> "64K"
-        Audio.A132K -> "132K"
-        Audio.A192K -> "192K"
-        Audio.ADolbyAtoms -> "Dolby Atmos"
-        Audio.AHiRes -> "Hi-Res"
-    }
+    get() =
+        when (this) {
+            Audio.A64K -> "64K"
+            Audio.A132K -> "132K"
+            Audio.A192K -> "192K"
+            Audio.ADolbyAtoms -> "Dolby Atmos"
+            Audio.AHiRes -> "Hi-Res"
+        }
 
 /** 宽高比显示名称。 */
 private val VideoAspectRatio.displayName: String
-    get() = when (this) {
-        VideoAspectRatio.Default -> "默认"
-        VideoAspectRatio.FourToThree -> "4:3"
-        VideoAspectRatio.SixteenToNine -> "16:9"
-    }
+    get() =
+        when (this) {
+            VideoAspectRatio.Default -> "默认"
+            VideoAspectRatio.FourToThree -> "4:3"
+            VideoAspectRatio.SixteenToNine -> "16:9"
+        }

@@ -50,9 +50,10 @@ fun ToViewScreen(
     val gridState = rememberLazyGridState()
     val context = LocalContext.current
 
-    val (unwatched, watched) = remember(viewModel.toViewItems.toList()) {
-        viewModel.toViewItems.partition { it.progress != -1 }
-    }
+    val (unwatched, watched) =
+        remember(viewModel.toViewItems.toList()) {
+            viewModel.toViewItems.partition { it.progress != -1 }
+        }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -90,31 +91,34 @@ fun ToViewScreen(
                 SectionHeader(title = "未看完 (${unwatched.size})")
             }
             itemsIndexed(items = unwatched) { _, item ->
-                val cardData = remember(item) {
-                    val durationMs = item.duration * 1000L
-                    val progressRatio = if (item.duration > 0) {
-                        item.progress.toFloat() / item.duration.toFloat()
-                    } else {
-                        null
+                val cardData =
+                    remember(item) {
+                        val durationMs = item.duration * 1000L
+                        val progressRatio =
+                            if (item.duration > 0) {
+                                item.progress.toFloat() / item.duration.toFloat()
+                            } else {
+                                null
+                            }
+                        val timeString =
+                            if (item.progress > 0 && item.duration > 0) {
+                                "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
+                            } else {
+                                durationMs.formatHourMinSec()
+                            }
+                        VideoCardData(
+                            avid = item.oid,
+                            cid = item.cid,
+                            title = item.title,
+                            cover = item.cover,
+                            playString = "",
+                            danmakuString = "",
+                            timeString = timeString,
+                            upName = item.author,
+                            upMid = item.mid,
+                            progress = progressRatio,
+                        )
                     }
-                    val timeString = if (item.progress > 0 && item.duration > 0) {
-                        "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
-                    } else {
-                        durationMs.formatHourMinSec()
-                    }
-                    VideoCardData(
-                        avid = item.oid,
-                        cid = item.cid,
-                        title = item.title,
-                        cover = item.cover,
-                        playString = "",
-                        danmakuString = "",
-                        timeString = timeString,
-                        upName = item.author,
-                        upMid = item.mid,
-                        progress = progressRatio,
-                    )
-                }
                 SmallVideoCard(
                     data = cardData,
                     onClick = {
@@ -126,9 +130,10 @@ fun ToViewScreen(
                     onRemoveWatchLater = {
                         viewModel.delToView(aid = item.oid)
                     },
-                    onGoToUpPage = item.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
-                    },
+                    onGoToUpPage =
+                        item.mid?.let { mid ->
+                            { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
+                        },
                 )
             }
         }
@@ -138,21 +143,22 @@ fun ToViewScreen(
                 SectionHeader(title = "已看完 (${watched.size})")
             }
             itemsIndexed(items = watched) { _, item ->
-                val cardData = remember(item) {
-                    val durationMs = item.duration * 1000L
-                    VideoCardData(
-                        avid = item.oid,
-                        cid = item.cid,
-                        title = item.title,
-                        cover = item.cover,
-                        playString = "",
-                        danmakuString = "",
-                        timeString = "已看完 / ${durationMs.formatHourMinSec()}",
-                        upName = item.author,
-                        upMid = item.mid,
-                        progress = 1f,
-                    )
-                }
+                val cardData =
+                    remember(item) {
+                        val durationMs = item.duration * 1000L
+                        VideoCardData(
+                            avid = item.oid,
+                            cid = item.cid,
+                            title = item.title,
+                            cover = item.cover,
+                            playString = "",
+                            danmakuString = "",
+                            timeString = "已看完 / ${durationMs.formatHourMinSec()}",
+                            upName = item.author,
+                            upMid = item.mid,
+                            progress = 1f,
+                        )
+                    }
                 SmallVideoCard(
                     data = cardData,
                     onClick = {
@@ -164,9 +170,10 @@ fun ToViewScreen(
                     onRemoveWatchLater = {
                         viewModel.delToView(aid = item.oid)
                     },
-                    onGoToUpPage = item.mid?.let { mid ->
-                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
-                    },
+                    onGoToUpPage =
+                        item.mid?.let { mid ->
+                            { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
+                        },
                 )
             }
         }

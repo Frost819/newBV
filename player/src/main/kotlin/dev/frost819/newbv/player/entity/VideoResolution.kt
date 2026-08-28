@@ -10,7 +10,7 @@ package dev.frost819.newbv.player.entity
 enum class VideoResolution(
     val code: Int,
     val displayName: String,
-    val shortName: String
+    val shortName: String,
 ) {
     R240P(6, "240P", "240P"),
     R360P(16, "360P", "360P"),
@@ -23,12 +23,11 @@ enum class VideoResolution(
     R4K(120, "4K", "4K"),
     RHdr(125, "HDR", "HDR"),
     RDolby(126, "Dolby Vision", "Dolby"),
-    R8K(127, "8K", "8K");
+    R8K(127, "8K", "8K"),
+    ;
 
     companion object {
         /** 根据 B 站 API 返回的 qn 画质标识获取枚举，未知值默认返回 1080P */
-        fun fromCode(code: Int): VideoResolution {
-            return entries.find { it.code == code } ?: R1080P
-        }
+        fun fromCode(code: Int): VideoResolution = entries.find { it.code == code } ?: R1080P
     }
 }

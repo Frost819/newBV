@@ -73,12 +73,14 @@ fun HistoryScreen(
     }
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.historyItems.size - 20
-            }
-            .collect {
+            }.collect {
                 viewModel.loadHistory()
             }
     }
@@ -95,35 +97,38 @@ fun HistoryScreen(
             items = state.historyItems,
             key = { index, _ -> index },
         ) { index, item ->
-            val cardData = remember(item) {
-                val durationMs = item.duration * 1000L
-                val progressRatio = if (item.progress == -1) {
-                    1f
-                } else if (item.duration > 0) {
-                    item.progress.toFloat() / item.duration.toFloat()
-                } else {
-                    null
+            val cardData =
+                remember(item) {
+                    val durationMs = item.duration * 1000L
+                    val progressRatio =
+                        if (item.progress == -1) {
+                            1f
+                        } else if (item.duration > 0) {
+                            item.progress.toFloat() / item.duration.toFloat()
+                        } else {
+                            null
+                        }
+                    val timeString =
+                        if (item.progress == -1) {
+                            "已看完 / ${durationMs.formatHourMinSec()}"
+                        } else if (item.progress > 0 && item.duration > 0) {
+                            "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
+                        } else {
+                            durationMs.formatHourMinSec()
+                        }
+                    VideoCardData(
+                        avid = item.oid,
+                        cid = item.cid,
+                        title = item.title,
+                        cover = item.cover,
+                        playString = "",
+                        danmakuString = "",
+                        timeString = timeString,
+                        upName = item.author,
+                        upMid = item.mid,
+                        progress = progressRatio,
+                    )
                 }
-                val timeString = if (item.progress == -1) {
-                    "已看完 / ${durationMs.formatHourMinSec()}"
-                } else if (item.progress > 0 && item.duration > 0) {
-                    "${(item.progress * 1000L).formatHourMinSec()} / ${durationMs.formatHourMinSec()}"
-                } else {
-                    durationMs.formatHourMinSec()
-                }
-                VideoCardData(
-                    avid = item.oid,
-                    cid = item.cid,
-                    title = item.title,
-                    cover = item.cover,
-                    playString = "",
-                    danmakuString = "",
-                    timeString = timeString,
-                    upName = item.author,
-                    upMid = item.mid,
-                    progress = progressRatio,
-                )
-            }
             SmallVideoCard(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,
@@ -133,9 +138,10 @@ fun HistoryScreen(
                 onGoToDetailPage = {
                     navController.navigate(VideoDetailRoute(aid = item.oid))
                 },
-                onGoToUpPage = item.mid?.let { mid ->
-                    { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
-                },
+                onGoToUpPage =
+                    item.mid?.let { mid ->
+                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
+                    },
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = item.oid) },
             )
         }

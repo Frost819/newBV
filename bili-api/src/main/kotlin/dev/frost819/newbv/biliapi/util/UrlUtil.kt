@@ -3,10 +3,9 @@ package dev.frost819.newbv.biliapi.util
 import io.ktor.http.Url
 
 object UrlUtil {
-    fun isVideoUrl(url: String): Boolean {
-        return url.startsWith("bilibili://video/") ||
+    fun isVideoUrl(url: String): Boolean =
+        url.startsWith("bilibili://video/") ||
             url.startsWith("https://www.bilibili.com/video/")
-    }
 
     fun parseAidFromUrl(url: String): Long {
         if (url.startsWith("bilibili://video/")) {

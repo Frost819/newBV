@@ -215,7 +215,19 @@ class PgcRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.seasonIndexAnimeResult(
-                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 BiliResponse(code = 0, message = "", data = fakeIndexResultData())
@@ -223,20 +235,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Anime,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -250,7 +303,16 @@ class PgcRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.seasonIndexGuochuangResult(
-                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 BiliResponse(code = 0, message = "", data = fakeIndexResultData())
@@ -258,20 +320,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.GuoChuang,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -288,20 +391,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Movie,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -318,20 +462,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Documentary,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -346,20 +531,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Tv,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -374,20 +600,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Variety,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.list).hasSize(1)
@@ -398,7 +665,19 @@ class PgcRepositoryUnitTest {
         runTest {
             coEvery {
                 BiliHttpApi.seasonIndexAnimeResult(
-                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
                 )
             } returns
                 BiliResponse(code = 0, message = "", data = fakeIndexResultData(hasNext = 0))
@@ -406,20 +685,61 @@ class PgcRepositoryUnitTest {
             val result =
                 repository.getPgcIndex(
                     pgcType = PgcType.Anime,
-                    indexOrder = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder.values().first(),
-                    indexOrderType = dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType.values().first(),
-                    seasonVersion = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion.values().first(),
-                    spokenLanguage = dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage.values().first(),
-                    area = dev.frost819.newbv.biliapi.entity.pgc.index.Area.values().first(),
-                    isFinish = dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish.values().first(),
-                    copyright = dev.frost819.newbv.biliapi.entity.pgc.index.Copyright.values().first(),
-                    seasonStatus = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus.values().first(),
-                    seasonMonth = dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth.values().first(),
-                    producer = dev.frost819.newbv.biliapi.entity.pgc.index.Producer.values().first(),
-                    year = dev.frost819.newbv.biliapi.entity.pgc.index.Year.values().first(),
-                    releaseDate = dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate.values().first(),
-                    style = dev.frost819.newbv.biliapi.entity.pgc.index.Style.values().first(),
-                    page = dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData.PgcIndexPage(),
+                    indexOrder =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrder
+                            .values()
+                            .first(),
+                    indexOrderType =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IndexOrderType
+                            .values()
+                            .first(),
+                    seasonVersion =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonVersion
+                            .values()
+                            .first(),
+                    spokenLanguage =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SpokenLanguage
+                            .values()
+                            .first(),
+                    area =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Area
+                            .values()
+                            .first(),
+                    isFinish =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.IsFinish
+                            .values()
+                            .first(),
+                    copyright =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Copyright
+                            .values()
+                            .first(),
+                    seasonStatus =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonStatus
+                            .values()
+                            .first(),
+                    seasonMonth =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.SeasonMonth
+                            .values()
+                            .first(),
+                    producer =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Producer
+                            .values()
+                            .first(),
+                    year =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Year
+                            .values()
+                            .first(),
+                    releaseDate =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.ReleaseDate
+                            .values()
+                            .first(),
+                    style =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.Style
+                            .values()
+                            .first(),
+                    page =
+                        dev.frost819.newbv.biliapi.entity.pgc.index.PgcIndexData
+                            .PgcIndexPage(),
                 )
 
             assertThat(result.nextPage.hasNext).isFalse()

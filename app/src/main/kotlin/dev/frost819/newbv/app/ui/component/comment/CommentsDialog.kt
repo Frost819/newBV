@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,8 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,11 +61,11 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.viewmodel.comment.CommentSort
 import dev.frost819.newbv.app.viewmodel.comment.CommentUiEffect
 import dev.frost819.newbv.app.viewmodel.comment.CommentUiState
 import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
-import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.biliapi.entity.comment.Comment
 import dev.frost819.newbv.core.focus.isDpadDown
 import dev.frost819.newbv.core.focus.isDpadLeft
@@ -135,37 +134,40 @@ fun CommentsDialog(
 
         val currentPictures = imageViewerPictures
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.62f))
-                .onPreviewKeyEvent { event ->
-                    if (currentPictures == null) return@onPreviewKeyEvent false
-                    if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
-                    when {
-                        event.isDpadLeft() && imageViewerIndex > 0 -> {
-                            imageViewerIndex--
-                            true
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.62f))
+                    .onPreviewKeyEvent { event ->
+                        if (currentPictures == null) return@onPreviewKeyEvent false
+                        if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
+                        when {
+                            event.isDpadLeft() && imageViewerIndex > 0 -> {
+                                imageViewerIndex--
+                                true
+                            }
+                            event.isDpadRight() && imageViewerIndex < currentPictures.lastIndex -> {
+                                imageViewerIndex++
+                                true
+                            }
+                            event.isDpadUp() || event.isDpadDown() -> true
+                            else -> false
                         }
-                        event.isDpadRight() && imageViewerIndex < currentPictures.lastIndex -> {
-                            imageViewerIndex++
-                            true
-                        }
-                        event.isDpadUp() || event.isDpadDown() -> true
-                        else -> false
-                    }
-                },
+                    },
         ) {
             Surface(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxHeight()
-                    .width(if (mode == CommentDialogMode.Player) 520.dp else 680.dp)
-                    .focusRequester(focusRequester),
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight()
+                        .width(if (mode == CommentDialogMode.Player) 520.dp else 680.dp)
+                        .focusRequester(focusRequester),
                 shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
-                colors = SurfaceDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                ),
+                colors =
+                    SurfaceDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
             ) {
                 CommentsContent(
                     state = state,
@@ -209,8 +211,11 @@ private fun CommentsContent(
     val listState = rememberLazyListState()
 
     LaunchedEffect(state.comments.size, state.hasMore) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-            .distinctUntilChanged()
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index ?: 0
+        }.distinctUntilChanged()
             .collectLatest { lastVisibleIndex ->
                 if (state.hasMore && lastVisibleIndex >= state.comments.size - 3) onLoadMore()
             }
@@ -318,11 +323,12 @@ private fun CommentItem(
     onImageClick: (List<String>, Int) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(12.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AsyncImage(
@@ -333,11 +339,12 @@ private fun CommentItem(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = buildString {
-                        append(comment.userName)
-                        if (comment.level > 0) append("  Lv.${comment.level}")
-                        if (comment.isUp) append("  UP主")
-                    },
+                    text =
+                        buildString {
+                            append(comment.userName)
+                            if (comment.level > 0) append("  Lv.${comment.level}")
+                            if (comment.isUp) append("  UP主")
+                        },
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
@@ -356,21 +363,25 @@ private fun CommentItem(
                         comment.pictures.forEachIndexed { index, url ->
                             val picFocusRequester = remember { FocusRequester() }
                             Surface(
-                                modifier = Modifier
-                                    .size(if (compact) 60.dp else 80.dp)
-                                    .focusRequester(picFocusRequester)
-                                    .touchClickable(onClick = { onImageClick(comment.pictures, index) }),
+                                modifier =
+                                    Modifier
+                                        .size(if (compact) 60.dp else 80.dp)
+                                        .focusRequester(picFocusRequester)
+                                        .touchClickable(onClick = { onImageClick(comment.pictures, index) }),
                                 onClick = { onImageClick(comment.pictures, index) },
                                 shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                                border = ClickableSurfaceDefaults.border(
-                                    focusedBorder = Border(
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            2.dp,
-                                            MaterialTheme.colorScheme.border,
-                                        ),
-                                        shape = MaterialTheme.shapes.small,
+                                border =
+                                    ClickableSurfaceDefaults.border(
+                                        focusedBorder =
+                                            Border(
+                                                border =
+                                                    androidx.compose.foundation.BorderStroke(
+                                                        2.dp,
+                                                        MaterialTheme.colorScheme.border,
+                                                    ),
+                                                shape = MaterialTheme.shapes.small,
+                                            ),
                                     ),
-                                ),
                             ) {
                                 AsyncImage(
                                     model = url,
@@ -453,16 +464,33 @@ private fun SortButton(
         modifier = Modifier.touchClickable(onClick = { onClick(sort) }),
         onClick = { onClick(sort) },
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (sort == selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = if (sort == selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.border),
-                shape = MaterialTheme.shapes.small,
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (sort ==
+                        selected
+                    ) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor =
+                    if (sort ==
+                        selected
+                    ) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             ),
-        ),
+        border =
+            ClickableSurfaceDefaults.border(
+                focusedBorder =
+                    Border(
+                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.border),
+                        shape = MaterialTheme.shapes.small,
+                    ),
+            ),
     ) {
         Text(sort.displayName, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
     }
@@ -477,16 +505,18 @@ private fun DialogActionButton(
     focusRequester: FocusRequester? = null,
 ) {
     Surface(
-        modifier = Modifier
-            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-            .touchClickable(onClick = onClick),
+        modifier =
+            Modifier
+                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+                .touchClickable(onClick = onClick),
         onClick = onClick,
         enabled = enabled,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
@@ -518,9 +548,10 @@ private fun CommentImageOverlay(
     BackHandler(onBack = onDismiss)
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -556,63 +587,66 @@ private fun fakeComment(
     isLiked: Boolean = false,
     isUp: Boolean = false,
     level: Int = 5,
-): Comment = Comment(
-    rpid = rpid,
-    oid = 1L,
-    type = 1,
-    mid = 100L,
-    rootRpid = 0L,
-    parentRpid = 0L,
-    userName = userName,
-    avatar = "",
-    level = level,
-    message = message,
-    pictures = emptyList(),
-    ctime = System.currentTimeMillis() / 1000,
-    likeCount = likeCount,
-    replyCount = replyCount,
-    isLiked = isLiked,
-    isUp = isUp,
-)
+): Comment =
+    Comment(
+        rpid = rpid,
+        oid = 1L,
+        type = 1,
+        mid = 100L,
+        rootRpid = 0L,
+        parentRpid = 0L,
+        userName = userName,
+        avatar = "",
+        level = level,
+        message = message,
+        pictures = emptyList(),
+        ctime = System.currentTimeMillis() / 1000,
+        likeCount = likeCount,
+        replyCount = replyCount,
+        isLiked = isLiked,
+        isUp = isUp,
+    )
 
 @Preview(device = "id:tv_1080p", showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 private fun CommentsContentPreview() {
     BVTheme {
         CommentsContent(
-            state = CommentUiState(
-                aid = 1L,
-                comments = listOf(
-                    fakeComment(
-                        rpid = 1,
-                        userName = "测试用户A",
-                        message = "这个视频做得太好了，学到了很多！",
-                        likeCount = 128,
-                        replyCount = 5,
-                        level = 6,
-                    ),
-                    fakeComment(
-                        rpid = 2,
-                        userName = "UP主本人",
-                        message = "感谢大家的支持！下期视频已经在做了。",
-                        likeCount = 56,
-                        replyCount = 12,
-                        isUp = true,
-                        level = 6,
-                    ),
-                    fakeComment(
-                        rpid = 3,
-                        userName = "路人乙",
-                        message = "沙发沙发，第一次这么靠前",
-                        likeCount = 3,
-                        replyCount = 0,
-                        level = 2,
-                    ),
+            state =
+                CommentUiState(
+                    aid = 1L,
+                    comments =
+                        listOf(
+                            fakeComment(
+                                rpid = 1,
+                                userName = "测试用户A",
+                                message = "这个视频做得太好了，学到了很多！",
+                                likeCount = 128,
+                                replyCount = 5,
+                                level = 6,
+                            ),
+                            fakeComment(
+                                rpid = 2,
+                                userName = "UP主本人",
+                                message = "感谢大家的支持！下期视频已经在做了。",
+                                likeCount = 56,
+                                replyCount = 12,
+                                isUp = true,
+                                level = 6,
+                            ),
+                            fakeComment(
+                                rpid = 3,
+                                userName = "路人乙",
+                                message = "沙发沙发，第一次这么靠前",
+                                likeCount = 3,
+                                replyCount = 0,
+                                level = 2,
+                            ),
+                        ),
+                    sort = CommentSort.Hot,
+                    total = 328,
+                    hasMore = false,
                 ),
-                sort = CommentSort.Hot,
-                total = 328,
-                hasMore = false,
-            ),
             mode = CommentDialogMode.Player,
             onDismiss = {},
             onRefresh = {},

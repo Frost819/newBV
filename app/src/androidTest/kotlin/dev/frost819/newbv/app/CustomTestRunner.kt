@@ -2,7 +2,6 @@ package dev.frost819.newbv.app
 
 import android.app.Application
 import android.content.Context
-import android.os.Bundle
 import androidx.test.runner.AndroidJUnitRunner
 
 /**
@@ -13,16 +12,14 @@ import androidx.test.runner.AndroidJUnitRunner
  * 使测试使用 Hilt 测试组件图。
  */
 class CustomTestRunner : AndroidJUnitRunner() {
-
     override fun newApplication(
         cl: ClassLoader,
         name: String,
-        context: Context
-    ): Application {
-        return super.newApplication(
+        context: Context,
+    ): Application =
+        super.newApplication(
             cl,
             "dev.frost819.newbv.app.HiltTestApplication_Application",
-            context
+            context,
         )
-    }
 }

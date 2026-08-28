@@ -6,9 +6,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.ui.state.search.SearchInputUiState
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.repositories.SearchRepository
+import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.repository.SearchHistoryRepository
-import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -30,137 +30,141 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
  * @param searchHistoryRepository 搜索历史持久化仓库
  */
 @HiltViewModel
-class SearchInputViewModel @Inject constructor(
-    private val searchRepository: SearchRepository,
-    private val searchHistoryRepository: SearchHistoryRepository,
-) : ViewModel() {
+class SearchInputViewModel
+    @Inject
+    constructor(
+        private val searchRepository: SearchRepository,
+        private val searchHistoryRepository: SearchHistoryRepository,
+    ) : ViewModel() {
+        private val logger = Loggers.get("SearchInputViewModel")
 
-    private val logger = Loggers.get("SearchInputViewModel")
-
-    companion object {
-        private const val LOAD_TIMEOUT_MS = 10_000L
-    }
-
-    private val _uiState = MutableStateFlow(SearchInputUiState())
-    val uiState = _uiState.asStateFlow()
-
-    init {
-        loadHotwords()
-        loadHistories()
-    }
-
-    /**
-     * 更新搜索关键词。
-     *
-     * keyword 非空时自动触发搜索建议加载。
-     */
-    fun updateKeyword(keyword: String) {
-        _uiState.update { it.copy(keyword = keyword) }
-        if (keyword.isNotEmpty()) {
-            loadSuggests(keyword)
-        } else {
-            _uiState.update { it.copy(suggests = emptyList()) }
+        companion object {
+            private const val LOAD_TIMEOUT_MS = 10_000L
         }
-    }
 
-    /**
-     * 提交搜索：记录历史。
-     *
-     * @param keyword 搜索关键词
-     */
-    fun commitSearch(keyword: String, onCompleted: () -> Unit = {}) {
-        if (keyword.isBlank()) return
-        viewModelScope.launch {
-            // 页面会在提交后跳转，确保数据库写入不会因源页面销毁而被取消。
-            withContext(NonCancellable) {
-                searchHistoryRepository.addHistory(keyword)
-            }
-            loadHistories()
-            onCompleted()
-        }
-    }
+        private val _uiState = MutableStateFlow(SearchInputUiState())
+        val uiState = _uiState.asStateFlow()
 
-    /** 删除指定搜索历史。 */
-    fun deleteHistory(keyword: String) {
-        viewModelScope.launch {
-            searchHistoryRepository.deleteHistory(keyword)
+        init {
+            loadHotwords()
             loadHistories()
         }
-    }
 
-    /** 清空全部搜索历史。 */
-    fun clearAllHistories() {
-        viewModelScope.launch {
-            searchHistoryRepository.clearAll()
-            loadHistories()
+        /**
+         * 更新搜索关键词。
+         *
+         * keyword 非空时自动触发搜索建议加载。
+         */
+        fun updateKeyword(keyword: String) {
+            _uiState.update { it.copy(keyword = keyword) }
+            if (keyword.isNotEmpty()) {
+                loadSuggests(keyword)
+            } else {
+                _uiState.update { it.copy(suggests = emptyList()) }
+            }
         }
-    }
 
-    /** 刷新热搜词。 */
-    fun refreshHotwords() {
-        _uiState.update { it.copy(hotwordsError = false) }
-        loadHotwords()
-    }
+        /**
+         * 提交搜索：记录历史。
+         *
+         * @param keyword 搜索关键词
+         */
+        fun commitSearch(
+            keyword: String,
+            onCompleted: () -> Unit = {},
+        ) {
+            if (keyword.isBlank()) return
+            viewModelScope.launch {
+                // 页面会在提交后跳转，确保数据库写入不会因源页面销毁而被取消。
+                withContext(NonCancellable) {
+                    searchHistoryRepository.addHistory(keyword)
+                }
+                loadHistories()
+                onCompleted()
+            }
+        }
 
-    private fun loadHotwords() {
-        if (_uiState.value.isLoadingHotwords) return
-        _uiState.update { it.copy(isLoadingHotwords = true, hotwordsError = false) }
+        /** 删除指定搜索历史。 */
+        fun deleteHistory(keyword: String) {
+            viewModelScope.launch {
+                searchHistoryRepository.deleteHistory(keyword)
+                loadHistories()
+            }
+        }
 
-        viewModelScope.launch {
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    searchRepository.getSearchHotwords(
-                        limit = 50,
-                        preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
-                    )
+        /** 清空全部搜索历史。 */
+        fun clearAllHistories() {
+            viewModelScope.launch {
+                searchHistoryRepository.clearAll()
+                loadHistories()
+            }
+        }
+
+        /** 刷新热搜词。 */
+        fun refreshHotwords() {
+            _uiState.update { it.copy(hotwordsError = false) }
+            loadHotwords()
+        }
+
+        private fun loadHotwords() {
+            if (_uiState.value.isLoadingHotwords) return
+            _uiState.update { it.copy(isLoadingHotwords = true, hotwordsError = false) }
+
+            viewModelScope.launch {
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        searchRepository.getSearchHotwords(
+                            limit = 50,
+                            preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
+                        )
+                    }
+                }.onSuccess { hotwords ->
+                    _uiState.update {
+                        it.copy(hotwords = hotwords, isLoadingHotwords = false, hotwordsError = false)
+                    }
+                    logger.info { "Loaded hotwords: ${hotwords.size}" }
+                }.onFailure { e ->
+                    if (e is CancellationException && e !is TimeoutCancellationException) {
+                        throw e
+                    }
+                    logger.warn { "Failed to load hotwords: $e" }
+                    _uiState.update { it.copy(isLoadingHotwords = false, hotwordsError = true) }
                 }
-            }.onSuccess { hotwords ->
-                _uiState.update {
-                    it.copy(hotwords = hotwords, isLoadingHotwords = false, hotwordsError = false)
+            }
+        }
+
+        private fun loadSuggests(keyword: String) {
+            _uiState.update { it.copy(isLoadingSuggests = true) }
+
+            viewModelScope.launch {
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        searchRepository.getSearchSuggest(
+                            keyword = keyword,
+                            preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
+                        )
+                    }
+                }.onSuccess { suggests ->
+                    _uiState.update { it.copy(suggests = suggests, isLoadingSuggests = false) }
+                }.onFailure { e ->
+                    if (e is CancellationException && e !is TimeoutCancellationException) {
+                        throw e
+                    }
+                    logger.warn { "Failed to load suggests: $e" }
+                    _uiState.update { it.copy(suggests = emptyList(), isLoadingSuggests = false) }
                 }
-                logger.info { "Loaded hotwords: ${hotwords.size}" }
-            }.onFailure { e ->
-                if (e is CancellationException && e !is TimeoutCancellationException) {
-                    throw e
+            }
+        }
+
+        private fun loadHistories() {
+            viewModelScope.launch {
+                runCatching {
+                    searchHistoryRepository.getHistories(20)
+                }.onSuccess { histories ->
+                    _uiState.update { it.copy(histories = histories) }
+                }.onFailure { e ->
+                    logger.warn { "Failed to load histories: $e" }
                 }
-                logger.warn { "Failed to load hotwords: $e" }
-                _uiState.update { it.copy(isLoadingHotwords = false, hotwordsError = true) }
             }
         }
     }
-
-    private fun loadSuggests(keyword: String) {
-        _uiState.update { it.copy(isLoadingSuggests = true) }
-
-        viewModelScope.launch {
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    searchRepository.getSearchSuggest(
-                        keyword = keyword,
-                        preferApiType = if (Prefs.apiType == DataApiType.App) ApiType.App else ApiType.Web,
-                    )
-                }
-            }.onSuccess { suggests ->
-                _uiState.update { it.copy(suggests = suggests, isLoadingSuggests = false) }
-            }.onFailure { e ->
-                if (e is CancellationException && e !is TimeoutCancellationException) {
-                    throw e
-                }
-                logger.warn { "Failed to load suggests: $e" }
-                _uiState.update { it.copy(suggests = emptyList(), isLoadingSuggests = false) }
-            }
-        }
-    }
-
-    private fun loadHistories() {
-        viewModelScope.launch {
-            runCatching {
-                searchHistoryRepository.getHistories(20)
-            }.onSuccess { histories ->
-                _uiState.update { it.copy(histories = histories) }
-            }.onFailure { e ->
-                logger.warn { "Failed to load histories: $e" }
-            }
-        }
-    }
-}

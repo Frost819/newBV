@@ -26,7 +26,6 @@ import java.nio.file.Files
  * init 块中的协程运行在 Dispatchers.IO 上，测试中使用 Thread.sleep 等待完成。
  */
 class LogViewerViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var httpServer: HttpServer
     private lateinit var crashHandler: CrashHandler
@@ -69,11 +68,12 @@ class LogViewerViewModelTest {
     @Test
     fun `LogViewerUiState with values`() {
         val files = listOf(File("test.log"))
-        val state = LogViewerUiState(
-            logFiles = files,
-            serverAddress = "192.168.1.1:8080",
-            isServerReady = true,
-        )
+        val state =
+            LogViewerUiState(
+                logFiles = files,
+                serverAddress = "192.168.1.1:8080",
+                isServerReady = true,
+            )
         assertThat(state.logFiles).hasSize(1)
         assertThat(state.serverAddress).isEqualTo("192.168.1.1:8080")
         assertThat(state.isServerReady).isTrue()

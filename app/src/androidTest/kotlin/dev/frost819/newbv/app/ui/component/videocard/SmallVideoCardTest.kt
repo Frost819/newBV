@@ -9,10 +9,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 /**
  * [SmallVideoCard] 的插桩测试。
@@ -22,21 +22,21 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class SmallVideoCardTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val fakeData = VideoCardData(
-        avid = 12345L,
-        title = "测试视频标题",
-        cover = "http://example.com/cover.jpg",
-        upName = "测试UP主",
-        upMid = 100L,
-        playString = "1.0万",
-        danmakuString = "500",
-        timeString = "02:00",
-        pubTime = "2024-01-01",
-    )
+    private val fakeData =
+        VideoCardData(
+            avid = 12345L,
+            title = "测试视频标题",
+            cover = "http://example.com/cover.jpg",
+            upName = "测试UP主",
+            upMid = 100L,
+            playString = "1.0万",
+            danmakuString = "500",
+            timeString = "02:00",
+            pubTime = "2024-01-01",
+        )
 
     private fun setContent(content: @androidx.compose.runtime.Composable () -> Unit) {
         composeRule.setContent {

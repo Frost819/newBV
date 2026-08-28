@@ -1,6 +1,8 @@
 package dev.frost819.newbv.biliapi.http.entity.index
 
-enum class IndexOrder(val id: Int) {
+enum class IndexOrder(
+    val id: Int,
+) {
     UpdateTime(0),
     DanmakuCount(1),
     PlayCount(2),

@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,7 +25,6 @@ import java.util.Date
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuthDataTest {
-
     companion object {
         private lateinit var testDataStore: DataStore<Preferences>
 
@@ -37,10 +35,11 @@ class AuthDataTest {
             val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             val file = File.createTempFile("test_authdata", ".preferences_pb")
             file.deleteOnExit()
-            testDataStore = PreferenceDataStoreFactory.create(
-                scope = scope,
-                produceFile = { file },
-            )
+            testDataStore =
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { file },
+                )
             Prefs.init(testDataStore)
         }
 
@@ -58,16 +57,17 @@ class AuthDataTest {
 
     @Test
     fun `toJson and fromJson roundtrip preserves all fields`() {
-        val original = AuthData(
-            uid = 12345L,
-            uidCkMd5 = "ckmd5",
-            sid = "sid-123",
-            biliJct = "jct-token",
-            sessData = "sess-data",
-            tokenExpiredDate = 1700000000000L,
-            accessToken = "access-token",
-            refreshToken = "refresh-token",
-        )
+        val original =
+            AuthData(
+                uid = 12345L,
+                uidCkMd5 = "ckmd5",
+                sid = "sid-123",
+                biliJct = "jct-token",
+                sessData = "sess-data",
+                tokenExpiredDate = 1700000000000L,
+                accessToken = "access-token",
+                refreshToken = "refresh-token",
+            )
 
         val json = original.toJson()
         val restored = AuthData.fromJson(json)
@@ -77,14 +77,15 @@ class AuthDataTest {
 
     @Test
     fun `toJson produces valid JSON with all fields`() {
-        val authData = AuthData(
-            uid = 100L,
-            uidCkMd5 = "md5",
-            sid = "sid",
-            biliJct = "jct",
-            sessData = "sess",
-            tokenExpiredDate = 1700000000000L,
-        )
+        val authData =
+            AuthData(
+                uid = 100L,
+                uidCkMd5 = "md5",
+                sid = "sid",
+                biliJct = "jct",
+                sessData = "sess",
+                tokenExpiredDate = 1700000000000L,
+            )
 
         val json = authData.toJson()
 
@@ -95,7 +96,10 @@ class AuthDataTest {
 
     @Test
     fun `fromJson handles default empty accessToken and refreshToken`() {
-        val json = """{"uid":1,"uidCkMd5":"m","sid":"s","biliJct":"j","sessData":"d","tokenExpiredDate":1700000000000}"""
+        val json =
+            """
+            {"uid":1,"uidCkMd5":"m","sid":"s","biliJct":"j","sessData":"d","tokenExpiredDate":1700000000000}
+            """.trimIndent()
 
         val authData = AuthData.fromJson(json)
 
@@ -105,16 +109,17 @@ class AuthDataTest {
 
     @Test
     fun `saveToPrefs writes all fields to Prefs`() {
-        val authData = AuthData(
-            uid = 999L,
-            uidCkMd5 = "ckmd5",
-            sid = "mysid",
-            biliJct = "myjct",
-            sessData = "mysess",
-            tokenExpiredDate = 1700000000000L,
-            accessToken = "mytoken",
-            refreshToken = "myrefresh",
-        )
+        val authData =
+            AuthData(
+                uid = 999L,
+                uidCkMd5 = "ckmd5",
+                sid = "mysid",
+                biliJct = "myjct",
+                sessData = "mysess",
+                tokenExpiredDate = 1700000000000L,
+                accessToken = "mytoken",
+                refreshToken = "myrefresh",
+            )
 
         authData.saveToPrefs()
 
@@ -154,16 +159,17 @@ class AuthDataTest {
 
     @Test
     fun `saveToPrefs and fromPrefs roundtrip`() {
-        val original = AuthData(
-            uid = 777L,
-            uidCkMd5 = "roundtrip",
-            sid = "rsid",
-            biliJct = "rjct",
-            sessData = "rsess",
-            tokenExpiredDate = 1900000000000L,
-            accessToken = "rtoken",
-            refreshToken = "rrefresh",
-        )
+        val original =
+            AuthData(
+                uid = 777L,
+                uidCkMd5 = "roundtrip",
+                sid = "rsid",
+                biliJct = "rjct",
+                sessData = "rsess",
+                tokenExpiredDate = 1900000000000L,
+                accessToken = "rtoken",
+                refreshToken = "rrefresh",
+            )
 
         original.saveToPrefs()
         val restored = AuthData.fromPrefs()

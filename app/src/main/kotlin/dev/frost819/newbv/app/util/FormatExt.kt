@@ -2,7 +2,7 @@ package dev.frost819.newbv.app.util
 
 import androidx.core.text.HtmlCompat
 
-/**
+/*
  * 数字与时间格式化扩展函数。
  */
 
@@ -14,11 +14,16 @@ import androidx.core.text.HtmlCompat
  * - >= 10000 显示 "n.n万"
  */
 fun Int?.toWanString(): String =
-    this?.let {
-        if (it < 0) ""
-        else if (it < 10_000) it.toString()
-        else "${(it / 1000) / 10f}万"
-    }.orEmpty()
+    this
+        ?.let {
+            if (it < 0) {
+                ""
+            } else if (it < 10_000) {
+                it.toString()
+            } else {
+                "${(it / 1000) / 10f}万"
+            }
+        }.orEmpty()
 
 /**
  * 将毫秒时长格式化为 "HH:MM:SS" 或 "MM:SS" 字符串。
@@ -57,6 +62,9 @@ fun Int.formatHourMinSec(): String = (this * 1000L).formatHourMinSec()
 /**
  * 去除字符串中的 HTML 标签（如搜索结果标题中的 <em> 高亮标签）。
  */
-fun String.removeHtmlTags(): String = HtmlCompat.fromHtml(
-    this, HtmlCompat.FROM_HTML_MODE_LEGACY,
-).toString()
+fun String.removeHtmlTags(): String =
+    HtmlCompat
+        .fromHtml(
+            this,
+            HtmlCompat.FROM_HTML_MODE_LEGACY,
+        ).toString()

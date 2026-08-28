@@ -2,8 +2,8 @@ package dev.frost819.newbv.app.ui.navigation
 
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
-import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.core.log.Loggers
+import dev.frost819.newbv.data.datastore.Prefs
 
 private val logger = Loggers.get("VideoCardNavigation")
 
@@ -28,7 +28,7 @@ fun NavController.navigateFromVideoCard(data: VideoCardData) {
                 epid = data.epid?.toLong(),
                 title = data.title,
                 cover = data.cover,
-            )
+            ),
         )
     }
 }

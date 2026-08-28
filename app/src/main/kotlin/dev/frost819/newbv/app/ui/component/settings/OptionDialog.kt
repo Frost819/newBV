@@ -43,27 +43,30 @@ fun <T : Enum<T>> OptionDialog(
 ) {
     val windowInfo = LocalWindowInfo.current
     val density = LocalDensity.current
-    val maxHeightDp = with(density) {
-        (windowInfo.containerSize.height * 0.6f).toDp()
-    }
+    val maxHeightDp =
+        with(density) {
+            (windowInfo.containerSize.height * 0.6f).toDp()
+        }
 
     BasicAlertDialog(
         modifier = modifier.padding(vertical = 24.dp),
         onDismissRequest = onDismiss,
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.9f)
+                    .wrapContentHeight(),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 4.dp,
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .heightIn(max = maxHeightDp)
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .wrapContentHeight()
+                        .heightIn(max = maxHeightDp)
+                        .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {

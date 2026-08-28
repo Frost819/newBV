@@ -25,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -43,6 +42,7 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.viewmodel.settings.LogViewerViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 import io.github.g0dkar.qrcode.QRCode
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -82,23 +82,25 @@ fun LogViewerScreen(
             qrImage = null
             return@LaunchedEffect
         }
-        val url = if (isCreateFocused) {
-            viewModel.getServerUrl()
-        } else {
-            selectedFile?.let { viewModel.getFileUrl(it) } ?: viewModel.getServerUrl()
-        }
+        val url =
+            if (isCreateFocused) {
+                viewModel.getServerUrl()
+            } else {
+                selectedFile?.let { viewModel.getFileUrl(it) } ?: viewModel.getServerUrl()
+            }
         qrImage = generateQrCode(url)
     }
 
     Scaffold(
         topBar = {
             Box(
-                modifier = Modifier.padding(
-                    start = 48.dp,
-                    top = 24.dp,
-                    bottom = 8.dp,
-                    end = 48.dp,
-                ),
+                modifier =
+                    Modifier.padding(
+                        start = 48.dp,
+                        top = 24.dp,
+                        bottom = 8.dp,
+                        end = 48.dp,
+                    ),
             ) {
                 Text(
                     text = "日志管理",
@@ -108,9 +110,10 @@ fun LogViewerScreen(
         },
     ) { innerPadding ->
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             Box(
                 modifier = Modifier.weight(1f),
@@ -122,15 +125,15 @@ fun LogViewerScreen(
                 ) {
                     item {
                         ListItem(
-                            modifier = Modifier
-                                .focusRequester(focusRequester)
-                                .onFocusChanged {
-                                    if (it.hasFocus) {
-                                        isCreateFocused = true
-                                        selectedFile = null
-                                    }
-                                }
-                                .touchClickable(onClick = { viewModel.createManualLog() }),
+                            modifier =
+                                Modifier
+                                    .focusRequester(focusRequester)
+                                    .onFocusChanged {
+                                        if (it.hasFocus) {
+                                            isCreateFocused = true
+                                            selectedFile = null
+                                        }
+                                    }.touchClickable(onClick = { viewModel.createManualLog() }),
                             selected = false,
                             onClick = { viewModel.createManualLog() },
                             headlineContent = {
@@ -141,12 +144,13 @@ fun LogViewerScreen(
 
                     items(items = uiState.logFiles, key = { it.name }) { file ->
                         ListItem(
-                            modifier = Modifier.onFocusChanged {
-                                if (it.hasFocus) {
-                                    isCreateFocused = false
-                                    selectedFile = file
-                                }
-                            },
+                            modifier =
+                                Modifier.onFocusChanged {
+                                    if (it.hasFocus) {
+                                        isCreateFocused = false
+                                        selectedFile = file
+                                    }
+                                },
                             selected = false,
                             onClick = {},
                             headlineContent = {
@@ -167,9 +171,10 @@ fun LogViewerScreen(
                     if (uiState.logFiles.isEmpty()) {
                         item {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(text = "无日志")
@@ -180,9 +185,10 @@ fun LogViewerScreen(
             }
 
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
@@ -196,10 +202,11 @@ fun LogViewerScreen(
                         textAlign = TextAlign.Center,
                     )
                     Box(
-                        modifier = Modifier
-                            .size(240.dp)
-                            .clip(MaterialTheme.shapes.large)
-                            .background(Color.White),
+                        modifier =
+                            Modifier
+                                .size(240.dp)
+                                .clip(MaterialTheme.shapes.large)
+                                .background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (qrImage != null) {
@@ -230,11 +237,10 @@ fun LogViewerScreen(
  * @param content 二维码内容 URL。
  * @return 生成的 [ImageBitmap]，失败返回 null。
  */
-private fun generateQrCode(content: String): ImageBitmap? {
-    return runCatching {
+private fun generateQrCode(content: String): ImageBitmap? =
+    runCatching {
         val output = ByteArrayOutputStream()
         QRCode(content).render().writeImage(output)
         val input = ByteArrayInputStream(output.toByteArray())
         BitmapFactory.decodeStream(input).asImageBitmap()
     }.getOrNull()
-}

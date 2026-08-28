@@ -347,7 +347,8 @@ class SearchRepositoryHelpersTest {
     fun `fromSearchTypeResult HTTP with activity result type returns empty lists via else branch`() {
         val activityJson =
             kotlinx.serialization.json.Json.encodeToString(
-                dev.frost819.newbv.biliapi.http.entity.search.SearchActivityResult.serializer(),
+                dev.frost819.newbv.biliapi.http.entity.search.SearchActivityResult
+                    .serializer(),
                 dev.frost819.newbv.biliapi.http.entity.search.SearchActivityResult(
                     status = 0,
                     author = "",
@@ -377,7 +378,8 @@ class SearchRepositoryHelpersTest {
                 eggHit = 0,
                 result =
                     listOf(
-                        kotlinx.serialization.json.Json.parseToJsonElement(activityJson),
+                        kotlinx.serialization.json.Json
+                            .parseToJsonElement(activityJson),
                     ),
             )
 
@@ -777,8 +779,10 @@ class SearchRepositoryHelpersTest {
             eggHit = 0,
             result =
                 listOf(
-                    kotlinx.serialization.json.Json.parseToJsonElement(videoJson),
-                    kotlinx.serialization.json.Json.parseToJsonElement(videoJson),
+                    kotlinx.serialization.json.Json
+                        .parseToJsonElement(videoJson),
+                    kotlinx.serialization.json.Json
+                        .parseToJsonElement(videoJson),
                 ),
         )
     }
@@ -834,7 +838,8 @@ class SearchRepositoryHelpersTest {
             eggHit = 0,
             result =
                 listOf(
-                    kotlinx.serialization.json.Json.parseToJsonElement(mediaJson),
+                    kotlinx.serialization.json.Json
+                        .parseToJsonElement(mediaJson),
                 ),
         )
     }
@@ -879,7 +884,8 @@ class SearchRepositoryHelpersTest {
             eggHit = 0,
             result =
                 listOf(
-                    kotlinx.serialization.json.Json.parseToJsonElement(userJson),
+                    kotlinx.serialization.json.Json
+                        .parseToJsonElement(userJson),
                 ),
         )
     }

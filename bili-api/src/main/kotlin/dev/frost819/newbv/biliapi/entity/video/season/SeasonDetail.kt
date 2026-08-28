@@ -38,8 +38,8 @@ data class SeasonDetail(
     var playerIcon: PlayerIcon? = null,
 ) {
     companion object {
-        fun fromSeasonData(seasonData: WebSeasonData): SeasonDetail {
-            return SeasonDetail(
+        fun fromSeasonData(seasonData: WebSeasonData): SeasonDetail =
+            SeasonDetail(
                 title = seasonData.title,
                 originTitle = null,
                 styles = seasonData.styles,
@@ -53,14 +53,14 @@ data class SeasonDetail(
                 seasons = seasonData.seasons.map { PgcSeason.fromSeason(it) },
                 episodes = seasonData.episodes.map { Episode.fromEpisode(it) },
                 sections =
-                    seasonData.section.map { Section.fromSection(it) }
+                    seasonData.section
+                        .map { Section.fromSection(it) }
                         // 过滤掉跳转别的 pgc 的视频后可能出现空列表
                         .filter { it.episodes.isNotEmpty() },
             )
-        }
 
-        fun fromSeasonData(seasonData: AppSeasonData): SeasonDetail {
-            return SeasonDetail(
+        fun fromSeasonData(seasonData: AppSeasonData): SeasonDetail =
+            SeasonDetail(
                 title = seasonData.title,
                 originTitle = seasonData.originName,
                 styles = seasonData.styles.map { it.name },
@@ -74,13 +74,15 @@ data class SeasonDetail(
                 seasons =
                     seasonData.modules
                         .firstOrNull { it.style == "season" }
-                        ?.data?.seasons
+                        ?.data
+                        ?.seasons
                         ?.map { PgcSeason.fromSeason(it) }
                         ?: emptyList(),
                 episodes =
                     seasonData.modules
                         .firstOrNull { it.style == "positive" }
-                        ?.data?.episodes
+                        ?.data
+                        ?.episodes
                         ?.map { Episode.fromEpisode(it) }
                         ?: emptyList(),
                 sections =
@@ -89,7 +91,6 @@ data class SeasonDetail(
                         .map { Section.fromModule(it) },
                 playerIcon = PlayerIcon.fromPlayerIcon(seasonData.playerIcon),
             )
-        }
     }
 
     /**
@@ -105,8 +106,8 @@ data class SeasonDetail(
         val progress: Progress? = null,
     ) {
         companion object {
-            fun fromUserStatus(userStatus: WebSeasonData.UserStatus): UserStatus {
-                return UserStatus(
+            fun fromUserStatus(userStatus: WebSeasonData.UserStatus): UserStatus =
+                UserStatus(
                     follow = userStatus.follow == 1,
                     pay = userStatus.pay == 1,
                     progress =
@@ -118,10 +119,9 @@ data class SeasonDetail(
                             )
                         },
                 )
-            }
 
-            fun fromUserStatus(userStatus: AppSeasonData.UserStatus): UserStatus {
-                return UserStatus(
+            fun fromUserStatus(userStatus: AppSeasonData.UserStatus): UserStatus =
+                UserStatus(
                     follow = userStatus.follow == 1,
                     pay = userStatus.pay == 1,
                     progress =
@@ -133,7 +133,6 @@ data class SeasonDetail(
                             )
                         },
                 )
-            }
         }
 
         /**
@@ -155,12 +154,11 @@ data class SeasonDetail(
         val publishDate: String,
     ) {
         companion object {
-            fun fromPublish(publish: dev.frost819.newbv.biliapi.http.entity.season.Publish): Publish {
-                return Publish(
+            fun fromPublish(publish: dev.frost819.newbv.biliapi.http.entity.season.Publish): Publish =
+                Publish(
                     isPublished = publish.isStarted,
                     publishDate = publish.pubTimeShow,
                 )
-            }
         }
     }
 }

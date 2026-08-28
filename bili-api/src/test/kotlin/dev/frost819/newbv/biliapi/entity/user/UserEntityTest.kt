@@ -132,10 +132,12 @@ class UserEntityTest {
 
     @Suppress("LongMethod")
     private fun fakeFansMedal() =
-        dev.frost819.newbv.biliapi.http.entity.user.UserInfoData.FansMedal(show = false, wear = false, medal = null)
+        dev.frost819.newbv.biliapi.http.entity.user.UserInfoData
+            .FansMedal(show = false, wear = false, medal = null)
 
     private fun fakeOfficial() =
-        dev.frost819.newbv.biliapi.http.entity.user.Official(role = 0, title = "", desc = "", type = -1)
+        dev.frost819.newbv.biliapi.http.entity.user
+            .Official(role = 0, title = "", desc = "", type = -1)
 
     private fun fakeVip() =
         dev.frost819.newbv.biliapi.http.entity.user.Vip(
@@ -182,9 +184,13 @@ class UserEntityTest {
             condition = "",
         )
 
-    private fun fakeUserHonours() = dev.frost819.newbv.biliapi.http.entity.user.UserHonours(mid = 0L)
+    private fun fakeUserHonours() =
+        dev.frost819.newbv.biliapi.http.entity.user
+            .UserHonours(mid = 0L)
 
-    private fun fakeSysNotice() = dev.frost819.newbv.biliapi.http.entity.user.UserInfoData.SysNotice()
+    private fun fakeSysNotice() =
+        dev.frost819.newbv.biliapi.http.entity.user.UserInfoData
+            .SysNotice()
 
     private fun fakeLiveRoom() =
         dev.frost819.newbv.biliapi.http.entity.user.UserInfoData.LiveRoom(
@@ -209,7 +215,8 @@ class UserEntityTest {
         )
 
     private fun fakeProfession() =
-        dev.frost819.newbv.biliapi.http.entity.user.Profession(name = "", department = "", title = "", isShow = 0)
+        dev.frost819.newbv.biliapi.http.entity.user
+            .Profession(name = "", department = "", title = "", isShow = 0)
 
     private fun fakeSeries() =
         dev.frost819.newbv.biliapi.http.entity.user.UserInfoData.Series(
@@ -229,7 +236,9 @@ class UserEntityTest {
                 ),
         )
 
-    private fun fakeOfficialVerify() = dev.frost819.newbv.biliapi.http.entity.user.OfficialVerify(type = -1, desc = "")
+    private fun fakeOfficialVerify() =
+        dev.frost819.newbv.biliapi.http.entity.user
+            .OfficialVerify(type = -1, desc = "")
 
     private fun fakeFollowedUserVip() =
         dev.frost819.newbv.biliapi.http.entity.user.UserFollowData.FollowedUser.Vip(

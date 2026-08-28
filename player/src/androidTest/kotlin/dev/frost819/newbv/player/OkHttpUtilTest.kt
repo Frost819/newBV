@@ -17,7 +17,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class OkHttpUtilTest {
-
     private lateinit var context: Context
 
     @Before

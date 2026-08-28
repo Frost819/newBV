@@ -76,12 +76,14 @@ fun FavoriteScreen(
     }
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.favoriteItems.size - 20
-            }
-            .collect {
+            }.collect {
                 if (state.currentFolderId != -1L) {
                     viewModel.loadFavoriteItems(state.currentFolderId)
                 }
@@ -91,9 +93,10 @@ fun FavoriteScreen(
     Column(modifier = modifier.fillMaxSize()) {
         if (state.favoriteFolders.isNotEmpty()) {
             androidx.compose.foundation.lazy.LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(state.favoriteFolders.size) { index ->
@@ -102,29 +105,36 @@ fun FavoriteScreen(
                         onClick = {
                             viewModel.loadFavoriteItems(folder.id, forceRefresh = true)
                         },
-                        modifier = Modifier.touchClickable(onClick = {
-                            viewModel.loadFavoriteItems(folder.id, forceRefresh = true)
-                        }),
-                        shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                        ),
-                        colors = androidx.tv.material3.ClickableSurfaceDefaults.colors(
-                            containerColor = if (state.currentFolderId == folder.id) {
-                                androidx.tv.material3.MaterialTheme.colorScheme.primary
-                            } else {
-                                androidx.tv.material3.MaterialTheme.colorScheme.surface
-                            },
-                        ),
+                        modifier =
+                            Modifier.touchClickable(onClick = {
+                                viewModel.loadFavoriteItems(folder.id, forceRefresh = true)
+                            }),
+                        shape =
+                            androidx.tv.material3.ClickableSurfaceDefaults.shape(
+                                shape =
+                                    androidx.compose.foundation.shape
+                                        .RoundedCornerShape(50),
+                            ),
+                        colors =
+                            androidx.tv.material3.ClickableSurfaceDefaults.colors(
+                                containerColor =
+                                    if (state.currentFolderId == folder.id) {
+                                        androidx.tv.material3.MaterialTheme.colorScheme.primary
+                                    } else {
+                                        androidx.tv.material3.MaterialTheme.colorScheme.surface
+                                    },
+                            ),
                     ) {
                         androidx.tv.material3.Text(
                             text = "${folder.title} (${folder.mediaCount})",
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             style = androidx.tv.material3.MaterialTheme.typography.labelLarge,
-                            color = if (state.currentFolderId == folder.id) {
-                                androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                androidx.tv.material3.MaterialTheme.colorScheme.onSurface
-                            },
+                            color =
+                                if (state.currentFolderId == folder.id) {
+                                    androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+                                },
                         )
                     }
                 }
@@ -142,18 +152,19 @@ fun FavoriteScreen(
                 items = state.favoriteItems,
                 key = { _, item -> item.id },
             ) { index, item ->
-                val cardData = remember(item) {
-                    VideoCardData(
-                        avid = item.id,
-                        title = item.title,
-                        cover = item.cover,
-                        playString = "",
-                        danmakuString = "",
-                        timeString = (item.duration * 1000L).formatHourMinSec(),
-                        upName = item.upper.name,
-                        upMid = item.upper.mid,
-                    )
-                }
+                val cardData =
+                    remember(item) {
+                        VideoCardData(
+                            avid = item.id,
+                            title = item.title,
+                            cover = item.cover,
+                            playString = "",
+                            danmakuString = "",
+                            timeString = (item.duration * 1000L).formatHourMinSec(),
+                            upName = item.upper.name,
+                            upMid = item.upper.mid,
+                        )
+                    }
                 SmallVideoCard(
                     modifier = Modifier.focusSaverItem(focusSaver, index),
                     data = cardData,

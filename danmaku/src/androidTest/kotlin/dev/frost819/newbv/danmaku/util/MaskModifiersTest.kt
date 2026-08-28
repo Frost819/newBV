@@ -2,7 +2,6 @@ package dev.frost819.newbv.danmaku.util
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -12,8 +11,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.common.truth.Truth.assertThat
 import com.caverock.androidsvg.SVG
+import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMaskFrame
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMobMaskFrame
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuWebMaskFrame
@@ -32,7 +31,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class MaskModifiersTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -44,9 +42,10 @@ class MaskModifiersTest {
 
         composeRule.setContent {
             Canvas(
-                modifier = Modifier
-                    .size(200.dp)
-                    .bitmapMask(bitmap, videoAspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .bitmapMask(bitmap, videoAspectRatio = 16f / 9f),
             ) { }
         }
 
@@ -59,9 +58,10 @@ class MaskModifiersTest {
 
         composeRule.setContent {
             Canvas(
-                modifier = Modifier
-                    .size(200.dp)
-                    .bitmapMask(bitmap, videoAspectRatio = 1.0f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .bitmapMask(bitmap, videoAspectRatio = 1.0f),
             ) { }
         }
 
@@ -79,12 +79,13 @@ class MaskModifiersTest {
         // Row 1: 00000000 (all black)       = 0x00
         val image = byteArrayOf(0xFF.toByte(), 0x00.toByte())
 
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = width,
-            height = height,
-            image = image
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = width,
+                height = height,
+                image = image,
+            )
 
         val bmp = createMobMaskBitmap(frame)
 
@@ -111,12 +112,13 @@ class MaskModifiersTest {
         // 10101010 = 0xAA → alternating transparent/black
         val image = byteArrayOf(0xAA.toByte())
 
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = width,
-            height = height,
-            image = image
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = width,
+                height = height,
+                image = image,
+            )
 
         val bmp = createMobMaskBitmap(frame)
 
@@ -132,19 +134,21 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuMobMask_appliesInComposeWithoutCrash() {
-        val frame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = 8,
-            height = 2,
-            image = byteArrayOf(0xFF.toByte(), 0x00.toByte())
-        )
+        val frame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = 8,
+                height = 2,
+                image = byteArrayOf(0xFF.toByte(), 0x00.toByte()),
+            )
 
         composeRule.setContent {
             Text(
                 text = "Masked Content",
-                modifier = Modifier
-                    .size(200.dp)
-                    .danmakuMobMask(frame, aspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .danmakuMobMask(frame, aspectRatio = 16f / 9f),
             )
         }
 
@@ -155,11 +159,12 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuWebMask_parsesSvgAndCreatesBitmap() {
-        val svg = """
+        val svg =
+            """
             <svg width="100" height="50" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100" height="50" fill="black"/>
             </svg>
-        """.trimIndent()
+            """.trimIndent()
 
         val svgObj = SVG.getFromString(svg)
         assertThat(svgObj).isNotNull()
@@ -176,10 +181,11 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuWebMask_withInvalidSvg_returnsNullBitmap() {
-        val frame = DanmakuWebMaskFrame(
-            range = 0L until 1000L,
-            svg = "not a valid svg"
-        )
+        val frame =
+            DanmakuWebMaskFrame(
+                range = 0L until 1000L,
+                svg = "not a valid svg",
+            )
 
         val result = runCatching { SVG.getFromString(frame.svg) }
         assertThat(result.isFailure).isTrue()
@@ -187,23 +193,26 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuWebMask_appliesInComposeWithoutCrash() {
-        val svg = """
+        val svg =
+            """
             <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100" height="100" fill="black"/>
             </svg>
-        """.trimIndent()
+            """.trimIndent()
 
-        val frame = DanmakuWebMaskFrame(
-            range = 0L until 1000L,
-            svg = svg
-        )
+        val frame =
+            DanmakuWebMaskFrame(
+                range = 0L until 1000L,
+                svg = svg,
+            )
 
         composeRule.setContent {
             Text(
                 text = "WebMasked Content",
-                modifier = Modifier
-                    .size(200.dp)
-                    .danmakuWebMask(frame, aspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .danmakuWebMask(frame, aspectRatio = 16f / 9f),
             )
         }
 
@@ -217,9 +226,10 @@ class MaskModifiersTest {
         composeRule.setContent {
             Text(
                 text = "No Mask",
-                modifier = Modifier
-                    .size(200.dp)
-                    .danmakuMask(null, aspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .danmakuMask(null, aspectRatio = 16f / 9f),
             )
         }
 
@@ -228,19 +238,21 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuMask_withMobFrame_appliesCorrectly() {
-        val frame: DanmakuMaskFrame = DanmakuMobMaskFrame(
-            range = 0L until 1000L,
-            width = 8,
-            height = 2,
-            image = byteArrayOf(0xFF.toByte(), 0x00.toByte())
-        )
+        val frame: DanmakuMaskFrame =
+            DanmakuMobMaskFrame(
+                range = 0L until 1000L,
+                width = 8,
+                height = 2,
+                image = byteArrayOf(0xFF.toByte(), 0x00.toByte()),
+            )
 
         composeRule.setContent {
             Text(
                 text = "Mob Mask",
-                modifier = Modifier
-                    .size(200.dp)
-                    .danmakuMask(frame, aspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .danmakuMask(frame, aspectRatio = 16f / 9f),
             )
         }
 
@@ -249,23 +261,26 @@ class MaskModifiersTest {
 
     @Test
     fun danmakuMask_withWebFrame_appliesCorrectly() {
-        val svg = """
+        val svg =
+            """
             <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
                 <rect width="50" height="50" fill="black"/>
             </svg>
-        """.trimIndent()
+            """.trimIndent()
 
-        val frame: DanmakuMaskFrame = DanmakuWebMaskFrame(
-            range = 0L until 1000L,
-            svg = svg
-        )
+        val frame: DanmakuMaskFrame =
+            DanmakuWebMaskFrame(
+                range = 0L until 1000L,
+                svg = svg,
+            )
 
         composeRule.setContent {
             Text(
                 text = "Web Mask",
-                modifier = Modifier
-                    .size(200.dp)
-                    .danmakuMask(frame, aspectRatio = 16f / 9f)
+                modifier =
+                    Modifier
+                        .size(200.dp)
+                        .danmakuMask(frame, aspectRatio = 16f / 9f),
             )
         }
 
@@ -282,12 +297,13 @@ class MaskModifiersTest {
         val height = frame.height
         val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-        val pixels = IntArray(width * height) { i ->
-            val byteIndex = i / 8
-            val bitOffset = 7 - (i % 8)
-            val bit = (frame.image[byteIndex].toInt() shr bitOffset) and 1
-            if (bit == 1) android.graphics.Color.TRANSPARENT else android.graphics.Color.BLACK
-        }
+        val pixels =
+            IntArray(width * height) { i ->
+                val byteIndex = i / 8
+                val bitOffset = 7 - (i % 8)
+                val bit = (frame.image[byteIndex].toInt() shr bitOffset) and 1
+                if (bit == 1) android.graphics.Color.TRANSPARENT else android.graphics.Color.BLACK
+            }
         bmp.setPixels(pixels, 0, width, 0, 0, width, height)
         return bmp
     }

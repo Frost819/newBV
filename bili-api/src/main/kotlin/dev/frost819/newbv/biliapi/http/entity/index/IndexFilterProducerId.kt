@@ -28,7 +28,27 @@ object IndexFilterProducerId {
 
     private val producerIdIds =
         listOf(
-            -1, 4, 1, 7, 14, 2, 6, 8, 9, 5, 3, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20,
+            -1,
+            4,
+            1,
+            7,
+            14,
+            2,
+            6,
+            8,
+            9,
+            5,
+            3,
+            10,
+            11,
+            12,
+            13,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
         )
 
     val producerIds by lazy { producerIdIds.associateWith { producerIdFilter[it]!! } }

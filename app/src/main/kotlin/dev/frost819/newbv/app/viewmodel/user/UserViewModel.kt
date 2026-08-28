@@ -19,42 +19,44 @@ import javax.inject.Inject
  * @property accountRepository 账户仓库。
  */
 @HiltViewModel
-class UserViewModel @Inject constructor(
-    private val accountRepository: AccountRepositoryImpl,
-) : ViewModel() {
+class UserViewModel
+    @Inject
+    constructor(
+        private val accountRepository: AccountRepositoryImpl,
+    ) : ViewModel() {
+        /**
+         * 当前账户 UI 状态。
+         *
+         * 直接映射 [AccountRepositoryImpl.uiState]，随登录态变化自动更新。
+         */
+        val uiState: StateFlow<AccountUiState> =
+            accountRepository.uiState
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = AccountUiState(),
+                )
 
-    /**
-     * 当前账户 UI 状态。
-     *
-     * 直接映射 [AccountRepositoryImpl.uiState]，随登录态变化自动更新。
-     */
-    val uiState: StateFlow<AccountUiState> = accountRepository.uiState
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = AccountUiState(),
-        )
-
-    init {
-        viewModelScope.launch {
-            if (accountRepository.isLogin()) {
-                accountRepository.reloadAvatar()
-                accountRepository.refreshUserInfo()
+        init {
+            viewModelScope.launch {
+                if (accountRepository.isLogin()) {
+                    accountRepository.reloadAvatar()
+                    accountRepository.refreshUserInfo()
+                }
             }
         }
-    }
 
-    /**
-     * 强制刷新用户信息（从网络）。
-     */
-    fun refreshUserInfo() {
-        viewModelScope.launch { accountRepository.refreshUserInfo() }
-    }
+        /**
+         * 强制刷新用户信息（从网络）。
+         */
+        fun refreshUserInfo() {
+            viewModelScope.launch { accountRepository.refreshUserInfo() }
+        }
 
-    /**
-     * 切换无痕模式。
-     */
-    fun toggleIncognitoMode() {
-        accountRepository.toggleIncognitoMode()
+        /**
+         * 切换无痕模式。
+         */
+        fun toggleIncognitoMode() {
+            accountRepository.toggleIncognitoMode()
+        }
     }
-}

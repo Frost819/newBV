@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -39,7 +37,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,8 +59,8 @@ import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
-import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
+import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.state.search.SearchResultItem
@@ -74,27 +71,27 @@ import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.search.SearchResultViewModel
-import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
-import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
 import dev.frost819.newbv.biliapi.repositories.SearchType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
-private val searchTypeLabels = mapOf(
-    SearchType.Video to "视频",
-    SearchType.MediaBangumi to "番剧",
-    SearchType.MediaFt to "影视",
-    SearchType.BiliUser to "用户",
-    SearchType.LiveRoom to "直播间",
-)
+private val searchTypeLabels =
+    mapOf(
+        SearchType.Video to "视频",
+        SearchType.MediaBangumi to "番剧",
+        SearchType.MediaFt to "影视",
+        SearchType.BiliUser to "用户",
+        SearchType.LiveRoom to "直播间",
+    )
 
-private val searchTypeColumns = mapOf(
-    SearchType.Video to 4,
-    SearchType.MediaBangumi to 6,
-    SearchType.MediaFt to 6,
-    SearchType.BiliUser to 5,
-    SearchType.LiveRoom to 4,
-)
+private val searchTypeColumns =
+    mapOf(
+        SearchType.Video to 4,
+        SearchType.MediaBangumi to 6,
+        SearchType.MediaFt to 6,
+        SearchType.BiliUser to 5,
+        SearchType.LiveRoom to 4,
+    )
 
 /**
  * 搜索结果页内容。
@@ -124,13 +121,14 @@ fun SearchResultContent(
     val activeResult = uiState.results[uiState.activeType] ?: TypedSearchResult(uiState.activeType)
     val columnCount = searchTypeColumns[uiState.activeType] ?: 4
 
-    val isVideoSearchViaWebApi = remember {
-        derivedStateOf {
-            uiState.activeType == SearchType.Video &&
+    val isVideoSearchViaWebApi =
+        remember {
+            derivedStateOf {
+                uiState.activeType == SearchType.Video &&
                     dev.frost819.newbv.data.datastore.Prefs.apiType ==
                     dev.frost819.newbv.data.datastore.ApiType.Web
+            }
         }
-    }
 
     BackHandler(focusOnContent) {
         runCatching { tabRowFocusRequester.requestFocus() }
@@ -144,12 +142,14 @@ fun SearchResultContent(
 
     LaunchedEffect(gridState) {
         snapshotFlow {
-            val lastIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            val lastIndex =
+                gridState.layoutInfo.visibleItemsInfo
+                    .lastOrNull()
+                    ?.index ?: -1
             val current = viewModel.uiState.value
             val count = current.results[current.activeType]?.count ?: 0
             lastIndex to count
-        }
-            .distinctUntilChanged()
+        }.distinctUntilChanged()
             .filter { (index, count) -> index >= 0 && index >= count - 20 }
             .collect {
                 viewModel.loadMore(viewModel.uiState.value.activeType)
@@ -157,25 +157,31 @@ fun SearchResultContent(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onKeyEvent {
-                if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
-                    if (isVideoSearchViaWebApi.value) {
-                        viewModel.toggleFilter(true)
-                        true
-                    } else false
-                } else false
-            },
+        modifier =
+            modifier
+                .fillMaxSize()
+                .onKeyEvent {
+                    if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
+                        if (isVideoSearchViaWebApi.value) {
+                            viewModel.toggleFilter(true)
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                },
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
             // 标题栏
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 48.dp, top = 24.dp, bottom = 8.dp, end = 48.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 48.dp, top = 24.dp, bottom = 8.dp, end = 48.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
                 Text(
@@ -202,20 +208,24 @@ fun SearchResultContent(
 
             // 结果网格
             LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusGroup()
-                    .onKeyEvent {
-                        if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
-                            if (isVideoSearchViaWebApi.value) {
-                                viewModel.toggleFilter(true)
-                                true
-                            } else false
-                        } else false
-                    }
-                    .onFocusChanged {
-                        focusOnContent = it.hasFocus
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .focusGroup()
+                        .onKeyEvent {
+                            if (it.key == Key.Menu && it.type == KeyEventType.KeyDown) {
+                                if (isVideoSearchViaWebApi.value) {
+                                    viewModel.toggleFilter(true)
+                                    true
+                                } else {
+                                    false
+                                }
+                            } else {
+                                false
+                            }
+                        }.onFocusChanged {
+                            focusOnContent = it.hasFocus
+                        },
                 state = gridState,
                 columns = GridCells.Fixed(columnCount),
                 contentPadding = PaddingValues(24.dp),
@@ -236,17 +246,18 @@ fun SearchResultContent(
                             val focusKey = "video_${v.aid}"
                             SmallVideoCard(
                                 modifier = Modifier.focusSaverItem(focusSaver, focusKey),
-                                data = VideoCardData(
-                                    avid = v.aid,
-                                    title = v.title.removeHtmlTags(),
-                                    cover = v.cover,
-                                    playString = v.play.toWanString(),
-                                    danmakuString = v.danmaku.toWanString(),
-                                    timeString = v.duration.formatHourMinSec(),
-                                    upName = v.author,
-                                    upMid = v.mid,
-                                    pubTime = v.pubTime,
-                                ),
+                                data =
+                                    VideoCardData(
+                                        avid = v.aid,
+                                        title = v.title.removeHtmlTags(),
+                                        cover = v.cover,
+                                        playString = v.play.toWanString(),
+                                        danmakuString = v.danmaku.toWanString(),
+                                        timeString = v.duration.formatHourMinSec(),
+                                        upName = v.author,
+                                        upMid = v.mid,
+                                        pubTime = v.pubTime,
+                                    ),
                                 onClick = {
                                     navController.navigate(VideoDetailRoute(aid = v.aid))
                                 },
@@ -264,12 +275,13 @@ fun SearchResultContent(
                             val focusKey = "pgc_${p.seasonId}"
                             SeasonCard(
                                 modifier = Modifier.focusSaverItem(focusSaver, focusKey),
-                                data = SeasonCardData(
-                                    seasonId = p.seasonId,
-                                    title = p.title.removeHtmlTags(),
-                                    cover = p.cover,
-                                    rating = if (p.star > 0) String.format("%.1f", p.star) else null,
-                                ),
+                                data =
+                                    SeasonCardData(
+                                        seasonId = p.seasonId,
+                                        title = p.title.removeHtmlTags(),
+                                        cover = p.cover,
+                                        rating = if (p.star > 0) String.format("%.1f", p.star) else null,
+                                    ),
                                 onClick = {
                                     navController.navigate(
                                         PgcFeatureRoute(
@@ -297,18 +309,19 @@ fun SearchResultContent(
                             val focusKey = "live_${room.roomId}"
                             LiveRoomCard(
                                 modifier = Modifier.focusSaverItem(focusSaver, focusKey),
-                                data = LiveRoomCardData(
-                                    roomId = room.roomId,
-                                    title = room.title.removeHtmlTags(),
-                                    uname = room.uname.removeHtmlTags(),
-                                    uid = room.uid,
-                                    cover = room.cover,
-                                    face = room.face,
-                                    areaV2Name = room.areaName.removeHtmlTags(),
-                                    areaV2ParentName = "",
-                                    onlineString = room.online.toWanString(),
-                                    watchedString = "",
-                                ),
+                                data =
+                                    LiveRoomCardData(
+                                        roomId = room.roomId,
+                                        title = room.title.removeHtmlTags(),
+                                        uname = room.uname.removeHtmlTags(),
+                                        uid = room.uid,
+                                        cover = room.cover,
+                                        face = room.face,
+                                        areaV2Name = room.areaName.removeHtmlTags(),
+                                        areaV2ParentName = "",
+                                        onlineString = room.online.toWanString(),
+                                        watchedString = "",
+                                    ),
                                 onClick = {
                                     navController.navigate(LivePlayerRoute(roomId = room.roomId))
                                 },
@@ -318,7 +331,10 @@ fun SearchResultContent(
                 }
 
                 // 底部加载/错误/没有更多
-                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(columnCount) }) {
+                item(span = {
+                    androidx.compose.foundation.lazy.grid
+                        .GridItemSpan(columnCount)
+                }) {
                     ListFooterTip(
                         isLoading = activeResult.isLoading,
                         isError = activeResult.error,
@@ -332,9 +348,10 @@ fun SearchResultContent(
         // 覆盖在标题栏上方，不参与标题栏测量，避免改变结果区域高度。
         if (isVideoSearchViaWebApi.value) {
             IconButton(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, end = 40.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 16.dp, end = 40.dp),
                 onClick = { viewModel.toggleFilter(true) },
             ) {
                 Icon(

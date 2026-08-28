@@ -448,11 +448,18 @@ class SeasonRepositoryUnitTest {
 
     private fun httpEpisode() =
         Timeline.Episode(
-            cover = "http://cover.test", delay = 0, delayId = 0,
-            delayIndex = "", delayReason = "",
-            episodeId = 100, pubIndex = "第1话", pubTime = "2024-01-01",
-            pubTs = 1704067200, _published = 1,
-            seasonId = 400, squareCover = "http://square.test",
+            cover = "http://cover.test",
+            delay = 0,
+            delayId = 0,
+            delayIndex = "",
+            delayReason = "",
+            episodeId = 100,
+            pubIndex = "第1话",
+            pubTime = "2024-01-01",
+            pubTs = 1704067200,
+            _published = 1,
+            seasonId = 400,
+            squareCover = "http://square.test",
             title = "番剧名",
         )
 }

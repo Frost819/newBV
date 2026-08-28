@@ -23,16 +23,21 @@ import java.util.concurrent.ConcurrentHashMap
  * @param cache 图片解码 LRU 缓存
  * @return 缩略图帧信息
  */
-suspend fun VideoShot.getSpriteFrame(time: Int, cache: VideoShotImageCache): SpriteFrame {
+suspend fun VideoShot.getSpriteFrame(
+    time: Int,
+    cache: VideoShotImageCache,
+): SpriteFrame {
     val index = findClosestValueIndex(times, time.toUShort())
     val singleImgCount = imageCountX * imageCountY
     val imagesIndex = index / singleImgCount
     val imageIndex = index % singleImgCount
 
-    val spriteSheet = cache.getOrDecodeImage(
-        imagesIndex,
-        images[imagesIndex]!!,
-    ).asImageBitmap()
+    val spriteSheet =
+        cache
+            .getOrDecodeImage(
+                imagesIndex,
+                images[imagesIndex]!!,
+            ).asImageBitmap()
 
     val cellWidth = spriteSheet.width / imageCountX
     val cellHeight = spriteSheet.height / imageCountY
@@ -49,7 +54,10 @@ suspend fun VideoShot.getSpriteFrame(time: Int, cache: VideoShotImageCache): Spr
 /**
  * 二分查找最接近目标值的索引。
  */
-private fun findClosestValueIndex(array: List<UShort>, target: UShort): Int {
+private fun findClosestValueIndex(
+    array: List<UShort>,
+    target: UShort,
+): Int {
     var left = 0
     var right = array.size - 1
     while (left < right) {
@@ -75,10 +83,11 @@ class VideoShotImageCache {
     private val activeTasks = ConcurrentHashMap<Int, Deferred<Bitmap>>()
 
     companion object {
-        val bitmapOptions = BitmapFactory.Options().apply {
-            inPreferredConfig = Bitmap.Config.RGB_565
-            inScaled = false
-        }
+        val bitmapOptions =
+            BitmapFactory.Options().apply {
+                inPreferredConfig = Bitmap.Config.RGB_565
+                inScaled = false
+            }
     }
 
     /**
@@ -91,24 +100,33 @@ class VideoShotImageCache {
      * @param imageData 图片二进制数据
      * @return 解码后的位图
      */
-    suspend fun getOrDecodeImage(imagesIndex: Int, imageData: ByteArray): Bitmap = coroutineScope {
-        memoryCache.get(imagesIndex)?.let { return@coroutineScope it }
+    suspend fun getOrDecodeImage(
+        imagesIndex: Int,
+        imageData: ByteArray,
+    ): Bitmap =
+        coroutineScope {
+            memoryCache.get(imagesIndex)?.let { return@coroutineScope it }
 
-        val task = activeTasks.getOrPut(imagesIndex) {
-            async(Dispatchers.IO) {
-                val decoded = BitmapFactory.decodeByteArray(
-                    imageData, 0, imageData.size, bitmapOptions,
-                )
-                memoryCache.put(imagesIndex, decoded)
-                decoded
+            val task =
+                activeTasks.getOrPut(imagesIndex) {
+                    async(Dispatchers.IO) {
+                        val decoded =
+                            BitmapFactory.decodeByteArray(
+                                imageData,
+                                0,
+                                imageData.size,
+                                bitmapOptions,
+                            )
+                        memoryCache.put(imagesIndex, decoded)
+                        decoded
+                    }
+                }
+            try {
+                return@coroutineScope task.await()
+            } finally {
+                activeTasks.remove(imagesIndex)
             }
         }
-        try {
-            return@coroutineScope task.await()
-        } finally {
-            activeTasks.remove(imagesIndex)
-        }
-    }
 }
 
 /**

@@ -50,31 +50,36 @@ fun SeasonCard(
     Surface(
         modifier = modifier.touchClickable(onClick = onClick),
         onClick = onClick,
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            pressedContainerColor = MaterialTheme.colorScheme.surface,
-        ),
-        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.large),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                    border = BorderStroke(width = 3.dp, color = MaterialTheme.colorScheme.border),
-                shape = MaterialTheme.shapes.large,
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                pressedContainerColor = MaterialTheme.colorScheme.surface,
             ),
-        ),
+        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.large),
+        border =
+            ClickableSurfaceDefaults.border(
+                focusedBorder =
+                    Border(
+                        border = BorderStroke(width = 3.dp, color = MaterialTheme.colorScheme.border),
+                        shape = MaterialTheme.shapes.large,
+                    ),
+            ),
     ) {
         Column {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.large),
                 contentAlignment = Alignment.BottomCenter,
             ) {
                 AsyncImage(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(0.75f)
-                        .clip(MaterialTheme.shapes.large),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(0.75f)
+                            .clip(MaterialTheme.shapes.large),
                     model = data.cover,
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
@@ -82,23 +87,26 @@ fun SeasonCard(
 
                 if (data.hasRating) {
                     Box(
-                        modifier = Modifier
-                            .height(48.dp)
-                            .fillMaxWidth()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.8f),
+                        modifier =
+                            Modifier
+                                .height(48.dp)
+                                .fillMaxWidth()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors =
+                                            listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.8f),
+                                            ),
                                     ),
                                 ),
-                            ),
                     )
                     Text(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .fillMaxWidth()
-                            .padding(8.dp, 0.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .fillMaxWidth()
+                                .padding(8.dp, 0.dp),
                         text = data.rating ?: "",
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,

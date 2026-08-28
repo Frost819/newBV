@@ -45,30 +45,33 @@ fun GestureTip(
         modifier = modifier,
     ) {
         Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val iconVector = when (state.type) {
-                    GestureTipType.Brightness -> Icons.Rounded.BrightnessHigh
-                    GestureTipType.Volume -> Icons.AutoMirrored.Rounded.VolumeUp
-                    GestureTipType.Speed -> Icons.Rounded.Speed
-                    GestureTipType.Seek -> Icons.Rounded.FastForward
-                    GestureTipType.None -> null
-                }
-                val displayText = when (state.type) {
-                    GestureTipType.Brightness -> "${(state.value * 100).toInt()}%"
-                    GestureTipType.Volume -> "${state.value.toInt()}%"
-                    GestureTipType.Speed -> "${state.value}x"
-                    GestureTipType.Seek -> "快进/快退"
-                    GestureTipType.None -> ""
-                }
+                val iconVector =
+                    when (state.type) {
+                        GestureTipType.Brightness -> Icons.Rounded.BrightnessHigh
+                        GestureTipType.Volume -> Icons.AutoMirrored.Rounded.VolumeUp
+                        GestureTipType.Speed -> Icons.Rounded.Speed
+                        GestureTipType.Seek -> Icons.Rounded.FastForward
+                        GestureTipType.None -> null
+                    }
+                val displayText =
+                    when (state.type) {
+                        GestureTipType.Brightness -> "${(state.value * 100).toInt()}%"
+                        GestureTipType.Volume -> "${state.value.toInt()}%"
+                        GestureTipType.Speed -> "${state.value}x"
+                        GestureTipType.Seek -> "快进/快退"
+                        GestureTipType.None -> ""
+                    }
                 if (iconVector != null) {
                     Icon(
                         imageVector = iconVector,

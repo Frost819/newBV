@@ -11,7 +11,6 @@ import kotlin.math.pow
  * 验证主题使用低饱和品牌色，并检查主要文字组合满足可读性要求。
  */
 class ColorPaletteTest {
-
     @Test
     fun `brand palette uses the approved muted primary and secondary colors`() {
         assertThat(BVColors.Primary).isEqualTo(Color(0xFF7773AD))
@@ -43,7 +42,10 @@ class ColorPaletteTest {
             .isAtLeast(MIN_TEXT_CONTRAST)
     }
 
-    private fun contrastRatio(first: Color, second: Color): Double {
+    private fun contrastRatio(
+        first: Color,
+        second: Color,
+    ): Double {
         val firstLuminance = relativeLuminance(first)
         val secondLuminance = relativeLuminance(second)
         val lighter = maxOf(firstLuminance, secondLuminance)

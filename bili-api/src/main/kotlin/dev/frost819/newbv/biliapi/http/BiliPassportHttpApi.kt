@@ -88,17 +88,18 @@ object BiliPassportHttpApi {
         ts: Int,
         mobiApp: String? = null,
     ): BiliResponse<AppQRDataRequest> =
-        client.post("/x/passport-tv-login/qrcode/auth_code") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        localId?.let { append("local_id", it) }
-                        append("ts", "$ts")
-                        mobiApp?.let { append("mobi_app", it) }
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/x/passport-tv-login/qrcode/auth_code") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            localId?.let { append("local_id", it) }
+                            append("ts", "$ts")
+                            mobiApp?.let { append("mobi_app", it) }
+                        },
+                    ),
+                )
+            }.body()
 
     /**
      * 使用[authCode]进行二维码登录
@@ -108,17 +109,18 @@ object BiliPassportHttpApi {
         localId: String? = null,
         ts: Int,
     ): BiliResponse<AppQRLoginData> =
-        client.post("/x/passport-tv-login/qrcode/poll") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("auth_code", authCode)
-                        localId?.let { append("local_id", it) }
-                        append("ts", "$ts")
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/x/passport-tv-login/qrcode/poll") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("auth_code", authCode)
+                            localId?.let { append("local_id", it) }
+                            append("ts", "$ts")
+                        },
+                    ),
+                )
+            }.body()
 
     /**
      * 申请 captcha 验证码
@@ -126,9 +128,10 @@ object BiliPassportHttpApi {
      * @param source 获取来源 已知：main_web
      */
     suspend fun getCaptcha(source: String? = null): BiliResponse<CaptchaData> =
-        client.get("/x/passport-login/captcha") {
-            source?.let { parameter("source", it) }
-        }.body()
+        client
+            .get("/x/passport-login/captcha") {
+                source?.let { parameter("source", it) }
+            }.body()
 
     /**
      * 发送短信验证码
@@ -153,25 +156,26 @@ object BiliPassportHttpApi {
         statistics: String,
         ts: Long,
     ): BiliResponse<SendSmsResponse> =
-        client.post("/x/passport-login/sms/send") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("cid", "$cid")
-                        append("tel", "$tel")
-                        append("login_session_id", loginSessionId)
-                        recaptchaToken?.let { append("recaptcha_token", it) }
-                        geeChallenge?.let { append("gee_challenge", it) }
-                        geeValidate?.let { append("gee_validate", it) }
-                        geeSeccode?.let { append("gee_seccode", it) }
-                        append("channel", channel)
-                        append("buvid", buvid)
-                        append("statistics", statistics)
-                        append("ts", "$ts")
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/x/passport-login/sms/send") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("cid", "$cid")
+                            append("tel", "$tel")
+                            append("login_session_id", loginSessionId)
+                            recaptchaToken?.let { append("recaptcha_token", it) }
+                            geeChallenge?.let { append("gee_challenge", it) }
+                            geeValidate?.let { append("gee_validate", it) }
+                            geeSeccode?.let { append("gee_seccode", it) }
+                            append("channel", channel)
+                            append("buvid", buvid)
+                            append("statistics", statistics)
+                            append("ts", "$ts")
+                        },
+                    ),
+                )
+            }.body()
 
     suspend fun loginWithSms(
         cid: Long,
@@ -180,18 +184,19 @@ object BiliPassportHttpApi {
         code: Int,
         captchaKey: String,
     ): BiliResponse<SmsLoginResponse> =
-        client.post("/x/passport-login/login/sms") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("cid", "$cid")
-                        append("tel", "$tel")
-                        append("login_session_id", loginSessionId)
-                        append("code", "$code")
-                        append("captcha_key", captchaKey)
-                        append("ts", "0")
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/x/passport-login/login/sms") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("cid", "$cid")
+                            append("tel", "$tel")
+                            append("login_session_id", loginSessionId)
+                            append("code", "$code")
+                            append("captcha_key", captchaKey)
+                            append("ts", "0")
+                        },
+                    ),
+                )
+            }.body()
 }

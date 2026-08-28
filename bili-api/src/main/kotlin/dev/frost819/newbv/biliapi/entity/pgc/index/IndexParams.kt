@@ -7,7 +7,9 @@ interface PgcIndexParam
 /**
  * 排序
  */
-enum class IndexOrder(val id: Int) : PgcIndexParam {
+enum class IndexOrder(
+    val id: Int,
+) : PgcIndexParam {
     UpdateTime(0), // 更新时间
     DanmakuCount(1), // 弹幕数量
     PlayCount(2), // 播放数量
@@ -30,7 +32,9 @@ enum class IndexOrder(val id: Int) : PgcIndexParam {
     }
 }
 
-enum class IndexOrderType(val id: Int) : PgcIndexParam {
+enum class IndexOrderType(
+    val id: Int,
+) : PgcIndexParam {
     Desc(0), // 降序
     Asc(1), // 升序
 }
@@ -38,7 +42,9 @@ enum class IndexOrderType(val id: Int) : PgcIndexParam {
 /**
  * 类型
  */
-enum class SeasonVersion(val id: Int) : PgcIndexParam {
+enum class SeasonVersion(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     FeatureFilm(1), // 正片
     Movies(2), // 电影
@@ -46,19 +52,20 @@ enum class SeasonVersion(val id: Int) : PgcIndexParam {
     ;
 
     companion object {
-        fun getList(pgcType: PgcType): List<SeasonVersion> {
-            return when (pgcType) {
+        fun getList(pgcType: PgcType): List<SeasonVersion> =
+            when (pgcType) {
                 PgcType.Anime, PgcType.GuoChuang -> listOf(All, FeatureFilm, Movies, Other)
                 else -> emptyList()
             }
-        }
     }
 }
 
 /**
  * 配音
  */
-enum class SpokenLanguage(val id: Int) : PgcIndexParam {
+enum class SpokenLanguage(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     OriginalSoundtrack(1), // 原声
     ChineseDubbing(2), // 中文配音
@@ -76,7 +83,9 @@ enum class SpokenLanguage(val id: Int) : PgcIndexParam {
 /**
  * 地区
  */
-enum class Area(val id: Int) : PgcIndexParam {
+enum class Area(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     MainlandChina(1), // 中国大陆
     Japan(2), // 日本
@@ -98,8 +107,19 @@ enum class Area(val id: Int) : PgcIndexParam {
                 PgcType.Anime -> listOf(All, Japan, America, Other)
                 PgcType.Movie ->
                     listOf(
-                        All, MainlandChina, ChinaHongKongTaiwan, America, Japan, Korea, France,
-                        Britain, Germany, Thailand, Italy, Spain, Other,
+                        All,
+                        MainlandChina,
+                        ChinaHongKongTaiwan,
+                        America,
+                        Japan,
+                        Korea,
+                        France,
+                        Britain,
+                        Germany,
+                        Thailand,
+                        Italy,
+                        Spain,
+                        Other,
                     )
 
                 PgcType.Tv -> listOf(All, MainlandChina, Japan, America, Britain, Other)
@@ -111,7 +131,9 @@ enum class Area(val id: Int) : PgcIndexParam {
 /**
  * 状态（完结状态）
  */
-enum class IsFinish(val id: Int) : PgcIndexParam {
+enum class IsFinish(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     Finished(1), // 完结
     Serialization(0), // 连载
@@ -129,7 +151,9 @@ enum class IsFinish(val id: Int) : PgcIndexParam {
 /**
  * 版权
  */
-enum class Copyright(val id: Int) : PgcIndexParam {
+enum class Copyright(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     Exclusive(3), // 独家
     Other(1), // 其他 1,2,4
@@ -147,7 +171,9 @@ enum class Copyright(val id: Int) : PgcIndexParam {
 /**
  * 付费（付费状态）
  */
-enum class SeasonStatus(val id: Int) : PgcIndexParam {
+enum class SeasonStatus(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     Free(1), // 免费
     Paid(2), // 付费 2,6
@@ -166,7 +192,9 @@ enum class SeasonStatus(val id: Int) : PgcIndexParam {
 /**
  * 季度
  */
-enum class SeasonMonth(val id: Int) : PgcIndexParam {
+enum class SeasonMonth(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     January(1), // 1月
     April(4), // 4月
@@ -186,7 +214,9 @@ enum class SeasonMonth(val id: Int) : PgcIndexParam {
 /**
  * 出品（方）
  */
-enum class Producer(val id: Int) : PgcIndexParam {
+enum class Producer(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     BBC(1), // BBC
     NHK(2), // NHK
@@ -215,9 +245,27 @@ enum class Producer(val id: Int) : PgcIndexParam {
             when (pgcType) {
                 PgcType.Documentary ->
                     listOf(
-                        All, CCTV, BBC, DiscoveryChannel, NationalGeographic, NHK, HistoryChannel,
-                        SatelliteTV, SelfMade, ITV, SKY, ZDF, Cooperation, DomesticOther, ForeignOther,
-                        Sony, Universal, Paramount, Warner, Disney, HBO,
+                        All,
+                        CCTV,
+                        BBC,
+                        DiscoveryChannel,
+                        NationalGeographic,
+                        NHK,
+                        HistoryChannel,
+                        SatelliteTV,
+                        SelfMade,
+                        ITV,
+                        SKY,
+                        ZDF,
+                        Cooperation,
+                        DomesticOther,
+                        ForeignOther,
+                        Sony,
+                        Universal,
+                        Paramount,
+                        Warner,
+                        Disney,
+                        HBO,
                     )
 
                 else -> emptyList()
@@ -229,7 +277,9 @@ enum class Producer(val id: Int) : PgcIndexParam {
  * 年份（Year）
  */
 @Suppress("EnumEntryName")
-enum class Year(val str: String) : PgcIndexParam {
+enum class Year(
+    val str: String,
+) : PgcIndexParam {
     All("-1"), // 全部
     Year2026("[2026,2027)"), // 2026
     Year2025("[2025,2026)"), // 2025
@@ -256,9 +306,25 @@ enum class Year(val str: String) : PgcIndexParam {
             when (pgcType) {
                 PgcType.Anime, PgcType.GuoChuang ->
                     listOf(
-                        All, Year2026, Year2025, Year2024, Year2023, Year2022, Year2021, Year2020,
-                        Year2019, Year2018, Year2017, Year2016, Year2015, Year2014_2010,
-                        Year2009_2005, Year2004_2000, Year199x, Year198x, Earlier,
+                        All,
+                        Year2026,
+                        Year2025,
+                        Year2024,
+                        Year2023,
+                        Year2022,
+                        Year2021,
+                        Year2020,
+                        Year2019,
+                        Year2018,
+                        Year2017,
+                        Year2016,
+                        Year2015,
+                        Year2014_2010,
+                        Year2009_2005,
+                        Year2004_2000,
+                        Year199x,
+                        Year198x,
+                        Earlier,
                     )
 
                 else -> emptyList()
@@ -270,7 +336,9 @@ enum class Year(val str: String) : PgcIndexParam {
  * 年份（发布时间）
  */
 @Suppress("EnumEntryName")
-enum class ReleaseDate(val str: String) : PgcIndexParam {
+enum class ReleaseDate(
+    val str: String,
+) : PgcIndexParam {
     All("-1"), // 全部
     Year2026("[2026-01-01 00:00:00,2027-01-01 00:00:00)"), // 2026
     Year2025("[2025-01-01 00:00:00,2026-01-01 00:00:00)"), // 2025
@@ -296,9 +364,24 @@ enum class ReleaseDate(val str: String) : PgcIndexParam {
             when (pgcType) {
                 PgcType.Movie, PgcType.Documentary, PgcType.Tv ->
                     listOf(
-                        All, Year2026, Year2025, Year2024, Year2023, Year2022, Year2021, Year2020,
-                        Year2019, Year2018, Year2017, Year2016, Year2015_2010,
-                        Year2009_2005, Year2004_2000, Year199x, Year198x, Earlier,
+                        All,
+                        Year2026,
+                        Year2025,
+                        Year2024,
+                        Year2023,
+                        Year2022,
+                        Year2021,
+                        Year2020,
+                        Year2019,
+                        Year2018,
+                        Year2017,
+                        Year2016,
+                        Year2015_2010,
+                        Year2009_2005,
+                        Year2004_2000,
+                        Year199x,
+                        Year198x,
+                        Earlier,
                     )
 
                 else -> emptyList()
@@ -309,7 +392,9 @@ enum class ReleaseDate(val str: String) : PgcIndexParam {
 /**
  * 风格
  */
-enum class Style(val id: Int) : PgcIndexParam {
+enum class Style(
+    val id: Int,
+) : PgcIndexParam {
     All(-1), // 全部
     Movie(-10), // 电影
 
@@ -426,46 +511,180 @@ enum class Style(val id: Int) : PgcIndexParam {
             when (pgcType) {
                 PgcType.Anime ->
                     listOf(
-                        All, Original, Comic, Novel, Game, SpecialEffects, Puppetry, HotBlood, TimeTravel,
-                        Fantasy, Fight, Funny, Daily, ScienceFiction, Moe, Healing, School, Children,
-                        InstantNoodles, InLove, Girl, Magic, Adventure, History, Fiction, Mecha, GodDemon,
-                        VoiceControl, Sports, Inspirational, Music, Reasoning, Club, WisdomFight,
-                        Tearjerker, Food, Idol, Maiden, Workplace,
+                        All,
+                        Original,
+                        Comic,
+                        Novel,
+                        Game,
+                        SpecialEffects,
+                        Puppetry,
+                        HotBlood,
+                        TimeTravel,
+                        Fantasy,
+                        Fight,
+                        Funny,
+                        Daily,
+                        ScienceFiction,
+                        Moe,
+                        Healing,
+                        School,
+                        Children,
+                        InstantNoodles,
+                        InLove,
+                        Girl,
+                        Magic,
+                        Adventure,
+                        History,
+                        Fiction,
+                        Mecha,
+                        GodDemon,
+                        VoiceControl,
+                        Sports,
+                        Inspirational,
+                        Music,
+                        Reasoning,
+                        Club,
+                        WisdomFight,
+                        Tearjerker,
+                        Food,
+                        Idol,
+                        Maiden,
+                        Workplace,
                     )
 
                 PgcType.GuoChuang ->
                     listOf(
-                        All, Original, Comic, Novel, Game, Animation, Puppetry, HotBlood, Fantasy, XuanHuan,
-                        Fight, Funny, MartialArts, Daily, ScienceFiction, Moe, Healing, Suspense, School,
-                        Children, InstantNoodles, InLove, Girl, Magic, History, Mecha, GodDemon,
-                        VoiceControl, Sports, Inspirational, Music, Reasoning, Club, WisdomFight,
-                        Tearjerker, Food, Idol, Maiden, Workplace, AncientStyle,
+                        All,
+                        Original,
+                        Comic,
+                        Novel,
+                        Game,
+                        Animation,
+                        Puppetry,
+                        HotBlood,
+                        Fantasy,
+                        XuanHuan,
+                        Fight,
+                        Funny,
+                        MartialArts,
+                        Daily,
+                        ScienceFiction,
+                        Moe,
+                        Healing,
+                        Suspense,
+                        School,
+                        Children,
+                        InstantNoodles,
+                        InLove,
+                        Girl,
+                        Magic,
+                        History,
+                        Mecha,
+                        GodDemon,
+                        VoiceControl,
+                        Sports,
+                        Inspirational,
+                        Music,
+                        Reasoning,
+                        Club,
+                        WisdomFight,
+                        Tearjerker,
+                        Food,
+                        Idol,
+                        Maiden,
+                        Workplace,
+                        AncientStyle,
                     )
 
                 PgcType.Movie ->
                     listOf(
-                        All, ShortFilm, Plot, Comedy, Love, Action, Terror, ScienceFiction, Offense,
-                        Thriller, Suspense, Fantasy, War, Animation, Biography, Family, Opera, History,
-                        Adventure, Documentary, Disaster, Comic, Novel,
+                        All,
+                        ShortFilm,
+                        Plot,
+                        Comedy,
+                        Love,
+                        Action,
+                        Terror,
+                        ScienceFiction,
+                        Offense,
+                        Thriller,
+                        Suspense,
+                        Fantasy,
+                        War,
+                        Animation,
+                        Biography,
+                        Family,
+                        Opera,
+                        History,
+                        Adventure,
+                        Documentary,
+                        Disaster,
+                        Comic,
+                        Novel,
                     )
 
                 PgcType.Documentary ->
                     listOf(
-                        All, History, Food, Humanities, Technology, Explore, Universal, CutePet, Social,
-                        Animal, Nature, Medical, Military, Disaster, Crime, Mystery, Travel, Sports, Movie,
+                        All,
+                        History,
+                        Food,
+                        Humanities,
+                        Technology,
+                        Explore,
+                        Universal,
+                        CutePet,
+                        Social,
+                        Animal,
+                        Nature,
+                        Medical,
+                        Military,
+                        Disaster,
+                        Crime,
+                        Mystery,
+                        Travel,
+                        Sports,
+                        Movie,
                     )
 
                 PgcType.Variety ->
                     listOf(
-                        All, Music, Interview, TalkShow, RealityShow, Selection, Food, Tourism,
-                        EveningParty, Concert, Emotion, Comedy, ParentChild, Culture, Workplace,
-                        CutePet, Cultivate,
+                        All,
+                        Music,
+                        Interview,
+                        TalkShow,
+                        RealityShow,
+                        Selection,
+                        Food,
+                        Tourism,
+                        EveningParty,
+                        Concert,
+                        Emotion,
+                        Comedy,
+                        ParentChild,
+                        Culture,
+                        Workplace,
+                        CutePet,
+                        Cultivate,
                     )
 
                 PgcType.Tv ->
                     listOf(
-                        All, Plot, Emotion, Funny, Suspense, City, Family, AncientCostume, History,
-                        Fantasy, Youth, War, MartialArts, Inspirational, ShortPlay, ScienceFiction,
+                        All,
+                        Plot,
+                        Emotion,
+                        Funny,
+                        Suspense,
+                        City,
+                        Family,
+                        AncientCostume,
+                        History,
+                        Fantasy,
+                        Youth,
+                        War,
+                        MartialArts,
+                        Inspirational,
+                        ShortPlay,
+                        ScienceFiction,
                     )
             }
     }

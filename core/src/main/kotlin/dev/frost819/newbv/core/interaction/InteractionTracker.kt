@@ -19,7 +19,9 @@ enum class InputMethod {
     DPad,
 
     /** 触屏点击/手势。 */
-    Touch;
+    Touch,
+
+    ;
 
     val isTouch: Boolean get() = this == Touch
     val isDPad: Boolean get() = this == DPad
@@ -42,8 +44,9 @@ enum class InputMethod {
  * 仅根据最近输入动态切换焦点边框可见性，避免触屏用户看到多余边框，
  * 同时保证遥控器用户随时拿起遥控器就能看到焦点提示。
  */
-class InteractionTracker(initial: InputMethod = InputMethod.DPad) {
-
+class InteractionTracker(
+    initial: InputMethod = InputMethod.DPad,
+) {
     private val _inputMethod = MutableStateFlow(initial)
     val inputMethod: StateFlow<InputMethod> = _inputMethod.asStateFlow()
 

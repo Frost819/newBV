@@ -54,12 +54,14 @@ fun PopularScreen(
     focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.popularItems.size - 20
-            }
-            .collect {
+            }.collect {
                 viewModel.loadPopular()
             }
     }
@@ -76,20 +78,21 @@ fun PopularScreen(
             items = state.popularItems,
             key = { index, _ -> index },
         ) { index, item ->
-            val cardData = remember(item) {
-                VideoCardData(
-                    avid = item.aid,
-                    bvid = item.bvid,
-                    title = item.title,
-                    cover = item.cover,
-                    playString = item.play.takeIf { it != -1 }.toWanString(),
-                    danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
-                    timeString = (item.duration * 1000L).formatHourMinSec(),
-                    upName = item.author,
-                    upMid = item.authorMid,
-                    pubTime = item.pubTime,
-                )
-            }
+            val cardData =
+                remember(item) {
+                    VideoCardData(
+                        avid = item.aid,
+                        bvid = item.bvid,
+                        title = item.title,
+                        cover = item.cover,
+                        playString = item.play.takeIf { it != -1 }.toWanString(),
+                        danmakuString = item.danmaku.takeIf { it != -1 }.toWanString(),
+                        timeString = (item.duration * 1000L).formatHourMinSec(),
+                        upName = item.author,
+                        upMid = item.authorMid,
+                        pubTime = item.pubTime,
+                    )
+                }
             SmallVideoCard(
                 modifier = Modifier.focusSaverItem(focusSaver, index),
                 data = cardData,
@@ -99,9 +102,10 @@ fun PopularScreen(
                 onGoToDetailPage = {
                     navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid))
                 },
-                onGoToUpPage = item.authorMid?.let { mid ->
-                    { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
-                },
+                onGoToUpPage =
+                    item.authorMid?.let { mid ->
+                        { navController.navigate(UserSpaceRoute(mid = mid, name = item.author)) }
+                    },
                 onAddWatchLater = { watchLaterViewModel.addToView(aid = item.aid) },
             )
         }

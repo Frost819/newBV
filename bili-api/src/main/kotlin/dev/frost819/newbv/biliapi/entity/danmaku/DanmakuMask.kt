@@ -31,8 +31,10 @@ data class DanmakuMobMaskFrame(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DanmakuMobMaskFrame) return false
-        return range == other.range && width == other.width &&
-            height == other.height && image.contentEquals(other.image)
+        return range == other.range &&
+            width == other.width &&
+            height == other.height &&
+            image.contentEquals(other.image)
     }
 
     override fun hashCode(): Int {
@@ -136,17 +138,13 @@ class DanmakuMask private constructor(
         fun fromStream(
             input: InputStream,
             type: DanmakuMaskType,
-        ): DanmakuMask {
-            return input.source().buffer().use { parseFromSource(it, type) }
-        }
+        ): DanmakuMask = input.source().buffer().use { parseFromSource(it, type) }
 
         /** 兼容旧调用 */
         fun fromBinary(
             binary: ByteArray,
             type: DanmakuMaskType,
-        ): DanmakuMask {
-            return parseFromSource(Buffer().write(binary), type)
-        }
+        ): DanmakuMask = parseFromSource(Buffer().write(binary), type)
 
         private fun parseFromSource(
             source: BufferedSource,

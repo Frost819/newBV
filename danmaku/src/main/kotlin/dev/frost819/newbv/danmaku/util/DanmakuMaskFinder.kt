@@ -20,7 +20,6 @@ import kotlinx.coroutines.withContext
  * @see DanmakuMaskFrame
  */
 class DanmakuMaskFinder {
-
     @Volatile
     private var cachedSegment: DanmakuMaskSegment? = null
 
@@ -39,7 +38,10 @@ class DanmakuMaskFinder {
      * @param currentTime  当前播放时间（毫秒）
      * @return 当前应渲染的 [DanmakuMaskFrame]，无则返回 null
      */
-    suspend fun findFrame(mask: DanmakuMask, currentTime: Long): DanmakuMaskFrame? {
+    suspend fun findFrame(
+        mask: DanmakuMask,
+        currentTime: Long,
+    ): DanmakuMaskFrame? {
         val cached = cachedSegment
         if (cached == null || currentTime !in cached.range) {
             withContext(Dispatchers.Default) {
@@ -66,13 +68,12 @@ class DanmakuMaskFinder {
 fun calculateMaskDelay(
     currentFrame: DanmakuMaskFrame?,
     currentTime: Long,
-    isPlaying: Boolean
-): Long {
-    return when {
+    isPlaying: Boolean,
+): Long =
+    when {
         currentFrame != null && isPlaying -> {
             (currentFrame.range.last - currentTime).coerceIn(20L, 300L)
         }
         isPlaying -> 100L
         else -> 200L
     }
-}

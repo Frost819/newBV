@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证动作分组结构、显示名称解析及分组 ID 唯一性。
  */
 class PlayerCustomShortcutCatalogTest {
-
     @Test
     fun `groups returns non-empty list`() {
         val groups = PlayerCustomShortcutCatalog.groups()
@@ -89,45 +88,50 @@ class PlayerCustomShortcutCatalogTest {
 
     @Test
     fun `getActionDisplayName returns correct name for OpenSettings`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.OpenSettings,
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.OpenSettings,
+            )
 
         assertThat(name).isEqualTo("打开播放器设置菜单")
     }
 
     @Test
     fun `getActionDisplayName returns correct name for ToggleDanmaku`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.ToggleDanmaku,
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.ToggleDanmaku,
+            )
 
         assertThat(name).isEqualTo("弹幕开关")
     }
 
     @Test
     fun `getActionDisplayName returns correct name for ToggleDanmakuMask`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.ToggleDanmakuMask,
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.ToggleDanmakuMask,
+            )
 
         assertThat(name).isEqualTo("弹幕防遮挡开关")
     }
 
     @Test
     fun `getActionDisplayName returns correct name for parameterized action`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.TogglePlaybackSpeed(2.0f),
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.TogglePlaybackSpeed(2.0f),
+            )
 
         assertThat(name).isEqualTo("倍速播放开关：2.0x")
     }
 
     @Test
     fun `getActionDisplayName returns correct name for TogglePersistentBottomProgress`() {
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.TogglePersistentBottomProgress,
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.TogglePersistentBottomProgress,
+            )
 
         assertThat(name).isEqualTo("开关底部常驻迷你进度条")
     }
@@ -136,19 +140,21 @@ class PlayerCustomShortcutCatalogTest {
     fun `getActionDisplayName returns class simple name for unrecognized action`() {
         // 构造一个不在目录中的动作实例：同类型不同参数值无法区分，
         // 这里直接用未注册的 data object 场景不可行，改用参数不在目录的 speed 值
-        val name = PlayerCustomShortcutCatalog.getActionDisplayName(
-            PlayerCustomShortcutAction.ToggleLoop,
-        )
+        val name =
+            PlayerCustomShortcutCatalog.getActionDisplayName(
+                PlayerCustomShortcutAction.ToggleLoop,
+            )
 
         assertThat(name).isEqualTo("单视频循环开关")
     }
 
     @Test
     fun `ActionEntry valueDisplayName defaults to displayName when not specified`() {
-        val entry = PlayerCustomShortcutCatalog.ActionEntry(
-            action = PlayerCustomShortcutAction.ToggleLoop,
-            displayName = "单视频循环开关",
-        )
+        val entry =
+            PlayerCustomShortcutCatalog.ActionEntry(
+                action = PlayerCustomShortcutAction.ToggleLoop,
+                displayName = "单视频循环开关",
+            )
 
         assertThat(entry.valueDisplayName).isEqualTo("单视频循环开关")
     }

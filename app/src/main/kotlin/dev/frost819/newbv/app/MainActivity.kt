@@ -17,10 +17,10 @@ import dev.frost819.newbv.app.ui.navigation.AppNavHost
 import dev.frost819.newbv.app.ui.navigation.HomeRoute
 import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.interaction.LocalInteractionTracker
+import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.core.theme.BVTheme
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
-import dev.frost819.newbv.core.log.Loggers
 import javax.inject.Inject
 
 /**
@@ -36,7 +36,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     private val logger = Loggers.get("MainActivity")
 
     @Inject
@@ -50,16 +49,17 @@ class MainActivity : ComponentActivity() {
             val themeMode by Prefs.themeModeFlow.collectAsState(initial = ThemeMode.Dark)
             val density by Prefs.densityFlow.collectAsState(initial = 2.0f)
 
-            val coreThemeMode = when (themeMode) {
-                dev.frost819.newbv.data.datastore.ThemeMode.FollowSystem -> ThemeMode.FollowSystem
-                dev.frost819.newbv.data.datastore.ThemeMode.Dark -> ThemeMode.Dark
-                dev.frost819.newbv.data.datastore.ThemeMode.Light -> ThemeMode.Light
-                else -> ThemeMode.Dark
-            }
+            val coreThemeMode =
+                when (themeMode) {
+                    dev.frost819.newbv.data.datastore.ThemeMode.FollowSystem -> ThemeMode.FollowSystem
+                    dev.frost819.newbv.data.datastore.ThemeMode.Dark -> ThemeMode.Dark
+                    dev.frost819.newbv.data.datastore.ThemeMode.Light -> ThemeMode.Light
+                    else -> ThemeMode.Dark
+                }
 
             BVTheme(themeMode = coreThemeMode, density = density) {
                 CompositionLocalProvider(
-                    LocalInteractionTracker provides interactionTracker
+                    LocalInteractionTracker provides interactionTracker,
                 ) {
                     Surface(modifier = Modifier.fillMaxSize()) {
                         AppNavHost(startDestination = HomeRoute)

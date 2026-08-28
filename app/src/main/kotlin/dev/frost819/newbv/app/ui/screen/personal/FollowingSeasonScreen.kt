@@ -86,26 +86,29 @@ fun FollowingSeasonScreen(
     }
 
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.distinctUntilChanged()
             .filter { index ->
                 index != null && index >= state.followingSeasons.size - 30
-            }
-            .collect {
+            }.collect {
                 viewModel.loadFollowingSeasons()
             }
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onPreviewKeyEvent { event ->
-                if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                    showFilter = true
-                    return@onPreviewKeyEvent true
-                }
-                false
-            },
+        modifier =
+            modifier
+                .fillMaxSize()
+                .onPreviewKeyEvent { event ->
+                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                        showFilter = true
+                        return@onPreviewKeyEvent true
+                    }
+                    false
+                },
     ) {
         TvLazyVerticalGrid(
             state = gridState,
@@ -140,13 +143,14 @@ fun FollowingSeasonScreen(
                 items = state.followingSeasons,
                 key = { _, item -> item.seasonId },
             ) { index, item ->
-                val cardData = remember(item) {
-                    SeasonCardData(
-                        seasonId = item.seasonId,
-                        title = item.title,
-                        cover = item.cover,
-                    )
-                }
+                val cardData =
+                    remember(item) {
+                        SeasonCardData(
+                            seasonId = item.seasonId,
+                            title = item.title,
+                            cover = item.cover,
+                        )
+                    }
                 SeasonCard(
                     data = cardData,
                     onClick = {
@@ -203,17 +207,19 @@ private fun FollowingSeasonFilterDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(48.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(48.dp),
             contentAlignment = Alignment.Center,
         ) {
             androidx.tv.material3.Surface(
                 modifier = Modifier.padding(24.dp),
                 shape = androidx.tv.material3.MaterialTheme.shapes.large,
-                colors = androidx.tv.material3.SurfaceDefaults.colors(
-                    containerColor = androidx.tv.material3.MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    androidx.tv.material3.SurfaceDefaults.colors(
+                        containerColor = androidx.tv.material3.MaterialTheme.colorScheme.surface,
+                    ),
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -245,12 +251,13 @@ private fun FollowingSeasonFilterDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FollowingSeasonStatus.entries.forEach { status ->
                             FilterChip(
-                                text = when (status) {
-                                    FollowingSeasonStatus.All -> "全部"
-                                    FollowingSeasonStatus.Want -> "想看"
-                                    FollowingSeasonStatus.Watching -> "在看"
-                                    FollowingSeasonStatus.Watched -> "看过"
-                                },
+                                text =
+                                    when (status) {
+                                        FollowingSeasonStatus.All -> "全部"
+                                        FollowingSeasonStatus.Want -> "想看"
+                                        FollowingSeasonStatus.Watching -> "在看"
+                                        FollowingSeasonStatus.Watched -> "看过"
+                                    },
                                 selected = selectedStatus == status,
                                 onClick = { selectedStatus = status },
                             )
@@ -286,25 +293,31 @@ private fun FilterChip(
     androidx.tv.material3.Surface(
         onClick = onClick,
         modifier = Modifier.touchClickable(onClick = onClick),
-        shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-        ),
-        colors = androidx.tv.material3.ClickableSurfaceDefaults.colors(
-            containerColor = if (selected) {
-                androidx.tv.material3.MaterialTheme.colorScheme.primary
-            } else {
-                androidx.tv.material3.MaterialTheme.colorScheme.surfaceVariant
-            },
-        ),
+        shape =
+            androidx.tv.material3.ClickableSurfaceDefaults.shape(
+                shape =
+                    androidx.compose.foundation.shape
+                        .RoundedCornerShape(50),
+            ),
+        colors =
+            androidx.tv.material3.ClickableSurfaceDefaults.colors(
+                containerColor =
+                    if (selected) {
+                        androidx.tv.material3.MaterialTheme.colorScheme.primary
+                    } else {
+                        androidx.tv.material3.MaterialTheme.colorScheme.surfaceVariant
+                    },
+            ),
     ) {
         androidx.tv.material3.Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = if (selected) {
-                androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
-            } else {
-                androidx.tv.material3.MaterialTheme.colorScheme.onSurface
-            },
+            color =
+                if (selected) {
+                    androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
+                } else {
+                    androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+                },
         )
     }
 }

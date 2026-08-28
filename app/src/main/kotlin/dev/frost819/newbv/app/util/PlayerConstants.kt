@@ -8,7 +8,6 @@ import dev.frost819.newbv.biliapi.entity.ApiType
  * 包含 User-Agent、Referer 等 HTTP 请求头，以及 seek 增量等播放器行为常量。
  */
 object PlayerConstants {
-
     /** Web API 模式的 User-Agent（Desktop Chrome，B 站 CDN 需要此 UA 才能正常播放）。 */
     const val WEB_USER_AGENT =
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " +
@@ -21,16 +20,18 @@ object PlayerConstants {
     const val WEB_REFERER = "https://www.bilibili.com"
 
     /** 根据接口类型获取 User-Agent。 */
-    fun getUserAgent(apiType: ApiType): String = when (apiType) {
-        ApiType.Web -> WEB_USER_AGENT
-        ApiType.App -> APP_USER_AGENT
-    }
+    fun getUserAgent(apiType: ApiType): String =
+        when (apiType) {
+            ApiType.Web -> WEB_USER_AGENT
+            ApiType.App -> APP_USER_AGENT
+        }
 
     /** 根据接口类型获取 Referer，App 模式返回 null。 */
-    fun getReferer(apiType: ApiType): String? = when (apiType) {
-        ApiType.Web -> WEB_REFERER
-        ApiType.App -> null
-    }
+    fun getReferer(apiType: ApiType): String? =
+        when (apiType) {
+            ApiType.Web -> WEB_REFERER
+            ApiType.App -> null
+        }
 
     /** Seek 加速基础增量（毫秒）。 */
     const val SEEK_BASE_INCREMENT_MS = 10_000L

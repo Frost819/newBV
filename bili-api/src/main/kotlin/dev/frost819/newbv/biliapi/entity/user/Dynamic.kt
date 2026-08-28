@@ -70,7 +70,9 @@ data class DynamicVideo(
 ) {
     companion object {
         fun fromDynamicVideoItem(item: dev.frost819.newbv.biliapi.http.entity.dynamic.DynamicItem): DynamicVideo {
-            val archive = item.modules.moduleDynamic.major!!.archive!!
+            val archive =
+                item.modules.moduleDynamic.major!!
+                    .archive!!
             val author = item.modules.moduleAuthor
             return DynamicVideo(
                 aid = archive.aid.toLong(),
@@ -165,7 +167,8 @@ private fun convertStringPlayCountToNumberPlayCount(play: String): Int {
                 .replace("弹幕", "")
                 .replace("观看", "")
                 .replace("播放", "")
-                .substringBefore("万").toFloat()
+                .substringBefore("万")
+                .toFloat()
         return (if (play.contains("万")) number * 10000 else number).toInt()
     }.onFailure {
         println("convert play count [$play] failed: ${it.stackTraceToString()}")

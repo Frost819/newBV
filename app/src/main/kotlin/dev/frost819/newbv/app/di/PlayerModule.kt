@@ -16,7 +16,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object PlayerModule {
-
     /**
      * 提供 [ExoPlayerFactory] 单例。
      *

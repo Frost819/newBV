@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证主题模式解析、[ThemeMode.isDark] 逻辑与 [ThemeMode.fromOrdinal] 安全恢复。
  */
 class ThemeModeTest {
-
     @Test
     fun `FollowSystem isDark returns system value`() {
         assertThat(ThemeMode.FollowSystem.isDark(systemIsDark = true)).isTrue()

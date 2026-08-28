@@ -49,31 +49,32 @@ fun PlaySpeedMenuList(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LazyColumn(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .onPreviewKeyEvent {
-                    if (it.type == KeyEventType.KeyUp) {
-                        if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                            return@onPreviewKeyEvent false
+            modifier =
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyUp) {
+                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
+                                return@onPreviewKeyEvent false
+                            }
+                            return@onPreviewKeyEvent true
                         }
-                        return@onPreviewKeyEvent true
-                    }
-                    if (it.key == Key.DirectionRight) {
-                        onFocusStateChange(MenuFocusState.MenuNav)
-                    }
-                    false
-                }
-                .focusRestorer(focusRequester),
+                        if (it.key == Key.DirectionRight) {
+                            onFocusStateChange(MenuFocusState.MenuNav)
+                        }
+                        false
+                    }.focusRestorer(focusRequester),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(8.dp),
         ) {
             itemsIndexed(PlaySpeedItem.entries.toMutableList()) { index, item ->
                 MenuListItem(
-                    modifier = Modifier
-                        .ifElse(
-                            index == currentSelectedPlaySpeedItem.ordinal,
-                            Modifier.focusRequester(focusRequester),
-                        ),
+                    modifier =
+                        Modifier
+                            .ifElse(
+                                index == currentSelectedPlaySpeedItem.ordinal,
+                                Modifier.focusRequester(focusRequester),
+                            ),
                     text = item.displayName,
                     selected = currentSelectedPlaySpeedItem == item,
                     onClick = { onPlaySpeedChange(item.speed) },
@@ -90,12 +91,17 @@ fun PlaySpeedMenuList(
  * @property displayName 显示名称
  * @property speed 实际倍速值
  */
-enum class PlaySpeedItem(val code: Int, val displayName: String, val speed: Float) {
+enum class PlaySpeedItem(
+    val code: Int,
+    val displayName: String,
+    val speed: Float,
+) {
     X2(4, "2.0x", 2f),
     X1_5(3, "1.5x", 1.5f),
     X1_25(2, "1.25x", 1.25f),
     X1(1, "1.0x", 1f),
-    X0_5(0, "0.5x", 0.5f);
+    X0_5(0, "0.5x", 0.5f),
+    ;
 
     companion object {
         fun fromCode(code: Int): PlaySpeedItem = entries.find { it.code == code } ?: X1

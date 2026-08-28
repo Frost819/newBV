@@ -11,7 +11,6 @@ import dev.frost819.newbv.data.db.entity.UserEntity
  * @see UserEntity
  */
 interface AccountRepository {
-
     /** 查询全部已登录账户。 */
     suspend fun getAllUsers(): List<UserEntity>
 

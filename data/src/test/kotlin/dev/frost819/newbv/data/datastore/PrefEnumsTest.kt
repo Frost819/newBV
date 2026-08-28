@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 补充 [PrefsTest] 仅测试无效输入的不足，覆盖全部有效路径。
  */
 class PrefEnumsTest {
-
     // ===== ApiType =====
 
     @Test

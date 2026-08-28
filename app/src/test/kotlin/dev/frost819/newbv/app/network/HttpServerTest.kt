@@ -17,7 +17,6 @@ import java.nio.file.Files
  * 不依赖 Android Context（通过函数参数注入依赖）。
  */
 class HttpServerTest {
-
     private lateinit var tempDir: File
     private lateinit var server: HttpServer
     private lateinit var logFiles: MutableList<File>
@@ -31,19 +30,23 @@ class HttpServerTest {
         logFiles.add(createLog("logs_manual_2026-01-01_10:00:00.log", "manual log content"))
         logFiles.add(createLog("logs_crash_2026-01-02_11:30:00.log", "crash log content"))
 
-        server = HttpServer(
-            assetProvider = { path ->
-                if (path == "logs_ui/index.html") "<html>test</html>".toByteArray()
-                else null
-            },
-            logFileProvider = { logFiles.toList() },
-            manualLogCreator = {
-                val file = File(tempDir, "logs_manual_2026-01-03_12:00:00.log")
-                file.writeText("generated manual log")
-                logFiles.add(file)
-                file
-            }
-        )
+        server =
+            HttpServer(
+                assetProvider = { path ->
+                    if (path == "logs_ui/index.html") {
+                        "<html>test</html>".toByteArray()
+                    } else {
+                        null
+                    }
+                },
+                logFileProvider = { logFiles.toList() },
+                manualLogCreator = {
+                    val file = File(tempDir, "logs_manual_2026-01-03_12:00:00.log")
+                    file.writeText("generated manual log")
+                    logFiles.add(file)
+                    file
+                },
+            )
         server.start()
 
         // 等待服务器就绪
@@ -84,11 +87,12 @@ class HttpServerTest {
     @Test
     fun `GET root returns 404 when asset not found`() {
         server.stop()
-        server = HttpServer(
-            assetProvider = { null },
-            logFileProvider = { emptyList() },
-            manualLogCreator = { null }
-        )
+        server =
+            HttpServer(
+                assetProvider = { null },
+                logFileProvider = { emptyList() },
+                manualLogCreator = { null },
+            )
         server.start()
         Thread.sleep(200)
 
@@ -101,15 +105,20 @@ class HttpServerTest {
     @Test
     fun `GET logs_ui serves static asset`() {
         server.stop()
-        server = HttpServer(
-            assetProvider = { path ->
-                if (path == "logs_ui/index.html") "<html></html>".toByteArray()
-                else if (path == "logs_ui/test.css") "body { }".toByteArray()
-                else null
-            },
-            logFileProvider = { emptyList() },
-            manualLogCreator = { null }
-        )
+        server =
+            HttpServer(
+                assetProvider = { path ->
+                    if (path == "logs_ui/index.html") {
+                        "<html></html>".toByteArray()
+                    } else if (path == "logs_ui/test.css") {
+                        "body { }".toByteArray()
+                    } else {
+                        null
+                    }
+                },
+                logFileProvider = { emptyList() },
+                manualLogCreator = { null },
+            )
         server.start()
         Thread.sleep(200)
 
@@ -157,11 +166,12 @@ class HttpServerTest {
     @Test
     fun `GET api logs list returns empty array when no logs`() {
         server.stop()
-        server = HttpServer(
-            assetProvider = { null },
-            logFileProvider = { emptyList() },
-            manualLogCreator = { null }
-        )
+        server =
+            HttpServer(
+                assetProvider = { null },
+                logFileProvider = { emptyList() },
+                manualLogCreator = { null },
+            )
         server.start()
         Thread.sleep(200)
 
@@ -218,11 +228,12 @@ class HttpServerTest {
     @Test
     fun `GET create-manual-and-download returns 500 when creator fails`() {
         server.stop()
-        server = HttpServer(
-            assetProvider = { null },
-            logFileProvider = { emptyList() },
-            manualLogCreator = { null }
-        )
+        server =
+            HttpServer(
+                assetProvider = { null },
+                logFileProvider = { emptyList() },
+                manualLogCreator = { null },
+            )
         server.start()
         Thread.sleep(200)
 
@@ -234,7 +245,10 @@ class HttpServerTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun createLog(name: String, content: String): File {
+    private fun createLog(
+        name: String,
+        content: String,
+    ): File {
         val file = File(tempDir, name)
         file.writeText(content)
         // 确保每个文件的 lastModified 不同
@@ -252,11 +266,12 @@ class HttpServerTest {
             conn.connectTimeout = 5000
             conn.readTimeout = 5000
             val status = conn.responseCode
-            val body = if (status in 200..299) {
-                conn.inputStream.bufferedReader().use { it.readText() }
-            } else {
-                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            }
+            val body =
+                if (status in 200..299) {
+                    conn.inputStream.bufferedReader().use { it.readText() }
+                } else {
+                    conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                }
             status to body
         } catch (e: Exception) {
             -1 to (e.message ?: "error")

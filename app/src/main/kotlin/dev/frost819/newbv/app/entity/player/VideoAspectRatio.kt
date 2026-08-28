@@ -7,7 +7,9 @@ package dev.frost819.newbv.app.entity.player
  *
  * @property ratio 宽高比数值，[Default] 使用视频原始尺寸
  */
-enum class VideoAspectRatio(val ratio: Float?) {
+enum class VideoAspectRatio(
+    val ratio: Float?,
+) {
     /** 默认（使用视频原始宽高比）。 */
     Default(null),
 
@@ -15,11 +17,11 @@ enum class VideoAspectRatio(val ratio: Float?) {
     FourToThree(4f / 3f),
 
     /** 16:9。 */
-    SixteenToNine(16f / 9f);
+    SixteenToNine(16f / 9f),
+    ;
 
     companion object {
         /** 从序号安全解析，越界返回 [Default]。 */
-        fun fromOrdinal(ordinal: Int): VideoAspectRatio =
-            entries.getOrElse(ordinal) { Default }
+        fun fromOrdinal(ordinal: Int): VideoAspectRatio = entries.getOrElse(ordinal) { Default }
     }
 }

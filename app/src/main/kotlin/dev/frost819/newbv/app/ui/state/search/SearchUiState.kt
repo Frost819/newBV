@@ -33,10 +33,21 @@ data class SearchInputUiState(
  * 搜索结果页单项数据（4 种类型统一封装）。
  */
 sealed class SearchResultItem {
-    data class VideoItem(val video: SearchTypeResult.Video) : SearchResultItem()
-    data class PgcItem(val pgc: SearchTypeResult.Pgc) : SearchResultItem()
-    data class UserItem(val user: SearchTypeResult.User) : SearchResultItem()
-    data class LiveRoomItem(val room: SearchTypeResult.LiveRoom) : SearchResultItem()
+    data class VideoItem(
+        val video: SearchTypeResult.Video,
+    ) : SearchResultItem()
+
+    data class PgcItem(
+        val pgc: SearchTypeResult.Pgc,
+    ) : SearchResultItem()
+
+    data class UserItem(
+        val user: SearchTypeResult.User,
+    ) : SearchResultItem()
+
+    data class LiveRoomItem(
+        val room: SearchTypeResult.LiveRoom,
+    ) : SearchResultItem()
 }
 
 /**

@@ -18,7 +18,6 @@ import java.io.File
  */
 @RunWith(AndroidJUnit4::class)
 class CrashUploaderTest {
-
     private lateinit var context: Context
     private lateinit var logDir: File
     private lateinit var uploader: CrashUploader
@@ -61,15 +60,16 @@ class CrashUploaderTest {
     @Test
     fun uploadCrash_is_noop_when_disabled() {
         uploader.enabled = false
-        val deviceInfo = DeviceInfo(
-            appVersion = "1.0",
-            appVersionCode = 1,
-            androidVersion = "12",
-            androidSdk = 31,
-            device = "test",
-            model = "TestModel",
-            manufacturer = "TestManufacturer",
-        )
+        val deviceInfo =
+            DeviceInfo(
+                appVersion = "1.0",
+                appVersionCode = 1,
+                androidVersion = "12",
+                androidSdk = 31,
+                device = "test",
+                model = "TestModel",
+                manufacturer = "TestManufacturer",
+            )
 
         uploader.uploadCrash(deviceInfo, Thread.currentThread(), RuntimeException("test"), "logcat")
 
@@ -80,15 +80,16 @@ class CrashUploaderTest {
     @Test
     fun uploadCrash_saves_json_file_when_enabled() {
         uploader.enabled = true
-        val deviceInfo = DeviceInfo(
-            appVersion = "1.0",
-            appVersionCode = 42,
-            androidVersion = "12",
-            androidSdk = 31,
-            device = "test",
-            model = "TestModel",
-            manufacturer = "TestManufacturer",
-        )
+        val deviceInfo =
+            DeviceInfo(
+                appVersion = "1.0",
+                appVersionCode = 42,
+                androidVersion = "12",
+                androidSdk = 31,
+                device = "test",
+                model = "TestModel",
+                manufacturer = "TestManufacturer",
+            )
 
         uploader.uploadCrash(
             deviceInfo,

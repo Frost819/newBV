@@ -53,11 +53,12 @@ fun QrLoginContent(
     onLoginSuccess: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val statusColor = when (uiState.state) {
-        QrLoginState.Error, QrLoginState.Expired -> MaterialTheme.colorScheme.error
-        QrLoginState.Success -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    val statusColor =
+        when (uiState.state) {
+            QrLoginState.Error, QrLoginState.Expired -> MaterialTheme.colorScheme.error
+            QrLoginState.Success -> MaterialTheme.colorScheme.secondary
+            else -> MaterialTheme.colorScheme.onSurface
+        }
 
     LaunchedEffect(Unit) {
         viewModel.requestAppQrCode()
@@ -83,8 +84,9 @@ fun QrLoginContent(
                 verticalArrangement = Arrangement.spacedBy(36.dp),
             ) {
                 AnimatedVisibility(
-                    visible = uiState.state == QrLoginState.WaitingForScan ||
-                        uiState.state == QrLoginState.WaitingForConfirm,
+                    visible =
+                        uiState.state == QrLoginState.WaitingForScan ||
+                            uiState.state == QrLoginState.WaitingForConfirm,
                 ) {
                     QrCodeImage(
                         url = uiState.qrUrl,
@@ -97,50 +99,57 @@ fun QrLoginContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(
-                        text = when (uiState.state) {
-                            QrLoginState.Ready, QrLoginState.RequestingQRCode ->
-                                stringResource(R.string.login_requesting)
-                            QrLoginState.WaitingForScan ->
-                                stringResource(R.string.login_wait_for_scan)
-                            QrLoginState.WaitingForConfirm ->
-                                stringResource(R.string.login_wait_for_confirm)
-                            QrLoginState.Expired ->
-                                stringResource(R.string.login_expired)
-                            QrLoginState.Success ->
-                                stringResource(R.string.login_success)
-                            QrLoginState.Error, QrLoginState.Unknown ->
-                                uiState.errorMessage.ifEmpty { stringResource(R.string.login_error) }
-                        },
+                        text =
+                            when (uiState.state) {
+                                QrLoginState.Ready, QrLoginState.RequestingQRCode ->
+                                    stringResource(R.string.login_requesting)
+                                QrLoginState.WaitingForScan ->
+                                    stringResource(R.string.login_wait_for_scan)
+                                QrLoginState.WaitingForConfirm ->
+                                    stringResource(R.string.login_wait_for_confirm)
+                                QrLoginState.Expired ->
+                                    stringResource(R.string.login_expired)
+                                QrLoginState.Success ->
+                                    stringResource(R.string.login_success)
+                                QrLoginState.Error, QrLoginState.Unknown ->
+                                    uiState.errorMessage.ifEmpty { stringResource(R.string.login_error) }
+                            },
                         style = MaterialTheme.typography.displaySmall,
                         color = statusColor,
                     )
                     AnimatedVisibility(
-                        visible = uiState.state == QrLoginState.Expired ||
-                            uiState.state == QrLoginState.Error,
+                        visible =
+                            uiState.state == QrLoginState.Expired ||
+                                uiState.state == QrLoginState.Error,
                     ) {
                         val retryFocusRequester = remember { FocusRequester() }
                         LaunchedEffect(Unit) {
                             runCatching { retryFocusRequester.requestFocus() }
                         }
                         Surface(
-                            modifier = Modifier
-                                .focusRequester(retryFocusRequester)
-                                .touchClickable(onClick = { viewModel.requestAppQrCode() }),
+                            modifier =
+                                Modifier
+                                    .focusRequester(retryFocusRequester)
+                                    .touchClickable(onClick = { viewModel.requestAppQrCode() }),
                             onClick = { viewModel.requestAppQrCode() },
                             shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
-                            border = ClickableSurfaceDefaults.border(
-                                focusedBorder = Border(
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        2.dp,
-                                        MaterialTheme.colorScheme.border,
-                                    ),
-                                    shape = MaterialTheme.shapes.medium,
+                            border =
+                                ClickableSurfaceDefaults.border(
+                                    focusedBorder =
+                                        Border(
+                                            border =
+                                                androidx.compose.foundation.BorderStroke(
+                                                    2.dp,
+                                                    MaterialTheme.colorScheme.border,
+                                                ),
+                                            shape = MaterialTheme.shapes.medium,
+                                        ),
                                 ),
-                            ),
-                            colors = ClickableSurfaceDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            ),
+                            colors =
+                                ClickableSurfaceDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
                         ) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -169,16 +178,18 @@ private fun QrCodeImage(
     modifier: Modifier = Modifier,
 ) {
     if (url.isEmpty()) return
-    val qrImage = remember(url) {
-        val graphics = QRCode(url).render()
-        val bitmap = graphics.nativeImage() as android.graphics.Bitmap
-        bitmap.asImageBitmap()
-    }
+    val qrImage =
+        remember(url) {
+            val graphics = QRCode(url).render()
+            val bitmap = graphics.nativeImage() as android.graphics.Bitmap
+            bitmap.asImageBitmap()
+        }
     Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .border(2.dp, MaterialTheme.colorScheme.border, MaterialTheme.shapes.large)
-            .background(Color.White),
+        modifier =
+            modifier
+                .clip(MaterialTheme.shapes.large)
+                .border(2.dp, MaterialTheme.colorScheme.border, MaterialTheme.shapes.large)
+                .background(Color.White),
         contentAlignment = Alignment.Center,
     ) {
         Image(

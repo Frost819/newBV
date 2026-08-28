@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,7 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Button
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
@@ -81,8 +81,9 @@ private fun UserPanelContent(
     onGoFollowList: () -> Unit = {},
 ) {
     Surface(
-        modifier = modifier
-            .let { if (focusRequester != null) it.focusRequester(focusRequester) else it },
+        modifier =
+            modifier
+                .let { if (focusRequester != null) it.focusRequester(focusRequester) else it },
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(
@@ -99,9 +100,10 @@ private fun UserPanelContent(
                             model = uiState.avatar,
                             contentDescription = uiState.username,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape),
+                            modifier =
+                                Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape),
                         )
                     }
                     Column {
@@ -116,12 +118,15 @@ private fun UserPanelContent(
                     }
                 }
 
-                val expProgress = if (uiState.nextExp > uiState.currentMin) {
-                    ((uiState.exp - uiState.currentMin).toFloat() /
-                        (uiState.nextExp - uiState.currentMin).toFloat()).coerceIn(0f, 1f)
-                } else {
-                    1f
-                }
+                val expProgress =
+                    if (uiState.nextExp > uiState.currentMin) {
+                        (
+                            (uiState.exp - uiState.currentMin).toFloat() /
+                                (uiState.nextExp - uiState.currentMin).toFloat()
+                        ).coerceIn(0f, 1f)
+                    } else {
+                        1f
+                    }
                 LinearProgressIndicator(
                     progress = { expProgress },
                     modifier = Modifier.fillMaxWidth(),
@@ -143,8 +148,9 @@ private fun UserPanelContent(
                     modifier = Modifier.touchClickable(onClick = onToggleIncognito),
                 ) {
                     Text(
-                        text = stringResource(R.string.user_panel_incognito) +
-                            if (uiState.incognitoMode) "：开" else "：关",
+                        text =
+                            stringResource(R.string.user_panel_incognito) +
+                                if (uiState.incognitoMode) "：开" else "：关",
                     )
                 }
                 Button(
@@ -171,16 +177,17 @@ private fun UserPanelContent(
 private fun UserPanelContentPreview() {
     dev.frost819.newbv.core.theme.BVTheme {
         UserPanelContent(
-            uiState = AccountUiState(
-                isLogin = true,
-                uid = 12345L,
-                username = "测试用户",
-                avatar = "",
-                level = 6,
-                exp = 5000,
-                nextExp = 8000,
-                incognitoMode = false,
-            ),
+            uiState =
+                AccountUiState(
+                    isLogin = true,
+                    uid = 12345L,
+                    username = "测试用户",
+                    avatar = "",
+                    level = 6,
+                    exp = 5000,
+                    nextExp = 8000,
+                    incognitoMode = false,
+                ),
             onGoFollowList = {},
         )
     }

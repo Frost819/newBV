@@ -2,14 +2,10 @@ package dev.frost819.newbv.app.viewmodel.player
 
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
-import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
 import dev.frost819.newbv.data.datastore.Prefs
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -31,7 +27,6 @@ import org.junit.jupiter.api.Test
  * 验证字幕状态更新逻辑：字体大小、透明度、底部间距的设置。
  */
 class SubtitleViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var videoPlayRepository: VideoPlayRepository
     private lateinit var httpClient: HttpClient
@@ -73,92 +68,103 @@ class SubtitleViewModelTest {
     }
 
     @Test
-    fun `updateSubtitleState SetFontSize updates font size`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(32))
-        advanceUntilIdle()
+    fun `updateSubtitleState SetFontSize updates font size`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(32))
+            advanceUntilIdle()
 
-        assertThat(viewModel.subtitleState.value.fontSize).isEqualTo(32)
-    }
-
-    @Test
-    fun `updateSubtitleState SetOpacity updates opacity`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetOpacity(0.8f))
-        advanceUntilIdle()
-
-        assertThat(viewModel.subtitleState.value.opacity).isEqualTo(0.8f)
-    }
+            assertThat(viewModel.subtitleState.value.fontSize).isEqualTo(32)
+        }
 
     @Test
-    fun `updateSubtitleState SetBottomPadding updates padding`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetBottomPadding(24))
-        advanceUntilIdle()
+    fun `updateSubtitleState SetOpacity updates opacity`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetOpacity(0.8f))
+            advanceUntilIdle()
 
-        assertThat(viewModel.subtitleState.value.bottomPadding).isEqualTo(24)
-    }
-
-    @Test
-    fun `toggleSubtitle does nothing when subtitle list is empty`() = runTest(testDispatcher) {
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-        viewModel.toggleSubtitle()
-        advanceUntilIdle()
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-    }
+            assertThat(viewModel.subtitleState.value.opacity).isEqualTo(0.8f)
+        }
 
     @Test
-    fun `selectSubtitle minus one disables subtitle`() = runTest(testDispatcher) {
-        viewModel.selectSubtitle(-1L)
-        advanceUntilIdle()
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-        assertThat(viewModel.subtitleData.value).isEmpty()
-    }
+    fun `updateSubtitleState SetBottomPadding updates padding`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetBottomPadding(24))
+            advanceUntilIdle()
+
+            assertThat(viewModel.subtitleState.value.bottomPadding).isEqualTo(24)
+        }
 
     @Test
-    fun `clearSubtitle resets all subtitle state`() = runTest(testDispatcher) {
-        viewModel.clearSubtitle()
-
-        assertThat(viewModel.subtitleList.value).isEmpty()
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-        assertThat(viewModel.subtitleData.value).isEmpty()
-    }
-
-    @Test
-    fun `updateSubtitleState SetFontSize persists to Prefs`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(48))
-        advanceUntilIdle()
-
-        verify { Prefs.defaultSubtitleFontSize = 48 }
-    }
+    fun `toggleSubtitle does nothing when subtitle list is empty`() =
+        runTest(testDispatcher) {
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+            viewModel.toggleSubtitle()
+            advanceUntilIdle()
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+        }
 
     @Test
-    fun `updateSubtitleState SetOpacity persists to Prefs`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetOpacity(0.6f))
-        advanceUntilIdle()
-
-        verify { Prefs.defaultSubtitleBackgroundOpacity = 0.6f }
-    }
-
-    @Test
-    fun `updateSubtitleState SetBottomPadding persists to Prefs`() = runTest(testDispatcher) {
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetBottomPadding(30))
-        advanceUntilIdle()
-
-        verify { Prefs.defaultSubtitleBottomPadding = 30 }
-    }
+    fun `selectSubtitle minus one disables subtitle`() =
+        runTest(testDispatcher) {
+            viewModel.selectSubtitle(-1L)
+            advanceUntilIdle()
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+            assertThat(viewModel.subtitleData.value).isEmpty()
+        }
 
     @Test
-    fun `updateSubtitleState with no change is no-op`() = runTest(testDispatcher) {
-        val initialFontSize = viewModel.subtitleState.value.fontSize
-        viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(initialFontSize))
-        advanceUntilIdle()
+    fun `clearSubtitle resets all subtitle state`() =
+        runTest(testDispatcher) {
+            viewModel.clearSubtitle()
 
-        assertThat(viewModel.subtitleState.value.fontSize).isEqualTo(initialFontSize)
-    }
+            assertThat(viewModel.subtitleList.value).isEmpty()
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+            assertThat(viewModel.subtitleData.value).isEmpty()
+        }
 
     @Test
-    fun `toggleSubtitle does nothing when subtitle is active and list is empty`() = runTest(testDispatcher) {
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-        viewModel.toggleSubtitle()
-        advanceUntilIdle()
-        assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
-    }
+    fun `updateSubtitleState SetFontSize persists to Prefs`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(48))
+            advanceUntilIdle()
+
+            verify { Prefs.defaultSubtitleFontSize = 48 }
+        }
+
+    @Test
+    fun `updateSubtitleState SetOpacity persists to Prefs`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetOpacity(0.6f))
+            advanceUntilIdle()
+
+            verify { Prefs.defaultSubtitleBackgroundOpacity = 0.6f }
+        }
+
+    @Test
+    fun `updateSubtitleState SetBottomPadding persists to Prefs`() =
+        runTest(testDispatcher) {
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetBottomPadding(30))
+            advanceUntilIdle()
+
+            verify { Prefs.defaultSubtitleBottomPadding = 30 }
+        }
+
+    @Test
+    fun `updateSubtitleState with no change is no-op`() =
+        runTest(testDispatcher) {
+            val initialFontSize = viewModel.subtitleState.value.fontSize
+            viewModel.updateSubtitleState(SubtitleSettingAction.SetFontSize(initialFontSize))
+            advanceUntilIdle()
+
+            assertThat(viewModel.subtitleState.value.fontSize).isEqualTo(initialFontSize)
+        }
+
+    @Test
+    fun `toggleSubtitle does nothing when subtitle is active and list is empty`() =
+        runTest(testDispatcher) {
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+            viewModel.toggleSubtitle()
+            advanceUntilIdle()
+            assertThat(viewModel.subtitleId.value).isEqualTo(-1L)
+        }
 }

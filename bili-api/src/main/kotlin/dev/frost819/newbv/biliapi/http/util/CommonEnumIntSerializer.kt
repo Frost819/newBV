@@ -7,8 +7,11 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Suppress("MemberVisibilityCanBePrivate")
-open class CommonEnumIntSerializer<T>(val serialName: String, val choices: Array<T>, val choicesNumbers: Array<Int>) :
-    KSerializer<T> {
+open class CommonEnumIntSerializer<T>(
+    val serialName: String,
+    val choices: Array<T>,
+    val choicesNumbers: Array<Int>,
+) : KSerializer<T> {
     override val descriptor: SerialDescriptor = serialDescriptor<String>()
 
     init {
@@ -25,7 +28,8 @@ open class CommonEnumIntSerializer<T>(val serialName: String, val choices: Array
         value: T,
     ) {
         val index =
-            choices.indexOf(value)
+            choices
+                .indexOf(value)
                 .also { check(it != -1) { "$value is not a valid enum $serialName, choices are $choices" } }
         encoder.encodeInt(choicesNumbers[index])
     }

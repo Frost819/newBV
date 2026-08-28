@@ -26,7 +26,6 @@ import java.io.File
  * 和错误处理路径（未初始化时访问 dataStore / clear）。
  */
 class PrefDelegateTest {
-
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var tempDir: File
 
@@ -34,11 +33,15 @@ class PrefDelegateTest {
 
     @BeforeEach
     fun setUp() {
-        tempDir = kotlin.io.path.createTempDirectory(prefix = "delegate_test").toFile()
-        dataStore = PreferenceDataStoreFactory.create(
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-            produceFile = { File(tempDir, "Test.preferences_pb") }
-        )
+        tempDir =
+            kotlin.io.path
+                .createTempDirectory(prefix = "delegate_test")
+                .toFile()
+        dataStore =
+            PreferenceDataStoreFactory.create(
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                produceFile = { File(tempDir, "Test.preferences_pb") },
+            )
         Prefs.resetForTesting()
         Prefs.init(dataStore)
     }
@@ -87,12 +90,13 @@ class PrefDelegateTest {
     @Test
     fun `custom save and restore round trips correctly`() {
         val key = intPreferencesKey("test_enum_delegate")
-        val delegate = PrefDelegate<ThemeMode, Int>(
-            key = key,
-            defaultValue = ThemeMode.FollowSystem,
-            save = { it.ordinal },
-            restore = { ThemeMode.fromOrdinal(it) }
-        )
+        val delegate =
+            PrefDelegate<ThemeMode, Int>(
+                key = key,
+                defaultValue = ThemeMode.FollowSystem,
+                save = { it.ordinal },
+                restore = { ThemeMode.fromOrdinal(it) },
+            )
         delegate.setValue(null, ::dummy, ThemeMode.Dark)
         assertThat(delegate.getValue(null, ::dummy)).isEqualTo(ThemeMode.Dark)
         assertThat(delegate.flow.value).isEqualTo(1)
@@ -109,12 +113,13 @@ class PrefDelegateTest {
     @Test
     fun `resetToDefault with custom save restores default persisted form`() {
         val key = intPreferencesKey("test_reset_custom")
-        val delegate = PrefDelegate<ThemeMode, Int>(
-            key = key,
-            defaultValue = ThemeMode.Light,
-            save = { it.ordinal },
-            restore = { ThemeMode.fromOrdinal(it) }
-        )
+        val delegate =
+            PrefDelegate<ThemeMode, Int>(
+                key = key,
+                defaultValue = ThemeMode.Light,
+                save = { it.ordinal },
+                restore = { ThemeMode.fromOrdinal(it) },
+            )
         delegate.setValue(null, ::dummy, ThemeMode.Dark)
         delegate.resetToDefault()
         assertThat(delegate.flow.value).isEqualTo(2)
@@ -130,15 +135,16 @@ class PrefDelegateTest {
     }
 
     @Test
-    fun `themeModeFlow reflects changes`() = runBlocking {
-        val flow = Prefs.themeModeFlow
-        assertThat(flow.value).isEqualTo(ThemeMode.FollowSystem)
+    fun `themeModeFlow reflects changes`() =
+        runBlocking {
+            val flow = Prefs.themeModeFlow
+            assertThat(flow.value).isEqualTo(ThemeMode.FollowSystem)
 
-        Prefs.themeMode = ThemeMode.Dark
-        delay(200)
+            Prefs.themeMode = ThemeMode.Dark
+            delay(200)
 
-        assertThat(flow.value).isEqualTo(ThemeMode.Dark)
-    }
+            assertThat(flow.value).isEqualTo(ThemeMode.Dark)
+        }
 
     @Test
     fun `densityFlow returns StateFlow with default value`() {
@@ -147,15 +153,16 @@ class PrefDelegateTest {
     }
 
     @Test
-    fun `densityFlow reflects changes`() = runBlocking {
-        val flow = Prefs.densityFlow
-        assertThat(flow.value).isEqualTo(2f)
+    fun `densityFlow reflects changes`() =
+        runBlocking {
+            val flow = Prefs.densityFlow
+            assertThat(flow.value).isEqualTo(2f)
 
-        Prefs.density = 3.5f
-        delay(200)
+            Prefs.density = 3.5f
+            delay(200)
 
-        assertThat(flow.value).isEqualTo(3.5f)
-    }
+            assertThat(flow.value).isEqualTo(3.5f)
+        }
 
     // ===== Prefs 错误处理 =====
 
@@ -178,65 +185,68 @@ class PrefDelegateTest {
     }
 
     @Test
-    fun `launchPersist executes block`() = runBlocking {
-        var executed = false
-        Prefs.launchPersist { executed = true }
-        delay(200)
-        assertThat(executed).isTrue()
-    }
+    fun `launchPersist executes block`() =
+        runBlocking {
+            var executed = false
+            Prefs.launchPersist { executed = true }
+            delay(200)
+            assertThat(executed).isTrue()
+        }
 
     // ===== 覆盖全部 Prefs setter =====
 
     @Test
-    fun `write to all remaining prefs covers setters`() = runBlocking {
-        Prefs.sid = "test_sid"
-        Prefs.uidCkMd5 = "test_md5"
-        Prefs.accessToken = "test_token"
-        Prefs.refreshToken = "test_refresh"
-        Prefs.buvid3FromSpi = true
-        Prefs.deviceCookies = "test_cookies"
-        Prefs.crashReportEnabled = true
-        Prefs.enableSoftwareVideoDecoder = true
-        Prefs.enableFfmpegAudioRenderer = true
-        Prefs.defaultDanmakuScale = 2.0f
-        Prefs.defaultDanmakuOpacity = 0.5f
-        Prefs.defaultDanmakuSpeedFactor = 2.0f
-        Prefs.defaultDanmakuArea = 0.8f
-        Prefs.defaultDanmakuMask = true
-        Prefs.defaultSubtitleFontSize = 36
-        Prefs.defaultSubtitleBackgroundOpacity = 0.6f
-        Prefs.defaultSubtitleBottomPadding = 20
-        Prefs.showVideoInfo = false
-        Prefs.showPersistentSeek = true
-        Prefs.showPlayerDebugInfo = true
-        Prefs.firstHomeTopNavItem = HomeTopNavItem.Recommend
-        Prefs.firstPersonalTopNavItem = PersonalTopNavItem.History
-        Prefs.showHotword = false
-        Prefs.cacheThreshold = 300
-        Prefs.playerCustomShortcuts = "[{\"key\":\"test\"}]"
+    fun `write to all remaining prefs covers setters`() =
+        runBlocking {
+            Prefs.sid = "test_sid"
+            Prefs.uidCkMd5 = "test_md5"
+            Prefs.accessToken = "test_token"
+            Prefs.refreshToken = "test_refresh"
+            Prefs.buvid3FromSpi = true
+            Prefs.deviceCookies = "test_cookies"
+            Prefs.crashReportEnabled = true
+            Prefs.enableSoftwareVideoDecoder = true
+            Prefs.enableFfmpegAudioRenderer = true
+            Prefs.defaultDanmakuScale = 2.0f
+            Prefs.defaultDanmakuOpacity = 0.5f
+            Prefs.defaultDanmakuSpeedFactor = 2.0f
+            Prefs.defaultDanmakuArea = 0.8f
+            Prefs.defaultDanmakuMask = true
+            Prefs.defaultSubtitleFontSize = 36
+            Prefs.defaultSubtitleBackgroundOpacity = 0.6f
+            Prefs.defaultSubtitleBottomPadding = 20
+            Prefs.showVideoInfo = false
+            Prefs.showPersistentSeek = true
+            Prefs.showPlayerDebugInfo = true
+            Prefs.firstHomeTopNavItem = HomeTopNavItem.Recommend
+            Prefs.firstPersonalTopNavItem = PersonalTopNavItem.History
+            Prefs.showHotword = false
+            Prefs.cacheThreshold = 300
+            Prefs.playerCustomShortcuts = "[{\"key\":\"test\"}]"
 
-        delay(200)
+            delay(200)
 
-        assertThat(Prefs.sid).isEqualTo("test_sid")
-        assertThat(Prefs.enableSoftwareVideoDecoder).isTrue()
-        assertThat(Prefs.defaultDanmakuScale).isEqualTo(2.0f)
-        assertThat(Prefs.showPlayerDebugInfo).isTrue()
-        assertThat(Prefs.firstHomeTopNavItem).isEqualTo(HomeTopNavItem.Recommend)
-        assertThat(Prefs.defaultDanmakuSpeedFactor).isEqualTo(2.0f)
-    }
+            assertThat(Prefs.sid).isEqualTo("test_sid")
+            assertThat(Prefs.enableSoftwareVideoDecoder).isTrue()
+            assertThat(Prefs.defaultDanmakuScale).isEqualTo(2.0f)
+            assertThat(Prefs.showPlayerDebugInfo).isTrue()
+            assertThat(Prefs.firstHomeTopNavItem).isEqualTo(HomeTopNavItem.Recommend)
+            assertThat(Prefs.defaultDanmakuSpeedFactor).isEqualTo(2.0f)
+        }
 
     // ===== buvid3 preserved =====
 
     @Test
-    fun `custom buvid3 is preserved across reinit`() = runBlocking {
-        Prefs.buvid3 = "custom_buvid3_value"
-        delay(200)
+    fun `custom buvid3 is preserved across reinit`() =
+        runBlocking {
+            Prefs.buvid3 = "custom_buvid3_value"
+            delay(200)
 
-        Prefs.resetForTesting()
-        Prefs.init(dataStore)
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
 
-        assertThat(Prefs.buvid3).isEqualTo("custom_buvid3_value")
-    }
+            assertThat(Prefs.buvid3).isEqualTo("custom_buvid3_value")
+        }
 
     // ===== PrefDelegate null flow value =====
 

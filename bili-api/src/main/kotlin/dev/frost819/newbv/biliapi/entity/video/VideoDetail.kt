@@ -49,7 +49,9 @@ data class VideoDetail(
                     redirectToEp = viewReply.arc.redirectUrl.contains("ep"),
                     epid =
                         runCatching {
-                            viewReply.arc.redirectUrl.split("ep", "?")[1].toInt()
+                            viewReply.arc.redirectUrl
+                                .split("ep", "?")[1]
+                                .toInt()
                         }.getOrNull(),
                     argueTip = viewReply.argueMsg.takeIf { it.isNotEmpty() },
                     tags = viewReply.tagList.map { Tag.fromTag(it) },
@@ -76,10 +78,14 @@ data class VideoDetail(
                             )
                         },
                     relatedVideos = viewReply.relatesList.map { RelatedVideo.fromRelate(it) },
-                    redirectToEp = viewReply.activitySeason.arc.redirectUrl.contains("ep"),
+                    redirectToEp =
+                        viewReply.activitySeason.arc.redirectUrl
+                            .contains("ep"),
                     epid =
                         runCatching {
-                            viewReply.activitySeason.arc.redirectUrl.split("ep", "?")[1].toInt()
+                            viewReply.activitySeason.arc.redirectUrl
+                                .split("ep", "?")[1]
+                                .toInt()
                         }.getOrNull(),
                     argueTip = viewReply.activitySeason.argueMsg.takeIf { it.isNotEmpty() },
                     tags = viewReply.tagList.map { Tag.fromTag(it) },
@@ -112,8 +118,14 @@ data class VideoDetail(
                     videoDetail.related?.map { RelatedVideo.fromRelate(it) }
                         ?: emptyList(),
                 redirectToEp = videoDetail.view.redirectUrl?.contains("ep") ?: false,
-                epid = videoDetail.view.redirectUrl?.split("ep", "?")?.get(1)?.toInt(),
-                argueTip = videoDetail.view.stat.argueMsg.takeIf { it.isNotEmpty() },
+                epid =
+                    videoDetail.view.redirectUrl
+                        ?.split("ep", "?")
+                        ?.get(1)
+                        ?.toInt(),
+                argueTip =
+                    videoDetail.view.stat.argueMsg
+                        .takeIf { it.isNotEmpty() },
                 tags = videoDetail.tags.map { Tag.fromTag(it) },
                 userActions = UserActions(),
                 history = History(0, 0),
@@ -209,13 +221,12 @@ data class UserActions(
     val dislike: Boolean = false,
 ) {
     companion object {
-        fun fromReqUser(reqUser: ReqUser): UserActions {
-            return UserActions(
+        fun fromReqUser(reqUser: ReqUser): UserActions =
+            UserActions(
                 like = reqUser.like == 1,
                 favorite = reqUser.favorite == 1,
                 coin = reqUser.coin == 1,
                 dislike = reqUser.dislike == 1,
             )
-        }
     }
 }

@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.login
 
-import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable

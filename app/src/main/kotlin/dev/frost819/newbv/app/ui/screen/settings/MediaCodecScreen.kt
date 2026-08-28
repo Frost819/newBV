@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import dev.frost819.newbv.core.focus.touchClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -48,6 +47,7 @@ import dev.frost819.newbv.app.util.CodecMedia
 import dev.frost819.newbv.app.util.CodecMode
 import dev.frost819.newbv.app.util.CodecType
 import dev.frost819.newbv.app.util.CodecUtil
+import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -91,19 +91,21 @@ fun MediaCodecScreen(
     ) { innerPadding ->
         Row(modifier = Modifier.padding(innerPadding)) {
             MediaCodecListItems(
-                modifier = Modifier
-                    .onFocusChanged { focusInNav = it.hasFocus }
-                    .weight(3f)
-                    .fillMaxHeight(),
+                modifier =
+                    Modifier
+                        .onFocusChanged { focusInNav = it.hasFocus }
+                        .weight(3f)
+                        .fillMaxHeight(),
                 codecInfoDataList = decoderList,
                 currentCodecInfoData = currentCodecInfoData,
                 onCodecInfoDataChanged = { currentCodecInfoData = it },
                 isFocusing = focusInNav,
             )
             MediaCodecDetails(
-                modifier = Modifier
-                    .weight(5f)
-                    .fillMaxSize(),
+                modifier =
+                    Modifier
+                        .weight(5f)
+                        .fillMaxSize(),
                 onBackNav = { focusInNav = true },
                 currentCodecInfoData = currentCodecInfoData,
             )
@@ -139,17 +141,18 @@ private fun MediaCodecListItems(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(items = codecInfoDataList) { codecInfoData ->
-            val buttonModifier = if (currentCodecInfoData == codecInfoData) {
-                Modifier.focusRequester(focusRequester).fillMaxWidth()
-            } else {
-                Modifier.fillMaxWidth()
-            }
+            val buttonModifier =
+                if (currentCodecInfoData == codecInfoData) {
+                    Modifier.focusRequester(focusRequester).fillMaxWidth()
+                } else {
+                    Modifier.fillMaxWidth()
+                }
             ListItem(
-                modifier = buttonModifier
-                    .onFocusChanged {
-                        if (it.hasFocus) onCodecInfoDataChanged(codecInfoData)
-                    }
-                    .touchClickable(onClick = { onCodecInfoDataChanged(codecInfoData) }),
+                modifier =
+                    buttonModifier
+                        .onFocusChanged {
+                            if (it.hasFocus) onCodecInfoDataChanged(codecInfoData)
+                        }.touchClickable(onClick = { onCodecInfoDataChanged(codecInfoData) }),
                 selected = currentCodecInfoData == codecInfoData,
                 onClick = { onCodecInfoDataChanged(codecInfoData) },
                 headlineContent = {
@@ -165,19 +168,21 @@ private fun MediaCodecListItems(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.small)
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .padding(horizontal = 8.dp),
+                            modifier =
+                                Modifier
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(horizontal = 8.dp),
                             text = codecInfoData.mimeType,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Icon(
-                            imageVector = when (codecInfoData.media) {
-                                CodecMedia.Audio -> Icons.Default.Audiotrack
-                                CodecMedia.Video -> Icons.Default.Videocam
-                            },
+                            imageVector =
+                                when (codecInfoData.media) {
+                                    CodecMedia.Audio -> Icons.Default.Audiotrack
+                                    CodecMedia.Video -> Icons.Default.Videocam
+                                },
                             contentDescription = null,
                         )
                     }
@@ -195,26 +200,28 @@ private fun MediaCodecDetails(
 ) {
     if (currentCodecInfoData != null) {
         LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .onPreviewKeyEvent {
-                    if (it.key == Key.DirectionLeft && it.type == KeyEventType.KeyDown) {
-                        onBackNav()
-                        true
-                    } else {
-                        false
-                    }
-                },
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .onPreviewKeyEvent {
+                        if (it.key == Key.DirectionLeft && it.type == KeyEventType.KeyDown) {
+                            onBackNav()
+                            true
+                        } else {
+                            false
+                        }
+                    },
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 48.dp, vertical = 24.dp),
         ) {
             item {
                 MediaCodecDetailItem(
                     title = "硬/软解",
-                    text = when (currentCodecInfoData.mode) {
-                        CodecMode.Hardware -> "硬件解码"
-                        CodecMode.Software -> "软件解码"
-                    },
+                    text =
+                        when (currentCodecInfoData.mode) {
+                            CodecMode.Hardware -> "硬件解码"
+                            CodecMode.Software -> "软件解码"
+                        },
                 )
             }
             item {
@@ -239,31 +246,20 @@ private fun MediaCodecDetails(
                 item {
                     MediaCodecDetailItem(
                         title = "帧率范围",
-                        text = "${currentCodecInfoData.videoFrame?.first}fps - ${currentCodecInfoData.videoFrame?.last}fps",
+                        text =
+                            "${currentCodecInfoData.videoFrame?.first}fps - " +
+                                "${currentCodecInfoData.videoFrame?.last}fps",
                     )
                 }
                 item {
                     MediaCodecDetailItem(
                         title = "支持帧率",
-                        text = currentCodecInfoData.supportedFrameRates.joinToString("\n") { sfr ->
-                            resolutionName(sfr.resolution.second) + ": " +
-                                if (sfr.unsupported) "不支持" else {
-                                    String.format(
-                                        Locale.getDefault(),
-                                        "%.1f",
-                                        sfr.frameRate.upper,
-                                    ) + "fps"
-                                }
-                        },
-                    )
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    item {
-                        MediaCodecDetailItem(
-                            title = "可达帧率",
-                            text = currentCodecInfoData.achievableFrameRates.joinToString("\n") { sfr ->
+                        text =
+                            currentCodecInfoData.supportedFrameRates.joinToString("\n") { sfr ->
                                 resolutionName(sfr.resolution.second) + ": " +
-                                    if (sfr.unsupported) "不支持" else {
+                                    if (sfr.unsupported) {
+                                        "不支持"
+                                    } else {
                                         String.format(
                                             Locale.getDefault(),
                                             "%.1f",
@@ -271,6 +267,25 @@ private fun MediaCodecDetails(
                                         ) + "fps"
                                     }
                             },
+                    )
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    item {
+                        MediaCodecDetailItem(
+                            title = "可达帧率",
+                            text =
+                                currentCodecInfoData.achievableFrameRates.joinToString("\n") { sfr ->
+                                    resolutionName(sfr.resolution.second) + ": " +
+                                        if (sfr.unsupported) {
+                                            "不支持"
+                                        } else {
+                                            String.format(
+                                                Locale.getDefault(),
+                                                "%.1f",
+                                                sfr.frameRate.upper,
+                                            ) + "fps"
+                                        }
+                                },
                         )
                     }
                 }
@@ -279,7 +294,9 @@ private fun MediaCodecDetails(
                 item {
                     MediaCodecDetailItem(
                         title = "音频码率范围",
-                        text = "${currentCodecInfoData.audioBitrateRange?.first?.toBps()} - ${currentCodecInfoData.audioBitrateRange?.last?.toBps()}",
+                        text =
+                            "${currentCodecInfoData.audioBitrateRange?.first?.toBps()} - " +
+                                "${currentCodecInfoData.audioBitrateRange?.last?.toBps()}",
                     )
                 }
             }
@@ -292,7 +309,10 @@ private fun MediaCodecDetails(
 }
 
 @Composable
-private fun MediaCodecDetailItem(title: String, text: String) {
+private fun MediaCodecDetailItem(
+    title: String,
+    text: String,
+) {
     ListItem(
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = text) },
@@ -301,19 +321,21 @@ private fun MediaCodecDetailItem(title: String, text: String) {
     )
 }
 
-private fun resolutionName(height: Int): String = when (height) {
-    360 -> "360P"
-    480 -> "480P"
-    720 -> "720P"
-    1080 -> "1080P"
-    1440 -> "1440P"
-    2160 -> "4K"
-    4320 -> "8K"
-    else -> "${height}P"
-}
+private fun resolutionName(height: Int): String =
+    when (height) {
+        360 -> "360P"
+        480 -> "480P"
+        720 -> "720P"
+        1080 -> "1080P"
+        1440 -> "1440P"
+        2160 -> "4K"
+        4320 -> "8K"
+        else -> "${height}P"
+    }
 
-private fun Int.toBps(): String = when {
-    this >= 1_000_000 -> "${this / 1_000_000} Mbps"
-    this >= 1_000 -> "${this / 1_000} Kbps"
-    else -> "$this bps"
-}
+private fun Int.toBps(): String =
+    when {
+        this >= 1_000_000 -> "${this / 1_000_000} Mbps"
+        this >= 1_000 -> "${this / 1_000} Kbps"
+        else -> "$this bps"
+    }

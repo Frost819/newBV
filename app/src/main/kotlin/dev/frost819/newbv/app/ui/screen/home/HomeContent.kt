@@ -8,14 +8,11 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,13 +26,13 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.compose.material3.Scaffold as Material3Scaffold
+import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.component.HomeTabItem
 import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.viewmodel.home.HomeViewModel
 import dev.frost819.newbv.data.datastore.HomeTopNavItem
 import dev.frost819.newbv.data.datastore.Prefs
-import androidx.tv.material3.MaterialTheme
+import androidx.compose.material3.Scaffold as Material3Scaffold
 
 /**
  * 首页内容（TopNav + 3 个子 Tab）。
@@ -57,15 +54,16 @@ fun HomeContent(
     var focusOnContent by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
 
-    val reorderedItems = remember {
-        val allItems = HomeTopNavItem.entries
-        val startIndex = allItems.indexOf(firstTab)
-        if (startIndex == -1) {
-            allItems.map { HomeTabItem(it) }
-        } else {
-            (allItems.drop(startIndex) + allItems.take(startIndex)).map { HomeTabItem(it) }
+    val reorderedItems =
+        remember {
+            val allItems = HomeTopNavItem.entries
+            val startIndex = allItems.indexOf(firstTab)
+            if (startIndex == -1) {
+                allItems.map { HomeTabItem(it) }
+            } else {
+                (allItems.drop(startIndex) + allItems.take(startIndex)).map { HomeTabItem(it) }
+            }
         }
-    }
 
     Material3Scaffold(
         topBar = {
@@ -74,11 +72,12 @@ fun HomeContent(
                 items = reorderedItems,
                 selectedIndex = reorderedItems.indexOf(HomeTabItem(selectedTab)),
                 isLargePadding = !focusOnContent,
-                accentColor = if (selectedTab == HomeTopNavItem.Dynamics) {
-                    MaterialTheme.colorScheme.secondary
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
+                accentColor =
+                    if (selectedTab == HomeTopNavItem.Dynamics) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
                 onSelectedChanged = { nav ->
                     val tab = (nav as HomeTabItem).item
                     selectedTab = tab
@@ -94,17 +93,18 @@ fun HomeContent(
         },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .onFocusChanged { focusOnContent = it.hasFocus }
-                .onPreviewKeyEvent { event ->
-                    if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                        viewModel.refresh(selectedTab)
-                        navFocusRequester.requestFocus()
-                        return@onPreviewKeyEvent true
-                    }
-                    false
-                },
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .onFocusChanged { focusOnContent = it.hasFocus }
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
+                            viewModel.refresh(selectedTab)
+                            navFocusRequester.requestFocus()
+                            return@onPreviewKeyEvent true
+                        }
+                        false
+                    },
         ) {
             AnimatedContent(
                 targetState = selectedTab,

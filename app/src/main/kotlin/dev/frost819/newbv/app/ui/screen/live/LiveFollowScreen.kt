@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -52,64 +51,65 @@ import javax.inject.Inject
  * 加载用户关注的主播中正在直播的全部房间列表。
  */
 @HiltViewModel
-class LiveFollowViewModel @Inject constructor(
-    private val liveRepository: LiveRepository,
-) : ViewModel() {
-
-    companion object {
-        private const val LOAD_TIMEOUT_MS = 10_000L
-    }
-
-    private val logger = Loggers.get("LiveFollowScreen")
-
-    private val _uiState = MutableStateFlow(LiveFollowUiState())
-    val uiState: StateFlow<LiveFollowUiState> = _uiState.asStateFlow()
-
-    init {
-        loadFollowLive()
-    }
-
-    /**
-     * 加载关注主播正在直播的房间列表。
-     */
-    fun loadFollowLive() {
-        _uiState.update {
-            it.copy(
-                items = emptyList(),
-                isLoading = true,
-                isError = false,
-            )
+class LiveFollowViewModel
+    @Inject
+    constructor(
+        private val liveRepository: LiveRepository,
+    ) : ViewModel() {
+        companion object {
+            private const val LOAD_TIMEOUT_MS = 10_000L
         }
 
-        viewModelScope.launch {
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val response = liveRepository.getFollowLive()
-                    response.rooms.filter { it.liveStatus == 1 }.map { it.toCardData() }
-                }
-            }.onSuccess { items ->
-                _uiState.update {
-                    it.copy(
-                        items = items,
-                        isLoading = false,
-                        isError = false,
-                    )
-                }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.warn(error) { "Failed to load follow live" }
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isError = true,
-                    )
+        private val logger = Loggers.get("LiveFollowScreen")
+
+        private val _uiState = MutableStateFlow(LiveFollowUiState())
+        val uiState: StateFlow<LiveFollowUiState> = _uiState.asStateFlow()
+
+        init {
+            loadFollowLive()
+        }
+
+        /**
+         * 加载关注主播正在直播的房间列表。
+         */
+        fun loadFollowLive() {
+            _uiState.update {
+                it.copy(
+                    items = emptyList(),
+                    isLoading = true,
+                    isError = false,
+                )
+            }
+
+            viewModelScope.launch {
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val response = liveRepository.getFollowLive()
+                        response.rooms.filter { it.liveStatus == 1 }.map { it.toCardData() }
+                    }
+                }.onSuccess { items ->
+                    _uiState.update {
+                        it.copy(
+                            items = items,
+                            isLoading = false,
+                            isError = false,
+                        )
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.warn(error) { "Failed to load follow live" }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isError = true,
+                        )
+                    }
                 }
             }
         }
     }
-}
 
 private fun FollowLiveRoom.toCardData(): LiveRoomCardData {
     val coverUrl = coverFromUser.ifBlank { keyframe }

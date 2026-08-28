@@ -33,9 +33,7 @@ import kotlinx.coroutines.launch
  * 显示当前版本号、最新版本号，按钮打开更新弹窗。
  */
 @Composable
-fun AboutSetting(
-    modifier: Modifier = Modifier,
-) {
+fun AboutSetting(modifier: Modifier = Modifier) {
     val logger = Loggers.get("AboutSetting")
 
     var showUpdateDialog by remember { mutableStateOf(false) }

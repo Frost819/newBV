@@ -16,29 +16,29 @@ import javax.inject.Singleton
  * @param searchHistoryDao Room DAO
  */
 @Singleton
-class SearchHistoryRepositoryImpl @Inject constructor(
-    private val searchHistoryDao: SearchHistoryDao,
-) : SearchHistoryRepository {
+class SearchHistoryRepositoryImpl
+    @Inject
+    constructor(
+        private val searchHistoryDao: SearchHistoryDao,
+    ) : SearchHistoryRepository {
+        override suspend fun getHistories(count: Int): List<SearchHistoryEntity> = searchHistoryDao.getHistories(count)
 
-    override suspend fun getHistories(count: Int): List<SearchHistoryEntity> =
-        searchHistoryDao.getHistories(count)
+        override suspend fun addHistory(keyword: String) {
+            if (Prefs.incognitoMode) return
+            val existing = searchHistoryDao.findHistory(keyword)
+            if (existing != null) {
+                existing.searchDate = Date()
+                searchHistoryDao.update(existing)
+            } else {
+                searchHistoryDao.insert(SearchHistoryEntity(keyword = keyword))
+            }
+        }
 
-    override suspend fun addHistory(keyword: String) {
-        if (Prefs.incognitoMode) return
-        val existing = searchHistoryDao.findHistory(keyword)
-        if (existing != null) {
-            existing.searchDate = Date()
-            searchHistoryDao.update(existing)
-        } else {
-            searchHistoryDao.insert(SearchHistoryEntity(keyword = keyword))
+        override suspend fun deleteHistory(keyword: String) {
+            searchHistoryDao.findHistory(keyword)?.let { searchHistoryDao.delete(it) }
+        }
+
+        override suspend fun clearAll() {
+            searchHistoryDao.deleteAll()
         }
     }
-
-    override suspend fun deleteHistory(keyword: String) {
-        searchHistoryDao.findHistory(keyword)?.let { searchHistoryDao.delete(it) }
-    }
-
-    override suspend fun clearAll() {
-        searchHistoryDao.deleteAll()
-    }
-}

@@ -35,19 +35,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.component.settings.SettingSwitchListItem
 import dev.frost819.newbv.app.ui.component.settings.displayName
-import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.app.ui.screen.main.displayName
-import dev.frost819.newbv.core.focus.touchClickable
+import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.data.datastore.HomeTopNavItem
 import dev.frost819.newbv.data.datastore.LeftNaviItem
-import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.PersonalTopNavItem
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.ThemeMode
 import kotlin.math.roundToInt
 
@@ -57,9 +55,7 @@ import kotlin.math.roundToInt
  * 启动页/首页 Tab/个人页 Tab/显示视频详情/常显进度条/Density/主题模式。
  */
 @Composable
-fun UISetting(
-    modifier: Modifier = Modifier,
-) {
+fun UISetting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     var showDensityDialog by remember { mutableStateOf(false) }
@@ -79,9 +75,10 @@ fun UISetting(
 
     Box(modifier = modifier) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 48.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -253,45 +250,49 @@ private fun UIDensityDialog(
             title = { Text(text = "界面缩放") },
             text = {
                 Column(
-                    modifier = Modifier
-                        .focusRequester(focusRequester)
-                        .focusable()
-                        .fillMaxWidth()
-                        .onPreviewKeyEvent {
-                            if ((it.key == Key.DirectionUp || it.key == Key.DirectionDown) &&
-                                it.type == KeyEventType.KeyDown
-                            ) {
-                                var newDensity = if (it.key == Key.DirectionUp) {
-                                    density + 0.1f
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester)
+                            .focusable()
+                            .fillMaxWidth()
+                            .onPreviewKeyEvent {
+                                if ((it.key == Key.DirectionUp || it.key == Key.DirectionDown) &&
+                                    it.type == KeyEventType.KeyDown
+                                ) {
+                                    var newDensity =
+                                        if (it.key == Key.DirectionUp) {
+                                            density + 0.1f
+                                        } else {
+                                            density - 0.1f
+                                        }
+                                    newDensity = (newDensity * 10).roundToInt() / 10f
+                                    onDensityChange(newDensity.coerceIn(0.5f, 5f))
+                                    true
                                 } else {
-                                    density - 0.1f
+                                    false
                                 }
-                                newDensity = (newDensity * 10).roundToInt() / 10f
-                                onDensityChange(newDensity.coerceIn(0.5f, 5f))
-                                true
-                            } else {
-                                false
-                            }
-                        },
+                            },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
-                        modifier = Modifier.clickable {
-                            var newDensity = density + 0.1f
-                            newDensity = (newDensity * 10).roundToInt() / 10f
-                            onDensityChange(newDensity.coerceIn(0.5f, 5f))
-                        },
+                        modifier =
+                            Modifier.clickable {
+                                var newDensity = density + 0.1f
+                                newDensity = (newDensity * 10).roundToInt() / 10f
+                                onDensityChange(newDensity.coerceIn(0.5f, 5f))
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
                     }
                     Text(text = "$density")
                     Box(
-                        modifier = Modifier.clickable {
-                            var newDensity = density - 0.1f
-                            newDensity = (newDensity * 10).roundToInt() / 10f
-                            onDensityChange(newDensity.coerceIn(0.5f, 5f))
-                        },
+                        modifier =
+                            Modifier.clickable {
+                                var newDensity = density - 0.1f
+                                newDensity = (newDensity * 10).roundToInt() / 10f
+                                onDensityChange(newDensity.coerceIn(0.5f, 5f))
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "减少")

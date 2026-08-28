@@ -9,10 +9,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 /**
  * [PlaySpeedMenuList] 的插桩测试。
@@ -21,7 +21,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class PlaySpeedMenuListTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 

@@ -23,7 +23,9 @@ class SeasonEntityTest {
                 bvid = "BV100",
                 cid = 200L,
                 cover = "http://cover.test",
-                dimension = dev.frost819.newbv.biliapi.http.entity.video.Dimension(1920, 1080, 0),
+                dimension =
+                    dev.frost819.newbv.biliapi.http.entity.video
+                        .Dimension(1920, 1080, 0),
                 duration = 1440,
                 enableVt = false,
                 epId = 500,
@@ -113,11 +115,22 @@ class SeasonEntityTest {
                         duration = 300,
                         rights =
                             dev.frost819.newbv.biliapi.http.entity.video.VideoRights(
-                                bp = 0, elec = 0, download = 0, movie = 0, pay = 0,
-                                hd5 = 0, noReprint = 0, autoplay = 0, ugcPay = 0,
-                                isCooperation = 0, ugcPayPreview = 0, arcPay = 0,
+                                bp = 0,
+                                elec = 0,
+                                download = 0,
+                                movie = 0,
+                                pay = 0,
+                                hd5 = 0,
+                                noReprint = 0,
+                                autoplay = 0,
+                                ugcPay = 0,
+                                isCooperation = 0,
+                                ugcPayPreview = 0,
+                                arcPay = 0,
                             ),
-                        stat = dev.frost819.newbv.biliapi.http.entity.video.VideoStat(),
+                        stat =
+                            dev.frost819.newbv.biliapi.http.entity.video
+                                .VideoStat(),
                         dynamic = "",
                         isChargeableSeason = false,
                         isBlooper = false,

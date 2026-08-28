@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme as Material3MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,7 +27,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.LiveMenuController
 import dev.frost819.newbv.danmaku.config.DanmakuState
@@ -112,10 +111,11 @@ fun LivePlayerController(
     fun startControllerAutoHide() {
         if (!showInfoController) return
         hideInfoCountdown?.cancel()
-        hideInfoCountdown = scope.launch {
-            delay(5000)
-            showInfoController = false
-        }
+        hideInfoCountdown =
+            scope.launch {
+                delay(5000)
+                showInfoController = false
+            }
     }
 
     LaunchedEffect(Unit) {
@@ -199,66 +199,71 @@ fun LivePlayerController(
     }
 
     Box(
-        modifier = modifier
-            .background(Color.Black)
-            .focusable()
-            .onPreviewKeyEvent { event ->
-                startControllerAutoHide()
-                handleKeyEvent(event)
-            }
-            .playerGestures(
-                totalDuration = { 0L },
-                controllerVisible = { showInfoController },
-                callbacks = PlayerGestureCallbacks(
-                    onSingleTap = {
-                        if (!showClickableControllers) {
-                            showInfoController = !showInfoController
-                            if (showInfoController) startControllerAutoHide()
-                        } else {
-                            closeAllControllers()
-                        }
-                    },
-                    onDoubleTap = { onPlayPause() },
-                    onSeekDelta = { },
-                    onSeekCommit = { },
-                    onBrightnessChange = { deltaY ->
-                        val activity = context as? android.app.Activity
-                        if (activity != null) {
-                            currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
-                            gestureTipState.value = GestureTipState(
-                                isActive = true,
-                                type = GestureTipType.Brightness,
-                                value = currentBrightness,
-                            )
-                        }
-                    },
-                    onVolumeChange = { deltaY ->
-                        val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE)
-                            as? android.media.AudioManager
-                        if (audioManager != null) {
-                            val volumePercent = adjustVolume(audioManager, deltaY)
-                            gestureTipState.value = GestureTipState(
-                                isActive = true,
-                                type = GestureTipType.Volume,
-                                value = volumePercent.toFloat(),
-                            )
-                        }
-                    },
-                    onCycleAspectRatio = { },
+        modifier =
+            modifier
+                .background(Color.Black)
+                .focusable()
+                .onPreviewKeyEvent { event ->
+                    startControllerAutoHide()
+                    handleKeyEvent(event)
+                }.playerGestures(
+                    totalDuration = { 0L },
+                    controllerVisible = { showInfoController },
+                    callbacks =
+                        PlayerGestureCallbacks(
+                            onSingleTap = {
+                                if (!showClickableControllers) {
+                                    showInfoController = !showInfoController
+                                    if (showInfoController) startControllerAutoHide()
+                                } else {
+                                    closeAllControllers()
+                                }
+                            },
+                            onDoubleTap = { onPlayPause() },
+                            onSeekDelta = { },
+                            onSeekCommit = { },
+                            onBrightnessChange = { deltaY ->
+                                val activity = context as? android.app.Activity
+                                if (activity != null) {
+                                    currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
+                                    gestureTipState.value =
+                                        GestureTipState(
+                                            isActive = true,
+                                            type = GestureTipType.Brightness,
+                                            value = currentBrightness,
+                                        )
+                                }
+                            },
+                            onVolumeChange = { deltaY ->
+                                val audioManager =
+                                    context.getSystemService(android.content.Context.AUDIO_SERVICE)
+                                        as? android.media.AudioManager
+                                if (audioManager != null) {
+                                    val volumePercent = adjustVolume(audioManager, deltaY)
+                                    gestureTipState.value =
+                                        GestureTipState(
+                                            isActive = true,
+                                            type = GestureTipType.Volume,
+                                            value = volumePercent.toFloat(),
+                                        )
+                                }
+                            },
+                            onCycleAspectRatio = { },
+                        ),
+                    gestureTipState = gestureTipState,
                 ),
-                gestureTipState = gestureTipState,
-            ),
     ) {
         content()
 
         // 调试信息
         if (Prefs.showPlayerDebugInfo && debugInfo.isNotBlank()) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(8.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(Color.Black.copy(alpha = 0.5f)),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(Color.Black.copy(alpha = 0.5f)),
             ) {
                 Text(
                     modifier = Modifier.padding(8.dp),

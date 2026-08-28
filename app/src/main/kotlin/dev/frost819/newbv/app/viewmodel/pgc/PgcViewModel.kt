@@ -50,112 +50,114 @@ data class PgcUiState(
  * @param pgcRepository PGC 数据仓库。
  */
 @HiltViewModel
-class PgcViewModel @Inject constructor(
-    private val pgcRepository: PgcRepository,
-) : ViewModel() {
+class PgcViewModel
+    @Inject
+    constructor(
+        private val pgcRepository: PgcRepository,
+    ) : ViewModel() {
+        private val logger = Loggers.get("PgcViewModel")
 
-    private val logger = Loggers.get("PgcViewModel")
+        private val _uiState = MutableStateFlow(PgcUiState())
+        val uiState: StateFlow<PgcUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(PgcUiState())
-    val uiState: StateFlow<PgcUiState> = _uiState.asStateFlow()
+        /** 当前选中的分区。 */
+        private var currentType: PgcType = PgcType.Anime
 
-    /** 当前选中的分区。 */
-    private var currentType: PgcType = PgcType.Anime
+        /** 当前分区的分页游标。 */
+        private var cursor: Int = 0
 
-    /** 当前分区的分页游标。 */
-    private var cursor: Int = 0
+        init {
+            loadCarousel()
+            loadMore()
+        }
 
-    init {
-        loadCarousel()
-        loadMore()
-    }
+        /**
+         * 切换到指定分区。
+         *
+         * @param type 目标分区。
+         */
+        fun switchType(type: PgcType) {
+            if (type == currentType && _uiState.value.items.isNotEmpty()) return
+            currentType = type
+            cursor = 0
+            _uiState.value = PgcUiState()
+            loadCarousel()
+            loadMore()
+        }
 
-    /**
-     * 切换到指定分区。
-     *
-     * @param type 目标分区。
-     */
-    fun switchType(type: PgcType) {
-        if (type == currentType && _uiState.value.items.isNotEmpty()) return
-        currentType = type
-        cursor = 0
-        _uiState.value = PgcUiState()
-        loadCarousel()
-        loadMore()
-    }
+        /**
+         * 加载轮播图数据。
+         *
+         * 失败时静默处理（轮播图为辅助展示，不阻塞 Feed）。
+         */
+        fun loadCarousel() {
+            viewModelScope.launch {
+                _uiState.update { it.copy(carouselLoading = true) }
 
-    /**
-     * 加载轮播图数据。
-     *
-     * 失败时静默处理（轮播图为辅助展示，不阻塞 Feed）。
-     */
-    fun loadCarousel() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(carouselLoading = true) }
-
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val carouselData = pgcRepository.getCarousel(currentType)
-                    _uiState.update {
-                        it.copy(carouselItems = carouselData.items)
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val carouselData = pgcRepository.getCarousel(currentType)
+                        _uiState.update {
+                            it.copy(carouselItems = carouselData.items)
+                        }
                     }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to load PGC carousel: $currentType" }
                 }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to load PGC carousel: $currentType" }
-            }
 
-            _uiState.update { it.copy(carouselLoading = false) }
+                _uiState.update { it.copy(carouselLoading = false) }
+            }
+        }
+
+        /**
+         * 加载更多当前分区 Feed 数据。
+         *
+         * 超时或失败时标记 error，不中断已有数据。
+         */
+        fun loadMore() {
+            val current = _uiState.value
+            if (current.loading || !current.hasMore) return
+
+            viewModelScope.launch {
+                _uiState.update { it.copy(loading = true, error = false) }
+
+                runCatching {
+                    withTimeout(LOAD_TIMEOUT_MS) {
+                        val data: PgcFeedData =
+                            pgcRepository.getFeed(
+                                pgcType = currentType,
+                                cursor = cursor,
+                            )
+                        cursor = data.cursor
+                        _uiState.update {
+                            it.copy(
+                                items = it.items + data.items,
+                                hasMore = data.hasNext,
+                            )
+                        }
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException && error !is TimeoutCancellationException) {
+                        throw error
+                    }
+                    logger.error(error) { "Failed to load PGC feed: $currentType" }
+                    _uiState.update { it.copy(error = true) }
+                }
+
+                _uiState.update { it.copy(loading = false) }
+            }
+        }
+
+        /**
+         * 刷新当前分区数据（轮播图 + Feed）。
+         */
+        fun refresh() {
+            cursor = 0
+            _uiState.value = PgcUiState()
+            loadCarousel()
+            loadMore()
         }
     }
-
-    /**
-     * 加载更多当前分区 Feed 数据。
-     *
-     * 超时或失败时标记 error，不中断已有数据。
-     */
-    fun loadMore() {
-        val current = _uiState.value
-        if (current.loading || !current.hasMore) return
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = false) }
-
-            runCatching {
-                withTimeout(LOAD_TIMEOUT_MS) {
-                    val data: PgcFeedData = pgcRepository.getFeed(
-                        pgcType = currentType,
-                        cursor = cursor,
-                    )
-                    cursor = data.cursor
-                    _uiState.update {
-                        it.copy(
-                            items = it.items + data.items,
-                            hasMore = data.hasNext,
-                        )
-                    }
-                }
-            }.onFailure { error ->
-                if (error is CancellationException && error !is TimeoutCancellationException) {
-                    throw error
-                }
-                logger.error(error) { "Failed to load PGC feed: $currentType" }
-                _uiState.update { it.copy(error = true) }
-            }
-
-            _uiState.update { it.copy(loading = false) }
-        }
-    }
-
-    /**
-     * 刷新当前分区数据（轮播图 + Feed）。
-     */
-    fun refresh() {
-        cursor = 0
-        _uiState.value = PgcUiState()
-        loadCarousel()
-        loadMore()
-    }
-}

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class VideoResolutionTest {
-
     @Test
     fun `fromCode returns correct resolution`() {
         assertEquals(VideoResolution.R240P, VideoResolution.fromCode(6))

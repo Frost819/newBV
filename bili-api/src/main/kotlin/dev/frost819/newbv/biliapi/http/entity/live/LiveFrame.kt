@@ -41,18 +41,19 @@ data class FrameHeader(
 ) {
     val dataLength get() = totalLength - headerLength
 
-    fun toBinary(): Source {
-        return buildPacket {
+    fun toBinary(): Source =
+        buildPacket {
             writeInt(this@FrameHeader.totalLength)
             writeShort(headerLength)
             writeShort(version)
             writeInt(this@FrameHeader.type)
             writeInt(sequence)
         }
-    }
 }
 
-enum class FrameType(val code: Int) {
+enum class FrameType(
+    val code: Int,
+) {
     HeartRequest(2),
     HeartResponse(3),
     Normal(5),

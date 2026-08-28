@@ -5,7 +5,6 @@ import dev.frost819.newbv.danmaku.entity.DanmakuType
 import org.junit.jupiter.api.Test
 
 class DanmakuStateTest {
-
     @Test
     fun `default values are correct`() {
         val state = DanmakuState()
@@ -18,7 +17,7 @@ class DanmakuStateTest {
         assertThat(state.enabledTypes).containsExactly(
             DanmakuType.Rolling,
             DanmakuType.Top,
-            DanmakuType.Bottom
+            DanmakuType.Bottom,
         )
     }
 
@@ -30,13 +29,15 @@ class DanmakuStateTest {
 
     @Test
     fun `isShowAll is true when all three types present`() {
-        val state = DanmakuState(
-            enabledTypes = listOf(
-                DanmakuType.Rolling,
-                DanmakuType.Top,
-                DanmakuType.Bottom
+        val state =
+            DanmakuState(
+                enabledTypes =
+                    listOf(
+                        DanmakuType.Rolling,
+                        DanmakuType.Top,
+                        DanmakuType.Bottom,
+                    ),
             )
-        )
         assertThat(state.isShowAll).isTrue()
     }
 

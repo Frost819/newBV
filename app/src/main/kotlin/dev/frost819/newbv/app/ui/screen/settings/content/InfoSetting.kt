@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,47 +47,51 @@ fun InfoSetting(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val memoryInfo = remember {
-        runCatching {
-            val memoryInfo = ActivityManager.MemoryInfo()
-            (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
-                .getMemoryInfo(memoryInfo)
-            val df = DecimalFormat("###.##")
-            Pair(
-                "${df.format(memoryInfo.availMem / 1024.0.pow(3))} GB",
-                "${df.format(memoryInfo.totalMem / 1024.0.pow(3))} GB",
-            )
-        }.getOrDefault(Pair("Unknown", "Unknown"))
-    }
+    val memoryInfo =
+        remember {
+            runCatching {
+                val memoryInfo = ActivityManager.MemoryInfo()
+                (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
+                    .getMemoryInfo(memoryInfo)
+                val df = DecimalFormat("###.##")
+                Pair(
+                    "${df.format(memoryInfo.availMem / 1024.0.pow(3))} GB",
+                    "${df.format(memoryInfo.totalMem / 1024.0.pow(3))} GB",
+                )
+            }.getOrDefault(Pair("Unknown", "Unknown"))
+        }
 
-    val storageInfo = remember {
-        runCatching {
-            val statFs = StatFs(Environment.getExternalStorageDirectory().absolutePath)
-            val df = DecimalFormat("###.##")
-            Pair(
-                "${df.format(statFs.availableBytes / 1024.0.pow(3))} GB",
-                "${df.format(statFs.totalBytes / 1024.0.pow(3))} GB",
-            )
-        }.getOrDefault(Pair("Unknown", "Unknown"))
-    }
+    val storageInfo =
+        remember {
+            runCatching {
+                val statFs = StatFs(Environment.getExternalStorageDirectory().absolutePath)
+                val df = DecimalFormat("###.##")
+                Pair(
+                    "${df.format(statFs.availableBytes / 1024.0.pow(3))} GB",
+                    "${df.format(statFs.totalBytes / 1024.0.pow(3))} GB",
+                )
+            }.getOrDefault(Pair("Unknown", "Unknown"))
+        }
 
-    val screenInfo = remember {
-        runCatching {
-            val display = context.display ?: return@runCatching Triple(0, 0, 0f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val mode = display.mode
-                Triple(mode.physicalWidth, mode.physicalHeight, mode.refreshRate)
-            } else {
-                Triple(0, 0, 0f)
-            }
-        }.getOrDefault(Triple(0, 0, 0f))
-    }
+    val screenInfo =
+        remember {
+            runCatching {
+                val display = context.display ?: return@runCatching Triple(0, 0, 0f)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val mode = display.mode
+                    Triple(mode.physicalWidth, mode.physicalHeight, mode.refreshRate)
+                } else {
+                    Triple(0, 0, 0f)
+                }
+            }.getOrDefault(Triple(0, 0, 0f))
+        }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 48.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

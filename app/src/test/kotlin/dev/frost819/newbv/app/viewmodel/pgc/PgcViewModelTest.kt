@@ -28,7 +28,6 @@ import java.io.IOException
  * 使用 MockK mock [PgcRepository]，用 answers + callCount 区分多次调用。
  */
 class PgcViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var pgcRepository: PgcRepository
@@ -45,268 +44,307 @@ class PgcViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun fakePgcItem(seasonId: Int) = PgcItem(
-        cover = "https://example.com/cover$seasonId.jpg",
-        title = "番剧 $seasonId",
-        subTitle = "副标题 $seasonId",
-        seasonId = seasonId,
-        episodeId = seasonId * 100,
-        seasonType = SeasonIndexType.Anime,
-        rating = "9.0",
-    )
+    private fun fakePgcItem(seasonId: Int) =
+        PgcItem(
+            cover = "https://example.com/cover$seasonId.jpg",
+            title = "番剧 $seasonId",
+            subTitle = "副标题 $seasonId",
+            seasonId = seasonId,
+            episodeId = seasonId * 100,
+            seasonType = SeasonIndexType.Anime,
+            rating = "9.0",
+        )
 
-    private fun fakeFeedData(items: List<PgcItem>, hasNext: Boolean, cursor: Int) = PgcFeedData(
+    private fun fakeFeedData(
+        items: List<PgcItem>,
+        hasNext: Boolean,
+        cursor: Int,
+    ) = PgcFeedData(
         hasNext = hasNext,
         cursor = cursor,
         items = items,
     )
 
-    private fun fakeCarouselData() = CarouselData(
-        items = listOf(
-            CarouselData.CarouselItem(
-                cover = "https://example.com/banner.jpg",
-                title = "轮播标题",
-                seasonId = 1,
-                episodeId = 100,
-            ),
-        ),
-    )
-
-    @Test
-    fun `init loads first page with carousel`() = runTest(testDispatcher) {
-        val items = listOf(fakePgcItem(1), fakePgcItem(2))
-        coEvery { pgcRepository.getFeed(any(), any()) } returns
-            fakeFeedData(items, hasNext = true, cursor = 1)
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(2)
-        assertThat(viewModel.uiState.value.loading).isFalse()
-        assertThat(viewModel.uiState.value.hasMore).isTrue()
-        assertThat(viewModel.uiState.value.error).isFalse()
-        assertThat(viewModel.uiState.value.carouselItems).hasSize(1)
-        assertThat(viewModel.uiState.value.carouselLoading).isFalse()
-    }
-
-    @Test
-    fun `loadMore appends items and stops when hasNext is false`() = runTest(testDispatcher) {
-        var callCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            callCount++
-            if (callCount == 1) {
-                fakeFeedData(listOf(fakePgcItem(1), fakePgcItem(2)), hasNext = true, cursor = 1)
-            } else {
-                fakeFeedData(listOf(fakePgcItem(3), fakePgcItem(4)), hasNext = false, cursor = 2)
-            }
-        }
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-        viewModel.loadMore()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(4)
-        assertThat(viewModel.uiState.value.hasMore).isFalse()
-    }
-
-    @Test
-    fun `switchType clears and loads new region`() = runTest(testDispatcher) {
-        coEvery {
-            pgcRepository.getFeed(PgcType.Anime, any())
-        } returns fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-        coEvery {
-            pgcRepository.getFeed(PgcType.Movie, any())
-        } returns fakeFeedData(listOf(fakePgcItem(100)), hasNext = false, cursor = 1)
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-        viewModel.switchType(PgcType.Movie)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.items[0].seasonId).isEqualTo(100)
-        assertThat(viewModel.uiState.value.hasMore).isFalse()
-    }
-
-    @Test
-    fun `error sets error flag and preserves existing items`() = runTest(testDispatcher) {
-        var callCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            callCount++
-            if (callCount == 1) {
-                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-            } else {
-                throw IOException("network error")
-            }
-        }
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-
-        viewModel.loadMore()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.error).isTrue()
-        assertThat(viewModel.uiState.value.loading).isFalse()
-    }
-
-    @Test
-    fun `refresh clears items and reloads`() = runTest(testDispatcher) {
-        var callCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            callCount++
-            if (callCount == 1) {
-                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-            } else {
-                fakeFeedData(listOf(fakePgcItem(99)), hasNext = false, cursor = 1)
-            }
-        }
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.items[0].seasonId).isEqualTo(1)
-
-        viewModel.refresh()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.items[0].seasonId).isEqualTo(99)
-    }
-
-    @Test
-    fun `loadMore is no-op when hasMore is false`() = runTest(testDispatcher) {
-        var callCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            callCount++
-            fakeFeedData(listOf(fakePgcItem(callCount)), hasNext = false, cursor = 1)
-        }
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.hasMore).isFalse()
-
-        viewModel.loadMore()
-        advanceUntilIdle()
-
-        assertThat(callCount).isEqualTo(1)
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-    }
-
-    @Test
-    fun `carousel load failure does not block feed`() = runTest(testDispatcher) {
-        coEvery { pgcRepository.getFeed(any(), any()) } returns
-            fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-        coEvery { pgcRepository.getCarousel(any()) } throws IOException("carousel error")
-        viewModel = PgcViewModel(pgcRepository)
-
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(1)
-        assertThat(viewModel.uiState.value.carouselItems).isEmpty()
-        assertThat(viewModel.uiState.value.carouselLoading).isFalse()
-    }
-
-    @Test
-    fun `switchType to same type with existing items is no-op`() = runTest(testDispatcher) {
-        coEvery { pgcRepository.getFeed(any(), any()) } returns
-            fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-        advanceUntilIdle()
-
-        viewModel.switchType(PgcType.Anime)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { pgcRepository.getFeed(any(), any()) }
-    }
-
-    @Test
-    fun `init error on first load sets error with empty items`() = runTest(testDispatcher) {
-        coEvery { pgcRepository.getFeed(any(), any()) } throws IOException("init error")
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).isEmpty()
-        assertThat(viewModel.uiState.value.error).isTrue()
-        assertThat(viewModel.uiState.value.loading).isFalse()
-    }
-
-    @Test
-    fun `refresh reloads carousel and feed`() = runTest(testDispatcher) {
-        var feedCallCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            feedCallCount++
-            if (feedCallCount == 1) {
-                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-            } else {
-                fakeFeedData(listOf(fakePgcItem(99)), hasNext = false, cursor = 1)
-            }
-        }
-        var carouselCallCount = 0
-        coEvery { pgcRepository.getCarousel(any()) } answers {
-            carouselCallCount++
-            fakeCarouselData()
-        }
-        viewModel = PgcViewModel(pgcRepository)
-        advanceUntilIdle()
-
-        viewModel.refresh()
-        advanceUntilIdle()
-
-        assertThat(feedCallCount).isEqualTo(2)
-        assertThat(carouselCallCount).isAtLeast(2)
-        assertThat(viewModel.uiState.value.items[0].seasonId).isEqualTo(99)
-    }
-
-    @Test
-    fun `loadMore appends to existing items`() = runTest(testDispatcher) {
-        var callCount = 0
-        coEvery { pgcRepository.getFeed(any(), any()) } answers {
-            callCount++
-            if (callCount == 1) {
-                fakeFeedData(listOf(fakePgcItem(1), fakePgcItem(2)), hasNext = true, cursor = 1)
-            } else {
-                fakeFeedData(listOf(fakePgcItem(3)), hasNext = false, cursor = 2)
-            }
-        }
-        coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
-        viewModel = PgcViewModel(pgcRepository)
-        advanceUntilIdle()
-
-        viewModel.loadMore()
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.items).hasSize(3)
-        assertThat(viewModel.uiState.value.items[2].seasonId).isEqualTo(3)
-    }
-
-    @Test
-    fun `carousel success sets carousel items`() = runTest(testDispatcher) {
-        coEvery { pgcRepository.getFeed(any(), any()) } returns
-            fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
-        val carouselData = CarouselData(
-            items = listOf(
-                CarouselData.CarouselItem(cover = "c1", title = "B1", seasonId = 10, episodeId = 100),
-                CarouselData.CarouselItem(cover = "c2", title = "B2", seasonId = 20, episodeId = 200),
-            ),
+    private fun fakeCarouselData() =
+        CarouselData(
+            items =
+                listOf(
+                    CarouselData.CarouselItem(
+                        cover = "https://example.com/banner.jpg",
+                        title = "轮播标题",
+                        seasonId = 1,
+                        episodeId = 100,
+                    ),
+                ),
         )
-        coEvery { pgcRepository.getCarousel(any()) } returns carouselData
-        viewModel = PgcViewModel(pgcRepository)
-        advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.carouselItems).hasSize(2)
-        assertThat(viewModel.uiState.value.carouselItems[0].title).isEqualTo("B1")
-    }
+    @Test
+    fun `init loads first page with carousel`() =
+        runTest(testDispatcher) {
+            val items = listOf(fakePgcItem(1), fakePgcItem(2))
+            coEvery { pgcRepository.getFeed(any(), any()) } returns
+                fakeFeedData(items, hasNext = true, cursor = 1)
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(2)
+            assertThat(viewModel.uiState.value.loading).isFalse()
+            assertThat(viewModel.uiState.value.hasMore).isTrue()
+            assertThat(viewModel.uiState.value.error).isFalse()
+            assertThat(viewModel.uiState.value.carouselItems).hasSize(1)
+            assertThat(viewModel.uiState.value.carouselLoading).isFalse()
+        }
+
+    @Test
+    fun `loadMore appends items and stops when hasNext is false`() =
+        runTest(testDispatcher) {
+            var callCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                callCount++
+                if (callCount == 1) {
+                    fakeFeedData(listOf(fakePgcItem(1), fakePgcItem(2)), hasNext = true, cursor = 1)
+                } else {
+                    fakeFeedData(listOf(fakePgcItem(3), fakePgcItem(4)), hasNext = false, cursor = 2)
+                }
+            }
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+            viewModel.loadMore()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(4)
+            assertThat(viewModel.uiState.value.hasMore).isFalse()
+        }
+
+    @Test
+    fun `switchType clears and loads new region`() =
+        runTest(testDispatcher) {
+            coEvery {
+                pgcRepository.getFeed(PgcType.Anime, any())
+            } returns fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+            coEvery {
+                pgcRepository.getFeed(PgcType.Movie, any())
+            } returns fakeFeedData(listOf(fakePgcItem(100)), hasNext = false, cursor = 1)
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+            viewModel.switchType(PgcType.Movie)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(
+                viewModel.uiState.value.items[0]
+                    .seasonId,
+            ).isEqualTo(100)
+            assertThat(viewModel.uiState.value.hasMore).isFalse()
+        }
+
+    @Test
+    fun `error sets error flag and preserves existing items`() =
+        runTest(testDispatcher) {
+            var callCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                callCount++
+                if (callCount == 1) {
+                    fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+                } else {
+                    throw IOException("network error")
+                }
+            }
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+
+            viewModel.loadMore()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(viewModel.uiState.value.error).isTrue()
+            assertThat(viewModel.uiState.value.loading).isFalse()
+        }
+
+    @Test
+    fun `refresh clears items and reloads`() =
+        runTest(testDispatcher) {
+            var callCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                callCount++
+                if (callCount == 1) {
+                    fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+                } else {
+                    fakeFeedData(listOf(fakePgcItem(99)), hasNext = false, cursor = 1)
+                }
+            }
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(
+                viewModel.uiState.value.items[0]
+                    .seasonId,
+            ).isEqualTo(1)
+
+            viewModel.refresh()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(
+                viewModel.uiState.value.items[0]
+                    .seasonId,
+            ).isEqualTo(99)
+        }
+
+    @Test
+    fun `loadMore is no-op when hasMore is false`() =
+        runTest(testDispatcher) {
+            var callCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                callCount++
+                fakeFeedData(listOf(fakePgcItem(callCount)), hasNext = false, cursor = 1)
+            }
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(viewModel.uiState.value.hasMore).isFalse()
+
+            viewModel.loadMore()
+            advanceUntilIdle()
+
+            assertThat(callCount).isEqualTo(1)
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+        }
+
+    @Test
+    fun `carousel load failure does not block feed`() =
+        runTest(testDispatcher) {
+            coEvery { pgcRepository.getFeed(any(), any()) } returns
+                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+            coEvery { pgcRepository.getCarousel(any()) } throws IOException("carousel error")
+            viewModel = PgcViewModel(pgcRepository)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(1)
+            assertThat(viewModel.uiState.value.carouselItems).isEmpty()
+            assertThat(viewModel.uiState.value.carouselLoading).isFalse()
+        }
+
+    @Test
+    fun `switchType to same type with existing items is no-op`() =
+        runTest(testDispatcher) {
+            coEvery { pgcRepository.getFeed(any(), any()) } returns
+                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+            advanceUntilIdle()
+
+            viewModel.switchType(PgcType.Anime)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { pgcRepository.getFeed(any(), any()) }
+        }
+
+    @Test
+    fun `init error on first load sets error with empty items`() =
+        runTest(testDispatcher) {
+            coEvery { pgcRepository.getFeed(any(), any()) } throws IOException("init error")
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).isEmpty()
+            assertThat(viewModel.uiState.value.error).isTrue()
+            assertThat(viewModel.uiState.value.loading).isFalse()
+        }
+
+    @Test
+    fun `refresh reloads carousel and feed`() =
+        runTest(testDispatcher) {
+            var feedCallCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                feedCallCount++
+                if (feedCallCount == 1) {
+                    fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+                } else {
+                    fakeFeedData(listOf(fakePgcItem(99)), hasNext = false, cursor = 1)
+                }
+            }
+            var carouselCallCount = 0
+            coEvery { pgcRepository.getCarousel(any()) } answers {
+                carouselCallCount++
+                fakeCarouselData()
+            }
+            viewModel = PgcViewModel(pgcRepository)
+            advanceUntilIdle()
+
+            viewModel.refresh()
+            advanceUntilIdle()
+
+            assertThat(feedCallCount).isEqualTo(2)
+            assertThat(carouselCallCount).isAtLeast(2)
+            assertThat(
+                viewModel.uiState.value.items[0]
+                    .seasonId,
+            ).isEqualTo(99)
+        }
+
+    @Test
+    fun `loadMore appends to existing items`() =
+        runTest(testDispatcher) {
+            var callCount = 0
+            coEvery { pgcRepository.getFeed(any(), any()) } answers {
+                callCount++
+                if (callCount == 1) {
+                    fakeFeedData(listOf(fakePgcItem(1), fakePgcItem(2)), hasNext = true, cursor = 1)
+                } else {
+                    fakeFeedData(listOf(fakePgcItem(3)), hasNext = false, cursor = 2)
+                }
+            }
+            coEvery { pgcRepository.getCarousel(any()) } returns fakeCarouselData()
+            viewModel = PgcViewModel(pgcRepository)
+            advanceUntilIdle()
+
+            viewModel.loadMore()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.items).hasSize(3)
+            assertThat(
+                viewModel.uiState.value.items[2]
+                    .seasonId,
+            ).isEqualTo(3)
+        }
+
+    @Test
+    fun `carousel success sets carousel items`() =
+        runTest(testDispatcher) {
+            coEvery { pgcRepository.getFeed(any(), any()) } returns
+                fakeFeedData(listOf(fakePgcItem(1)), hasNext = true, cursor = 1)
+            val carouselData =
+                CarouselData(
+                    items =
+                        listOf(
+                            CarouselData.CarouselItem(cover = "c1", title = "B1", seasonId = 10, episodeId = 100),
+                            CarouselData.CarouselItem(cover = "c2", title = "B2", seasonId = 20, episodeId = 200),
+                        ),
+                )
+            coEvery { pgcRepository.getCarousel(any()) } returns carouselData
+            viewModel = PgcViewModel(pgcRepository)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.carouselItems).hasSize(2)
+            assertThat(
+                viewModel.uiState.value.carouselItems[0]
+                    .title,
+            ).isEqualTo("B1")
+        }
 }

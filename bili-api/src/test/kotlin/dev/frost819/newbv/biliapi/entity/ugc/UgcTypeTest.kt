@@ -44,10 +44,22 @@ class UgcTypeTest {
     fun `UgcType top-level categories have locId set`() {
         val topLevelCategories =
             listOf(
-                UgcType.Douga, UgcType.Game, UgcType.Kichiku, UgcType.Music,
-                UgcType.Dance, UgcType.Cinephile, UgcType.Ent, UgcType.Knowledge,
-                UgcType.Tech, UgcType.Information, UgcType.Food, UgcType.Life,
-                UgcType.Car, UgcType.Fashion, UgcType.Sports, UgcType.Animal,
+                UgcType.Douga,
+                UgcType.Game,
+                UgcType.Kichiku,
+                UgcType.Music,
+                UgcType.Dance,
+                UgcType.Cinephile,
+                UgcType.Ent,
+                UgcType.Knowledge,
+                UgcType.Tech,
+                UgcType.Information,
+                UgcType.Food,
+                UgcType.Life,
+                UgcType.Car,
+                UgcType.Fashion,
+                UgcType.Sports,
+                UgcType.Animal,
             )
         topLevelCategories.forEach { assertThat(it.locId).isGreaterThan(0) }
     }
@@ -56,10 +68,22 @@ class UgcTypeTest {
     fun `UgcType sub-categories have default locId`() {
         val topLevel =
             setOf(
-                UgcType.Douga, UgcType.Game, UgcType.Kichiku, UgcType.Music,
-                UgcType.Dance, UgcType.Cinephile, UgcType.Ent, UgcType.Knowledge,
-                UgcType.Tech, UgcType.Information, UgcType.Food, UgcType.Life,
-                UgcType.Car, UgcType.Fashion, UgcType.Sports, UgcType.Animal,
+                UgcType.Douga,
+                UgcType.Game,
+                UgcType.Kichiku,
+                UgcType.Music,
+                UgcType.Dance,
+                UgcType.Cinephile,
+                UgcType.Ent,
+                UgcType.Knowledge,
+                UgcType.Tech,
+                UgcType.Information,
+                UgcType.Food,
+                UgcType.Life,
+                UgcType.Car,
+                UgcType.Fashion,
+                UgcType.Sports,
+                UgcType.Animal,
             )
         UgcType.entries
             .filter { it !in topLevel }

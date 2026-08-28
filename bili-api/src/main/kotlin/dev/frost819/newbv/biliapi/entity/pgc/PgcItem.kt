@@ -12,8 +12,8 @@ data class PgcItem(
     var rating: String,
 ) {
     companion object {
-        fun fromFeedSubItem(feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData.FeedSubItem): PgcItem {
-            return PgcItem(
+        fun fromFeedSubItem(feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedData.FeedSubItem): PgcItem =
+            PgcItem(
                 cover = feedSubItem.cover,
                 title = feedSubItem.title,
                 subTitle = feedSubItem.subTitle,
@@ -22,12 +22,11 @@ data class PgcItem(
                 seasonType = SeasonIndexType.fromId(feedSubItem.seasonType!!),
                 rating = feedSubItem.rating ?: "0",
             )
-        }
 
         fun fromFeedSubItem(
             feedSubItem: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data.FeedItem.FeedSubItem,
-        ): PgcItem {
-            return PgcItem(
+        ): PgcItem =
+            PgcItem(
                 cover = feedSubItem.cover,
                 title = feedSubItem.title,
                 subTitle = feedSubItem.subTitle,
@@ -36,12 +35,11 @@ data class PgcItem(
                 seasonType = SeasonIndexType.fromId(feedSubItem.seasonType!!),
                 rating = feedSubItem.rating ?: "0",
             )
-        }
 
         fun fromIndexResultItem(
             indexResultItem: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData.IndexResultItem,
-        ): PgcItem {
-            return PgcItem(
+        ): PgcItem =
+            PgcItem(
                 cover = indexResultItem.cover,
                 title = indexResultItem.title,
                 subTitle = indexResultItem.subTitle,
@@ -50,6 +48,5 @@ data class PgcItem(
                 seasonType = SeasonIndexType.fromId(indexResultItem.seasonType),
                 rating = indexResultItem.score,
             )
-        }
     }
 }

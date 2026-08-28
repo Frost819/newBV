@@ -23,14 +23,15 @@ class RecommendVideoRepository(
     suspend fun getPopularVideos(
         page: PopularVideoPage,
         preferApiType: ApiType,
-    ): PopularVideoData {
-        return when (preferApiType) {
+    ): PopularVideoData =
+        when (preferApiType) {
             ApiType.Web -> {
                 val response =
-                    BiliHttpApi.getPopularVideoData(
-                        pageSize = page.nextWebPageSize,
-                        pageNumber = page.nextWebPageNumber,
-                    ).getResponseData()
+                    BiliHttpApi
+                        .getPopularVideoData(
+                            pageSize = page.nextWebPageSize,
+                            pageNumber = page.nextWebPageNumber,
+                        ).getResponseData()
                 val list = response.list.map { UgcItem.fromVideoInfo(it) }
                 val nextPage =
                     PopularVideoPage(
@@ -52,7 +53,8 @@ class RecommendVideoRepository(
                         },
                     )
                 val list =
-                    reply?.itemsList
+                    reply
+                        ?.itemsList
                         ?.filter { it.itemCase == bilibili.app.card.v1.Card.ItemCase.SMALL_COVER_V5 }
                         ?.map { UgcItem.fromSmallCoverV5(it.smallCoverV5) }
                         ?: emptyList()
@@ -67,7 +69,6 @@ class RecommendVideoRepository(
                 )
             }
         }
-    }
 
     suspend fun getRecommendVideos(
         page: RecommendPage = RecommendPage(),
@@ -76,20 +77,22 @@ class RecommendVideoRepository(
         val items =
             when (preferApiType) {
                 ApiType.Web ->
-                    BiliHttpApi.getFeedRcmd(
-                        idx = page.nextWebIdx,
-                    )
-                        .getResponseData().item
+                    BiliHttpApi
+                        .getFeedRcmd(
+                            idx = page.nextWebIdx,
+                        ).getResponseData()
+                        .item
                         .map { UgcItem.fromRcmdItem(it) }
 
                 // 推荐流没有对应 RPC，与原版一致走 App HTTP feed/index；
                 // 不能复用 Popular.Index，否则推荐和热门内容相同
                 ApiType.App ->
-                    BiliHttpApi.getFeedIndex(
-                        idx = page.nextAppIdx,
-                        accessKey = authRepository.accessToken,
-                    )
-                        .getResponseData().items
+                    BiliHttpApi
+                        .getFeedIndex(
+                            idx = page.nextAppIdx,
+                            accessKey = authRepository.accessToken,
+                        ).getResponseData()
+                        .items
                         .filter { it.cardGoto == "av" }
                         .map { UgcItem.fromRcmdItem(it) }
             }

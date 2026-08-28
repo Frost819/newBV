@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证默认值、相等性、拷贝及自定义配置。
  */
 class VideoPlayerOptionsTest {
-
     @Test
     fun `default values are null or false`() {
         val options = VideoPlayerOptions()
@@ -22,12 +21,13 @@ class VideoPlayerOptionsTest {
 
     @Test
     fun `custom values are retained`() {
-        val options = VideoPlayerOptions(
-            userAgent = "Mozilla/5.0",
-            referer = "https://www.bilibili.com",
-            enableFfmpegAudioRenderer = true,
-            enableSoftwareVideoDecoder = true,
-        )
+        val options =
+            VideoPlayerOptions(
+                userAgent = "Mozilla/5.0",
+                referer = "https://www.bilibili.com",
+                enableFfmpegAudioRenderer = true,
+                enableSoftwareVideoDecoder = true,
+            )
 
         assertThat(options.userAgent).isEqualTo("Mozilla/5.0")
         assertThat(options.referer).isEqualTo("https://www.bilibili.com")

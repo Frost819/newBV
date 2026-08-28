@@ -42,14 +42,13 @@ data class PgcSeason(
     val horizontalCover: String?,
 ) {
     companion object {
-        fun fromSeason(season: OtherSeason): PgcSeason {
-            return PgcSeason(
+        fun fromSeason(season: OtherSeason): PgcSeason =
+            PgcSeason(
                 seasonId = season.seasonId,
                 title = season.title,
                 shortTitle = season.seasonTitle,
                 cover = season.cover,
                 horizontalCover = season.horizontalCover ?: season.newEp.cover,
             )
-        }
     }
 }

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
  * 验证构造默认值、equals/hashCode、copy、destructuring、可变字段修改及 lock 默认值。
  */
 class UserEntityTest {
-
     @Test
     fun `construct with required fields only uses defaults for id and lock`() {
         val entity = UserEntity(uid = 123L, username = "user", avatar = "url", auth = "{}")
@@ -23,14 +22,15 @@ class UserEntityTest {
 
     @Test
     fun `construct with all fields`() {
-        val entity = UserEntity(
-            id = 1,
-            uid = 456L,
-            username = "test",
-            avatar = "http://example.com/a.png",
-            auth = """{"sessdata":"abc"}""",
-            lock = "1234"
-        )
+        val entity =
+            UserEntity(
+                id = 1,
+                uid = 456L,
+                username = "test",
+                avatar = "http://example.com/a.png",
+                auth = """{"sessdata":"abc"}""",
+                lock = "1234",
+            )
         assertThat(entity.id).isEqualTo(1)
         assertThat(entity.uid).isEqualTo(456L)
         assertThat(entity.username).isEqualTo("test")

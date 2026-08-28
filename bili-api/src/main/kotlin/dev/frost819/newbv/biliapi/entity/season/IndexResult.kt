@@ -34,8 +34,8 @@ data class IndexResultItem(
     companion object {
         fun fromIndexResultItem(
             item: dev.frost819.newbv.biliapi.http.entity.index.IndexResultData.IndexResultItem,
-        ): IndexResultItem {
-            return IndexResultItem(
+        ): IndexResultItem =
+            IndexResultItem(
                 title = item.title,
                 subTitle = item.subTitle,
                 cover = item.cover,
@@ -49,7 +49,6 @@ data class IndexResultItem(
                 indexShow = item.indexShow,
                 seasonId = item.seasonId,
             )
-        }
     }
 
     data class Badge(

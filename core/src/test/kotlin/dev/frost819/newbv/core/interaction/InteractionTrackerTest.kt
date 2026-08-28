@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * 验证输入方式状态流转：Touch ↔ DPad 切换、StateFlow 传播。
  */
 class InteractionTrackerTest {
-
     @Test
     fun `initial value is DPad by default`() {
         val tracker = InteractionTracker()
@@ -47,30 +46,32 @@ class InteractionTrackerTest {
     }
 
     @Test
-    fun `inputMethod StateFlow emits changes`() = runTest {
-        val tracker = InteractionTracker()
-        tracker.inputMethod.test {
-            assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
-            tracker.onTouch()
-            assertThat(awaitItem()).isEqualTo(InputMethod.Touch)
-            tracker.onDpadKey()
-            assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
-            cancelAndIgnoreRemainingEvents()
+    fun `inputMethod StateFlow emits changes`() =
+        runTest {
+            val tracker = InteractionTracker()
+            tracker.inputMethod.test {
+                assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
+                tracker.onTouch()
+                assertThat(awaitItem()).isEqualTo(InputMethod.Touch)
+                tracker.onDpadKey()
+                assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
     @Test
-    fun `repeated same input does not emit duplicate`() = runTest {
-        val tracker = InteractionTracker()
-        tracker.inputMethod.test {
-            assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
-            tracker.onDpadKey()  // same as current, should not emit
-            expectNoEvents()
-            tracker.onTouch()
-            assertThat(awaitItem()).isEqualTo(InputMethod.Touch)
-            cancelAndIgnoreRemainingEvents()
+    fun `repeated same input does not emit duplicate`() =
+        runTest {
+            val tracker = InteractionTracker()
+            tracker.inputMethod.test {
+                assertThat(awaitItem()).isEqualTo(InputMethod.DPad)
+                tracker.onDpadKey() // same as current, should not emit
+                expectNoEvents()
+                tracker.onTouch()
+                assertThat(awaitItem()).isEqualTo(InputMethod.Touch)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
     @Test
     fun `InputMethod isTouch and isDPad are mutually exclusive`() {
