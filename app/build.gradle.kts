@@ -159,7 +159,7 @@ dependencies {
     implementation(libs.kotlinx.serialization)
 
     // === Other ===
-    implementation(libs.akdanmaku)
+    implementation(project(":danmaku-engine"))
     implementation(libs.androidsvg)
     implementation(libs.qrcode)
     debugImplementation(libs.leakcanary)

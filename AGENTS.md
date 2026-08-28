@@ -1704,3 +1704,50 @@ wsClient.newWebSocket(request, listener)
 4. **指数退避**：1s → 2s → 4s → 8s → 10s 封顶
 5. **6 秒 auth 超时**：发送 auth 包后设 6 秒超时，超时关闭连接触发重连
 6. **正确断连信号**：用 `CompletableDeferred` 替代 `while(delay)` 循环，`onClosed`/`onFailure` 回调完成 signal，重连循环 `await()` 后执行退避重连
+
+### 11.13 弹幕分段加载与引擎收编
+
+#### 11.13.1 akdanmaku `updateData` 是增量追加而非全量替换
+
+**问题**：akdanmaku（Frost819 fork 1.0.4）的 `DanmakuPlayer.updateData()` 底层调用 `DataSystem.addItems()`，是**增量追加**语义。切视频时调用 `updateData(emptyList())` 什么都不做，旧视频弹幕残留在 `sortedData` 中，播放到对应时间点时会错误显示。
+
+**解决方案**：收编引擎源码（`danmaku-engine/` 模块），新增 `DanmakuPlayer.clearData()` + `DataSystem.clearData()`（清空数据列表、pending 队列、idSet、当前切片窗口并移除全部实体）。切视频必须调 `clearDanmaku()` → `danmakuPlayer.clearData()`。
+
+#### 11.13.2 引擎源码收编到 danmaku-engine 模块
+
+**背景**：分段加载需要修改引擎（清空 API），维护独立 fork 版本成本高，直接把 AkDanmaku 1.0.4 源码（125 文件）收编进 `danmaku-engine/` 模块。
+
+**要点**：
+1. **包名保持 `com.kuaishou.akdanmaku`**：便于对照上游更新，不做包名重构
+2. **依赖**：gdx 1.12.0 + ashley 1.7.4（登记 `libs.versions.toml`），`jniLibs/` 的 libgdx.so 与原 AAR 打包等价
+3. **AGP 9 的 `BuildConfig`**：模块启用 `buildFeatures { buildConfig = true }`，生成类在 namespace 包下（`dev.frost819.newbv.danmaku.engine.BuildConfig`），vendored 的 `Trace.kt` 需改 import
+4. **detekt 豁免**：第三方源码不参与 detekt（根 `build.gradle.kts` 按 `project.name == "danmaku-engine"` 禁用），ktlint 保持开启
+5. 升级上游时重新拷贝 `library/src/main/java` + `jniLibs`，重新应用差异（见 `danmaku-engine/README.md`）
+
+#### 11.13.3 分段大小不要硬编码，用 dm/view 元数据
+
+**问题**：弹幕分段每段时长通常为 6 分钟，但硬编码会在服务端调整 `pageSize` 时失效，且无法做越界 clamp（请求超出总段数的分段浪费请求）。
+
+**解决方案**：加载弹幕前先调 Web `/x/v2/dm/web/view`（非 WBI，无需签名），从 protobuf `DmWebViewReply.dmSge` 取 `pageSize`（毫秒）与 `total`；失败回退默认 360_000ms。注意 **App gRPC 的 `DmViewReply` 不含 `dmSge` 字段**，元数据固定走 Web 通道。`dmSge` proto 已存在于 `bili-api-grpc` 的 `dm.proto`（`DmWebViewReply`），无需新增 proto。
+
+#### 11.13.4 分段加载触发用响应式 Flow 而非轮询
+
+**问题**：fantasytyx/bv 用 `while(isActive) { loadSegment(); delay(15s) }` 轮询驱动分段加载，ViewModel 内自调度循环会让测试的 `advanceUntilIdle` 无限推进（踩坑 11.5.4 同源问题）。
+
+**解决方案**：
+1. UI 层把 `seekerState.currentTime` 喂给 `DanmakuViewModel.onProgressChanged()`（写 conflated StateFlow，10Hz 调用无成本）
+2. VM 内 `currentTimeFlow.map { 段号 }.distinctUntilChanged().collectLatest { ensureSegments(it) }`——无循环、可 `advanceUntilIdle` 安全测试
+3. 初始段定位：`loadDanmaku` 元数据就绪后启动 watcher，StateFlow 订阅即收到当前值，无需显式触发
+4. `collectLatest` 自带防陈旧：段号变化时自动取消旧段的 in-flight 请求；切集用 generation 计数兜底
+
+#### 11.13.5 ktlint 插件 12.x + AGP 9：Android 模块检查静默失效
+
+**问题**：ktlint-gradle 插件 12.1.2 无法识别 AGP 9 的内置 Kotlin（不再应用 `org.jetbrains.kotlin.android`，上游 issue #1008），导致**所有 Android 模块（app/core/data/danmaku 等）的 `ktlintCheck` 实际只检查 .kts 文件**，Kotlin 源码从未被检查——只有 JVM 模块（bili-api）正常。JVM 模块全绿造成"全项目 lint 通过"的假象。
+
+**发现契机**：danmaku-engine 收编后要求参与 ktlint 检查，发现其 ktlint 任务根本不存在。
+
+**解决方案**：
+1. 升级 ktlint 插件 12.1.2 → 14.2.0（14.1.0 起支持 AGP 9 内置 Kotlin，任务名变为 `ktlint{Variant}SourceSetCheck`）
+2. 引擎从 1.0.1 → 1.5.0 后全项目暴露 ~8700 条存量违规（danmaku-engine ~4900 条中 4093 条是上游 2 空格缩进），经决策执行全库 `ktlintFormat` 一次性修复（独立格式化提交，368 文件）
+3. `ktlintFormat` 遇 `cannot be auto-corrected` 会中断：需手动修复"双 KDoc/KDoc 后接注释"（文件级 KDoc 转普通块注释 `/* */` 即可）与超长行，再重跑
+4. 升级注意：detekt 与 ktlint 配置互相独立；`.editorconfig` 需要为新引擎规则（如 `standard:no-consecutive-comments`）复核既有代码

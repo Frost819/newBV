@@ -56,13 +56,14 @@ android {
 dependencies {
     implementation(project(":bili-api"))
 
+    implementation(project(":danmaku-engine"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.util)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.kotlinx.coroutines)
-    implementation(libs.akdanmaku)
     implementation(libs.androidsvg)
 
     testImplementation(libs.junit.jupiter)

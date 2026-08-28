@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -18,7 +19,6 @@ import dev.frost819.newbv.app.viewmodel.player.DanmakuViewModel
 import dev.frost819.newbv.app.viewmodel.player.PlayerViewModel
 import dev.frost819.newbv.app.viewmodel.player.SubtitleViewModel
 import dev.frost819.newbv.app.viewmodel.player.VideoListViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
 
 /**
  * 视频播放器页面注册。
@@ -59,8 +59,15 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             //    仅当历史 cid 与当前 cid 一致时才应用断点续播
             playerViewModel.loadVideoDetail(route.aid, route.bvid)
             // 6. 使用正确的 cid 加载弹幕、字幕（route.cid 可能为 0，需从详情获取）
+            //    弹幕分段加载按历史进度（秒 → 毫秒）定位初始分段
             val actualCid = playerViewModel.uiState.value.cid
-            danmakuViewModel.loadDanmaku(route.aid, actualCid)
+            danmakuViewModel.loadDanmaku(
+                aid = route.aid,
+                cid = actualCid,
+                initialPositionMs =
+                    playerViewModel.uiState.value.lastPlayed
+                        .toLong() * 1000,
+            )
             danmakuViewModel.loadDanmakuMask(route.aid, actualCid)
             subtitleViewModel.loadSubtitleList(route.aid, actualCid)
             // 7. 获取播放地址并开始播放

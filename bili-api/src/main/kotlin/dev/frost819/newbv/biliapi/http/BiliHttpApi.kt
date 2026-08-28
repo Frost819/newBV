@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.http
 
 import bilibili.community.service.dm.v1.DmSegMobileReply
+import bilibili.community.service.dm.v1.DmWebViewReply
 import com.tfowl.ktor.client.plugins.JsoupPlugin
 import dev.frost819.newbv.biliapi.entity.SpiData
 import dev.frost819.newbv.biliapi.entity.SpiResult
@@ -234,10 +235,11 @@ object BiliHttpApi {
         pageNumber: Int = 1,
         pageSize: Int = 20,
     ): BiliResponse<PopularVideoData> =
-        client.get("/x/web-interface/popular") {
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-        }.body()
+        client
+            .get("/x/web-interface/popular") {
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+            }.body()
 
     /**
      * 获取视频详细信息
@@ -246,10 +248,11 @@ object BiliHttpApi {
         av: Long? = null,
         bv: String? = null,
     ): BiliResponse<VideoInfo> =
-        client.get("/x/web-interface/view") {
-            parameter("aid", av)
-            parameter("bvid", bv)
-        }.body()
+        client
+            .get("/x/web-interface/view") {
+                parameter("aid", av)
+                parameter("bvid", bv)
+            }.body()
 
     /**
      * 获取视频超详细信息
@@ -258,10 +261,11 @@ object BiliHttpApi {
         av: Long? = null,
         bv: String? = null,
     ): BiliResponse<VideoDetail> =
-        client.get("/x/web-interface/wbi/view/detail") {
-            parameter("aid", av)
-            parameter("bvid", bv)
-        }.body()
+        client
+            .get("/x/web-interface/wbi/view/detail") {
+                parameter("aid", av)
+                parameter("bvid", bv)
+            }.body()
 
     /**
      * 获取视频流
@@ -328,23 +332,24 @@ object BiliHttpApi {
         drmTechType: Int? = null,
         fromClient: String? = null,
     ): BiliResponse<PlayUrlData> =
-        client.get("/pgc/player/web/playurl") {
-            require(av != null || bv != null) { "av and bv cannot be null at the same time" }
-            require(epid != null || cid != null) { "epid and cid cannot be null at the same time" }
-            av?.let { parameter("avid", it) }
-            bv?.let { parameter("bvid", it) }
-            epid?.let { parameter("ep_id", it) }
-            cid?.let { parameter("cid", it) }
-            qn?.let { parameter("qn", it) }
-            fnval?.let { parameter("fnval", it) }
-            fnver?.let { parameter("fnver", it) }
-            fourk?.let { parameter("fourk", it) }
-            session?.let { parameter("session", it) }
-            supportMultiAudio?.let { parameter("support_multi_audio", it) }
-            drmTechType?.let { parameter("drm_tech_type", it) }
-            fromClient?.let { parameter("from_client", it) }
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .get("/pgc/player/web/playurl") {
+                require(av != null || bv != null) { "av and bv cannot be null at the same time" }
+                require(epid != null || cid != null) { "epid and cid cannot be null at the same time" }
+                av?.let { parameter("avid", it) }
+                bv?.let { parameter("bvid", it) }
+                epid?.let { parameter("ep_id", it) }
+                cid?.let { parameter("cid", it) }
+                qn?.let { parameter("qn", it) }
+                fnval?.let { parameter("fnval", it) }
+                fnver?.let { parameter("fnver", it) }
+                fourk?.let { parameter("fourk", it) }
+                session?.let { parameter("session", it) }
+                supportMultiAudio?.let { parameter("support_multi_audio", it) }
+                drmTechType?.let { parameter("drm_tech_type", it) }
+                fromClient?.let { parameter("from_client", it) }
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 获取剧集视频流 v2
@@ -363,30 +368,32 @@ object BiliHttpApi {
         drmTechType: Int? = null,
         fromClient: String? = null,
     ): BiliResponse<PlayUrlV2Data> =
-        client.get("/pgc/player/web/v2/playurl") {
-            av?.let { parameter("avid", it) }
-            bv?.let { parameter("bvid", it) }
-            epid?.let { parameter("ep_id", it) }
-            cid?.let { parameter("cid", it) }
-            qn?.let { parameter("qn", it) }
-            fnval?.let { parameter("fnval", it) }
-            fnver?.let { parameter("fnver", it) }
-            fourk?.let { parameter("fourk", it) }
-            session?.let { parameter("session", it) }
-            supportMultiAudio?.let { parameter("support_multi_audio", it) }
-            drmTechType?.let { parameter("drm_tech_type", it) }
-            fromClient?.let { parameter("from_client", it) }
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .get("/pgc/player/web/v2/playurl") {
+                av?.let { parameter("avid", it) }
+                bv?.let { parameter("bvid", it) }
+                epid?.let { parameter("ep_id", it) }
+                cid?.let { parameter("cid", it) }
+                qn?.let { parameter("qn", it) }
+                fnval?.let { parameter("fnval", it) }
+                fnver?.let { parameter("fnver", it) }
+                fourk?.let { parameter("fourk", it) }
+                session?.let { parameter("session", it) }
+                supportMultiAudio?.let { parameter("support_multi_audio", it) }
+                drmTechType?.let { parameter("drm_tech_type", it) }
+                fromClient?.let { parameter("from_client", it) }
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 通过[cid]获取视频弹幕
      */
     suspend fun getDanmakuXml(cid: Long): DanmakuResponse {
         val xmlChannel =
-            client.get("/x/v1/dm/list.so") {
-                parameter("oid", cid)
-            }.bodyAsChannel()
+            client
+                .get("/x/v1/dm/list.so") {
+                    parameter("oid", cid)
+                }.bodyAsChannel()
 
         val dbFactory = DocumentBuilderFactory.newInstance()
         val dBuilder = dbFactory.newDocumentBuilder()
@@ -397,10 +404,30 @@ object BiliHttpApi {
         doc.documentElement.normalize()
 
         val chatServer = doc.getElementsByTagName("chatserver").item(0).textContent
-        val chatId = doc.getElementsByTagName("chatid").item(0).textContent.toLong()
-        val maxLimit = doc.getElementsByTagName("maxlimit").item(0).textContent.toInt()
-        val state = doc.getElementsByTagName("state").item(0).textContent.toInt()
-        val realName = doc.getElementsByTagName("real_name").item(0).textContent.toInt()
+        val chatId =
+            doc
+                .getElementsByTagName("chatid")
+                .item(0)
+                .textContent
+                .toLong()
+        val maxLimit =
+            doc
+                .getElementsByTagName("maxlimit")
+                .item(0)
+                .textContent
+                .toInt()
+        val state =
+            doc
+                .getElementsByTagName("state")
+                .item(0)
+                .textContent
+                .toInt()
+        val realName =
+            doc
+                .getElementsByTagName("real_name")
+                .item(0)
+                .textContent
+                .toInt()
         val source =
             runCatching {
                 doc.getElementsByTagName("source").item(0).textContent
@@ -436,13 +463,41 @@ object BiliHttpApi {
         segmentIndex: Int,
     ): List<DanmakuData> {
         val bytes =
-            client.get("/x/v2/dm/wbi/web/seg.so") {
-                parameter("type", 1)
-                parameter("oid", cid)
-                parameter("pid", avid)
-                parameter("segment_index", segmentIndex)
-            }.readRawBytes()
+            client
+                .get("/x/v2/dm/wbi/web/seg.so") {
+                    parameter("type", 1)
+                    parameter("oid", cid)
+                    parameter("pid", avid)
+                    parameter("segment_index", segmentIndex)
+                }.readRawBytes()
         return DmSegMobileReply.parseFrom(bytes).elemsList.map { DanmakuData.fromDanmakuElem(it) }
+    }
+
+    /**
+     * 获取弹幕元数据（Web protobuf 接口）。
+     *
+     * 对应文档：docs/bilibili-API-collect-master/docs/danmaku/danmaku_proto.md
+     * 端点：GET /x/v2/dm/web/view（非 WBI 端点，无需签名，与原版 playurl 策略一致以降低风控风险）
+     * 鉴权：Cookie（injectCookies）；未登录可正常获取元数据
+     *
+     * 返回的分段配置（pageSize/total）用于弹幕分段加载，不硬编码 6 分钟。
+     * 注意：App gRPC 的 DmViewReply 不含 dmSge 字段，故元数据固定走 Web 通道。
+     *
+     * @param cid 视频 CID（oid）
+     * @param avid 稿件 avid（pid）
+     */
+    suspend fun getDanmakuView(
+        cid: Long,
+        avid: Long,
+    ): DmWebViewReply {
+        val bytes =
+            client
+                .get("/x/v2/dm/web/view") {
+                    parameter("type", 1)
+                    parameter("oid", cid)
+                    parameter("pid", avid)
+                }.readRawBytes()
+        return DmWebViewReply.parseFrom(bytes)
     }
 
     /**
@@ -457,12 +512,13 @@ object BiliHttpApi {
         page: Int = 1,
         offset: String? = null,
     ): BiliResponse<DynamicData> =
-        client.get("/x/polymer/web-dynamic/v1/feed/all") {
-            parameter("timezone_offset", timezoneOffset)
-            parameter("type", type)
-            parameter("page", page)
-            offset?.let { parameter("offset", offset) }
-        }.body()
+        client
+            .get("/x/polymer/web-dynamic/v1/feed/all") {
+                parameter("timezone_offset", timezoneOffset)
+                parameter("type", type)
+                parameter("page", page)
+                offset?.let { parameter("offset", offset) }
+            }.body()
 
     /**
      * 获取用户[uid]的详细信息。
@@ -471,9 +527,10 @@ object BiliHttpApi {
      * 路径中的 `wbi` 会自动触发 [encApiSign] 拦截器添加 `w_rid`/`wts` 签名参数。
      */
     suspend fun getUserInfo(uid: Long): BiliResponse<UserInfoData> =
-        client.get("/x/space/wbi/acc/info") {
-            parameter("mid", uid)
-        }.body()
+        client
+            .get("/x/space/wbi/acc/info") {
+                parameter("mid", uid)
+            }.body()
 
     /**
      * 获取用户[uid]的卡片信息
@@ -485,10 +542,11 @@ object BiliHttpApi {
         uid: Long,
         photo: Boolean = false,
     ): BiliResponse<UserCardData> =
-        client.get("/x/web-interface/card") {
-            parameter("mid", uid)
-            parameter("photo", photo)
-        }.body()
+        client
+            .get("/x/web-interface/card") {
+                parameter("mid", uid)
+                parameter("photo", photo)
+            }.body()
 
     /**
      * 通过[sessData]获取用户个人信息
@@ -507,22 +565,24 @@ object BiliHttpApi {
         viewAt: Long = 0,
         pageSize: Int = 20,
     ): BiliResponse<HistoryData> =
-        client.get("/x/web-interface/history/cursor") {
-            parameter("max", max)
-            parameter("business", business)
-            parameter("view_at", viewAt)
-            parameter("ps", pageSize)
-        }.body()
+        client
+            .get("/x/web-interface/history/cursor") {
+                parameter("max", max)
+                parameter("business", business)
+                parameter("view_at", viewAt)
+                parameter("ps", pageSize)
+            }.body()
 
     /**
      * 获取稍后再看列表
      */
 
     suspend fun getToView(accessKey: String? = null): BiliResponse<ToViewData> =
-        client.get("/x/v2/history/toview") {
-            checkToken(accessKey)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v2/history/toview") {
+                checkToken(accessKey)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 添加视频到稍后再看
@@ -533,18 +593,19 @@ object BiliHttpApi {
         csrf: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/v2/history/toview/add") {
-                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            avid?.let { append("aid", "$it") }
-                            bvid?.let { append("bvid", it) }
-                            append("csrf", csrf)
-                        },
-                    ),
-                )
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/v2/history/toview/add") {
+                    require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                avid?.let { append("aid", "$it") }
+                                bvid?.let { append("bvid", it) }
+                                append("csrf", csrf)
+                            },
+                        ),
+                    )
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -554,18 +615,19 @@ object BiliHttpApi {
         accessKey: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/v2/history/toview/add") {
-                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            avid?.let { append("aid", "$it") }
-                            bvid?.let { append("bvid", it) }
-                            append("access_key", accessKey)
-                        },
-                    ),
-                )
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/v2/history/toview/add") {
+                    require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                avid?.let { append("aid", "$it") }
+                                bvid?.let { append("bvid", it) }
+                                append("access_key", accessKey)
+                            },
+                        ),
+                    )
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -578,17 +640,18 @@ object BiliHttpApi {
         csrf: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/v2/history/toview/del") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("viewed", "${if (viewed) 1 else 0}")
-                            avid?.let { append("aid", "$it") }
-                            append("csrf", csrf)
-                        },
-                    ),
-                )
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/v2/history/toview/del") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("viewed", "${if (viewed) 1 else 0}")
+                                avid?.let { append("aid", "$it") }
+                                append("csrf", csrf)
+                            },
+                        ),
+                    )
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -598,17 +661,18 @@ object BiliHttpApi {
         accessKey: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/v2/history/toview/del") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("viewed", "${if (viewed) 1 else 0}")
-                            avid?.let { append("aid", "$it") }
-                            append("access_key", accessKey)
-                        },
-                    ),
-                )
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/v2/history/toview/del") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("viewed", "${if (viewed) 1 else 0}")
+                                avid?.let { append("aid", "$it") }
+                                append("access_key", accessKey)
+                            },
+                        ),
+                    )
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -619,11 +683,12 @@ object BiliHttpApi {
         avid: Long? = null,
         bvid: String? = null,
     ): RelatedVideosResponse =
-        client.get("/x/web-interface/archive/related") {
-            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-            parameter("aid", avid)
-            parameter("bvid", bvid)
-        }.body()
+        client
+            .get("/x/web-interface/archive/related") {
+                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                parameter("aid", avid)
+                parameter("bvid", bvid)
+            }.body()
 
     /**
      * 获取收藏夹[mediaId]的元数据
@@ -632,11 +697,12 @@ object BiliHttpApi {
         mediaId: Long,
         accessKey: String? = null,
     ): BiliResponse<FavoriteFolderInfo> =
-        client.get("/x/v3/fav/folder/info") {
-            checkToken(accessKey)
-            parameter("media_id", mediaId)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v3/fav/folder/info") {
+                checkToken(accessKey)
+                parameter("media_id", mediaId)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 获取用户[mid]的所有收藏夹信息
@@ -650,13 +716,14 @@ object BiliHttpApi {
         rid: Long? = null,
         accessKey: String? = null,
     ): BiliResponse<UserFavoriteFoldersData> =
-        client.get("/x/v3/fav/folder/created/list-all") {
-            checkToken(accessKey)
-            parameter("up_mid", mid)
-            parameter("type", type)
-            parameter("rid", rid)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v3/fav/folder/created/list-all") {
+                checkToken(accessKey)
+                parameter("up_mid", mid)
+                parameter("type", type)
+                parameter("rid", rid)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 获取收藏夹[mediaId]的详细内容
@@ -680,18 +747,19 @@ object BiliHttpApi {
         platform: String? = null,
         accessKey: String? = null,
     ): BiliResponse<FavoriteFolderInfoListData> =
-        client.get("/x/v3/fav/resource/list") {
-            checkToken(accessKey)
-            parameter("media_id", mediaId)
-            parameter("tid", tid)
-            parameter("keyword", keyword)
-            parameter("order", order)
-            parameter("type", type)
-            parameter("ps", pageSize)
-            parameter("pn", pageNumber)
-            parameter("platform", platform)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v3/fav/resource/list") {
+                checkToken(accessKey)
+                parameter("media_id", mediaId)
+                parameter("tid", tid)
+                parameter("keyword", keyword)
+                parameter("order", order)
+                parameter("type", type)
+                parameter("ps", pageSize)
+                parameter("pn", pageNumber)
+                parameter("platform", platform)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 获取收藏夹[mediaId]的全部内容id
@@ -701,12 +769,13 @@ object BiliHttpApi {
         platform: String? = null,
         accessKey: String? = null,
     ): FavoriteItemIdListResponse =
-        client.get("/x/v3/fav/resource/ids") {
-            checkToken(accessKey)
-            parameter("media_id", mediaId)
-            parameter("platform", platform)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v3/fav/resource/ids") {
+                checkToken(accessKey)
+                parameter("media_id", mediaId)
+                parameter("platform", platform)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 上报视频播放心跳
@@ -743,29 +812,30 @@ object BiliHttpApi {
         playType: Int? = null,
         csrf: String? = null,
     ): String =
-        client.post("/x/click-interface/web/heartbeat") {
-            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        avid?.let { append("aid", "$it") }
-                        bvid?.let { append("bvid", it) }
-                        cid?.let { append("cid", "$it") }
-                        epid?.let { append("epid", "$it") }
-                        sid?.let { append("sid", "$it") }
-                        mid?.let { append("mid", "$it") }
-                        playedTime?.let { append("played_time", "$it") }
-                        realtime?.let { append("realtime", "$it") }
-                        startTs?.let { append("start_ts", "$it") }
-                        type?.let { append("type", "$it") }
-                        subType?.let { append("sub_type", "$it") }
-                        dt?.let { append("dt", "$it") }
-                        playType?.let { append("play_type", "$it") }
-                        csrf?.let { append("csrf", it) }
-                    },
-                ),
-            )
-        }.bodyAsText()
+        client
+            .post("/x/click-interface/web/heartbeat") {
+                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            avid?.let { append("aid", "$it") }
+                            bvid?.let { append("bvid", it) }
+                            cid?.let { append("cid", "$it") }
+                            epid?.let { append("epid", "$it") }
+                            sid?.let { append("sid", "$it") }
+                            mid?.let { append("mid", "$it") }
+                            playedTime?.let { append("played_time", "$it") }
+                            realtime?.let { append("realtime", "$it") }
+                            startTs?.let { append("start_ts", "$it") }
+                            type?.let { append("type", "$it") }
+                            subType?.let { append("sub_type", "$it") }
+                            dt?.let { append("dt", "$it") }
+                            playType?.let { append("play_type", "$it") }
+                            csrf?.let { append("csrf", it) }
+                        },
+                    ),
+                )
+            }.bodyAsText()
 
     suspend fun sendHeartbeatApp(
         avid: Long? = null,
@@ -783,29 +853,30 @@ object BiliHttpApi {
         playType: Int? = null,
         accessKey: String? = null,
     ): String =
-        client.post("/x/v2/history/report") {
-            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        avid?.let { append("aid", "$it") }
-                        bvid?.let { append("bvid", it) }
-                        cid?.let { append("cid", "$it") }
-                        epid?.let { append("epid", "$it") }
-                        sid?.let { append("sid", "$it") }
-                        mid?.let { append("mid", "$it") }
-                        playedTime?.let { append("progress", "$it") }
-                        realtime?.let { append("realtime", "$it") }
-                        startTs?.let { append("start_ts", "$it") }
-                        type?.let { append("type", "$it") }
-                        subType?.let { append("sub_type", "$it") }
-                        dt?.let { append("dt", "$it") }
-                        playType?.let { append("play_type", "$it") }
-                        accessKey?.let { append("access_key", it) }
-                    },
-                ),
-            )
-        }.bodyAsText()
+        client
+            .post("/x/v2/history/report") {
+                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            avid?.let { append("aid", "$it") }
+                            bvid?.let { append("bvid", it) }
+                            cid?.let { append("cid", "$it") }
+                            epid?.let { append("epid", "$it") }
+                            sid?.let { append("sid", "$it") }
+                            mid?.let { append("mid", "$it") }
+                            playedTime?.let { append("progress", "$it") }
+                            realtime?.let { append("realtime", "$it") }
+                            startTs?.let { append("start_ts", "$it") }
+                            type?.let { append("type", "$it") }
+                            subType?.let { append("sub_type", "$it") }
+                            dt?.let { append("dt", "$it") }
+                            playType?.let { append("play_type", "$it") }
+                            accessKey?.let { append("access_key", it) }
+                        },
+                    ),
+                )
+            }.bodyAsText()
 
     /**
      * 获取视频主评论列表。
@@ -826,15 +897,16 @@ object BiliHttpApi {
         pageSize: Int = 20,
         accessKey: String? = null,
     ): BiliResponse<JsonObject> =
-        client.get("/x/v2/reply") {
-            parameter("type", 1)
-            parameter("oid", aid)
-            parameter("sort", sort)
-            parameter("pn", page.coerceAtLeast(1))
-            parameter("ps", pageSize.coerceIn(1, 20))
-            parameter("nohot", 1)
-            accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v2/reply") {
+                parameter("type", 1)
+                parameter("oid", aid)
+                parameter("sort", sort)
+                parameter("pn", page.coerceAtLeast(1))
+                parameter("ps", pageSize.coerceIn(1, 20))
+                parameter("nohot", 1)
+                accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 获取视频评论的楼中楼。
@@ -852,14 +924,15 @@ object BiliHttpApi {
         pageSize: Int = 20,
         accessKey: String? = null,
     ): BiliResponse<JsonObject> =
-        client.get("/x/v2/reply/reply") {
-            parameter("type", 1)
-            parameter("oid", aid)
-            parameter("root", rootRpid)
-            parameter("pn", page.coerceAtLeast(1))
-            parameter("ps", pageSize.coerceIn(1, 49))
-            accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("/x/v2/reply/reply") {
+                parameter("type", 1)
+                parameter("oid", aid)
+                parameter("root", rootRpid)
+                parameter("pn", page.coerceAtLeast(1))
+                parameter("ps", pageSize.coerceIn(1, 49))
+                accessKey?.takeIf { it.isNotBlank() }?.let { parameter("access_key", it) }
+            }.body()
 
     /**
      * 点赞或取消点赞评论。
@@ -878,21 +951,22 @@ object BiliHttpApi {
         accessKey: String? = null,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/v2/reply/action") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("type", "1")
-                            append("oid", aid.toString())
-                            append("rpid", rpid.toString())
-                            append("action", if (like) "1" else "0")
-                            csrf?.takeIf { it.isNotBlank() }?.let { append("csrf", it) }
-                            accessKey?.takeIf { it.isNotBlank() }?.let { append("access_key", it) }
-                        },
-                    ),
-                )
-                header("Referer", "https://www.bilibili.com")
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/v2/reply/action") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("type", "1")
+                                append("oid", aid.toString())
+                                append("rpid", rpid.toString())
+                                append("action", if (like) "1" else "0")
+                                csrf?.takeIf { it.isNotBlank() }?.let { append("csrf", it) }
+                                accessKey?.takeIf { it.isNotBlank() }?.let { append("access_key", it) }
+                            },
+                        ),
+                    )
+                    header("Referer", "https://www.bilibili.com")
+                }.body<BiliResponseWithoutData>()
         return (response.code == 0) to response.message
     }
 
@@ -903,10 +977,11 @@ object BiliHttpApi {
         avid: Long,
         cid: Long,
     ): BiliResponse<VideoMoreInfo> =
-        client.get("/x/player/wbi/v2") {
-            parameter("aid", avid)
-            parameter("cid", cid)
-        }.body()
+        client
+            .get("/x/player/wbi/v2") {
+                parameter("aid", avid)
+                parameter("cid", cid)
+            }.body()
 
     /**
      * 获取视频同时观看人数（在线人数）。
@@ -923,12 +998,13 @@ object BiliHttpApi {
         bvid: String? = null,
         cid: Long,
     ): BiliResponse<OnlineTotal> =
-        client.get("/x/player/online/total") {
-            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-            parameter("aid", avid)
-            parameter("bvid", bvid)
-            parameter("cid", cid)
-        }.body()
+        client
+            .get("/x/player/online/total") {
+                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                parameter("aid", avid)
+                parameter("bvid", bvid)
+                parameter("cid", cid)
+            }.body()
 
     /**
      * 获取视频同时观看人数（在线人数）— App 端。
@@ -943,11 +1019,12 @@ object BiliHttpApi {
         aid: Long,
         cid: Long,
     ): BiliResponse<OnlineTotalApp> =
-        client.get("https://app.bilibili.com/x/v2/view/video/online") {
-            parameter("aid", aid)
-            parameter("cid", cid)
-            parameter("ts", 0)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/view/video/online") {
+                parameter("aid", aid)
+                parameter("cid", cid)
+                parameter("ts", 0)
+            }.body()
 
     /**
      * 为视频[avid]或[bvid]点赞或取消赞
@@ -963,20 +1040,21 @@ object BiliHttpApi {
         csrf: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("/x/web-interface/archive/like") {
-                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            avid?.let { append("aid", "$it") }
-                            bvid?.let { append("bvid", it) }
-                            append("like", "${if (like) 1 else 2}")
-                            append("csrf", csrf)
-                        },
-                    ),
-                )
-                header("referer", "https://www.bilibili.com")
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("/x/web-interface/archive/like") {
+                    require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                avid?.let { append("aid", "$it") }
+                                bvid?.let { append("bvid", it) }
+                                append("like", "${if (like) 1 else 2}")
+                                append("csrf", csrf)
+                            },
+                        ),
+                    )
+                    header("referer", "https://www.bilibili.com")
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -996,17 +1074,18 @@ object BiliHttpApi {
         accessKey: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("https://app.bilibili.com/x/v2/view/like") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("access_key", accessKey)
-                            append("aid", "$avid")
-                            append("like", "${if (like) 0 else 1}")
-                        },
-                    ),
-                )
-            }.body<BiliResponseWithoutData>()
+            client
+                .post("https://app.bilibili.com/x/v2/view/like") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("access_key", accessKey)
+                                append("aid", "$avid")
+                                append("like", "${if (like) 0 else 1}")
+                            },
+                        ),
+                    )
+                }.body<BiliResponseWithoutData>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -1022,12 +1101,13 @@ object BiliHttpApi {
         accessKey: String? = null,
     ): Boolean {
         val response =
-            client.get("/x/web-interface/archive/has/like") {
-                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-                avid?.let { parameter("aid", it) }
-                bvid?.let { parameter("bvid", it) }
-                accessKey?.let { parameter("access_key", it) }
-            }.body<BiliResponse<Int>>()
+            client
+                .get("/x/web-interface/archive/has/like") {
+                    require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                    avid?.let { parameter("aid", it) }
+                    bvid?.let { parameter("bvid", it) }
+                    accessKey?.let { parameter("access_key", it) }
+                }.body<BiliResponse<Int>>()
         return runCatching {
             response.getResponseData() == 1
         }.getOrDefault(false)
@@ -1050,24 +1130,25 @@ object BiliHttpApi {
     ): Pair<Boolean, String> {
         require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
         val response =
-            client.post("/x/web-interface/coin/add") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            avid?.let { append("aid", "$it") }
-                            bvid?.let { append("bvid", it) }
-                            append("multiply", "$multiply")
-                            append("select_like", "${if (like) 1 else 0}")
-                            append("cross_domain", "true")
-                            append("source", "web_normal")
-                            append("ga", "1")
-                            append("spmid", "333.788.0.0")
-                            append("csrf", csrf)
-                        },
-                    ),
-                )
-                header("Referer", "https://www.bilibili.com")
-            }.body<BiliResponse<AddCoin>>()
+            client
+                .post("/x/web-interface/coin/add") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                avid?.let { append("aid", "$it") }
+                                bvid?.let { append("bvid", it) }
+                                append("multiply", "$multiply")
+                                append("select_like", "${if (like) 1 else 0}")
+                                append("cross_domain", "true")
+                                append("source", "web_normal")
+                                append("ga", "1")
+                                append("spmid", "333.788.0.0")
+                                append("csrf", csrf)
+                            },
+                        ),
+                    )
+                    header("Referer", "https://www.bilibili.com")
+                }.body<BiliResponse<AddCoin>>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -1083,12 +1164,13 @@ object BiliHttpApi {
         accessKey: String? = null,
     ): Boolean {
         val response =
-            client.get("/x/web-interface/archive/coins") {
-                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-                avid?.let { parameter("aid", it) }
-                bvid?.let { parameter("bvid", it) }
-                accessKey?.let { parameter("access_key", it) }
-            }.body<BiliResponse<CheckSentCoin>>()
+            client
+                .get("/x/web-interface/archive/coins") {
+                    require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                    avid?.let { parameter("aid", it) }
+                    bvid?.let { parameter("bvid", it) }
+                    accessKey?.let { parameter("access_key", it) }
+                }.body<BiliResponse<CheckSentCoin>>()
         return runCatching {
             response.getResponseData().multiply != 0
         }.getOrDefault(false)
@@ -1112,18 +1194,19 @@ object BiliHttpApi {
         accessKey: String,
     ): Pair<Boolean, String> {
         val response =
-            client.post("https://app.bilibili.com/x/v2/view/coin/add") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("access_key", accessKey)
-                            append("aid", "$avid")
-                            append("multiply", "$multiply")
-                            append("select_like", "${if (like) 1 else 0}")
-                        },
-                    ),
-                )
-            }.body<BiliResponse<AddCoin>>()
+            client
+                .post("https://app.bilibili.com/x/v2/view/coin/add") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("access_key", accessKey)
+                                append("aid", "$avid")
+                                append("multiply", "$multiply")
+                                append("select_like", "${if (like) 1 else 0}")
+                            },
+                        ),
+                    )
+                }.body<BiliResponse<AddCoin>>()
         return Pair(response.code == 0, response.message)
     }
 
@@ -1140,24 +1223,25 @@ object BiliHttpApi {
     ) {
         checkToken(accessKey)
         val response =
-            client.post("/x/v3/fav/resource/deal") {
-                require(addMediaIds.isNotEmpty() || delMediaIds.isNotEmpty()) {
-                    "addMediaIds and delMediaIds cannot be empty at the same time"
-                }
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("rid", "$avid")
-                            append("type", "$type")
-                            append("add_media_ids", addMediaIds.joinToString(separator = ","))
-                            append("del_media_ids", delMediaIds.joinToString(separator = ","))
-                            csrf?.let { append("csrf", it) }
-                            accessKey?.let { append("access_key", it) }
-                        },
-                    ),
-                )
-                header("referer", "https://www.bilibili.com")
-            }.body<BiliResponse<SetVideoFavorite>>()
+            client
+                .post("/x/v3/fav/resource/deal") {
+                    require(addMediaIds.isNotEmpty() || delMediaIds.isNotEmpty()) {
+                        "addMediaIds and delMediaIds cannot be empty at the same time"
+                    }
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("rid", "$avid")
+                                append("type", "$type")
+                                append("add_media_ids", addMediaIds.joinToString(separator = ","))
+                                append("del_media_ids", delMediaIds.joinToString(separator = ","))
+                                csrf?.let { append("csrf", it) }
+                                accessKey?.let { append("access_key", it) }
+                            },
+                        ),
+                    )
+                    header("referer", "https://www.bilibili.com")
+                }.body<BiliResponse<SetVideoFavorite>>()
         check(response.code == 0) { response.message }
     }
 
@@ -1170,10 +1254,11 @@ object BiliHttpApi {
     ): Boolean {
         checkToken(accessKey)
         val response =
-            client.get("/x/v2/fav/video/favoured") {
-                parameter("aid", avid)
-                accessKey?.let { parameter("access_key", it) }
-            }.body<BiliResponse<CheckVideoFavoured>>()
+            client
+                .get("/x/v2/fav/video/favoured") {
+                    parameter("aid", avid)
+                    accessKey?.let { parameter("access_key", it) }
+                }.body<BiliResponse<CheckVideoFavoured>>()
         return runCatching {
             response.getResponseData().favoured
         }.getOrDefault(false)
@@ -1192,18 +1277,19 @@ object BiliHttpApi {
     ): Triple<Boolean, String, OneClickTripleAction?> {
         require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
         val response =
-            client.post("/x/web-interface/archive/like/triple") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            avid?.let { append("aid", "$it") }
-                            bvid?.let { append("bvid", it) }
-                            append("csrf", csrf)
-                        },
-                    ),
-                )
-                header("referer", "https://www.bilibili.com")
-            }.body<BiliResponse<OneClickTripleAction>>()
+            client
+                .post("/x/web-interface/archive/like/triple") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                avid?.let { append("aid", "$it") }
+                                bvid?.let { append("bvid", it) }
+                                append("csrf", csrf)
+                            },
+                        ),
+                    )
+                    header("referer", "https://www.bilibili.com")
+                }.body<BiliResponse<OneClickTripleAction>>()
         return Triple(response.code == 0, response.message, response.data)
     }
 
@@ -1221,16 +1307,17 @@ object BiliHttpApi {
         accessKey: String,
     ): Triple<Boolean, String, OneClickTripleAction?> {
         val response =
-            client.post("https://app.bilibili.com/x/v2/view/like/triple") {
-                setBody(
-                    FormDataContent(
-                        Parameters.build {
-                            append("access_key", accessKey)
-                            append("aid", "$avid")
-                        },
-                    ),
-                )
-            }.body<BiliResponse<OneClickTripleAction>>()
+            client
+                .post("https://app.bilibili.com/x/v2/view/like/triple") {
+                    setBody(
+                        FormDataContent(
+                            Parameters.build {
+                                append("access_key", accessKey)
+                                append("aid", "$avid")
+                            },
+                        ),
+                    )
+                }.body<BiliResponse<OneClickTripleAction>>()
         return Triple(response.code == 0, response.message, response.data)
     }
 
@@ -1251,23 +1338,24 @@ object BiliHttpApi {
         pageNumber: Int = 1,
         pageSize: Int = 30,
     ): BiliResponse<WebSpaceVideoData> =
-        client.get("/x/space/wbi/arc/search") {
-            parameter("mid", mid)
-            parameter("order", order)
-            parameter("tid", tid)
-            keyword?.let { parameter("keyword", it) }
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-            parameter("dm_img_list", "[]")
-            parameter("dm_img_str", "V2ViR0wgMS4wIChPcGVuR0wgRVMgMi4wIENocm9taXVtKQ")
-            parameter(
-                "dm_cover_img_str",
-                "QU5HTEUgKEFNRCwgQU1EIFJhZGVvbiA3ODBNIEdyYXBoaWNzICgweDAwMDAxNUJGKSBEaXJlY3" +
-                    "QzRDExIHZzXzVfMCBwc181XzAsIEQzRDExKUdvb2dsZSBJbmMuIChBTU",
-            )
-            parameter("dm_img_inter", "{\"ds\":[],\"wh\":[4769,2793,43],\"of\":[285,570,285]}")
-            header("referer", "https://space.bilibili.com")
-        }.body()
+        client
+            .get("/x/space/wbi/arc/search") {
+                parameter("mid", mid)
+                parameter("order", order)
+                parameter("tid", tid)
+                keyword?.let { parameter("keyword", it) }
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+                parameter("dm_img_list", "[]")
+                parameter("dm_img_str", "V2ViR0wgMS4wIChPcGVuR0wgRVMgMi4wIENocm9taXVtKQ")
+                parameter(
+                    "dm_cover_img_str",
+                    "QU5HTEUgKEFNRCwgQU1EIFJhZGVvbiA3ODBNIEdyYXBoaWNzICgweDAwMDAxNUJGKSBEaXJlY3" +
+                        "QzRDExIHZzXzVfMCBwc181XzAsIEQzRDExKUdvb2dsZSBJbmMuIChBTU",
+                )
+                parameter("dm_img_inter", "{\"ds\":[],\"wh\":[4769,2793,43],\"of\":[285,570,285]}")
+                header("referer", "https://space.bilibili.com")
+            }.body()
 
     suspend fun getAppUserSpaceVideos(
         mid: Long,
@@ -1276,13 +1364,14 @@ object BiliHttpApi {
         ts: Long,
         accessKey: String,
     ): BiliResponse<AppSpaceVideoData> =
-        client.get("https://app.bilibili.com/x/v2/space/archive/cursor") {
-            parameter("vmid", mid)
-            parameter("aid", lastAvid)
-            parameter("order", order)
-            parameter("ts", ts)
-            parameter("access_key", accessKey)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/space/archive/cursor") {
+                parameter("vmid", mid)
+                parameter("aid", lastAvid)
+                parameter("order", order)
+                parameter("ts", ts)
+                parameter("access_key", accessKey)
+            }.body()
 
     /**
      * 获取剧集[seasonId]或[epId]的详细信息 (Web)，例如 ss24439 ep234533，传参仅需数字
@@ -1291,12 +1380,13 @@ object BiliHttpApi {
         seasonId: Int? = null,
         epId: Int? = null,
     ): BiliResponse<WebSeasonData> =
-        client.get("/pgc/view/web/season") {
-            require(seasonId != null || epId != null) { "seasonId and epId cannot be null at the same time" }
-            seasonId?.let { parameter("season_id", it) }
-            epId?.let { parameter("ep_id", it) }
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .get("/pgc/view/web/season") {
+                require(seasonId != null || epId != null) { "seasonId and epId cannot be null at the same time" }
+                seasonId?.let { parameter("season_id", it) }
+                epId?.let { parameter("ep_id", it) }
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 获取剧集[seasonId]或[epId]的详细信息 (App)，例如 ss24439 ep234533，传参仅需数字
@@ -1323,29 +1413,30 @@ object BiliHttpApi {
         ts: Int? = null,
         accessKey: String? = "",
     ): BiliResponse<AppSeasonData> =
-        client.get("/pgc/view/v2/app/season") {
-            require(seasonId != null || epId != null) { "seasonId and epId cannot be null at the same time" }
-            seasonId?.let { parameter("season_id", it) }
-            epId?.let { parameter("ep_id", it) }
-            parameter("mobi_app", mobiApp)
-            adExtra?.let { parameter("ad_extra", it) }
-            autoPlay?.let { parameter("auto_play", it) }
-            build?.let { parameter("build", it) }
-            cLocale?.let { parameter("c_locale", it) }
-            channel?.let { parameter("channel", it) }
-            disableRcmd?.let { parameter("disable_rcmd", it) }
-            fromAv?.let { parameter("from_av", it) }
-            fromSpmid?.let { parameter("from_spmid", it) }
-            isShowAllSeries?.let { parameter("is_show_all_series", it) }
-            platform?.let { parameter("platform", it) }
-            sLocale?.let { parameter("s_locale", it) }
-            spmid?.let { parameter("spmid", it) }
-            statistics?.let { parameter("statistics", it) }
-            trackPath?.let { parameter("track_path", it) }
-            trackid?.let { parameter("trackid", it) }
-            ts?.let { parameter("ts", it) }
-            accessKey?.let { parameter("access_key", accessKey) }
-        }.body()
+        client
+            .get("/pgc/view/v2/app/season") {
+                require(seasonId != null || epId != null) { "seasonId and epId cannot be null at the same time" }
+                seasonId?.let { parameter("season_id", it) }
+                epId?.let { parameter("ep_id", it) }
+                parameter("mobi_app", mobiApp)
+                adExtra?.let { parameter("ad_extra", it) }
+                autoPlay?.let { parameter("auto_play", it) }
+                build?.let { parameter("build", it) }
+                cLocale?.let { parameter("c_locale", it) }
+                channel?.let { parameter("channel", it) }
+                disableRcmd?.let { parameter("disable_rcmd", it) }
+                fromAv?.let { parameter("from_av", it) }
+                fromSpmid?.let { parameter("from_spmid", it) }
+                isShowAllSeries?.let { parameter("is_show_all_series", it) }
+                platform?.let { parameter("platform", it) }
+                sLocale?.let { parameter("s_locale", it) }
+                spmid?.let { parameter("spmid", it) }
+                statistics?.let { parameter("statistics", it) }
+                trackPath?.let { parameter("track_path", it) }
+                trackid?.let { parameter("trackid", it) }
+                ts?.let { parameter("ts", it) }
+                accessKey?.let { parameter("access_key", accessKey) }
+            }.body()
 
     /**
      * 添加番剧[seasonId]的追番
@@ -1354,17 +1445,18 @@ object BiliHttpApi {
         seasonId: Int,
         csrf: String,
     ): BiliResponse<SeasonFollowData> =
-        client.post("/pgc/web/follow/add") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("season_id", "$seasonId")
-                        append("csrf", csrf)
-                    },
-                ),
-            )
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .post("/pgc/web/follow/add") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("season_id", "$seasonId")
+                            append("csrf", csrf)
+                        },
+                    ),
+                )
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 添加番剧[seasonId]的追番（App）
@@ -1373,16 +1465,17 @@ object BiliHttpApi {
         seasonId: Int,
         accessKey: String,
     ): BiliResponse<SeasonFollowData> =
-        client.post("/pgc/app/follow/add") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("season_id", "$seasonId")
-                        append("access_key", accessKey)
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/pgc/app/follow/add") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("season_id", "$seasonId")
+                            append("access_key", accessKey)
+                        },
+                    ),
+                )
+            }.body()
 
     /**
      * 取消番剧[seasonId]的追番
@@ -1391,17 +1484,18 @@ object BiliHttpApi {
         seasonId: Int,
         csrf: String,
     ): BiliResponse<SeasonFollowData> =
-        client.post("/pgc/web/follow/del") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("season_id", "$seasonId")
-                        append("csrf", csrf)
-                    },
-                ),
-            )
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .post("/pgc/web/follow/del") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("season_id", "$seasonId")
+                            append("csrf", csrf)
+                        },
+                    ),
+                )
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 取消番剧[seasonId]的追番（App）
@@ -1410,25 +1504,27 @@ object BiliHttpApi {
         seasonId: Int,
         accessKey: String,
     ): BiliResponse<SeasonFollowData> =
-        client.post("/pgc/app/follow/del") {
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("season_id", "$seasonId")
-                        append("access_key", accessKey)
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/pgc/app/follow/del") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("season_id", "$seasonId")
+                            append("access_key", accessKey)
+                        },
+                    ),
+                )
+            }.body()
 
     /**
      * 单独获取剧集[seasonId]的用户信息[WebSeasonData.UserStatus]
      */
     suspend fun getSeasonUserStatus(seasonId: Int): BiliResponse<WebSeasonData.UserStatus> =
-        client.get("/pgc/view/web/season/user/status") {
-            parameter("season_id", seasonId)
-            header("referer", "https://www.bilibili.com")
-        }.body()
+        client
+            .get("/pgc/view/web/season/user/status") {
+                parameter("season_id", seasonId)
+                header("referer", "https://www.bilibili.com")
+            }.body()
 
     /**
      * 获取视频[avid]/[bvid]的视频标签[Tag]
@@ -1437,11 +1533,12 @@ object BiliHttpApi {
         avid: Long? = null,
         bvid: String? = null,
     ): BiliResponse<List<Tag>> =
-        client.get("/x/tag/archive/tags") {
-            require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
-            avid?.let { parameter("aid", it) }
-            bvid?.let { parameter("bvid", it) }
-        }.body()
+        client
+            .get("/x/tag/archive/tags") {
+                require(avid != null || bvid != null) { "avid and bvid cannot be null at the same time" }
+                avid?.let { parameter("aid", it) }
+                bvid?.let { parameter("bvid", it) }
+            }.body()
 
     /**
      * 获取视频标签[tagId]的详细信息，包含相关标签和最新视频
@@ -1451,11 +1548,12 @@ object BiliHttpApi {
         pageNumber: Int,
         pageSize: Int,
     ): BiliResponse<TagDetail> =
-        client.get("/x/tag/detail") {
-            parameter("tag_id", tagId)
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-        }.body()
+        client
+            .get("/x/tag/detail") {
+                parameter("tag_id", tagId)
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+            }.body()
 
     /**
      * 获取视频标签[tagId]的最热门的视频列表
@@ -1465,11 +1563,12 @@ object BiliHttpApi {
         pageNumber: Int,
         pageSize: Int,
     ): TagTopVideosResponse =
-        client.get("/x/web-interface/tag/top") {
-            parameter("tid", tagId)
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-        }.body()
+        client
+            .get("/x/web-interface/tag/top") {
+                parameter("tid", tagId)
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+            }.body()
 
     /**
      * 获取剧集更新时间表
@@ -1481,13 +1580,14 @@ object BiliHttpApi {
         before: Int,
         after: Int,
     ): BiliResponse<List<Timeline>> =
-        client.get("/pgc/web/timeline") {
-            require(before in 0..7) { "before must in [0,7]" }
-            require(after in 0..7) { "after must in [0,7]" }
-            parameter("types", type)
-            parameter("before", before)
-            parameter("after", after)
-        }.body()
+        client
+            .get("/pgc/web/timeline") {
+                require(before in 0..7) { "before must in [0,7]" }
+                require(after in 0..7) { "after must in [0,7]" }
+                parameter("types", type)
+                parameter("before", before)
+                parameter("after", after)
+            }.body()
 
     /**
      * 获取剧集更新时间表
@@ -1495,10 +1595,11 @@ object BiliHttpApi {
      * @param filterType 全部: 0 番剧: 1 我的追番: 2 国创: 3
      */
     suspend fun getTimeline(filterType: Int): BiliResponse<TimelineAppData> =
-        client.get("/pgc/app/timeline") {
-            parameter("filter_type", filterType)
-            parameter("access_key", "")
-        }.body()
+        client
+            .get("/pgc/app/timeline") {
+                parameter("filter_type", filterType)
+                parameter("access_key", "")
+            }.body()
 
     /**
      * 获取用户[mid]的关注列表，对于其他用户只能访问前5页
@@ -1510,14 +1611,15 @@ object BiliHttpApi {
         pageNumber: Int = 1,
         accessKey: String? = null,
     ): BiliResponse<UserFollowData> =
-        client.get("/x/relation/followings") {
-            checkToken(accessKey)
-            parameter("vmid", mid)
-            orderType?.let { parameter("order_type", orderType) }
-            parameter("ps", pageSize)
-            parameter("pn", pageNumber)
-            accessKey?.let { parameter("access_key", accessKey) }
-        }.body()
+        client
+            .get("/x/relation/followings") {
+                checkToken(accessKey)
+                parameter("vmid", mid)
+                orderType?.let { parameter("order_type", orderType) }
+                parameter("ps", pageSize)
+                parameter("pn", pageNumber)
+                accessKey?.let { parameter("access_key", accessKey) }
+            }.body()
 
     /**
      * 更改与用户[mid]之间的相互关系[action]
@@ -1529,20 +1631,21 @@ object BiliHttpApi {
         accessKey: String? = null,
         csrf: String? = null,
     ): BiliResponseWithoutData =
-        client.post("/x/relation/modify") {
-            checkToken(accessKey)
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("fid", "$mid")
-                        append("act", "${action.id}")
-                        append("re_src", "${actionSource.id}")
-                        accessKey?.let { append("access_key", accessKey) }
-                        csrf?.let { append("csrf", csrf) }
-                    },
-                ),
-            )
-        }.body()
+        client
+            .post("/x/relation/modify") {
+                checkToken(accessKey)
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("fid", "$mid")
+                            append("act", "${action.id}")
+                            append("re_src", "${actionSource.id}")
+                            accessKey?.let { append("access_key", accessKey) }
+                            csrf?.let { append("csrf", csrf) }
+                        },
+                    ),
+                )
+            }.body()
 
     /**
      * 获取与用户[mid]的相互关系[RelationData]
@@ -1555,11 +1658,12 @@ object BiliHttpApi {
         mid: Long,
         accessKey: String? = null,
     ): BiliResponse<RelationData> =
-        client.get("/x/space/wbi/acc/relation") {
-            checkToken(accessKey)
-            parameter("mid", mid)
-            accessKey?.let { parameter("access_key", accessKey) }
-        }.body()
+        client
+            .get("/x/space/wbi/acc/relation") {
+                checkToken(accessKey)
+                parameter("mid", mid)
+                accessKey?.let { parameter("access_key", accessKey) }
+            }.body()
 
     /**
      * 获取用户[mid]的关系统计（关注数，粉丝数，黑名单数）
@@ -1568,10 +1672,11 @@ object BiliHttpApi {
         mid: Long,
         accessKey: String? = null,
     ): BiliResponse<RelationStat> =
-        client.get("x/relation/stat") {
-            parameter("vmid", mid)
-            accessKey?.let { parameter("access_key", accessKey) }
-        }.body()
+        client
+            .get("x/relation/stat") {
+                parameter("vmid", mid)
+                accessKey?.let { parameter("access_key", accessKey) }
+            }.body()
 
     /**
      * 获取搜索提示（Web）
@@ -1583,10 +1688,11 @@ object BiliHttpApi {
         limit: Int = 10,
         platform: String? = null,
     ): BiliResponse<WebSearchSquareData> =
-        client.get("/x/web-interface/wbi/search/square") {
-            parameter("limit", limit)
-            platform?.let { parameter("platform", platform) }
-        }.body()
+        client
+            .get("/x/web-interface/wbi/search/square") {
+                parameter("limit", limit)
+                platform?.let { parameter("platform", platform) }
+            }.body()
 
     /**
      * 获取搜索提示（App）
@@ -1599,12 +1705,13 @@ object BiliHttpApi {
         platform: String? = null,
         // accessKey: String = ""
     ): BiliResponse<List<AppSearchSquareData>> =
-        client.get("https://app.bilibili.com/x/v2/search/square") {
-            parameter("limit", limit)
-            platform?.let { parameter("platform", platform) }
-            parameter("build", BiliAppConf.APP_BUILD_CODE)
-            // parameter("access_key", accessKey)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/search/square") {
+                parameter("limit", limit)
+                platform?.let { parameter("platform", platform) }
+                parameter("build", BiliAppConf.APP_BUILD_CODE)
+                // parameter("access_key", accessKey)
+            }.body()
 
     /**
      * 获取搜索趋势（App）
@@ -1612,11 +1719,12 @@ object BiliHttpApi {
      * @param limit 返回数量
      */
     suspend fun getSearchTrendRank(limit: Int = 10): BiliResponse<SearchTendingData> =
-        client.get("https://app.bilibili.com/x/v2/search/trending/ranking") {
-            parameter("limit", limit)
-            // platform?.let { parameter("platform", platform) }
-            // parameter("build", BiliAppConf.APP_BUILD_CODE)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/search/trending/ranking") {
+                parameter("limit", limit)
+                // platform?.let { parameter("platform", platform) }
+                // parameter("build", BiliAppConf.APP_BUILD_CODE)
+            }.body()
 
     /**
      * 获取搜索关键词建议
@@ -1639,12 +1747,14 @@ object BiliHttpApi {
         // Response header `ContentType: null`
         // Request header `Accept: application/json`
         val responseText =
-            client.get("https://s.search.bilibili.com/main/suggest") {
-                parameter("term", term)
-                parameter("main_ver", mainVer)
-                highlight?.let { parameter("highlight", it) }
-                parameter("buvid", buvid)
-            }.readRawBytes().toString(Charsets.UTF_8)
+            client
+                .get("https://s.search.bilibili.com/main/suggest") {
+                    parameter("term", term)
+                    parameter("main_ver", mainVer)
+                    highlight?.let { parameter("highlight", it) }
+                    parameter("buvid", buvid)
+                }.readRawBytes()
+                .toString(Charsets.UTF_8)
         val keywordSuggest = json.decodeFromString<KeywordSuggest>(responseText)
         val result = json.decodeFromJsonElement<KeywordSuggest.Result>(keywordSuggest.result!!)
         keywordSuggest.suggests.addAll(result.tag)
@@ -1661,13 +1771,14 @@ object BiliHttpApi {
         order: String? = null,
         duration: Int? = null,
     ): BiliResponse<SearchResultData> =
-        client.get("/x/web-interface/wbi/search/all/v2") {
-            parameter("keyword", keyword)
-            parameter("page", page)
-            tid?.let { parameter("tids", it) }
-            order?.let { parameter("order", it) }
-            duration?.let { parameter("duration", it) }
-        }.body()
+        client
+            .get("/x/web-interface/wbi/search/all/v2") {
+                parameter("keyword", keyword)
+                parameter("page", page)
+                tid?.let { parameter("tids", it) }
+                order?.let { parameter("order", it) }
+                duration?.let { parameter("duration", it) }
+            }.body()
 
     /**
      * 分类搜索与[keyword]相关的[type]类型的相关结果
@@ -1680,15 +1791,16 @@ object BiliHttpApi {
         order: String? = null,
         duration: Int? = null,
     ): BiliResponse<SearchResultData> =
-        client.get("/x/web-interface/wbi/search/type") {
-            parameter("keyword", keyword)
-            parameter("search_type", type)
-            parameter("page", page)
-            tid?.let { parameter("tids", it) }
-            order?.let { parameter("order", it) }
-            duration?.let { parameter("duration", it) }
-            header("referer", "https://search.bilibili.com/")
-        }.body()
+        client
+            .get("/x/web-interface/wbi/search/type") {
+                parameter("keyword", keyword)
+                parameter("search_type", type)
+                parameter("page", page)
+                tid?.let { parameter("tids", it) }
+                order?.let { parameter("order", it) }
+                duration?.let { parameter("duration", it) }
+                header("referer", "https://search.bilibili.com/")
+            }.body()
 
     /** 获取番剧首页数据 */
     suspend fun getPgcWebInitialStateData(pgcType: PgcType): PgcWebInitialStateData {
@@ -1696,9 +1808,12 @@ object BiliHttpApi {
         val htmlDocuments = client.get("https://www.bilibili.com/$path").body<Document>()
 
         val dataScriptTagContent =
-            htmlDocuments.body().select("script").find {
-                it.html().contains("__INITIAL_STATE__")
-            }?.html() ?: throw IllegalStateException("initial state data cannot be null")
+            htmlDocuments
+                .body()
+                .select("script")
+                .find {
+                    it.html().contains("__INITIAL_STATE__")
+                }?.html() ?: throw IllegalStateException("initial state data cannot be null")
         val dataJson =
             dataScriptTagContent.split("__INITIAL_STATE__=", ";(function()")[1]
         val initinalData =
@@ -1719,10 +1834,11 @@ object BiliHttpApi {
         name: String = "anime",
         cursor: Int = 0,
     ): BiliResponse<PgcFeedV3Data> =
-        client.get("/pgc/page/web/v3/feed") {
-            parameter("name", name)
-            parameter("coursor", cursor)
-        }.body()
+        client
+            .get("/pgc/page/web/v3/feed") {
+                parameter("name", name)
+                parameter("coursor", cursor)
+            }.body()
 
     /**
      * 获取 PGC 猜你喜欢
@@ -1731,11 +1847,12 @@ object BiliHttpApi {
         name: String = "movie",
         cursor: Int = 0,
     ): BiliResponse<PgcFeedData> =
-        client.get("/pgc/page/web/feed") {
-            parameter("name", name)
-            parameter("coursor", cursor)
-            parameter("new_cursor_status", true)
-        }.body()
+        client
+            .get("/pgc/page/web/feed") {
+                parameter("name", name)
+                parameter("coursor", cursor)
+                parameter("new_cursor_status", true)
+            }.body()
 
     /**
      * 获取用户[mid]的追剧列表
@@ -1753,13 +1870,14 @@ object BiliHttpApi {
         pageSize: Int = 15,
         mid: Long,
     ): BiliResponse<FollowingSeasonWebData> =
-        client.get("/x/space/bangumi/follow/list") {
-            parameter("type", type)
-            parameter("follow_status", status)
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-            parameter("vmid", mid)
-        }.body()
+        client
+            .get("/x/space/bangumi/follow/list") {
+                parameter("type", type)
+                parameter("follow_status", status)
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+                parameter("vmid", mid)
+            }.body()
 
     /**
      * 获取用户的追剧列表
@@ -1778,13 +1896,14 @@ object BiliHttpApi {
         build: Int,
         accessKey: String,
     ): BiliResponse<FollowingSeasonAppData> =
-        client.get("/pgc/app/follow/v2/$type") {
-            parameter("status", status)
-            parameter("pn", pageNumber)
-            parameter("ps", pageSize)
-            parameter("build", build)
-            parameter("access_key", accessKey)
-        }.body()
+        client
+            .get("/pgc/app/follow/v2/$type") {
+                parameter("status", status)
+                parameter("pn", pageNumber)
+                parameter("ps", pageSize)
+                parameter("build", build)
+                parameter("access_key", accessKey)
+            }.body()
 
     /**
      * 获取导航栏用户信息
@@ -1799,7 +1918,8 @@ object BiliHttpApi {
     suspend fun updateWbi() {
         val now = System.currentTimeMillis()
         val needToUpdate =
-            wbiImgKey == null || wbiSubKey == null ||
+            wbiImgKey == null ||
+                wbiSubKey == null ||
                 (now - wbiLastRefreshDate > 2 * 60 * 60 * 1000L)
 
         if (!needToUpdate) {
@@ -1826,12 +1946,13 @@ object BiliHttpApi {
         pageSize: Int = 30,
         idx: Int = 1,
     ): BiliResponse<RcmdTopData> =
-        client.get("/x/web-interface/wbi/index/top/feed/rcmd") {
-            parameter("fresh_type", freshType)
-            parameter("ps", pageSize)
-            parameter("fresh_idx", idx)
-            parameter("fresh_idx_1h", idx)
-        }.body()
+        client
+            .get("/x/web-interface/wbi/index/top/feed/rcmd") {
+                parameter("fresh_type", freshType)
+                parameter("ps", pageSize)
+                parameter("fresh_idx", idx)
+                parameter("fresh_idx_1h", idx)
+            }.body()
 
     /**
      * 获取首页视频推荐列表（App）
@@ -1840,10 +1961,11 @@ object BiliHttpApi {
         idx: Int = 0,
         accessKey: String? = null,
     ): BiliResponse<RcmdIndexData> =
-        client.get("https://app.bilibili.com/x/v2/feed/index") {
-            parameter("idx", idx)
-            accessKey?.let { parameter("access_key", it) }
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/feed/index") {
+                parameter("idx", idx)
+                accessKey?.let { parameter("access_key", it) }
+            }.body()
 
     private suspend fun seasonIndexResult(
         seasonIndexType: SeasonIndexType,
@@ -1864,26 +1986,27 @@ object BiliHttpApi {
         pagesize: Int? = null,
         type: Int? = null,
     ): BiliResponse<IndexResultData> =
-        client.get("/pgc/season/index/result") {
-            parameter("st", seasonIndexType.id)
-            order?.let { parameter("order", it) }
-            seasonVersion?.let { parameter("season_version", it) }
-            spokenLanguageType?.let { parameter("spoken_language_type", it) }
-            area?.let { parameter("area", it) }
-            isFinish?.let { parameter("is_finish", it) }
-            copyright?.let { parameter("copyright", it) }
-            seasonStatus?.let { parameter("season_status", it) }
-            seasonMonth?.let { parameter("season_month", it) }
-            year?.let { parameter("year", it) }
-            releaseDate?.let { parameter("release_date", it) }
-            styleId?.let { parameter("style_id", it) }
-            producerId?.let { parameter("producer_id", it) }
-            sort?.let { parameter("sort", it) }
-            page?.let { parameter("page", it) }
-            parameter("season_type", seasonIndexType.id)
-            pagesize?.let { parameter("pagesize", it) }
-            type?.let { parameter("type", it) }
-        }.body()
+        client
+            .get("/pgc/season/index/result") {
+                parameter("st", seasonIndexType.id)
+                order?.let { parameter("order", it) }
+                seasonVersion?.let { parameter("season_version", it) }
+                spokenLanguageType?.let { parameter("spoken_language_type", it) }
+                area?.let { parameter("area", it) }
+                isFinish?.let { parameter("is_finish", it) }
+                copyright?.let { parameter("copyright", it) }
+                seasonStatus?.let { parameter("season_status", it) }
+                seasonMonth?.let { parameter("season_month", it) }
+                year?.let { parameter("year", it) }
+                releaseDate?.let { parameter("release_date", it) }
+                styleId?.let { parameter("style_id", it) }
+                producerId?.let { parameter("producer_id", it) }
+                sort?.let { parameter("sort", it) }
+                page?.let { parameter("page", it) }
+                parameter("season_type", seasonIndexType.id)
+                pagesize?.let { parameter("pagesize", it) }
+                type?.let { parameter("type", it) }
+            }.body()
 
     suspend fun seasonIndexAnimeResult(
         order: Int = 0,
@@ -2035,13 +2158,9 @@ object BiliHttpApi {
         type = type,
     )
 
-    suspend fun download(url: String): ByteArray {
-        return client.get(url).readRawBytes()
-    }
+    suspend fun download(url: String): ByteArray = client.get(url).readRawBytes()
 
-    suspend fun downloadAsStream(url: String): InputStream {
-        return client.get(url).bodyAsChannel().toInputStream()
-    }
+    suspend fun downloadAsStream(url: String): InputStream = client.get(url).bodyAsChannel().toInputStream()
 
     suspend fun getWebVideoShot(
         aid: Long? = null,
@@ -2049,28 +2168,31 @@ object BiliHttpApi {
         cid: Long? = null,
         needJsonArrayIndex: Boolean = false,
     ): BiliResponse<VideoShot> =
-        client.get("/x/player/videoshot") {
-            require(aid != null || bvid != null) { "av and bv cannot be null at the same time" }
-            aid?.let { parameter("aid", it) }
-            bvid?.let { parameter("bvid", it) }
-            cid?.let { parameter("cid", it) }
-            parameter("index", if (needJsonArrayIndex) 1 else 0)
-        }.body()
+        client
+            .get("/x/player/videoshot") {
+                require(aid != null || bvid != null) { "av and bv cannot be null at the same time" }
+                aid?.let { parameter("aid", it) }
+                bvid?.let { parameter("bvid", it) }
+                cid?.let { parameter("cid", it) }
+                parameter("index", if (needJsonArrayIndex) 1 else 0)
+            }.body()
 
     suspend fun getAppVideoShot(
         aid: Long,
         cid: Long,
     ): BiliResponse<VideoShot> =
-        client.get("https://app.bilibili.com/x/v2/view/video/shot") {
-            parameter("aid", aid)
-            parameter("cid", cid)
-            parameter("ts", 0)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/view/video/shot") {
+                parameter("aid", aid)
+                parameter("cid", cid)
+                parameter("ts", 0)
+            }.body()
 
     suspend fun getUserEquippedGarb(part: EquipPart): BiliResponse<Equip> =
-        client.get("/x/garb/user/equip") {
-            parameter("part", part.value)
-        }.body()
+        client
+            .get("/x/garb/user/equip") {
+                parameter("part", part.value)
+            }.body()
 
     /**
      * 获取分区动态（App），包含顶部轮播图，大卡片活动推广位，和视频列表第一页
@@ -2079,11 +2201,12 @@ object BiliHttpApi {
         rid: Int,
         accessKey: String,
     ): BiliResponse<RegionDynamic> =
-        client.get("https://app.bilibili.com/x/v2/region/dynamic") {
-            parameter("access_key", accessKey)
-            parameter("build", BiliAppConf.APP_BUILD_CODE)
-            parameter("rid", rid)
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/region/dynamic") {
+                parameter("access_key", accessKey)
+                parameter("build", BiliAppConf.APP_BUILD_CODE)
+                parameter("rid", rid)
+            }.body()
 
     /**
      * 获取分区视频列表（App）,用于[getRegionDynamic]加载数据后下滑加载更多数据
@@ -2093,13 +2216,14 @@ object BiliHttpApi {
         ctime: Long = 0,
         accessKey: String,
     ): BiliResponse<RegionDynamicList> =
-        client.get("https://app.bilibili.com/x/v2/region/dynamic/list") {
-            parameter("access_key", accessKey)
-            parameter("build", BiliAppConf.APP_BUILD_CODE)
-            parameter("rid", rid)
-            parameter("ctime", ctime)
-            parameter("pull", "false")
-        }.body()
+        client
+            .get("https://app.bilibili.com/x/v2/region/dynamic/list") {
+                parameter("access_key", accessKey)
+                parameter("build", BiliAppConf.APP_BUILD_CODE)
+                parameter("rid", rid)
+                parameter("ctime", ctime)
+                parameter("pull", "false")
+            }.body()
 
     //
 
@@ -2125,9 +2249,10 @@ object BiliHttpApi {
      * 5003  动物圈 animal
      */
     suspend fun getLocs(ids: List<Int>): RegionLocs =
-        client.get("/x/web-show/res/locs") {
-            parameter("ids", ids.joinToString(","))
-        }.body()
+        client
+            .get("/x/web-show/res/locs") {
+                parameter("ids", ids.joinToString(","))
+            }.body()
 
     /**
      * 获取 UGC 分区推荐视频
@@ -2143,16 +2268,19 @@ object BiliHttpApi {
         device: String = "web",
         plat: Int = 30,
     ): BiliResponse<RegionFeedRcmd> =
-        client.get("/x/web-interface/region/feed/rcmd") {
-            parameter("display_id", displayId)
-            parameter("request_cnt", requestCnt)
-            parameter("from_region", fromRegion)
-            parameter("device", device)
-            parameter("plat", plat)
-        }.body()
+        client
+            .get("/x/web-interface/region/feed/rcmd") {
+                parameter("display_id", displayId)
+                parameter("request_cnt", requestCnt)
+                parameter("from_region", fromRegion)
+                parameter("device", device)
+                parameter("plat", plat)
+            }.body()
 }
 
-enum class SeasonIndexType(val id: Int) {
+enum class SeasonIndexType(
+    val id: Int,
+) {
     Anime(1),
     Movie(2),
     Documentary(3),
