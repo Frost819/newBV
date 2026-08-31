@@ -570,6 +570,19 @@ class PlayerViewModel
         }
 
         /**
+         * 播放结束后的统一入口。
+         *
+         * 循环模式回到开头，否则根据 [Prefs.actionAfterPlay] 决定后续动作。
+         */
+        fun onPlaybackEnded() {
+            if (_uiState.value.isLooping) {
+                backToStart()
+            } else {
+                checkAndPlayNext()
+            }
+        }
+
+        /**
          * 播放结束后的检查逻辑。
          *
          * 根据 Prefs.actionAfterPlay 决定：暂停 / 播放下一集 / 退出 / 播放相关视频。
@@ -584,11 +597,13 @@ class PlayerViewModel
                 dev.frost819.newbv.data.datastore.ActionAfterPlay.PlayRelated -> {
                     val firstRelated = videoInfoRepository.relatedVideos.value.firstOrNull()
                     if (firstRelated != null) {
-                        playNewVideo(
-                            VideoListItem(
-                                aid = firstRelated.aid,
-                                cid = firstRelated.cid,
-                                title = firstRelated.title,
+                        startNextEpisodeCountdown(
+                            NextPlayTarget.VideoItem(
+                                VideoListItem(
+                                    aid = firstRelated.aid,
+                                    cid = firstRelated.cid,
+                                    title = firstRelated.title,
+                                ),
                             ),
                         )
                         return

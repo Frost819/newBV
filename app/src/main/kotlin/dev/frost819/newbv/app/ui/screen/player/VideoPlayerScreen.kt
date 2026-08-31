@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.player
 
-import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -86,7 +85,6 @@ fun VideoPlayerScreen(
 
     val maskFinder = remember { DanmakuMaskFinder() }
     var currentDanmakuMaskFrame by remember { mutableStateOf<DanmakuMaskFrame?>(null) }
-    var isLooping by remember { mutableStateOf(false) }
     var showInteractionDialog by remember { mutableStateOf(false) }
     var showCommentsDialog by remember { mutableStateOf(false) }
     var resumeAfterComments by remember { mutableStateOf(false) }
@@ -137,17 +135,13 @@ fun VideoPlayerScreen(
         playerViewModel.uiEffect.collect { effect ->
             when (effect) {
                 dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.FinishActivity -> {
-                    (context as? Activity)?.finish()
+                    navController.popBackStack()
                 }
                 is dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.ShowToast -> {
                     ToastUtils.show(context, effect.message)
                 }
                 dev.frost819.newbv.app.ui.state.player.PlayerUiEffect.PlayEnded -> {
-                    if (isLooping) {
-                        playerViewModel.backToStart()
-                    } else {
-                        playerViewModel.checkAndPlayNext()
-                    }
+                    playerViewModel.onPlaybackEnded()
                 }
             }
         }
@@ -265,7 +259,7 @@ fun VideoPlayerScreen(
     VideoPlayerController(
         modifier = Modifier.fillMaxSize(),
         fromSeason = uiState.fromSeason,
-        isLooping = isLooping,
+        isLooping = uiState.isLooping,
         videoShotCache = videoShotCache,
         uiState = mergedUiState,
         seekerState = seekerState,
@@ -295,8 +289,7 @@ fun VideoPlayerScreen(
         onPlayPrevious = { playerViewModel.playPreviousNow() },
         onPlayNext = { playerViewModel.playNextNow() },
         onToggleLoop = {
-            logger.info { "[PLAYBACK] loopToggle enabled=${!isLooping}" }
-            isLooping = !isLooping
+            logger.info { "[PLAYBACK] loopToggle enabled=${!uiState.isLooping}" }
             playerViewModel.toggleLoop()
         },
         onToggleSubtitle = { subtitleViewModel.toggleSubtitle() },

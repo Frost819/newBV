@@ -11,6 +11,7 @@ import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
+import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
@@ -639,6 +640,32 @@ class PlayerViewModelTest {
             assertThat(viewModel.uiState.value.playerState).isEqualTo(PlayerState.Ended)
         }
 
+    // ── onPlaybackEnded tests ────────────────────────────────
+
+    @Test
+    fun `onPlaybackEnded with looping calls backToStart`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            updateUiState { it.copy(isLooping = true) }
+
+            viewModel.onPlaybackEnded()
+
+            verify { mockPlayer.seekTo(0) }
+            assertThat(viewModel.uiState.value.showBackToStart).isFalse()
+        }
+
+    @Test
+    fun `onPlaybackEnded without looping calls checkAndPlayNext`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.Pause
+            updateUiState { it.copy(isLooping = false) }
+
+            viewModel.onPlaybackEnded()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
+        }
+
     // ── checkAndPlayNext tests ────────────────────────────────
 
     @Test
@@ -670,6 +697,49 @@ class PlayerViewModelTest {
     fun `checkAndPlayNext with PlayNext and no next target emits FinishActivity`() =
         runTest(testDispatcher) {
             every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayNext
+
+            viewModel.uiEffect.test {
+                viewModel.checkAndPlayNext()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isEqualTo(PlayerUiEffect.FinishActivity)
+            }
+        }
+
+    @Test
+    fun `checkAndPlayNext with PlayRelated shows countdown`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayRelated
+            every { videoInfoRepository.relatedVideos } returns
+                MutableStateFlow(
+                    listOf(
+                        RelatedVideo(
+                            aid = 999L,
+                            cid = 888L,
+                            cover = "",
+                            title = "Related Video",
+                            duration = 0,
+                            author = null,
+                            jumpToSeason = false,
+                            epid = null,
+                            view = 0,
+                            danmaku = 0,
+                        ),
+                    ),
+                )
+
+            viewModel.checkAndPlayNext()
+            runCurrent()
+
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isTrue()
+        }
+
+    @Test
+    fun `checkAndPlayNext with PlayRelated and no related videos falls through to PlayNext`() =
+        runTest(testDispatcher) {
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayRelated
+            every { videoInfoRepository.relatedVideos } returns MutableStateFlow(emptyList())
 
             viewModel.uiEffect.test {
                 viewModel.checkAndPlayNext()

@@ -221,13 +221,20 @@ fun VideoPlayerController(
      *
      * 复用 [PlayerTip] 组件显示动作名称，定时结束后自动消失。
      * 快捷键提示始终显示，新的提示会覆盖旧提示。
+     *
+     * 对于开关类/参数类动作，[status] 会追加在动作名称后面（如"字幕：开"）。
      */
-    fun showShortcutTip(action: PlayerCustomShortcutAction) {
-        onShowShortcutTip(PlayerCustomShortcutCatalog.getActionDisplayName(action))
+    fun showShortcutTip(
+        action: PlayerCustomShortcutAction,
+        status: String? = null,
+    ) {
+        val name = PlayerCustomShortcutCatalog.getActionDisplayName(action)
+        val tip = if (status != null) "$name：$status" else name
+        onShowShortcutTip(tip)
     }
 
     fun executeCustomShortcut(action: PlayerCustomShortcutAction) {
-        showShortcutTip(action)
+        var status: String? = null
         when (action) {
             PlayerCustomShortcutAction.OpenSettings -> showMenuController = true
             PlayerCustomShortcutAction.OpenRelatedVideos -> showRelatedVideosController = true
@@ -235,24 +242,39 @@ fun VideoPlayerController(
             PlayerCustomShortcutAction.PlayNext -> onPlayNext()
             PlayerCustomShortcutAction.OpenVideoDetail -> onGoToVideoDetail()
             PlayerCustomShortcutAction.OpenUpPage -> onGoToUpPage()
-            PlayerCustomShortcutAction.ToggleLoop -> onToggleLoop()
-            PlayerCustomShortcutAction.ToggleDanmaku -> onToggleDanmaku()
-            PlayerCustomShortcutAction.ToggleSubtitle -> onToggleSubtitle()
+            PlayerCustomShortcutAction.ToggleLoop -> {
+                status = if (!isLooping) "开" else "关"
+                onToggleLoop()
+            }
+            PlayerCustomShortcutAction.ToggleDanmaku -> {
+                status = if (uiState.danmakuState.enabledTypes.isEmpty()) "开" else "关"
+                onToggleDanmaku()
+            }
+            PlayerCustomShortcutAction.ToggleSubtitle -> {
+                status = if (uiState.subtitleId == -1L) "开" else "关"
+                onToggleSubtitle()
+            }
             PlayerCustomShortcutAction.TogglePersistentBottomProgress -> {
                 showPersistentSeek = !showPersistentSeek
                 Prefs.showPersistentSeek = showPersistentSeek
+                status = if (showPersistentSeek) "开" else "关"
             }
 
             is PlayerCustomShortcutAction.TogglePlaybackSpeed -> {
                 val targetSpeed = if (uiState.playSpeed == action.speed) 1f else action.speed
+                status = "${targetSpeed}x"
                 onPlaySpeedChange(targetSpeed)
             }
 
-            is PlayerCustomShortcutAction.ToggleDanmakuMask ->
+            is PlayerCustomShortcutAction.ToggleDanmakuMask -> {
+                val newMaskEnabled = !uiState.danmakuState.maskEnabled
+                status = if (newMaskEnabled) "开" else "关"
                 onDanmakuSettingChange(
-                    DanmakuSettingAction.SetMaskEnabled(!uiState.danmakuState.maskEnabled),
+                    DanmakuSettingAction.SetMaskEnabled(newMaskEnabled),
                 )
+            }
         }
+        showShortcutTip(action, status)
     }
 
     fun handleCustomShortcut(event: KeyEvent): Boolean {
