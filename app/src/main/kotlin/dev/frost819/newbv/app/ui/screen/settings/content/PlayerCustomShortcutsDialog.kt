@@ -395,7 +395,7 @@ private fun PickActionValueStage(
                 ) {
                     items(values) { entry ->
                         SettingsMenuSelectItem(
-                            text = entry.valueDisplayName,
+                            text = entry.displayName,
                             selected = currentShortcut?.action == entry.action,
                             onClick = { onSelect(entry.action) },
                         )

@@ -13,7 +13,6 @@ object PlayerCustomShortcutCatalog {
     data class ActionEntry(
         val action: PlayerCustomShortcutAction,
         val displayName: String,
-        val valueDisplayName: String = displayName,
     )
 
     /** 动作分组。简单动作只有 [action]，参数化动作有 [values]。 */
@@ -54,19 +53,19 @@ object PlayerCustomShortcutCatalog {
                     values =
                         PlaySpeed.entries.filter { it.speed != 1f }.map { speed ->
                             PlayerCustomShortcutAction.TogglePlaybackSpeed(speed.speed).entry(
-                                displayName = "倍速播放开关：${speed.speed}x",
-                                valueDisplayName = "${speed.speed}x",
+                                displayName = "${speed.speed}x",
                             )
                         },
                 ),
             )
         }
 
-    /** 获取动作的显示名称。 */
+    /** 获取动作的显示名称。参数化动作返回分组名（不含参数值）。 */
     fun getActionDisplayName(action: PlayerCustomShortcutAction): String =
         groups()
             .flatMap { group ->
-                group.action?.let { listOf(ActionEntry(it, group.displayName)) } ?: group.values
+                group.action?.let { listOf(ActionEntry(it, group.displayName)) }
+                    ?: group.values.map { ActionEntry(it.action, group.displayName) }
             }.firstOrNull { it.action == action }
             ?.displayName ?: action.javaClass.simpleName
 
@@ -82,8 +81,6 @@ object PlayerCustomShortcutCatalog {
         values: List<ActionEntry>,
     ): ActionGroup = ActionGroup(id = id, displayName = displayName, values = values)
 
-    private fun PlayerCustomShortcutAction.entry(
-        displayName: String,
-        valueDisplayName: String = displayName,
-    ): ActionEntry = ActionEntry(action = this, displayName = displayName, valueDisplayName = valueDisplayName)
+    private fun PlayerCustomShortcutAction.entry(displayName: String): ActionEntry =
+        ActionEntry(action = this, displayName = displayName)
 }
