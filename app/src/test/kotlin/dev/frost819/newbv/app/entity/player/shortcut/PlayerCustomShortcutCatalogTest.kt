@@ -19,7 +19,7 @@ class PlayerCustomShortcutCatalogTest {
     @Test
     fun `groups contains all simple action groups`() {
         val groups = PlayerCustomShortcutCatalog.groups()
-        val simpleGroupIds = groups.filter { it.action != null }.map { it.id }
+        val simpleGroupIds = groups.filter { it.values.size == 1 }.map { it.id }
 
         assertThat(simpleGroupIds).containsExactly(
             "open_settings",
@@ -37,32 +37,30 @@ class PlayerCustomShortcutCatalogTest {
     }
 
     @Test
-    fun `simple action groups have action set and empty values`() {
+    fun `simple action groups have exactly one value`() {
         val groups = PlayerCustomShortcutCatalog.groups()
-        val simpleGroups = groups.filter { it.action != null }
+        val simpleGroups = groups.filter { it.values.size == 1 }
 
         simpleGroups.forEach { group ->
-            assertThat(group.action).isNotNull()
-            assertThat(group.values).isEmpty()
+            assertThat(group.values).hasSize(1)
         }
     }
 
     @Test
-    fun `toggle_playback_speed is the only value action group`() {
+    fun `toggle_playback_speed is the only parameterized action group`() {
         val groups = PlayerCustomShortcutCatalog.groups()
-        val valueGroupIds = groups.filter { it.values.isNotEmpty() }.map { it.id }
+        val paramGroupIds = groups.filter { it.values.size > 1 }.map { it.id }
 
-        assertThat(valueGroupIds).containsExactly("toggle_playback_speed")
+        assertThat(paramGroupIds).containsExactly("toggle_playback_speed")
     }
 
     @Test
-    fun `value action groups have null action and non-empty values`() {
+    fun `parameterized action groups have multiple values`() {
         val groups = PlayerCustomShortcutCatalog.groups()
-        val valueGroups = groups.filter { it.values.isNotEmpty() }
+        val paramGroups = groups.filter { it.values.size > 1 }
 
-        valueGroups.forEach { group ->
-            assertThat(group.action).isNull()
-            assertThat(group.values).isNotEmpty()
+        paramGroups.forEach { group ->
+            assertThat(group.values.size).isGreaterThan(1)
         }
     }
 

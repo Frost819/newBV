@@ -337,8 +337,8 @@ private fun PickActionStage(
                             text = group.displayName,
                             selected = false,
                             onClick = {
-                                if (group.action != null) {
-                                    onSelectAction(group.action)
+                                if (group.values.size == 1) {
+                                    onSelectAction(group.values.first().action)
                                 } else {
                                     onPickValues(group)
                                 }

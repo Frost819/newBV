@@ -15,12 +15,11 @@ object PlayerCustomShortcutCatalog {
         val displayName: String,
     )
 
-    /** 动作分组。简单动作只有 [action]，参数化动作有 [values]。 */
+    /** 动作分组。每个分组包含一组 [ActionEntry]，简单动作只有 1 个条目。 */
     data class ActionGroup(
         val id: String,
         val displayName: String,
-        val action: PlayerCustomShortcutAction? = null,
-        val values: List<ActionEntry> = emptyList(),
+        val values: List<ActionEntry>,
     )
 
     /** 获取所有可绑定的动作分组。 */
@@ -63,17 +62,15 @@ object PlayerCustomShortcutCatalog {
     /** 获取动作的显示名称。参数化动作返回分组名（不含参数值）。 */
     fun getActionDisplayName(action: PlayerCustomShortcutAction): String =
         groups()
-            .flatMap { group ->
-                group.action?.let { listOf(ActionEntry(it, group.displayName)) }
-                    ?: group.values.map { ActionEntry(it.action, group.displayName) }
-            }.firstOrNull { it.action == action }
+            .flatMap { group -> group.values.map { ActionEntry(it.action, group.displayName) } }
+            .firstOrNull { it.action == action }
             ?.displayName ?: action.javaClass.simpleName
 
     private fun simple(
         id: String,
         displayName: String,
         action: PlayerCustomShortcutAction,
-    ): ActionGroup = ActionGroup(id = id, displayName = displayName, action = action)
+    ): ActionGroup = ActionGroup(id = id, displayName = displayName, values = listOf(ActionEntry(action, displayName)))
 
     private fun valueGroup(
         id: String,
