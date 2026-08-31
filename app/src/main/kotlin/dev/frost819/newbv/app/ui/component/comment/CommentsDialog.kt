@@ -2,6 +2,7 @@ package dev.frost819.newbv.app.ui.component.comment
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -132,28 +132,11 @@ fun CommentsDialog(
             runCatching { focusRequester.requestFocus() }
         }
 
-        val currentPictures = imageViewerPictures
         Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.62f))
-                    .onPreviewKeyEvent { event ->
-                        if (currentPictures == null) return@onPreviewKeyEvent false
-                        if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
-                        when {
-                            event.isDpadLeft() && imageViewerIndex > 0 -> {
-                                imageViewerIndex--
-                                true
-                            }
-                            event.isDpadRight() && imageViewerIndex < currentPictures.lastIndex -> {
-                                imageViewerIndex++
-                                true
-                            }
-                            event.isDpadUp() || event.isDpadDown() -> true
-                            else -> false
-                        }
-                    },
+                    .background(Color.Black.copy(alpha = 0.62f)),
         ) {
             Surface(
                 modifier =
@@ -185,11 +168,12 @@ fun CommentsDialog(
                 )
             }
 
-            currentPictures?.let { pictures ->
+            imageViewerPictures?.let { pictures ->
                 CommentImageOverlay(
                     pictures = pictures,
                     currentIndex = imageViewerIndex,
                     onDismiss = { imageViewerPictures = null },
+                    onIndexChange = { imageViewerIndex = it },
                 )
             }
         }
@@ -538,31 +522,55 @@ private fun DialogActionButton(
  * @param pictures 图片 URL 列表
  * @param currentIndex 当前显示的图片索引
  * @param onDismiss 关闭回调
+ * @param onIndexChange 图片切换回调
  */
 @Composable
 private fun CommentImageOverlay(
     pictures: List<String>,
     currentIndex: Int,
     onDismiss: () -> Unit,
+    onIndexChange: (Int) -> Unit,
 ) {
-    BackHandler(onBack = onDismiss)
+    val focusRequester = remember { FocusRequester() }
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f)),
-        contentAlignment = Alignment.Center,
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Column(
-            modifier = Modifier.width(400.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        BackHandler(onBack = onDismiss)
+
+        LaunchedEffect(Unit) {
+            runCatching { focusRequester.requestFocus() }
+        }
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .focusRequester(focusRequester)
+                    .focusable()
+                    .onPreviewKeyEvent { event ->
+                        if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
+                        when {
+                            event.isDpadLeft() && currentIndex > 0 -> {
+                                onIndexChange(currentIndex - 1)
+                                true
+                            }
+                            event.isDpadRight() && currentIndex < pictures.lastIndex -> {
+                                onIndexChange(currentIndex + 1)
+                                true
+                            }
+                            event.isDpadUp() || event.isDpadDown() -> true
+                            else -> false
+                        }
+                    },
+            contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = pictures[currentIndex],
                 contentDescription = "评论图片 ${currentIndex + 1}/${pictures.size}",
-                modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
             if (pictures.size > 1) {
@@ -570,6 +578,11 @@ private fun CommentImageOverlay(
                     text = "${currentIndex + 1} / ${pictures.size}",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White.copy(alpha = 0.8f),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
         }

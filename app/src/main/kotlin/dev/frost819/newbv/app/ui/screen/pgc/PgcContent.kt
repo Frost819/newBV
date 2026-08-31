@@ -39,7 +39,7 @@ import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -145,7 +145,7 @@ private fun PgcGrid(
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberFocusSaver()
+    val focusSaver = rememberScreenFocusSaver()
 
     focusSaver.RestoreFocus()
 
@@ -177,6 +177,7 @@ private fun PgcGrid(
                     contentAlignment = Alignment.Center,
                 ) {
                     PgcCarousel(
+                        modifier = Modifier.focusSaverItem(focusSaver, "carousel"),
                         data = state.carouselItems,
                         onClick = { item ->
                             val seasonId = item.seasonId?.toLong()
@@ -218,7 +219,7 @@ private fun PgcGrid(
                 onGoToDetailPage = {
                     navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
                 },
-                modifier = Modifier.focusSaverItem(focusSaver, index),
+                modifier = Modifier.focusSaverItem(focusSaver, "item_$index"),
             )
         }
 

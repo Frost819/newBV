@@ -256,6 +256,9 @@ object BiliHttpApi {
 
     /**
      * 获取视频超详细信息
+     *
+     * 端点：GET /x/web-interface/wbi/view/detail（路径含 wbi，由 encApiSign 拦截器自动 WBI 签名）
+     * 鉴权：无需登录也可获取，但未登录时可能返回不完整数据，retry 后可成功
      */
     suspend fun getVideoDetail(
         av: Long? = null,
@@ -265,6 +268,7 @@ object BiliHttpApi {
             .get("/x/web-interface/wbi/view/detail") {
                 parameter("aid", av)
                 parameter("bvid", bv)
+                header("Referer", "https://www.bilibili.com")
             }.body()
 
     /**

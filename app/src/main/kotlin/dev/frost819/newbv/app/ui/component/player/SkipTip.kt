@@ -1,8 +1,6 @@
 package dev.frost819.newbv.app.ui.component.player
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -119,12 +117,8 @@ fun PlayerTip(
         enter =
             expandVertically(
                 expandFrom = Alignment.Bottom,
-                animationSpec =
-                    spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow,
-                    ),
-            ) + fadeIn(tween(400)),
+                animationSpec = tween(300),
+            ) + fadeIn(tween(300)),
         exit =
             shrinkVertically(
                 shrinkTowards = Alignment.Bottom,

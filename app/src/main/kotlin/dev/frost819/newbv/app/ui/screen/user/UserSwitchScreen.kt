@@ -40,6 +40,8 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.viewmodel.user.UserSwitchViewModel
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.data.db.entity.UserEntity
@@ -64,6 +66,8 @@ fun UserSwitchScreen(
     onNavigateLogin: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val focusSaver = rememberScreenFocusSaver()
+    focusSaver.RestoreFocus()
 
     LifecycleResumeEffect(Unit) {
         viewModel.updateData()
@@ -105,7 +109,10 @@ fun UserSwitchScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
                             onClick = onNavigateLogin,
-                            modifier = Modifier.touchClickable(onClick = onNavigateLogin),
+                            modifier =
+                                Modifier
+                                    .focusSaverItem(focusSaver, "add_user_empty")
+                                    .touchClickable(onClick = onNavigateLogin),
                         ) {
                             Text(text = stringResource(R.string.user_switch_add))
                         }
@@ -123,10 +130,14 @@ fun UserSwitchScreen(
                             isCurrentUser = user.uid == uiState.currentUid,
                             onClick = { viewModel.switchUser(user) },
                             onDelete = { viewModel.deleteUser(user) },
+                            modifier = Modifier.focusSaverItem(focusSaver, "user_${user.uid}"),
                         )
                     }
                     item {
-                        AddUserButton(onClick = onNavigateLogin)
+                        AddUserButton(
+                            onClick = onNavigateLogin,
+                            modifier = Modifier.focusSaverItem(focusSaver, "add_user"),
+                        )
                     }
                 }
             }
@@ -150,6 +161,7 @@ private fun UserListItem(
     isCurrentUser: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
@@ -163,6 +175,7 @@ private fun UserListItem(
             modifier =
                 Modifier
                     .weight(1f)
+                    .then(modifier)
                     .touchClickable(onClick = onClick),
             onClick = onClick,
             colors =
@@ -246,10 +259,13 @@ private fun UserListItem(
  * 添加用户按钮。
  */
 @Composable
-private fun AddUserButton(onClick: () -> Unit) {
+private fun AddUserButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Button(
         onClick = onClick,
-        modifier = Modifier.touchClickable(onClick = onClick),
+        modifier = modifier.touchClickable(onClick = onClick),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

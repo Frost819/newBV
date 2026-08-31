@@ -31,10 +31,10 @@ class SettingsMenuNavItemTest {
 
     @Test
     fun displayNames_knownValues() {
-        assertThat(SettingsMenuNavItem.AudioVideo.displayName).isEqualTo("音视频")
-        assertThat(SettingsMenuNavItem.UI.displayName).isEqualTo("界面")
-        assertThat(SettingsMenuNavItem.Other.displayName).isEqualTo("其他")
-        assertThat(SettingsMenuNavItem.Storage.displayName).isEqualTo("存储")
+        assertThat(SettingsMenuNavItem.AudioVideo.displayName).isEqualTo("播放设置")
+        assertThat(SettingsMenuNavItem.UI.displayName).isEqualTo("界面设置")
+        assertThat(SettingsMenuNavItem.Other.displayName).isEqualTo("更多设置")
+        assertThat(SettingsMenuNavItem.Storage.displayName).isEqualTo("存储管理")
         assertThat(SettingsMenuNavItem.Info.displayName).isEqualTo("设备信息")
         assertThat(SettingsMenuNavItem.About.displayName).isEqualTo("关于")
     }

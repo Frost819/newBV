@@ -39,6 +39,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.core.focus.isDpadRight
 import dev.frost819.newbv.core.focus.isKeyDown
 import dev.frost819.newbv.data.datastore.LeftNaviItem
@@ -72,6 +74,9 @@ fun LeftNaviContent(
     onFocusToContent: () -> Unit,
     onLogin: () -> Unit,
 ) {
+    val focusSaver = rememberScreenFocusSaver()
+    focusSaver.RestoreFocus()
+
     NavigationRail(
         modifier =
             modifier
@@ -90,9 +95,11 @@ fun LeftNaviContent(
         var userIsFocused by remember { mutableStateOf(false) }
         NavigationRailItem(
             modifier =
-                Modifier.onFocusChanged {
-                    userIsFocused = it.hasFocus
-                },
+                Modifier
+                    .focusSaverItem(focusSaver, "user")
+                    .onFocusChanged {
+                        userIsFocused = it.hasFocus
+                    },
             onClick = {
                 if (isLogin) {
                     onShowUserPanel()
@@ -167,9 +174,11 @@ fun LeftNaviContent(
         var settingsIsFocused by remember { mutableStateOf(false) }
         NavigationRailItem(
             modifier =
-                Modifier.onFocusChanged {
-                    settingsIsFocused = it.hasFocus
-                },
+                Modifier
+                    .focusSaverItem(focusSaver, "settings")
+                    .onFocusChanged {
+                        settingsIsFocused = it.hasFocus
+                    },
             onClick = onOpenSettings,
             selected = settingsIsFocused,
             icon = {
