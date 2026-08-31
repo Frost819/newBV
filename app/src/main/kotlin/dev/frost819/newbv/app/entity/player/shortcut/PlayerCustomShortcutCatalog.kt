@@ -32,6 +32,8 @@ object PlayerCustomShortcutCatalog {
             add(simple("play_next", "播放下一集", PlayerCustomShortcutAction.PlayNext))
             add(simple("open_video_detail", "打开视频详情", PlayerCustomShortcutAction.OpenVideoDetail))
             add(simple("open_up_page", "打开 UP 主页", PlayerCustomShortcutAction.OpenUpPage))
+            add(simple("open_comments", "打开评论", PlayerCustomShortcutAction.OpenComments))
+            add(simple("open_interaction", "打开视频交互", PlayerCustomShortcutAction.OpenInteraction))
             add(simple("toggle_loop", "单视频循环开关", PlayerCustomShortcutAction.ToggleLoop))
             add(simple("toggle_danmaku", "弹幕开关", PlayerCustomShortcutAction.ToggleDanmaku))
             add(simple("toggle_danmaku_mask", "弹幕防遮挡开关", PlayerCustomShortcutAction.ToggleDanmakuMask))

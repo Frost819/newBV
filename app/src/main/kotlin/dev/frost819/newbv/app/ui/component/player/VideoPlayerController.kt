@@ -242,6 +242,8 @@ fun VideoPlayerController(
             PlayerCustomShortcutAction.PlayNext -> onPlayNext()
             PlayerCustomShortcutAction.OpenVideoDetail -> onGoToVideoDetail()
             PlayerCustomShortcutAction.OpenUpPage -> onGoToUpPage()
+            PlayerCustomShortcutAction.OpenComments -> onShowComments()
+            PlayerCustomShortcutAction.OpenInteraction -> onShowInteraction()
             PlayerCustomShortcutAction.ToggleLoop -> {
                 status = if (!isLooping) "开" else "关"
                 onToggleLoop()

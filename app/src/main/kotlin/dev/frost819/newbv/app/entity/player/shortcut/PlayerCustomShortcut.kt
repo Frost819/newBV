@@ -153,6 +153,8 @@ object PlayerCustomShortcutsCodec {
             PlayerCustomShortcutAction.PlayNext -> "play_next" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenVideoDetail -> "open_video_detail" to buildJsonObject { }
             PlayerCustomShortcutAction.OpenUpPage -> "open_up_page" to buildJsonObject { }
+            PlayerCustomShortcutAction.OpenComments -> "open_comments" to buildJsonObject { }
+            PlayerCustomShortcutAction.OpenInteraction -> "open_interaction" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleLoop -> "toggle_loop" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleDanmaku -> "toggle_danmaku" to buildJsonObject { }
             PlayerCustomShortcutAction.ToggleDanmakuMask -> "toggle_danmaku_mask" to buildJsonObject { }
@@ -175,6 +177,8 @@ object PlayerCustomShortcutsCodec {
             "play_next" -> PlayerCustomShortcutAction.PlayNext
             "open_video_detail" -> PlayerCustomShortcutAction.OpenVideoDetail
             "open_up_page" -> PlayerCustomShortcutAction.OpenUpPage
+            "open_comments" -> PlayerCustomShortcutAction.OpenComments
+            "open_interaction" -> PlayerCustomShortcutAction.OpenInteraction
             "toggle_loop" -> PlayerCustomShortcutAction.ToggleLoop
             "toggle_danmaku" -> PlayerCustomShortcutAction.ToggleDanmaku
             "toggle_danmaku_mask" -> PlayerCustomShortcutAction.ToggleDanmakuMask

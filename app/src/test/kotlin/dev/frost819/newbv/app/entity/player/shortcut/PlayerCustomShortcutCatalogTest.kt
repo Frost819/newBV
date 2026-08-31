@@ -28,6 +28,8 @@ class PlayerCustomShortcutCatalogTest {
             "play_next",
             "open_video_detail",
             "open_up_page",
+            "open_comments",
+            "open_interaction",
             "toggle_loop",
             "toggle_danmaku",
             "toggle_danmaku_mask",

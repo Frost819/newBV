@@ -20,6 +20,10 @@ sealed interface PlayerCustomShortcutAction {
 
     data object OpenUpPage : PlayerCustomShortcutAction
 
+    data object OpenComments : PlayerCustomShortcutAction
+
+    data object OpenInteraction : PlayerCustomShortcutAction
+
     data object ToggleLoop : PlayerCustomShortcutAction
 
     data object ToggleDanmaku : PlayerCustomShortcutAction
