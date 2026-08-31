@@ -27,13 +27,15 @@
 | GrpcChannelTest | 单元测试：Channel 生命周期 + metadata 构造验证（P2-9 要求，`GrpcInfrastructureTest` 已部分覆盖） |
 | GrpcErrorTest | 单元测试：各 `GrpcErrorKind` 覆盖（P2-9 要求，`GrpcInfrastructureTest` 已部分覆盖） |
 | 风控错误识别 | ✅ **已完成（T-11）**：`handleGrpcException()` 解析 `bilibili.rpc.Status` 业务码，映射风控到 `GrpcErrorKind.RiskControl` |
-| 弹幕分段加载 | `DM.DmSegMobile` 接口层已实现，ViewModel 层延后至 Phase 4 |
+| 弹幕分段加载 | ✅ **已完成（P3-4）**：`DM.DmSegMobile` 接口层 + ViewModel 分段加载已实现 |
 
 ---
 
 ## 2. gRPC 接口盘点
 
-### 2.1 已实现（12 个 RPC）
+### 2.1 已实现（12 个 RPC，P2-9 完成）
+
+> 另有 `DmSegMobile` 于 P3-4 补充实现，见 §2.2。
 
 | # | RPC | Service / Proto Package | Repository | 方法 | 来源 |
 |---|---|---|---|---|---|
@@ -58,13 +60,13 @@
 >   但原版 BV 使用 HTTP `/x/v2/history/toview` + `access_key`。已回退为 **App HTTP**，与原版一致。
 > - 以上三个接口**不属于 gRPC**，详见 PRD §8.2.2 App HTTP 接口清单。
 
-### 2.2 未实现的 gRPC（1 个，已延后）
+### 2.2 已实现（P3-4 补充）
 
 | # | RPC | Service / Proto Package | 用途 | 当前替代 | proto 编译状态 |
 |---|---|---|---|---|---|
-| 1 | `DmSegMobile` | `DM` / `bilibili.community.service.dm.v1` | 弹幕分段数据（每 6 分钟一段） | HTTP XML `/x/v2/dm/list.so` | ✅ 已编译 |
+| 13 | `DmSegMobile` | `DM` / `bilibili.community.service.dm.v1` | 弹幕分段数据（每 6 分钟一段） | 已替代 HTTP XML `/x/v2/dm/list.so` | ✅ 已编译 |
 
-> `DmSegMobile` 接口层已实现（Web `getDanmakuSeg` + App `getDanmakuSegment`），ViewModel 层分段加载延后至 Phase 4。
+> `DmSegMobile` 已于 P3-4 完成：Web 走 HTTP `getDanmakuSeg`（`/x/v2/dm/wbi/web/seg.so`），App 走 gRPC `getDanmakuSegment`，ViewModel 层实现响应式分段加载与缓存。
 
 ### 2.3 不在 PRD 清单但 proto 已编译的可用 RPC（3 个）
 
@@ -164,9 +166,9 @@
 
 **目标**：实现 PRD 列出但尚未实现的 gRPC RPC，使 PRD 清单 100% 覆盖。
 
-**结果**：`SearchAll` 已完成。`DmSegMobile` 接口层已实现，ViewModel 层延后至 Phase 4。
+**结果**：`SearchAll` 已完成。`DmSegMobile` 已于 P3-4 完成（接口层 + ViewModel 分段加载）。
 
-#### T-01 `DM.DmSegMobile` — 弹幕分段数据（接口层已实现，ViewModel 层延后）
+#### T-01 `DM.DmSegMobile` — 弹幕分段数据 ✅（P3-4 完成）
 
 - **当前**：`DanmakuViewModel` 直调 `BiliHttpApi.getDanmakuXml()`（`/x/v1/dm/list.so` XML 全量）
 - **目标**：双通道分段加载（每段 6 分钟），详见 [P3剩余任务计划.md](P3剩余任务计划.md) §3.A
@@ -289,7 +291,7 @@ Phase 1 — 补全 PRD 清单（P0）✅
   ├─ T-02 SearchAll 全量搜索          ✅ 已完成
   ├─ T-11 风控错误识别               ✅ 已完成
   ├─ T-12 集成测试凭证                ✅ 22 个集成测试通过
-  └─ T-01 DmSegMobile 弹幕分段        接口层已实现，ViewModel 层延后至 Phase 4
+  └─ T-01 DmSegMobile 弹幕分段        ✅ 已完成（P3-4）
 
 Phase 2 — 高价值补充（P1，待排期）
   ├─ T-03 PlayerOnline 在线人数       ← proto 已编译，无依赖
@@ -310,7 +312,7 @@ Phase 3 — 扩展覆盖（P2，按需）
 ### 6.1 P0 验收
 
 - [x] PRD §8.2 的 RPC 全部实现或明确记录为 Web-only/App HTTP
-- [ ] `DM.DmSegMobile` 在 App 模式下可获取弹幕分段数据 — 接口层已实现，ViewModel 层延后至 Phase 4
+- [x] `DM.DmSegMobile` 在 App 模式下可获取弹幕分段数据 ✅（P3-4 完成）
 - [x] `Search.SearchAll` 在 App 模式下可获取全量搜索结果 ✅（已完成）
 - [x] `GrpcChannelTest` + `GrpcErrorTest` 通过（`GrpcInfrastructureTest` 覆盖）
 - [x] `handleGrpcException` 能识别风控错误 ✅（T-11 完成）

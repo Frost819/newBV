@@ -2301,7 +2301,7 @@ App 模式下接口分三种实现方式：**App gRPC**（grpc.biliapi.net）、
 | 评论主列表 | `Reply` | `MainList` | CommentRepository | `getComments()` |
 | 楼中楼回复 | `Reply` | `DetailList` | CommentRepository | `getReplies()` |
 
-> **未实现的 gRPC**：`DM.DmSegMobile`（弹幕分段，延后至功能增强阶段，需配套弹幕分段缓存改造）。
+> **已实现的 gRPC**：`DM.DmSegMobile`（弹幕分段，P3-4 完成实现，Web `seg.so` + App gRPC 双通道，含分段缓存与响应式加载）。
 
 #### 8.2.2 App HTTP 接口（独立端点）
 
