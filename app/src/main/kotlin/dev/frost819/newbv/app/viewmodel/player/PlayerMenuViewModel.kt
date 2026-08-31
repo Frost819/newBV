@@ -102,7 +102,7 @@ enum class VideoPlayerDanmakuMenuItem(
 ) {
     Switch("开关"),
     Size("大小"),
-    Opacity("透明度"),
+    Opacity("不透明度"),
     SpeedFactor("速度"),
     Area("区域"),
     Mask("蒙版"),
@@ -114,7 +114,7 @@ enum class VideoPlayerClosedCaptionMenuItem(
 ) {
     Switch("开关"),
     Size("大小"),
-    Opacity("透明度"),
+    Opacity("不透明度"),
     Padding("间距"),
 }
 

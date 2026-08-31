@@ -50,7 +50,10 @@ fun StepLessMenuItem(
                 .fillMaxHeight()
                 .onPreviewKeyEvent {
                     if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                    if (it.key == Key.DirectionRight) onFocusBackToParent()
+                    if (it.key == Key.DirectionRight) {
+                        onFocusBackToParent()
+                        return@onPreviewKeyEvent true
+                    }
                     false
                 },
     ) {
@@ -147,7 +150,10 @@ fun StepLessMenuItem(
                 .fillMaxHeight()
                 .onPreviewKeyEvent {
                     if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                    if (it.key == Key.DirectionRight) onFocusBackToParent()
+                    if (it.key == Key.DirectionRight) {
+                        onFocusBackToParent()
+                        return@onPreviewKeyEvent true
+                    }
                     false
                 },
     ) {

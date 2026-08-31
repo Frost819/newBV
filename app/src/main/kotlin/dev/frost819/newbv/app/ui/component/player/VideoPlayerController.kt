@@ -300,10 +300,9 @@ fun VideoPlayerController(
         // 自定义快捷键
         if (handleCustomShortcut(event)) return true
 
-        // 始终生效的按键
+        // 始终生效的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         when (event.key) {
             Key.Back -> {
-                if (event.type == KeyEventType.KeyUp) return true
                 if (showClickableControllers) {
                     closeAllControllers()
                     return true
@@ -312,33 +311,29 @@ fun VideoPlayerController(
                 return true
             }
 
-            Key.Menu -> {
-                if (event.type == KeyEventType.KeyUp) return true
-                showMenuController = !showMenuController
+            Key.Menu, Key(763) -> {
                 showInfoSeekController = false
+                showMenuController = !showMenuController
                 return true
             }
 
             Key.MediaPlayPause -> {
-                if (event.type == KeyEventType.KeyUp) return true
                 onPlay()
                 return true
             }
 
             Key.MediaPlay -> {
-                if (event.type == KeyEventType.KeyUp) return true
                 if (uiState.playerState != PlayerState.Playing) onPlay()
                 return true
             }
 
             Key.MediaPause -> {
-                if (event.type == KeyEventType.KeyUp) return true
                 if (uiState.playerState == PlayerState.Playing) onPause()
                 return true
             }
         }
 
-        // 覆盖层未打开时的按键
+        // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         if (!showClickableControllers) {
             when (event.key) {
                 in confirmKeys -> {
@@ -358,19 +353,16 @@ fun VideoPlayerController(
                 }
 
                 Key.DirectionUp -> {
-                    if (event.type == KeyEventType.KeyUp) return true
                     showListController = true
                     return true
                 }
 
                 Key.DirectionDown -> {
-                    if (event.type == KeyEventType.KeyUp) return true
                     showInfoSeekController = true
                     return true
                 }
 
                 Key.DirectionLeft, Key.MediaRewind -> {
-                    if (event.type == KeyEventType.KeyUp) return true
                     if (uiState.showSkipToNextEp) {
                         onCancelSkipToNextEp()
                         return true
@@ -381,7 +373,6 @@ fun VideoPlayerController(
                 }
 
                 Key.DirectionRight, Key.MediaFastForward -> {
-                    if (event.type == KeyEventType.KeyUp) return true
                     showInfoSeekController = true
                     onDirectionRight()
                     return true
@@ -541,6 +532,7 @@ fun VideoPlayerController(
 
         // 信息栏 + 进度条 + 按钮
         ControllerVideoInfo(
+            modifier = Modifier.focusable(),
             show = showInfoSeekController,
             isSeeking = isSeeking,
             goTime = goTime,
