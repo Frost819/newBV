@@ -287,10 +287,10 @@ private fun SettingsMenuButton(
 enum class SettingsMenuNavItem(
     val displayName: String,
 ) {
-    AudioVideo("音视频"),
-    UI("界面"),
-    Other("其他"),
-    Storage("存储"),
+    AudioVideo("播放设置"),
+    UI("界面设置"),
+    Other("更多设置"),
+    Storage("存储管理"),
     Info("设备信息"),
     About("关于"),
 }
