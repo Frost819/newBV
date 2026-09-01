@@ -101,11 +101,11 @@ fun ClosedCaptionMenuList(
                 VideoPlayerClosedCaptionMenuItem.Size ->
                     StepLessMenuItem(
                         modifier = menuItemsModifier,
-                        value = currentFontSize,
-                        step = 1,
-                        range = 8..48,
+                        value = currentFontSize.toFloat(),
+                        step = 1f,
+                        range = 8f..48f,
                         text = "${currentFontSize}sp",
-                        onValueChange = onSubtitleSizeChange,
+                        onValueChange = { onSubtitleSizeChange(it.toInt()) },
                         onFocusBackToParent = {
                             onFocusStateChange(MenuFocusState.Menu)
                             focusRequester.requestFocus()
@@ -129,11 +129,11 @@ fun ClosedCaptionMenuList(
                 VideoPlayerClosedCaptionMenuItem.Padding ->
                     StepLessMenuItem(
                         modifier = menuItemsModifier,
-                        value = currentPadding,
-                        step = 1,
-                        range = 0..48,
+                        value = currentPadding.toFloat(),
+                        step = 1f,
+                        range = 0f..48f,
                         text = "${currentPadding}dp",
-                        onValueChange = onSubtitleBottomPadding,
+                        onValueChange = { onSubtitleBottomPadding(it.toInt()) },
                         onFocusBackToParent = {
                             onFocusStateChange(MenuFocusState.Menu)
                             focusRequester.requestFocus()

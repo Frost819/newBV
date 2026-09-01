@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.component.player.menu.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,10 +22,11 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.Surface
 
 /**
- * 无极滑块菜单项（Float 版本）。
+ * 无极滑块菜单项。
  *
  * D-Pad 上/下键调整值，按步进 [step] 递增/递减，范围限制在 [range] 内。
  * 中间显示当前值的格式化文本，上下显示箭头图标。
+ * 统一使用 Float 类型，Int 场景在调用处转换。
  *
  * @param modifier 修饰符
  * @param value 当前值
@@ -63,6 +65,7 @@ fun StepLessMenuItem(
                     .align(Alignment.Center)
                     .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Surface(
                 onClick = {
@@ -112,106 +115,6 @@ fun StepLessMenuItem(
                 onClick = {
                     if (value - step <= range.start) {
                         onValueChange(range.start)
-                    } else {
-                        onValueChange(value - step)
-                    }
-                },
-            ) {
-                Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "减少")
-            }
-        }
-    }
-}
-
-/**
- * 无极滑块菜单项（Int 版本）。
- *
- * @param modifier 修饰符
- * @param value 当前值
- * @param text 格式化的显示文本
- * @param step 步进值
- * @param range 取值范围
- * @param onValueChange 值变化回调
- * @param onFocusBackToParent 返回父级回调
- */
-@Composable
-fun StepLessMenuItem(
-    modifier: Modifier = Modifier,
-    value: Int = 100,
-    text: String,
-    step: Int = 1,
-    range: IntRange = 0..100,
-    onValueChange: (Int) -> Unit,
-    onFocusBackToParent: () -> Unit,
-) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxHeight()
-                .onPreviewKeyEvent {
-                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                    if (it.key == Key.DirectionRight) {
-                        onFocusBackToParent()
-                        return@onPreviewKeyEvent true
-                    }
-                    false
-                },
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Surface(
-                onClick = {
-                    if (value >= range.last - step) {
-                        onValueChange(range.last)
-                    } else {
-                        onValueChange(value + step)
-                    }
-                },
-            ) {
-                Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
-            }
-            MenuListItem(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .onPreviewKeyEvent {
-                            when (it.key) {
-                                Key.DirectionUp -> {
-                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                    if (value >= range.last - step) {
-                                        onValueChange(range.last)
-                                    } else {
-                                        onValueChange(value + step)
-                                    }
-                                    true
-                                }
-
-                                Key.DirectionDown -> {
-                                    if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                    if (value - step <= range.first) {
-                                        onValueChange(range.first)
-                                    } else {
-                                        onValueChange(value - step)
-                                    }
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        },
-                text = text,
-                selected = false,
-                onClick = {},
-            )
-            Surface(
-                onClick = {
-                    if (value - step <= range.first) {
-                        onValueChange(range.first)
                     } else {
                         onValueChange(value - step)
                     }
