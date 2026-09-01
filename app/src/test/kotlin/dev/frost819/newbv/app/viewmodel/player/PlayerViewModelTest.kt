@@ -599,7 +599,7 @@ class PlayerViewModelTest {
 
             listener.onPlay()
 
-            verify { mockPlayer.seekTo(30L) }
+            verify { mockPlayer.seekTo(30_000L) }
             assertThat(viewModel.uiState.value.lastPlayed).isEqualTo(0)
             assertThat(viewModel.uiState.value.showBackToStart).isTrue()
         }

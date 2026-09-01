@@ -1085,7 +1085,8 @@ class PlayerViewModel
         }
 
         private fun seekToLastPlayed() {
-            val time = _uiState.value.lastPlayed.toLong()
+            // 历史接口和 UiState 以秒保存进度，播放器 seek API 使用毫秒。
+            val time = _uiState.value.lastPlayed.toLong() * 1000L
             videoPlayer?.seekTo(time)
             _uiState.update { it.copy(showBackToStart = true) }
             backToStartCountdownJob?.cancel()
