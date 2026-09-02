@@ -29,12 +29,12 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
@@ -82,12 +82,14 @@ enum class UgcTabItem(
  *
  * @param navFocusRequester 顶部 Tab 的焦点请求器。
  * @param navController 导航控制器。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  * @param viewModel UGC ViewModel。
  */
 @Composable
 fun UgcContent(
     navFocusRequester: FocusRequester,
     navController: NavController,
+    focusSaver: FocusSaver,
     viewModel: UgcViewModel = hiltViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(UgcTabItem.Douga) }
@@ -132,6 +134,7 @@ fun UgcContent(
             UgcGrid(
                 viewModel = viewModel,
                 navController = navController,
+                focusSaver = focusSaver,
             )
         }
     }
@@ -146,12 +149,10 @@ fun UgcContent(
 private fun UgcGrid(
     viewModel: UgcViewModel,
     navController: NavController,
+    focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberFocusSaver()
-
-    focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
         snapshotFlow {
@@ -192,7 +193,7 @@ private fun UgcGrid(
                     )
                 }
             SmallVideoCard(
-                modifier = Modifier.focusSaverItem(focusSaver, index),
+                modifier = Modifier.focusSaverItem(focusSaver, "ugc_$index"),
                 data = cardData,
                 onClick = {
                     navController.navigate(VideoDetailRoute(aid = item.aid))

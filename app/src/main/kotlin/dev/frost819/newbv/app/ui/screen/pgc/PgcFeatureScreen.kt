@@ -61,9 +61,9 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.LoadingTip
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
 import dev.frost819.newbv.app.util.ToastUtils
@@ -164,7 +164,7 @@ private fun SeasonDetailContent(
     viewModel: SeasonDetailViewModel,
     navController: NavController,
 ) {
-    val focusSaver = rememberScreenFocusSaver()
+    val focusSaver = rememberFocusSaver()
     focusSaver.RestoreFocus()
     val scrollState = rememberScrollState()
 
@@ -227,7 +227,7 @@ private fun SeasonInfoHeader(
     isFollowing: Boolean,
     onPlay: () -> Unit,
     onToggleFollow: () -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     val coverFocusRequester = focusSaver.focusRequesterFor("cover")
     val playFocusRequester = focusSaver.focusRequesterFor("play")
@@ -420,7 +420,7 @@ private fun SeasonEpisodeRow(
     episodes: List<Episode>,
     progress: SeasonDetail.UserStatus.Progress?,
     onClick: (Episode) -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
     rowKey: String,
 ) {
     Column(
@@ -470,7 +470,7 @@ private fun EpisodeCard(
     isLastWatched: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
     epKey: String,
 ) {
     Column(
@@ -550,7 +550,7 @@ private fun SeasonSwitcherRow(
     seasons: List<dev.frost819.newbv.biliapi.entity.video.season.PgcSeason>,
     currentSeasonId: Int,
     onClick: (Int) -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -599,7 +599,7 @@ private fun SeasonChip(
     isCurrent: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
     chipKey: String,
 ) {
     Surface(

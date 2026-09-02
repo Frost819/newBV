@@ -821,29 +821,31 @@ test(bili-api): 补全 VideoPlayRepository 单测
 
 #### 8.2.1 路由跳转后的焦点恢复（强制）
 
-**所有涉及路由跳转的可聚焦元素（按钮、卡片、Chip 等）必须接入 `FocusSaver` / `ScreenFocusSaver`**，否则用户从目标页返回后焦点会落在错误的元素上。
+**所有涉及路由跳转的可聚焦元素（按钮、卡片、Chip 等）必须接入 `FocusSaver`**，否则用户从目标页返回后焦点会落在错误的元素上。
 
-项目提供两个焦点恢复器（`app/ui/component/FocusSaver.kt`）：
+项目提供统一的焦点恢复器 `FocusSaver`（`app/ui/component/FocusSaver.kt`），使用 String key，适用于列表/网格（key = `"item_$index"`）和混合布局（key = `"cover"`、`"like"` 等）。
 
-| 类 | 适用场景 | key 类型 | 示例 |
+**两种使用模式**：
+
+| 模式 | 适用场景 | 创建方式 | 示例 |
 |---|---|---|---|
-| `FocusSaver` | 列表 / 网格（同类型 item） | `Int` index | 首页推荐网格、分区视频网格 |
-| `ScreenFocusSaver` | 混合布局（不同类型可聚焦元素） | `String` key | 详情页（封面、UP 按钮、点赞、Tag 等） |
+| **共享 FocusSaver** | MainScreen 内的页面（导航栏 + 内容区共享） | MainScreen 创建，通过参数传递给子组件 | 首页推荐网格、直播浏览页 |
+| **独立 FocusSaver** | 独立导航目的地（详情页、设置页等） | 页面内 `rememberFocusSaver()` 创建 | 视频详情页、设置页 |
+
+**共享模式**（MainScreen 内）：导航栏和内容区共享同一个 FocusSaver，避免多个独立 saver 竞争焦点（如返回详情页后焦点错误落在导航栏设置按钮上）。每个内容页用唯一 key 前缀（如 `"rcmd_$index"`、`"popular_$index"`）避免 AnimatedContent 切换时 key 冲突。
 
 **使用步骤（3 步）**：
 
 ```kotlin
-// 1. 创建 FocusSaver
-val focusSaver = rememberScreenFocusSaver()
+// 1. 创建 FocusSaver（独立页面）或接收参数（MainScreen 子页面）
+val focusSaver = rememberFocusSaver()
 
 // 2. 在屏幕顶层调用 RestoreFocus()，用于返回时恢复焦点
 focusSaver.RestoreFocus()
 
-// 3. 每个可聚焦元素接入：focusRequester + onFocusChanged
+// 3. 每个可聚焦元素接入：使用 focusSaverItem 扩展
 Card(
-    modifier = Modifier
-        .focusRequester(focusSaver.focusRequesterFor("cover"))
-        .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("cover") },
+    modifier = Modifier.focusSaverItem(focusSaver, "cover"),
     onClick = { navController.navigate(...) },
 ) { ... }
 
@@ -852,9 +854,7 @@ items(detail.tags) { tag ->
     val tagKey = "tag_${tag.id}"
     SuggestionChip(
         onClick = { navController.navigate(...) },
-        modifier = Modifier
-            .focusRequester(focusSaver.focusRequesterFor(tagKey))
-            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) },
+        modifier = Modifier.focusSaverItem(focusSaver, tagKey),
     ) { Text(tag.name) }
 }
 ```
@@ -864,7 +864,8 @@ items(detail.tags) { tag ->
 1. **LazyRow / LazyColumn 中的 item**：`RestoreFocus()` 内置 50ms 延迟，确保 LazyRow 子项完成组合后再请求焦点。如果跳过这一步，`focusRequesterFor(key)` 返回的 `FocusRequester` 尚未与实际节点绑定，`requestFocus()` 会静默失败
 2. **首次进入页面**：`savedKeyValue()` 为空时，手动 `requestFocus()` 到默认元素（如封面卡片）
 3. **key 唯一性**：列表 item 的 key 必须包含唯一标识（如 `"tag_${tag.id}"`），不能用纯索引（滚动后索引变化导致恢复到错误 item）
-4. **`ScreenFocusSaver` 用 `rememberSaveable`**：跨配置变更（如旋转）和进程恢复保持焦点 key
+4. **`FocusSaver` 用 `rememberSaveable`**：跨配置变更（如旋转）和进程恢复保持焦点 key
+5. **MainScreen 内的页面用共享 FocusSaver**：通过参数传递，不要自建。key 加页面前缀（如 `"rcmd_$index"`、`"live_rec_$roomId"`）避免 AnimatedContent 切换时冲突
 
 ### 8.3 DataStore Prefs
 
@@ -1027,7 +1028,7 @@ Card(
 
 **原因**：Compose Navigation 路由跳转时，源页面被移出 composition；返回时重新组合，焦点系统不知道之前哪个元素有焦点，默认聚焦到第一个或最后一个可聚焦节点。
 
-**解决方案**：所有涉及路由跳转的可聚焦元素必须接入 `FocusSaver` / `ScreenFocusSaver`（见 §8.2.1）。核心原理：
+**解决方案**：所有涉及路由跳转的可聚焦元素必须接入 `FocusSaver`（见 §8.2.1）。核心原理：
 - 元素获得焦点时，通过 `onFocusChanged` 保存 key 到 `rememberSaveable` 状态
 - 页面重新组合后，`RestoreFocus()` 读取保存的 key，通过对应的 `FocusRequester` 重新请求焦点
 - LazyRow 中的 item 需加 50ms 延迟等待子项组合完成（`RestoreFocus()` 已内置）

@@ -52,7 +52,7 @@ import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.livecard.LiveRoomCard
 import dev.frost819.newbv.app.ui.component.livecard.LiveRoomCardData
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.search.SearchResultFilter
 import dev.frost819.newbv.app.ui.component.search.UpCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
@@ -113,7 +113,7 @@ fun SearchResultContent(
 
     val gridState = rememberLazyGridState()
     val tabRowFocusRequester = remember { FocusRequester() }
-    val focusSaver = rememberScreenFocusSaver()
+    val focusSaver = rememberFocusSaver()
     var focusOnContent by remember { mutableStateOf(false) }
 
     focusSaver.RestoreFocus()

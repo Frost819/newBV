@@ -20,7 +20,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import dev.frost819.newbv.BuildConfig
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
@@ -40,7 +40,7 @@ import dev.frost819.newbv.data.datastore.Prefs
 fun OtherSetting(
     modifier: Modifier = Modifier,
     onNavigateToLogViewer: () -> Unit = {},
-    screenFocusSaver: ScreenFocusSaver? = null,
+    screenFocusSaver: FocusSaver? = null,
 ) {
     val scrollState = rememberScrollState()
 

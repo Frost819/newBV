@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.core.focus.touchClickable
@@ -42,7 +42,7 @@ import kotlin.math.pow
 fun InfoSetting(
     modifier: Modifier = Modifier,
     onOpenMediaCodec: () -> Unit = {},
-    screenFocusSaver: ScreenFocusSaver? = null,
+    screenFocusSaver: FocusSaver? = null,
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()

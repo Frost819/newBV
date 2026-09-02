@@ -15,7 +15,6 @@ import dev.frost819.newbv.app.ui.screen.player.livePlayerScreen
 import dev.frost819.newbv.app.ui.screen.player.seasonPlayerScreen
 import dev.frost819.newbv.app.ui.screen.player.videoPlayerScreen
 import dev.frost819.newbv.app.ui.screen.search.searchResultScreen
-import dev.frost819.newbv.app.ui.screen.search.searchScreen
 import dev.frost819.newbv.app.ui.screen.settings.settingsScreen
 import dev.frost819.newbv.app.ui.screen.user.followScreen
 import dev.frost819.newbv.app.ui.screen.user.userSpaceScreen
@@ -55,7 +54,6 @@ fun AppNavHost(
     ) {
         // ── 主流程 ────────────────────────────────────────────────────
         homeScreen(navController)
-        searchScreen(navController)
         searchResultScreen(navController)
 
         // ── 视频详情 ─────────────────────────────────────────────────

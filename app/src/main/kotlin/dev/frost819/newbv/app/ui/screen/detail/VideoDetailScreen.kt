@@ -77,12 +77,13 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.LoadingTip
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
 import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -259,7 +260,7 @@ private fun VideoDetailContent(
     commentViewModel: CommentViewModel,
 ) {
     val scrollState = rememberScrollState()
-    val focusSaver = rememberScreenFocusSaver()
+    val focusSaver = rememberFocusSaver()
     focusSaver.RestoreFocus()
 
     var showPartListDialog by remember { mutableStateOf(false) }
@@ -577,7 +578,7 @@ private fun VideoInfoHeader(
     onClickTag: (Tag) -> Unit,
     onPlayVideo: () -> Unit,
     onClickUp: () -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     val coverFocusRequester = focusSaver.focusRequesterFor("cover")
     val upFocusRequester = focusSaver.focusRequesterFor("up")
@@ -902,7 +903,7 @@ private fun ActionButton(
 @Composable
 private fun VideoDescription(
     description: String,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val focusRequester = focusSaver.focusRequesterFor("description")
@@ -972,7 +973,7 @@ private fun VideoPartRow(
     lastPlayedTime: Int,
     onClick: (VideoPage) -> Unit,
     onShowPartListDialog: () -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1064,7 +1065,12 @@ private fun VideoPartRow(
                     played = played,
                     isCurrent = page.cid == currentCid,
                     onClick = { onClick(page) },
-                    modifier = if (page == pages.first()) Modifier.focusRequester(focusRequester) else Modifier,
+                    modifier =
+                        if (page == pages.first()) {
+                            Modifier.focusRequester(focusRequester).focusSaverItem(focusSaver, "part_${page.cid}")
+                        } else {
+                            Modifier.focusSaverItem(focusSaver, "part_${page.cid}")
+                        },
                 )
             }
         }
@@ -1169,7 +1175,7 @@ private fun VideoUgcSeasonRow(
     lastPlayedTime: Int,
     onClick: (Episode) -> Unit,
     onShowListDialog: () -> Unit,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1261,7 +1267,12 @@ private fun VideoUgcSeasonRow(
                     played = played,
                     isCurrent = false,
                     onClick = { onClick(episode) },
-                    modifier = if (episode == episodes.first()) Modifier.focusRequester(focusRequester) else Modifier,
+                    modifier =
+                        if (episode == episodes.first()) {
+                            Modifier.focusRequester(focusRequester).focusSaverItem(focusSaver, "episode_${episode.cid}")
+                        } else {
+                            Modifier.focusSaverItem(focusSaver, "episode_${episode.cid}")
+                        },
                 )
             }
         }
@@ -1273,7 +1284,7 @@ private fun RelatedVideoRow(
     videos: List<RelatedVideo>,
     onClick: (RelatedVideo) -> Unit,
     navController: NavController,
-    focusSaver: ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
     CollectWatchLaterEffects(watchLaterViewModel)
@@ -1317,8 +1328,11 @@ private fun RelatedVideoRow(
                             Modifier
                                 .width(200.dp)
                                 .focusRequester(focusRequester)
+                                .focusSaverItem(focusSaver, "related_${video.aid}")
                         } else {
-                            Modifier.width(200.dp)
+                            Modifier
+                                .width(200.dp)
+                                .focusSaverItem(focusSaver, "related_${video.aid}")
                         },
                     data = cardData,
                     onClick = { onClick(video) },

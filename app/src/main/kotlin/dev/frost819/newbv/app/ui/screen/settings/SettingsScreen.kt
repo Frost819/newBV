@@ -34,9 +34,9 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import dev.frost819.newbv.app.ui.component.ScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.screen.settings.content.AboutSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.AudioVideoSetting
 import dev.frost819.newbv.app.ui.screen.settings.content.InfoSetting
@@ -65,7 +65,7 @@ fun SettingsScreen(
     var currentMenu by rememberSaveable { mutableStateOf(SettingsMenuNavItem.AudioVideo) }
     var focusInNav by remember { mutableStateOf(false) }
 
-    val screenFocusSaver = rememberScreenFocusSaver()
+    val screenFocusSaver = rememberFocusSaver()
 
     screenFocusSaver.RestoreFocus()
 
@@ -128,7 +128,7 @@ private fun SettingsNav(
     currentMenu: SettingsMenuNavItem,
     onMenuChanged: (SettingsMenuNavItem) -> Unit,
     isFocusing: Boolean,
-    screenFocusSaver: ScreenFocusSaver,
+    screenFocusSaver: FocusSaver,
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -185,7 +185,7 @@ private fun SettingContent(
     currentMenu: SettingsMenuNavItem,
     onNavigateToMediaCodec: () -> Unit = {},
     onNavigateToLogViewer: () -> Unit = {},
-    screenFocusSaver: ScreenFocusSaver,
+    screenFocusSaver: FocusSaver,
 ) {
     Box(
         modifier = modifier.padding(24.dp),

@@ -42,8 +42,8 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.search.SearchKeyword
 import dev.frost819.newbv.app.ui.component.search.SoftKeyboard
 import dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel
@@ -53,19 +53,21 @@ import dev.frost819.newbv.data.datastore.Prefs
  * 搜索输入页内容。
  *
  * 三列水平布局：搜索框+软键盘 | 热词/建议 | 搜索历史。
- * 所有可聚焦元素接入 [ScreenFocusSaver]，从搜索结果页返回后恢复焦点。
+ * 所有可聚焦元素接入 [FocusSaver]，从搜索结果页返回后恢复焦点。
+ *
+ * @param focusRequester 内容区入口焦点请求器（由 MainScreen 传入）。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
+ * @param onSearch 点击搜索回调。
  */
 @Composable
 fun SearchInputContent(
     modifier: Modifier = Modifier,
     viewModel: SearchInputViewModel,
     focusRequester: FocusRequester,
+    focusSaver: FocusSaver,
     onSearch: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val focusSaver = rememberScreenFocusSaver()
-
-    focusSaver.RestoreFocus()
 
     Row(
         modifier =
@@ -166,7 +168,7 @@ private fun SearchInputColumn(
 private fun SearchHotwordsColumn(
     hotwords: List<dev.frost819.newbv.biliapi.entity.search.Hotword>,
     onSearch: (String) -> Unit,
-    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     var showHotword by remember { mutableStateOf(Prefs.showHotword) }
 
@@ -221,7 +223,7 @@ private fun SearchHotwordsColumn(
             ) {
                 itemsIndexed(hotwords) { index, hotword ->
                     SearchKeyword(
-                        modifier = Modifier.focusSaverItem(focusSaver, "hotword_$index"),
+                        modifier = Modifier.focusSaverItem(focusSaver, "search_hotword_$index"),
                         keyword = hotword.showName,
                         onClick = { onSearch(hotword.showName) },
                     )
@@ -235,7 +237,7 @@ private fun SearchHotwordsColumn(
 private fun SearchSuggestsColumn(
     suggests: List<String>,
     onSearch: (String) -> Unit,
-    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     Column(
         modifier =
@@ -254,7 +256,7 @@ private fun SearchSuggestsColumn(
         ) {
             itemsIndexed(suggests) { index, suggest ->
                 SearchKeyword(
-                    modifier = Modifier.focusSaverItem(focusSaver, "suggest_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "search_suggest_$index"),
                     keyword = suggest,
                     onClick = { onSearch(suggest) },
                 )
@@ -269,7 +271,7 @@ private fun SearchHistoryColumn(
     onSearch: (String) -> Unit,
     onDelete: (String) -> Unit,
     onDeleteAll: () -> Unit,
-    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
+    focusSaver: FocusSaver,
 ) {
     var deleteMode by remember { mutableStateOf(false) }
 
@@ -324,7 +326,7 @@ private fun SearchHistoryColumn(
         ) {
             itemsIndexed(histories) { index, history ->
                 SearchKeyword(
-                    modifier = Modifier.focusSaverItem(focusSaver, "history_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "search_history_$index"),
                     keyword = history.keyword,
                     onClick = {
                         if (deleteMode) {

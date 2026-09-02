@@ -35,6 +35,7 @@ import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.rememberDrawerState
 import dev.frost819.newbv.app.ui.component.rememberDoublePressExit
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.user.UserPanel
 import dev.frost819.newbv.app.ui.screen.home.HomeContent
 import dev.frost819.newbv.app.viewmodel.user.UserViewModel
@@ -67,6 +68,9 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val homeFocusRequester = remember { FocusRequester() }
+    val focusSaver = rememberFocusSaver()
+
+    focusSaver.RestoreFocus()
 
     val handleBack =
         rememberDoublePressExit(
@@ -107,6 +111,7 @@ fun MainScreen(
                 onLogin = {
                     navController.navigate(dev.frost819.newbv.app.ui.navigation.LoginRoute)
                 },
+                focusSaver = focusSaver,
             )
         },
         drawerState = drawerState,
@@ -131,6 +136,7 @@ fun MainScreen(
                         HomeContent(
                             navFocusRequester = homeFocusRequester,
                             navController = navController,
+                            focusSaver = focusSaver,
                         )
                     LeftNaviItem.Search -> {
                         val searchInputViewModel: dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel =
@@ -139,6 +145,7 @@ fun MainScreen(
                         dev.frost819.newbv.app.ui.screen.search.SearchInputContent(
                             viewModel = searchInputViewModel,
                             focusRequester = homeFocusRequester,
+                            focusSaver = focusSaver,
                             onSearch = { keyword ->
                                 searchInputViewModel.commitSearch(keyword) {
                                     navController.navigate(
@@ -153,21 +160,25 @@ fun MainScreen(
                         dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
                             navFocusRequester = homeFocusRequester,
                             navController = navController,
+                            focusSaver = focusSaver,
                         )
                     LeftNaviItem.UGC ->
                         dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
                             navFocusRequester = homeFocusRequester,
                             navController = navController,
+                            focusSaver = focusSaver,
                         )
                     LeftNaviItem.PGC ->
                         dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
                             navFocusRequester = homeFocusRequester,
                             navController = navController,
+                            focusSaver = focusSaver,
                         )
                     LeftNaviItem.Live ->
                         dev.frost819.newbv.app.ui.screen.live.LiveContent(
                             navFocusRequester = homeFocusRequester,
                             navController = navController,
+                            focusSaver = focusSaver,
                         )
                 }
             }

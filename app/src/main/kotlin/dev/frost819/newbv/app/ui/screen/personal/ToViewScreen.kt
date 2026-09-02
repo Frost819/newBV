@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
@@ -39,12 +41,14 @@ import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
  *
  * @param viewModel 个人页 ViewModel。
  * @param navController 导航控制器。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
 @Composable
 fun ToViewScreen(
     modifier: Modifier = Modifier,
     viewModel: PersonalViewModel,
     navController: NavController,
+    focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
@@ -90,7 +94,7 @@ fun ToViewScreen(
             item(span = { GridItemSpan(maxLineSpan) }, key = "unwatched_header") {
                 SectionHeader(title = "未看完 (${unwatched.size})")
             }
-            itemsIndexed(items = unwatched) { _, item ->
+            itemsIndexed(items = unwatched) { index, item ->
                 val cardData =
                     remember(item) {
                         val durationMs = item.duration * 1000L
@@ -120,6 +124,7 @@ fun ToViewScreen(
                         )
                     }
                 SmallVideoCard(
+                    modifier = Modifier.focusSaverItem(focusSaver, "toview_unwatched_$index"),
                     data = cardData,
                     onClick = {
                         navController.navigateFromVideoCard(cardData)
@@ -142,7 +147,7 @@ fun ToViewScreen(
             item(span = { GridItemSpan(maxLineSpan) }, key = "watched_header") {
                 SectionHeader(title = "已看完 (${watched.size})")
             }
-            itemsIndexed(items = watched) { _, item ->
+            itemsIndexed(items = watched) { index, item ->
                 val cardData =
                     remember(item) {
                         val durationMs = item.duration * 1000L
@@ -160,6 +165,7 @@ fun ToViewScreen(
                         )
                     }
                 SmallVideoCard(
+                    modifier = Modifier.focusSaverItem(focusSaver, "toview_watched_$index"),
                     data = cardData,
                     onClick = {
                         navController.navigateFromVideoCard(cardData)

@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.type
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.MaterialTheme
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.HomeTabItem
 import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.viewmodel.home.HomeViewModel
@@ -42,11 +43,13 @@ import androidx.compose.material3.Scaffold as Material3Scaffold
  *
  * @param navFocusRequester 顶部 Tab 的焦点请求器（由 MainScreen 传入）。
  * @param navController 导航控制器（跳转详情页等）。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
 @Composable
 fun HomeContent(
     navFocusRequester: FocusRequester,
     navController: NavController,
+    focusSaver: FocusSaver,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val firstTab = remember { Prefs.firstHomeTopNavItem }
@@ -123,9 +126,24 @@ fun HomeContent(
                 },
             ) { screen ->
                 when (screen) {
-                    HomeTopNavItem.Recommend -> RecommendScreen(viewModel = viewModel, navController = navController)
-                    HomeTopNavItem.Popular -> PopularScreen(viewModel = viewModel, navController = navController)
-                    HomeTopNavItem.Dynamics -> DynamicsScreen(viewModel = viewModel, navController = navController)
+                    HomeTopNavItem.Recommend ->
+                        RecommendScreen(
+                            viewModel = viewModel,
+                            navController = navController,
+                            focusSaver = focusSaver,
+                        )
+                    HomeTopNavItem.Popular ->
+                        PopularScreen(
+                            viewModel = viewModel,
+                            navController = navController,
+                            focusSaver = focusSaver,
+                        )
+                    HomeTopNavItem.Dynamics ->
+                        DynamicsScreen(
+                            viewModel = viewModel,
+                            navController = navController,
+                            focusSaver = focusSaver,
+                        )
                 }
             }
         }

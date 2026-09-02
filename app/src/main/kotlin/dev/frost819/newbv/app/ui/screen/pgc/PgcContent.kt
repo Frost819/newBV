@@ -33,13 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.MaterialTheme
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.PgcCarousel
 import dev.frost819.newbv.app.ui.component.TopNav
 import dev.frost819.newbv.app.ui.component.TopNavItem
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -76,12 +76,14 @@ enum class PgcTabItem(
  *
  * @param navFocusRequester 顶部 Tab 的焦点请求器。
  * @param navController 导航控制器。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  * @param viewModel PGC ViewModel。
  */
 @Composable
 fun PgcContent(
     navFocusRequester: FocusRequester,
     navController: NavController,
+    focusSaver: FocusSaver,
     viewModel: PgcViewModel = hiltViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(PgcTabItem.Anime) }
@@ -127,6 +129,7 @@ fun PgcContent(
             PgcGrid(
                 viewModel = viewModel,
                 navController = navController,
+                focusSaver = focusSaver,
             )
         }
     }
@@ -142,12 +145,10 @@ fun PgcContent(
 private fun PgcGrid(
     viewModel: PgcViewModel,
     navController: NavController,
+    focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberScreenFocusSaver()
-
-    focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
         snapshotFlow {
@@ -177,7 +178,7 @@ private fun PgcGrid(
                     contentAlignment = Alignment.Center,
                 ) {
                     PgcCarousel(
-                        modifier = Modifier.focusSaverItem(focusSaver, "carousel"),
+                        modifier = Modifier.focusSaverItem(focusSaver, "pgc_carousel"),
                         data = state.carouselItems,
                         onClick = { item ->
                             val seasonId = item.seasonId?.toLong()
@@ -219,7 +220,7 @@ private fun PgcGrid(
                 onGoToDetailPage = {
                     navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
                 },
-                modifier = Modifier.focusSaverItem(focusSaver, "item_$index"),
+                modifier = Modifier.focusSaverItem(focusSaver, "pgc_item_$index"),
             )
         }
 

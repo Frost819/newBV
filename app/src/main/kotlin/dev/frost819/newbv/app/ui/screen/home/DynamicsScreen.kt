@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
@@ -48,6 +48,7 @@ fun DynamicsScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel,
     navController: NavController,
+    focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -66,12 +67,9 @@ fun DynamicsScreen(
     }
 
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberFocusSaver()
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
 
     CollectWatchLaterEffects(watchLaterViewModel)
-
-    focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
         snapshotFlow {
@@ -116,7 +114,7 @@ fun DynamicsScreen(
                     )
                 }
             SmallVideoCard(
-                modifier = Modifier.focusSaverItem(focusSaver, index),
+                modifier = Modifier.focusSaverItem(focusSaver, "dynamics_$index"),
                 data = cardData,
                 onClick = {
                     navController.navigateFromVideoCard(cardData)

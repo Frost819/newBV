@@ -37,10 +37,10 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCard
 import dev.frost819.newbv.app.ui.component.videocard.SeasonCardData
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
@@ -58,19 +58,18 @@ import kotlinx.coroutines.flow.filter
  *
  * @param viewModel 个人页 ViewModel。
  * @param navController 导航控制器。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
 @Composable
 fun FollowingSeasonScreen(
     modifier: Modifier = Modifier,
     viewModel: PersonalViewModel,
     navController: NavController,
+    focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberFocusSaver()
     var showFilter by remember { mutableStateOf(false) }
-
-    focusSaver.RestoreFocus()
 
     if (state.followingSeasons.isEmpty() && !state.followingLoading && !state.followingError) {
         Box(
@@ -156,7 +155,7 @@ fun FollowingSeasonScreen(
                     onClick = {
                         navController.navigate(PgcFeatureRoute(seasonId = item.seasonId.toLong()))
                     },
-                    modifier = Modifier.focusSaverItem(focusSaver, index),
+                    modifier = Modifier.focusSaverItem(focusSaver, "season_$index"),
                 )
             }
 

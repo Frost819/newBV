@@ -182,7 +182,7 @@ private fun LiveFollowScreen(
                 key = { _, item -> item.roomId },
             ) { index, item ->
                 LiveRoomCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, index),
+                    modifier = Modifier.focusSaverItem(focusSaver, "live_follow_$index"),
                     data = item,
                     onClick = {
                         navController.navigate(

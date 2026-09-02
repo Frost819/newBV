@@ -122,7 +122,7 @@ private fun FollowScreen(
                 key = { _, user -> user.mid },
             ) { index, user ->
                 FollowedUserCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, index),
+                    modifier = Modifier.focusSaverItem(focusSaver, "follow_$index"),
                     user = user,
                     onClick = {
                         navController.navigate(UserSpaceRoute(mid = user.mid, name = user.name, face = user.avatar))

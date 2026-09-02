@@ -145,7 +145,7 @@ private fun UserSpaceScreen(
                     )
                 }
             SmallVideoCard(
-                modifier = Modifier.focusSaverItem(focusSaver, index),
+                modifier = Modifier.focusSaverItem(focusSaver, "user_space_$index"),
                 data = cardData,
                 onClick = { navController.navigateFromVideoCard(cardData) },
                 onGoToDetailPage = {

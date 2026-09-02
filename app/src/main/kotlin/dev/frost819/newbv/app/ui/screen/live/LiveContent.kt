@@ -49,11 +49,11 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.livecard.LiveRoomCard
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.app.ui.navigation.LiveAreaRoute
 import dev.frost819.newbv.app.ui.navigation.LiveFollowRoute
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
@@ -70,18 +70,17 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  *
  * @param navFocusRequester 内容区入口焦点请求器（由 MainScreen 传入）。
  * @param navController 导航控制器。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
 @Composable
 fun LiveContent(
     navFocusRequester: FocusRequester,
     navController: NavController,
+    focusSaver: FocusSaver,
     viewModel: LiveHomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val focusSaver = rememberScreenFocusSaver()
-
-    focusSaver.RestoreFocus()
 
     LaunchedEffect(gridState) {
         snapshotFlow {
@@ -159,7 +158,7 @@ fun LiveContent(
                 key = { _, item -> "follow_${item.roomId}" },
             ) { _, item ->
                 LiveRoomCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, "follow_${item.roomId}"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "live_follow_${item.roomId}"),
                     data = item,
                     onClick = {
                         navController.navigate(
@@ -206,7 +205,7 @@ fun LiveContent(
             key = { _, item -> "rec_${item.roomId}" },
         ) { _, item ->
             LiveRoomCard(
-                modifier = Modifier.focusSaverItem(focusSaver, "rec_${item.roomId}"),
+                modifier = Modifier.focusSaverItem(focusSaver, "live_rec_${item.roomId}"),
                 data = item,
                 onClick = {
                     navController.navigate(
@@ -241,7 +240,7 @@ fun LiveContent(
 @Composable
 private fun FollowHeader(
     focusRequester: FocusRequester,
-    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
+    focusSaver: FocusSaver,
     onMoreClick: () -> Unit,
 ) {
     Row(
@@ -258,7 +257,7 @@ private fun FollowHeader(
             modifier =
                 Modifier
                     .focusRequester(focusRequester)
-                    .focusSaverItem(focusSaver, "follow_more"),
+                    .focusSaverItem(focusSaver, "live_follow_more"),
             onClick = onMoreClick,
             shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
             colors =
@@ -296,7 +295,7 @@ private fun FollowHeader(
 @Composable
 private fun AreaSection(
     areas: List<LiveAreaParent>,
-    focusSaver: dev.frost819.newbv.app.ui.component.ScreenFocusSaver,
+    focusSaver: FocusSaver,
     onAreaClick: (LiveAreaParent) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -317,7 +316,7 @@ private fun AreaSection(
         ) {
             items(areas) { area ->
                 AreaMiniCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, "area_${area.id}"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "live_area_${area.id}"),
                     area = area,
                     onClick = { onAreaClick(area) },
                 )

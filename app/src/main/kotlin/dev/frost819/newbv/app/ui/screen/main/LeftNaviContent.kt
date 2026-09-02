@@ -39,8 +39,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
 import dev.frost819.newbv.core.focus.isDpadRight
 import dev.frost819.newbv.core.focus.isKeyDown
 import dev.frost819.newbv.data.datastore.LeftNaviItem
@@ -61,6 +61,7 @@ import dev.frost819.newbv.data.datastore.LeftNaviItem
  * @param onShowUserPanel 显示用户面板回调。
  * @param onFocusToContent 焦点移至内容区回调。
  * @param onLogin 登录回调。
+ * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
 @Composable
 fun LeftNaviContent(
@@ -73,10 +74,8 @@ fun LeftNaviContent(
     onShowUserPanel: () -> Unit,
     onFocusToContent: () -> Unit,
     onLogin: () -> Unit,
+    focusSaver: FocusSaver,
 ) {
-    val focusSaver = rememberScreenFocusSaver()
-    focusSaver.RestoreFocus()
-
     NavigationRail(
         modifier =
             modifier
@@ -239,6 +238,9 @@ private fun LeftNaviContentPreview() {
             onShowUserPanel = {},
             onFocusToContent = {},
             onLogin = {},
+            focusSaver =
+                dev.frost819.newbv.app.ui.component
+                    .rememberFocusSaver(),
         )
     }
 }

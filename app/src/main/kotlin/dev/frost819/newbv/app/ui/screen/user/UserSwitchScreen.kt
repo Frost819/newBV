@@ -41,7 +41,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.ui.component.focusSaverItem
-import dev.frost819.newbv.app.ui.component.rememberScreenFocusSaver
+import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.viewmodel.user.UserSwitchViewModel
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.data.db.entity.UserEntity
@@ -66,7 +66,7 @@ fun UserSwitchScreen(
     onNavigateLogin: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val focusSaver = rememberScreenFocusSaver()
+    val focusSaver = rememberFocusSaver()
     focusSaver.RestoreFocus()
 
     LifecycleResumeEffect(Unit) {
