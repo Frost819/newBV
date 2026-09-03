@@ -361,11 +361,11 @@ private fun CardCover(
                 Spacer(Modifier.width(2.dp))
                 Text(
                     text = play,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color.White,
                     maxLines = 1,
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(8.dp))
             }
             if (danmaku.isNotBlank()) {
                 Icon(
@@ -377,7 +377,7 @@ private fun CardCover(
                 Spacer(Modifier.width(2.dp))
                 Text(
                     text = danmaku,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color.White,
                     maxLines = 1,
                 )
@@ -385,7 +385,7 @@ private fun CardCover(
             Spacer(Modifier.weight(1f))
             Text(
                 text = time,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
                 color = Color.White,
                 maxLines = 1,
             )

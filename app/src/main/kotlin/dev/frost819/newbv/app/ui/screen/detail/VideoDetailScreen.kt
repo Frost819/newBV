@@ -1128,13 +1128,14 @@ private fun PartButton(
             ),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (played > 0 && duration > 0) {
+            if (played != 0 && duration > 0) {
+                val ratio = if (played < 0) 1f else (played.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
                 Box(
                     modifier =
                         Modifier
                             .align(Alignment.BottomStart)
                             .fillMaxHeight()
-                            .fillMaxWidth((played.toFloat() / duration.toFloat()).coerceIn(0f, 1f))
+                            .fillMaxWidth(ratio)
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
                 )
             }
