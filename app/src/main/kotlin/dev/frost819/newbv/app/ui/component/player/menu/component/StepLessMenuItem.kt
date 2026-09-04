@@ -20,6 +20,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.Surface
+import dev.frost819.newbv.core.focus.touchClickable
 
 /**
  * 无极滑块菜单项。
@@ -46,6 +47,20 @@ fun StepLessMenuItem(
     onValueChange: (Float) -> Unit,
     onFocusBackToParent: () -> Unit,
 ) {
+    val increment: () -> Unit = {
+        if (value >= range.endInclusive - step) {
+            onValueChange(range.endInclusive)
+        } else {
+            onValueChange(value + step)
+        }
+    }
+    val decrement: () -> Unit = {
+        if (value - step <= range.start) {
+            onValueChange(range.start)
+        } else {
+            onValueChange(value - step)
+        }
+    }
     Box(
         modifier =
             modifier
@@ -68,13 +83,8 @@ fun StepLessMenuItem(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Surface(
-                onClick = {
-                    if (value >= range.endInclusive - step) {
-                        onValueChange(range.endInclusive)
-                    } else {
-                        onValueChange(value + step)
-                    }
-                },
+                modifier = Modifier.touchClickable(onClick = increment),
+                onClick = increment,
             ) {
                 Icon(imageVector = Icons.Rounded.ArrowDropUp, contentDescription = "增加")
             }
@@ -86,21 +96,13 @@ fun StepLessMenuItem(
                             when (it.key) {
                                 Key.DirectionUp -> {
                                     if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                    if (value >= range.endInclusive - step) {
-                                        onValueChange(range.endInclusive)
-                                    } else {
-                                        onValueChange(value + step)
-                                    }
+                                    increment()
                                     true
                                 }
 
                                 Key.DirectionDown -> {
                                     if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                                    if (value - step <= range.start) {
-                                        onValueChange(range.start)
-                                    } else {
-                                        onValueChange(value - step)
-                                    }
+                                    decrement()
                                     true
                                 }
 
@@ -112,13 +114,8 @@ fun StepLessMenuItem(
                 onClick = {},
             )
             Surface(
-                onClick = {
-                    if (value - step <= range.start) {
-                        onValueChange(range.start)
-                    } else {
-                        onValueChange(value - step)
-                    }
-                },
+                modifier = Modifier.touchClickable(onClick = decrement),
+                onClick = decrement,
             ) {
                 Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "减少")
             }

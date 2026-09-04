@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.ui.component.player
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -92,7 +93,7 @@ fun LivePlayerController(
     onQualityChange: (Int) -> Unit,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
     debugInfo: String,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

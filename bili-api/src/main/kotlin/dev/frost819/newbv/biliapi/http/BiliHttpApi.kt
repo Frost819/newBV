@@ -110,7 +110,23 @@ import javax.xml.parsers.DocumentBuilderFactory
 @Suppress("SpellCheckingInspection")
 object BiliHttpApi {
     private var endPoint: String = "api.bilibili.com"
-    private lateinit var client: HttpClient
+    private var _client: HttpClient? = null
+    private val client: HttpClient
+        get() = _client ?: createClient().also { _client = it }
+
+    /**
+     * 在后台协程预创建 Ktor HttpClient，与 UI 初始化并行执行。
+     * 创建完成后赋值给 [_client]，使首次网络请求时 [client] 直接可用，避免串行等待。
+     */
+    fun warmUpClient() {
+        if (_client == null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                if (_client == null) {
+                    _client = createClient()
+                }
+            }
+        }
+    }
 
     private val json =
         Json {
@@ -153,10 +169,10 @@ object BiliHttpApi {
         this.mid = mid
         this.accessToken = accessToken
 
-        createClient()
         CoroutineScope(Dispatchers.IO).launch {
             updateWbi()
         }
+        warmUpClient()
     }
 
     /**
@@ -205,28 +221,26 @@ object BiliHttpApi {
         return cookies.joinToString("; ")
     }
 
-    private fun createClient() {
-        client =
-            HttpClient(OkHttp) {
-                BiliUserAgent()
-                install(ContentNegotiation) { json(json) }
-                install(ContentEncoding) {
-                    deflate(1.0F)
-                    gzip(0.9F)
-                }
-                install(HttpRequestRetry) { retryOnException(maxRetries = 2) }
-                install(JsoupPlugin)
-                defaultRequest {
-                    url {
-                        host = endPoint
-                        protocol = URLProtocol.HTTPS
-                    }
-                }
-            }.apply {
-                encApiSign() // 1. 先注册（LIFO → 后执行）：负责签名
-                injectCookies() // 2. 后注册（LIFO → 先执行）：cookie 注入在签名之前
+    private fun createClient(): HttpClient =
+        HttpClient(OkHttp) {
+            BiliUserAgent()
+            install(ContentNegotiation) { json(json) }
+            install(ContentEncoding) {
+                deflate(1.0F)
+                gzip(0.9F)
             }
-    }
+            install(HttpRequestRetry) { retryOnException(maxRetries = 2) }
+            install(JsoupPlugin)
+            defaultRequest {
+                url {
+                    host = endPoint
+                    protocol = URLProtocol.HTTPS
+                }
+            }
+        }.apply {
+            encApiSign() // 1. 先注册（LIFO → 后执行）：负责签名
+            injectCookies() // 2. 后注册（LIFO → 先执行）：cookie 注入在签名之前
+        }
 
     /**
      * 获取热门视频列表

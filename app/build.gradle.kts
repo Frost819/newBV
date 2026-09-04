@@ -77,6 +77,18 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            // Protobuf source files and desktop-only Jansi natives are not used at runtime on Android.
+            excludes +=
+                listOf(
+                    "**/*.proto",
+                    "/META-INF/native-image/jansi/**",
+                    "/org/fusesource/jansi/internal/native/**",
+                )
+        }
+    }
 }
 
 ksp {
@@ -105,7 +117,6 @@ dependencies {
 
     // === Navigation ===
     implementation(libs.androidx.navigation.compose)
-    implementation("androidx.navigation:navigation-common-android:2.9.0")
 
     // === DataStore ===
     implementation(libs.androidx.datastore)
@@ -146,7 +157,6 @@ dependencies {
 
     // === Networking ===
     implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.encoding)

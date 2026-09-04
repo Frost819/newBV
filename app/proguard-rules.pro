@@ -66,14 +66,14 @@
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
 # === ktor ===
-# Without keeping ktor classes, request parameters get stripped after obfuscation.
--keep class io.ktor.**
+# Ktor's consumer rules keep engine service discovery and required runtime members.
+# Do not keep the whole framework here, otherwise R8 cannot remove unused plugins.
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean
 
 # === gRPC / protobuf ===
--keep class bilibili.rpc.** { *; }
--keep class com.google.protobuf.** { *; }
+# Only the business status message is consumed by name from gRPC trailers.
+-keep class bilibili.rpc.Status { *; }
 -dontwarn com.google.protobuf.GeneratedMessageV3$Builder
 -dontwarn com.google.protobuf.GeneratedMessageV3$BuilderParent
 -dontwarn com.google.protobuf.GeneratedMessageV3$FieldAccessorTable

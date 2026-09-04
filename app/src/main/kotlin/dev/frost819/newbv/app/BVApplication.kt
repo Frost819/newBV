@@ -85,7 +85,9 @@ class BVApplication : Application() {
             accessToken = accessToken,
         )
         if (accessToken.isNotBlank() && Prefs.buvid.isNotBlank()) {
-            channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
+            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
+            }
         }
 
         if (!Prefs.buvid3FromSpi) {

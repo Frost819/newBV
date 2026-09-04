@@ -47,6 +47,7 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.search.SearchKeyword
 import dev.frost819.newbv.app.ui.component.search.SoftKeyboard
 import dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel
+import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.data.datastore.Prefs
 
 /**
@@ -190,6 +191,13 @@ private fun SearchHotwordsColumn(
                 style = MaterialTheme.typography.titleLarge,
             )
             IconButton(
+                modifier =
+                    Modifier.touchClickable(
+                        onClick = {
+                            showHotword = !showHotword
+                            Prefs.showHotword = showHotword
+                        },
+                    ),
                 onClick = {
                     showHotword = !showHotword
                     Prefs.showHotword = showHotword
@@ -295,6 +303,7 @@ private fun SearchHistoryColumn(
             Row {
                 if (deleteMode && histories.isNotEmpty()) {
                     IconButton(
+                        modifier = Modifier.touchClickable(onClick = onDeleteAll),
                         onClick = onDeleteAll,
                     ) {
                         Icon(
@@ -304,6 +313,7 @@ private fun SearchHistoryColumn(
                     }
                 }
                 IconButton(
+                    modifier = Modifier.touchClickable(onClick = { deleteMode = !deleteMode }),
                     onClick = { deleteMode = !deleteMode },
                 ) {
                     if (deleteMode) {

@@ -1027,7 +1027,12 @@ class PlayerViewModel
             val state = _uiState.value
             val currentTime = (player.currentPosition.coerceAtLeast(0) / 1000).toInt()
             val totalTime = (player.duration.coerceAtLeast(0) / 1000).toInt()
-            val reportTime = if (currentTime >= totalTime) -1 else currentTime
+            val reportTime =
+                if (totalTime > 0 && currentTime >= totalTime) {
+                    -1
+                } else {
+                    currentTime
+                }
 
             if (updateLocal) {
                 videoInfoRepository.updateHistory(reportTime, state.cid)

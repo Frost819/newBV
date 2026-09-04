@@ -2,11 +2,14 @@ package dev.frost819.newbv.app.ui.screen.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -94,8 +97,14 @@ fun LivePlayerScreen(
         debugInfo = debugInfo,
     ) {
         if (videoPlayer != null) {
+            val aspectRatio =
+                if (videoPlayer.videoWidth > 0 && videoPlayer.videoHeight > 0) {
+                    videoPlayer.videoWidth.toFloat() / videoPlayer.videoHeight.toFloat()
+                } else {
+                    16f / 9f
+                }
             BvVideoPlayer(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.align(Alignment.Center).fillMaxHeight().aspectRatio(aspectRatio),
                 videoPlayer = videoPlayer,
             )
         }

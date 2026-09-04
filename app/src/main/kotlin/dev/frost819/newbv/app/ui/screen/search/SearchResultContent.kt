@@ -72,6 +72,7 @@ import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.search.SearchResultViewModel
 import dev.frost819.newbv.biliapi.repositories.SearchType
+import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -351,7 +352,8 @@ fun SearchResultContent(
                 modifier =
                     Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 16.dp, end = 40.dp),
+                        .padding(top = 16.dp, end = 40.dp)
+                        .touchClickable(onClick = { viewModel.toggleFilter(true) }),
                 onClick = { viewModel.toggleFilter(true) },
             ) {
                 Icon(

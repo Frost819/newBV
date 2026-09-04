@@ -30,7 +30,7 @@ fun BvVideoPlayer(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     player = videoPlayer.mPlayer
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
                     useController = false
                 }
             },

@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.ui.screen.player
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -353,7 +354,7 @@ fun VideoPlayerScreen(
 
             if (videoPlayer != null) {
                 BvVideoPlayer(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio),
                     videoPlayer = videoPlayer,
                 )
             }

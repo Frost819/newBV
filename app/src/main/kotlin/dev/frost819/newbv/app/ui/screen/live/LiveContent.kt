@@ -257,7 +257,8 @@ private fun FollowHeader(
             modifier =
                 Modifier
                     .focusRequester(focusRequester)
-                    .focusSaverItem(focusSaver, "live_follow_more"),
+                    .focusSaverItem(focusSaver, "live_follow_more")
+                    .touchClickable(onClick = onMoreClick),
             onClick = onMoreClick,
             shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
             colors =
