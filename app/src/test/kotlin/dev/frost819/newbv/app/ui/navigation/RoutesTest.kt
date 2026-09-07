@@ -23,10 +23,11 @@ class RoutesTest {
     }
 
     @Test
-    fun `SearchRoute serializes and deserializes`() {
-        val encoded = json.encodeToString(SearchRoute)
-        val decoded = json.decodeFromString<SearchRoute>(encoded)
-        assertThat(decoded).isEqualTo(SearchRoute)
+    fun `SearchResultRoute serializes and deserializes`() {
+        val route = SearchResultRoute(keyword = "test")
+        val encoded = json.encodeToString(route)
+        val decoded = json.decodeFromString<SearchResultRoute>(encoded)
+        assertThat(decoded.keyword).isEqualTo("test")
     }
 
     @Test
