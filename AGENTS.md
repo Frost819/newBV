@@ -753,7 +753,8 @@ item(span = { GridItemSpan(maxLineSpan) }) {
 
 ### 6.5 ViewModel 拆分原则
 
-- 单一职责，每个 ViewModel ≤ 300 行
+- 单一职责，按功能边界拆分，不单纯以行数作为拆分依据
+- 私有 UI 状态/行模型等应就近放在所属模块文件内，不为其单独建文件
 - 原版 `VideoPlayerV3ViewModel`（1417 行）拆分为：
   - `PlayerViewModel`（播放控制、状态）
   - `PlayerMenuViewModel`（设置菜单）

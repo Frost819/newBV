@@ -2008,7 +2008,7 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 
 #### 5.5.2 ViewModel 拆分
 
-- 单一职责原则，每个 ViewModel ≤ 300 行
+- 单一职责原则，按功能边界拆分，不单纯以行数作为拆分依据
 - 原版巨型 ViewModel 拆分（见第 2.5 节）
 - ViewModel 间通过 SharedFlow 通信，避免上帝对象
 

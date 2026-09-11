@@ -110,19 +110,19 @@ import javax.xml.parsers.DocumentBuilderFactory
 @Suppress("SpellCheckingInspection")
 object BiliHttpApi {
     private var endPoint: String = "api.bilibili.com"
-    private var _client: HttpClient? = null
+    private var clientInstance: HttpClient? = null
     private val client: HttpClient
-        get() = _client ?: createClient().also { _client = it }
+        get() = clientInstance ?: createClient().also { clientInstance = it }
 
     /**
      * 在后台协程预创建 Ktor HttpClient，与 UI 初始化并行执行。
-     * 创建完成后赋值给 [_client]，使首次网络请求时 [client] 直接可用，避免串行等待。
+     * 创建完成后赋值给 [clientInstance]，使首次网络请求时 [client] 直接可用，避免串行等待。
      */
     fun warmUpClient() {
-        if (_client == null) {
+        if (clientInstance == null) {
             CoroutineScope(Dispatchers.IO).launch {
-                if (_client == null) {
-                    _client = createClient()
+                if (clientInstance == null) {
+                    clientInstance = createClient()
                 }
             }
         }

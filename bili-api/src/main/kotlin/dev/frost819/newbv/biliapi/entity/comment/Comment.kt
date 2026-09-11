@@ -32,14 +32,7 @@ data class Comment(
     val replyCount: Int,
     val isLiked: Boolean,
     val isUp: Boolean,
-    val isExpanded: Boolean = false,
-    val isLoadingReplies: Boolean = false,
-    val replies: List<Comment> = emptyList(),
-    val repliesError: Boolean = false,
 ) {
-    /** 返回评论的展开/收起状态副本。 */
-    fun withExpanded(expanded: Boolean): Comment = copy(isExpanded = expanded)
-
     /** 从 B 站 Web/App HTTP 评论 JSON 转换为统一模型。 */
     companion object {
         fun fromJson(
@@ -118,13 +111,22 @@ data class Comment(
     }
 }
 
-/** 评论分页结果。 */
+/**
+ * 评论分页结果。
+ *
+ * @property comments 本页评论
+ * @property page 当前页码（Web 通道使用，从 1 开始）
+ * @property total 服务端返回的评论总数，未知时为 0
+ * @property hasMore 是否还有下一页
+ * @property nextCursor App gRPC 通道的下一页游标，Web 通道为 null
+ */
 @Serializable
 data class CommentPage(
     val comments: List<Comment>,
     val page: Int,
     val total: Int,
     val hasMore: Boolean,
+    val nextCursor: Long? = null,
 )
 
 private fun JsonObject.string(name: String): String? = this[name]?.jsonPrimitive?.contentOrNull

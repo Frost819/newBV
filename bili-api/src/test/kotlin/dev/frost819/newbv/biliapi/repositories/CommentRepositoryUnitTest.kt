@@ -85,6 +85,42 @@ class CommentRepositoryUnitTest {
             coVerify { BiliHttpApi.getVideoComments(eq(AID), eq(0), eq(2), any(), isNull()) }
         }
 
+    @Test
+    fun `getComments Web hasMore respects page size and num`() =
+        runTest {
+            val data = repliesJson(responses = 2, total = 3, num = 1, size = 2)
+            coEvery { BiliHttpApi.getVideoComments(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = data)
+
+            val result = repository.getComments(aid = AID, sort = 1, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.hasMore).isTrue()
+        }
+
+    @Test
+    fun `getComments Web stops when page covers total`() =
+        runTest {
+            val data = repliesJson(responses = 2, total = 2, num = 1, size = 2)
+            coEvery { BiliHttpApi.getVideoComments(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = data)
+
+            val result = repository.getComments(aid = AID, sort = 1, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.hasMore).isFalse()
+        }
+
+    @Test
+    fun `getComments Web filters invalid and duplicate rpid`() =
+        runTest {
+            val data = repliesJson(rpids = listOf(0L, RPID, RPID), total = 1)
+            coEvery { BiliHttpApi.getVideoComments(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = data)
+
+            val result = repository.getComments(aid = AID, sort = 1, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.comments.map { it.rpid }).containsExactly(RPID)
+        }
+
     // ------------------------------------------------------------------
     // getComments (App gRPC)
     // ------------------------------------------------------------------
@@ -123,6 +159,31 @@ class CommentRepositoryUnitTest {
             repository.getReplies(aid = AID, rootRpid = RPID, page = 2, preferApiType = ApiType.Web)
 
             coVerify { BiliHttpApi.getVideoCommentReplies(eq(AID), eq(RPID), eq(2), any(), isNull()) }
+        }
+
+    @Test
+    fun `getReplies Web hasMore uses page count`() =
+        runTest {
+            val data = repliesJson(responses = 2, count = 25, num = 1, size = 20)
+            coEvery { BiliHttpApi.getVideoCommentReplies(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = data)
+
+            val result = repository.getReplies(aid = AID, rootRpid = RPID, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.total).isEqualTo(25)
+            assertThat(result.hasMore).isTrue()
+        }
+
+    @Test
+    fun `getReplies Web stops when page covers count`() =
+        runTest {
+            val data = repliesJson(responses = 2, count = 1, num = 1, size = 20)
+            coEvery { BiliHttpApi.getVideoCommentReplies(any(), any(), any(), any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = data)
+
+            val result = repository.getReplies(aid = AID, rootRpid = RPID, page = 1, preferApiType = ApiType.Web)
+
+            assertThat(result.hasMore).isFalse()
         }
 
     // ------------------------------------------------------------------
@@ -194,17 +255,22 @@ class CommentRepositoryUnitTest {
     private fun repliesJson(
         responses: Int = 0,
         total: Int = 0,
-    ): JsonObject =
-        json
+        count: Long? = null,
+        num: Int? = null,
+        size: Int? = null,
+        rpids: List<Long>? = null,
+    ): JsonObject {
+        val ids = rpids ?: List(responses) { RPID + it }
+        return json
             .parseToJsonElement(
                 buildJsonObject {
                     put(
                         "replies",
                         buildJsonArray {
-                            repeat(responses) { i ->
+                            ids.forEachIndexed { i, rpid ->
                                 add(
                                     buildJsonObject {
-                                        put("rpid", RPID + i)
+                                        put("rpid", rpid)
                                         put("oid", AID)
                                         put("ctime", 1234567890L)
                                         put("like", 10L)
@@ -234,8 +300,12 @@ class CommentRepositoryUnitTest {
                         "page",
                         buildJsonObject {
                             put("acount", total.toLong())
+                            count?.let { put("count", it) }
+                            num?.let { put("num", it) }
+                            size?.let { put("size", it) }
                         },
                     )
                 }.toString(),
             ).jsonObject
+    }
 }
