@@ -52,7 +52,18 @@ jobs:
           echo "versionName=$(jq -r '.elements[0].versionName' "$META")" >> "$GITHUB_ENV"
 
       - name: Zip R8 mapping
-        run: zip -rj mapping.zip app/build/outputs/mapping/release
+        run: zip -rj "mapping_${versionCode}.zip" app/build/outputs/mapping/release
+
+      - name: Upload mapping to crash backend
+        env:
+          CRASH_UPLOAD_TOKEN: ${{ secrets.CRASH_UPLOAD_TOKEN }}
+        run: |
+          gzip -9 -c app/build/outputs/mapping/release/mapping.txt > mapping.txt.gz
+          curl -sfS -X POST \
+            "https://crash-log.frost819.site/api/mapping/upload?versionCode=${versionCode}&gzip=1" \
+            -H "Authorization: Bearer ${CRASH_UPLOAD_TOKEN}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @mapping.txt.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -65,7 +76,7 @@ jobs:
         with:
           files: |
             app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
-            mapping.zip
+            mapping_${{ env.versionCode }}.zip
           tag_name: ${{ github.ref_name }}
           name: newBV ${{ env.versionName }}
           generate_release_notes: true
