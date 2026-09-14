@@ -1,0 +1,4 @@
+releaseStoreFile=key.jks
+releaseStorePassword=your-store-password
+releaseKeyAlias=your-key-alias
+releaseKeyPassword=your-key-password

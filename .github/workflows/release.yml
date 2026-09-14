@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    if: github.repository == 'Frost819/newBV'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode signing config
+        env:
+          SIGNING_PROPERTIES: ${{ secrets.SIGNING_PROPERTIES }}
+          SIGN_KEY: ${{ secrets.SIGN_KEY }}
+        run: |
+          echo "$SIGNING_PROPERTIES" | base64 -d > signing.properties
+          echo "$SIGN_KEY" | base64 -d > key.jks
+
+      - name: Build release APK
+        env:
+          NEWBV_VERSION_BASE: ${{ github.ref_name }}
+        run: |
+          export NEWBV_VERSION_BASE="${NEWBV_VERSION_BASE#v}"
+          ./gradlew assembleRelease
+
+      - name: Parse version
+        run: |
+          META=app/build/outputs/apk/release/output-metadata.json
+          echo "versionCode=$(jq -r '.elements[0].versionCode' "$META")" >> "$GITHUB_ENV"
+          echo "versionName=$(jq -r '.elements[0].versionName' "$META")" >> "$GITHUB_ENV"
+
+      - name: Zip R8 mapping
+        run: zip -rj mapping.zip app/build/outputs/mapping/release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: newBV_${{ env.versionName }}
+          path: app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
+            mapping.zip
+          tag_name: ${{ github.ref_name }}
+          name: newBV ${{ env.versionName }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

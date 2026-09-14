@@ -18,9 +18,26 @@ localProperties.apply {
     }
 }
 
+val signingPropertiesFile = rootProject.file("signing.properties")
+val signingProperties = Properties()
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use { signingProperties.load(it) }
+}
+
 android {
     namespace = AppConfiguration.appId
     compileSdk = AppConfiguration.compileSdk
+
+    signingConfigs {
+        if (signingPropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(signingProperties.getProperty("releaseStoreFile"))
+                storePassword = signingProperties.getProperty("releaseStorePassword")
+                keyAlias = signingProperties.getProperty("releaseKeyAlias")
+                keyPassword = signingProperties.getProperty("releaseKeyPassword")
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = AppConfiguration.applicationId
@@ -49,6 +66,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (signingPropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -61,7 +81,7 @@ android {
             variant.outputs.forEach { output ->
                 if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                     output.outputFileName.set(
-                        "newBV_${AppConfiguration.versionName}_${variant.name}.apk",
+                        "newBV_${AppConfiguration.versionCode}_${AppConfiguration.versionName}_${variant.name}.apk",
                     )
                 }
             }
