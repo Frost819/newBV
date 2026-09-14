@@ -18,59 +18,43 @@
 newBV 是基于 [BV](https://github.com/aaa1115910/bv) 重构的 [哔哩哔哩](https://www.bilibili.com) 第三方 `Android TV`
 客户端，使用 `Jetpack Compose` 开发，支持 `Android 5.0+`（minSdk 21）。
 
-**这不是 BV 的 1:1 复刻，而是架构重构 + 功能增强。**
+**这不是 BV 的 1:1 复刻，而是架构重构 + 功能增强。保留了原版BV核心使用体验的同时，新增了许多呼声很高的功能，并重构了软件架构。**
 
-> 原版 BV 的代码仍保留在本仓库的 [`feature`](../../tree/feature) 分支。
+> 原版 BV 的代码仍保留在本仓库的 [`bv-feature`](../../tree/bv-feature) 分支。
 
-## 与 BV 的差异
+## 基于 BV 的升级点
+
+### 功能升级
+
+- **直播观看**：直播首页（推荐 / 分区 / 关注 / 直播排行榜）、直播播放（HLS/FLV，多线路手动切换）、WebSocket 实时弹幕、实时人气
+- **评论**：详情页评论预览、独立评论弹窗（全部 / 热门、无限滚动、楼中楼、评论点赞）、播放器内评论
+- **缓存自动清理**：缓存阈值可调（50/100/200/500MB / 不限制）、LRU 自动清理、手动清理、日志占用查看及清理
+- **触屏适配**：D-pad / 触屏运行时双模式，播放器手势（快进 / 亮度 / 音量）
+- **主题**：黑夜 / 白天 / 跟随系统三档，全新品牌配色
+- **视频卡片已播进度条**：历史 / 稍后再看 / UP 主页卡片显示观看进度
+- **播放器增强**：点赞·投币·收藏快捷键（长按一键三连）、同时观看人数、自定义快捷键触发提示、弹幕分段加载（基于AkDanmaku自研 `danmaku-engine`）
+- **诊断与崩溃**：关键操作诊断日志 + 局域网日志网页端；本地崩溃日志 + 可选自建端点上报
 
 ### 架构
 
 - 单 Activity + Navigation-Compose（禁止新增 Activity）
-- 全面使用 Hilt 依赖注入（不再使用 Koin / 手动单例）
+- 完全基于 StateFlow 重构，单向数据流（UDF）
+- Hilt 依赖注入
+- 仅 Media3 播放器，VOD + Live 双兼容
+- 完全删除代理逻辑（ProxyArea / Ali CDN 等）
 - 模块化拆分：`app` / `core` / `data` / `bili-api` / `player` / `danmaku` / `danmaku-engine` / `bili-subtitle`
-- 仅接入 Media3 播放器（不引入 VLC），播放器抽象同时支持 VOD 与 Live
-- 删除全部代理相关逻辑（ProxyArea / Ali CDN 替换等）
-- 无 Firebase，崩溃监控改为本地日志 + 可选自建上报
 
 ### 测试
 
-- 单元测试（JUnit 5 + MockK + Turbine + Truth）覆盖率目标 ≥ 80%
-- 接口集成测试按 source set 与单元测试物理隔离（`src/integrationTest`）
-- JaCoCo 覆盖率报告
+- 补全单元测试
+- 补全接口集成测试
 
 ## 构建
 
 ### 环境要求
 
-- JDK 17（设置 `JAVA_HOME`）
+- JDK 17
 - Android SDK（compileSdk 36）
-
-### 命令
-
-```bash
-# 构建 Debug APK
-./gradlew assembleDebug
-
-# 运行全部单元测试
-./gradlew test
-
-# 代码检查
-./gradlew ktlintCheck detekt
-
-# 覆盖率报告
-./gradlew test jacocoAggregatedReport
-```
-
-### 测试凭证配置
-
-接口集成测试需要 B 站账号凭证，复制 `local.properties.template` 为 `local.properties` 并填写（**不要提交**）：
-
-```properties
-test.sessdata=你的SESSDATA
-test.bili_jct=你的bili_jct
-test.uid=你的uid
-```
 
 ## 开发文档
 
@@ -79,6 +63,7 @@ test.uid=你的uid
 ## 致谢
 
 - [aaa1115910/bv](https://github.com/aaa1115910/bv) — 本项目源自 BV 的重构
+- [cat3399/blbl](https://github.com/cat3399/blbl) — 部分实现（弹幕分段加载等）参考 / 移植自该项目
 - [akdanmaku](https://github.com/Frost819/AkDanmaku) — 弹幕渲染引擎
 
 ## License
