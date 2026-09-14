@@ -1652,7 +1652,6 @@ CompositionLocalProvider(LocalInteractionTracker provides tracker) {
 | 上下滑动（左半屏） | 亮度调节 |
 | 上下滑动（右半屏） | 音量调节 |
 | 长按 | 倍速播放（2x） |
-| 捏合 | 缩放（宽高比） |
 
 **4.3.3.3 滚动优化**
 

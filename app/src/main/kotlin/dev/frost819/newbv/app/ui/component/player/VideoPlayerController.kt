@@ -441,14 +441,6 @@ fun VideoPlayerController(
                                         )
                                 }
                             },
-                            onCycleAspectRatio = {
-                                val current = uiState.aspectRatio
-                                val next =
-                                    VideoAspectRatio.entries[
-                                        (current.ordinal + 1) % VideoAspectRatio.entries.size,
-                                    ]
-                                onAspectRatioChange(next)
-                            },
                         ),
                     gestureTipState = gestureTipState,
                 ),

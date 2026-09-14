@@ -49,7 +49,6 @@ enum class GestureTipType {
  * @param onSeekCommit seek 提交（手指松开时调用）。
  * @param onBrightnessChange 亮度变化：deltaY > 0 增加亮度，< 0 降低亮度。
  * @param onVolumeChange 音量变化：deltaY > 0 增加音量，< 0 降低音量。
- * @param onCycleAspectRatio 捏合缩放：循环切换宽高比。
  */
 data class PlayerGestureCallbacks(
     val onSingleTap: () -> Unit,
@@ -58,19 +57,17 @@ data class PlayerGestureCallbacks(
     val onSeekCommit: () -> Unit,
     val onBrightnessChange: (deltaY: Float) -> Unit,
     val onVolumeChange: (deltaY: Float) -> Unit,
-    val onCycleAspectRatio: () -> Unit,
 )
 
 /**
  * 播放器手势处理器。
  *
- * 使用 `awaitEachGesture` 手动分发 6 种手势（PRD 4.3.3.2）：
+ * 使用 `awaitEachGesture` 手动分发 5 种手势（PRD 4.3.3.2）：
  * - 单击：显示/隐藏控制器
  * - 双击：播放/暂停
  * - 水平滑动：快进/快退
  * - 左半屏垂直滑动：亮度调节
  * - 右半屏垂直滑动：音量调节
- * - 双指捏合：宽高比循环
  *
  * D-pad 模式不受影响——此 modifier 仅处理触摸事件，按键事件由 `onPreviewKeyEvent` 处理。
  *
@@ -121,17 +118,6 @@ fun Modifier.playerGestures(
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Main)
                 val changes = event.changes
-
-                // 多指检测（捏合缩放）
-                if (changes.size >= 2) {
-                    gestureTipState.value = GestureTipState(isActive = false)
-                    changes.forEach { it.consume() }
-                    if (changes.all { !it.pressed }) {
-                        callbacks.onCycleAspectRatio()
-                        break
-                    }
-                    continue
-                }
 
                 val change = changes.firstOrNull() ?: continue
 

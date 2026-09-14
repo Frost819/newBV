@@ -256,7 +256,6 @@ fun LivePlayerController(
                                         )
                                 }
                             },
-                            onCycleAspectRatio = { },
                         ),
                     gestureTipState = gestureTipState,
                 ),
