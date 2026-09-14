@@ -27,20 +27,22 @@ class LoginEntityTest {
 
     @Test
     fun `QrLoginResult with all fields populated`() {
-        val cookies = WebCookies(
-            dedeUserId = 123L,
-            dedeUserIdCkMd5 = "md5hash",
-            sid = "session-id",
-            biliJct = "jct-value",
-            sessData = "sess-value",
-            expiredDate = Date(1700000000000L),
-        )
-        val result = QrLoginResult(
-            state = QrLoginState.Success,
-            accessToken = "at",
-            refreshToken = "rt",
-            cookies = cookies,
-        )
+        val cookies =
+            WebCookies(
+                dedeUserId = 123L,
+                dedeUserIdCkMd5 = "md5hash",
+                sid = "session-id",
+                biliJct = "jct-value",
+                sessData = "sess-value",
+                expiredDate = Date(1700000000000L),
+            )
+        val result =
+            QrLoginResult(
+                state = QrLoginState.Success,
+                accessToken = "at",
+                refreshToken = "rt",
+                cookies = cookies,
+            )
         assertThat(result.accessToken).isEqualTo("at")
         assertThat(result.refreshToken).isEqualTo("rt")
         assertThat(result.cookies!!.dedeUserId).isEqualTo(123L)
@@ -70,68 +72,69 @@ class LoginEntityTest {
 
     @Test
     fun `SmsLoginResult fromSmsLoginResponse maps all fields`() {
-        val response = dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse(
-            status = 0,
-            message = "ok",
-            url = "",
-            tokenInfo =
-                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.TokenInfo(
-                    mid = 100L,
-                    expiresIn = 3600,
-                    accessToken = "access-tok",
-                    refreshToken = "refresh-tok",
-                ),
-            cookieInfo =
-                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo(
-                    cookies =
-                        listOf(
-                            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
-                                name = "SESSDATA",
-                                value = "sess-value",
-                                httpOnly = 1,
-                                expires = 0,
-                                secure = 1,
-                                sameSite = 0,
+        val response =
+            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse(
+                status = 0,
+                message = "ok",
+                url = "",
+                tokenInfo =
+                    dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.TokenInfo(
+                        mid = 100L,
+                        expiresIn = 3600,
+                        accessToken = "access-tok",
+                        refreshToken = "refresh-tok",
+                    ),
+                cookieInfo =
+                    dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo(
+                        cookies =
+                            listOf(
+                                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
+                                    name = "SESSDATA",
+                                    value = "sess-value",
+                                    httpOnly = 1,
+                                    expires = 0,
+                                    secure = 1,
+                                    sameSite = 0,
+                                ),
+                                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
+                                    name = "bili_jct",
+                                    value = "jct-value",
+                                    httpOnly = 1,
+                                    expires = 0,
+                                    secure = 1,
+                                    sameSite = 0,
+                                ),
+                                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
+                                    name = "DedeUserID",
+                                    value = "123456",
+                                    httpOnly = 1,
+                                    expires = 0,
+                                    secure = 1,
+                                    sameSite = 0,
+                                ),
+                                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
+                                    name = "DedeUserID__ckMd5",
+                                    value = "ckmd5",
+                                    httpOnly = 1,
+                                    expires = 0,
+                                    secure = 1,
+                                    sameSite = 0,
+                                ),
+                                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
+                                    name = "sid",
+                                    value = "sid-val",
+                                    httpOnly = 1,
+                                    expires = 0,
+                                    secure = 1,
+                                    sameSite = 0,
+                                ),
                             ),
-                            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
-                                name = "bili_jct",
-                                value = "jct-value",
-                                httpOnly = 1,
-                                expires = 0,
-                                secure = 1,
-                                sameSite = 0,
-                            ),
-                            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
-                                name = "DedeUserID",
-                                value = "123456",
-                                httpOnly = 1,
-                                expires = 0,
-                                secure = 1,
-                                sameSite = 0,
-                            ),
-                            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
-                                name = "DedeUserID__ckMd5",
-                                value = "ckmd5",
-                                httpOnly = 1,
-                                expires = 0,
-                                secure = 1,
-                                sameSite = 0,
-                            ),
-                            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo.Cookie(
-                                name = "sid",
-                                value = "sid-val",
-                                httpOnly = 1,
-                                expires = 0,
-                                secure = 1,
-                                sameSite = 0,
-                            ),
-                        ),
-                    domains = emptyList(),
-                ),
-            sso = emptyList(),
-            isNew = false,
-            isTourist = false,
-        )
+                        domains = emptyList(),
+                    ),
+                sso = emptyList(),
+                isNew = false,
+                isTourist = false,
+            )
 
         val result = SmsLoginResult.fromSmsLoginResponse(response)
 
@@ -148,26 +151,27 @@ class LoginEntityTest {
 
     @Test
     fun `SmsLoginResult fromSmsLoginResponse uses empty string when cookie missing`() {
-        val response = dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse(
-            status = 0,
-            message = "ok",
-            url = "",
-            tokenInfo =
-                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.TokenInfo(
-                    mid = 1L,
-                    expiresIn = 7200,
-                    accessToken = "at",
-                    refreshToken = "rt",
-                ),
-            cookieInfo =
-                dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo(
-                    cookies = emptyList(),
-                    domains = emptyList(),
-                ),
-            sso = emptyList(),
-            isNew = false,
-            isTourist = false,
-        )
+        val response =
+            dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse(
+                status = 0,
+                message = "ok",
+                url = "",
+                tokenInfo =
+                    dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.TokenInfo(
+                        mid = 1L,
+                        expiresIn = 7200,
+                        accessToken = "at",
+                        refreshToken = "rt",
+                    ),
+                cookieInfo =
+                    dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse.CookieInfo(
+                        cookies = emptyList(),
+                        domains = emptyList(),
+                    ),
+                sso = emptyList(),
+                isNew = false,
+                isTourist = false,
+            )
 
         val result = SmsLoginResult.fromSmsLoginResponse(response)
 
