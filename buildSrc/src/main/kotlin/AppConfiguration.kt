@@ -17,11 +17,15 @@ object AppConfiguration {
     private const val hotFix = 0
 
     @Suppress("KotlinConstantConditions")
-    val versionName: String by lazy {
-        "$major.$minor.$patch${".$hotFix".takeIf { hotFix != 0 } ?: ""}" +
-            ".r${versionCode}.${"git rev-list HEAD --abbrev-commit --max-count=1".exec()}"
-    }
-    val versionCode: Int by lazy { "git rev-list --count HEAD".exec().toIntOrNull() ?: 1 }
+    val versionName: String
+        get() {
+            val base =
+                System.getenv("NEWBV_VERSION_BASE")?.takeIf { it.isNotBlank() }
+                    ?: "$major.$minor.$patch${".$hotFix".takeIf { hotFix != 0 } ?: ""}"
+            return "$base.r$versionCode.${"git rev-list HEAD --abbrev-commit --max-count=1".exec()}"
+        }
+    val versionCode: Int
+        get() = "git rev-list --count HEAD".exec().toIntOrNull() ?: 1
 }
 
 fun String.exec() = String(Runtime.getRuntime().exec(this).inputStream.readBytes()).trim()

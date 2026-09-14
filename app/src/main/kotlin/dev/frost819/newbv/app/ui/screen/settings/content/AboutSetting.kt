@@ -77,7 +77,7 @@ fun AboutSetting(modifier: Modifier = Modifier) {
         }
         Text(
             modifier = Modifier.align(Alignment.BottomCenter),
-            text = "https://github.com/Frost819/bv",
+            text = "https://github.com/Frost819/newBV",
         )
     }
 

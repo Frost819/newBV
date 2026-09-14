@@ -82,7 +82,7 @@ fun UpdateDialog(
                 val revision =
                     latestRelease!!
                         .assets
-                        .first { it.name.startsWith("BV") }
+                        .first { it.name.startsWith("newBV") && it.name.contains("release") }
                         .name
                         .split("_")[1]
                         .toInt()
@@ -129,7 +129,7 @@ fun UpdateDialog(
                 val tempFilename =
                     latestRelease!!
                         .assets
-                        .first { it.name.startsWith("BV") }
+                        .first { it.name.startsWith("newBV") && it.name.contains("release") }
                         .name
                 val tempDir = File(context.cacheDir, "update_downloader")
                 if (!tempDir.exists()) tempDir.mkdirs()
