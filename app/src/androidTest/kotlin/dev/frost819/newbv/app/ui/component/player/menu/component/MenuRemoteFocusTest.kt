@@ -124,7 +124,7 @@ class MenuRemoteFocusTest {
             MaterialTheme {
                 Box(modifier = Modifier.fillMaxSize().width(400.dp)) {
                     StepLessMenuItem(
-                        value = 20,
+                        value = 20f,
                         text = "20dp",
                         onValueChange = {},
                         onFocusBackToParent = { returnedToParent = true },

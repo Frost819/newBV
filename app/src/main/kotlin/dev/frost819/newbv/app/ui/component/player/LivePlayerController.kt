@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.LiveMenuController
+import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.Job
@@ -61,11 +62,14 @@ import kotlinx.coroutines.launch
  * @param danmakuState 弹幕配置状态
  * @param availableQualities 可用画质列表（qn, desc）
  * @param currentQuality 当前画质 qn
+ * @param availableLines 可用线路列表
+ * @param currentLine 当前线路序号（从 1 开始）
  * @param onBack 返回回调
  * @param onPlayPause 播放/暂停回调
  * @param onRefresh 刷新回调
  * @param onToggleDanmaku 弹幕开关回调
  * @param onQualityChange 画质变化回调
+ * @param onLineChange 线路变化回调
  * @param onDanmakuSettingChange 弹幕设置变化回调
  * @param debugInfo 调试信息文本（仅 [Prefs.showPlayerDebugInfo] 开启时有值）
  * @param content 视频画面 + 弹幕层内容
@@ -86,11 +90,14 @@ fun LivePlayerController(
     danmakuState: DanmakuState,
     availableQualities: List<Pair<Int, String>>,
     currentQuality: Int,
+    availableLines: List<LivePlayLine>,
+    currentLine: Int,
     onBack: () -> Unit,
     onPlayPause: () -> Unit,
     onRefresh: () -> Unit,
     onToggleDanmaku: () -> Unit,
     onQualityChange: (Int) -> Unit,
+    onLineChange: (Int) -> Unit,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
     debugInfo: String,
     content: @Composable BoxScope.() -> Unit,
@@ -315,6 +322,9 @@ fun LivePlayerController(
             availableQualities = availableQualities,
             currentQuality = currentQuality,
             onQualityChange = onQualityChange,
+            availableLines = availableLines,
+            currentLine = currentLine,
+            onLineChange = onLineChange,
             danmakuState = danmakuState,
             onDanmakuSettingChange = onDanmakuSettingChange,
         )

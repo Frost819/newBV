@@ -204,9 +204,12 @@ private fun MenuControllerContent(
                             if (it.key == Key.DirectionLeft) focusState = MenuFocusState.Menu
                             false
                         },
-                    selectedMenu = selectedNavItem,
-                    onSelectedChanged = { selectedNavItem = it },
+                    items = VideoPlayerMenuNavItem.entries,
+                    selected = selectedNavItem,
                     isFocusing = focusState == MenuFocusState.MenuNav,
+                    label = { it.displayName },
+                    icon = { it.icon },
+                    onSelectedChanged = { selectedNavItem = it },
                 )
             }
         }

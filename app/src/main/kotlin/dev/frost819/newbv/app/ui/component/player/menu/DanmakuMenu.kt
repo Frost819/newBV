@@ -1,36 +1,11 @@
 package dev.frost819.newbv.app.ui.component.player.menu
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.unit.dp
-import dev.frost819.newbv.app.ui.component.player.ifElse
 import dev.frost819.newbv.app.ui.component.player.menu.component.CheckBoxMenuList
-import dev.frost819.newbv.app.ui.component.player.menu.component.MenuListItem
+import dev.frost819.newbv.app.ui.component.player.menu.component.PlayerThreeLevelMenu
 import dev.frost819.newbv.app.ui.component.player.menu.component.RadioMenuList
 import dev.frost819.newbv.app.ui.component.player.menu.component.StepLessMenuItem
-import dev.frost819.newbv.app.viewmodel.player.LocalMenuFocusStateData
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusState
 import dev.frost819.newbv.app.viewmodel.player.VideoPlayerDanmakuMenuItem
 import dev.frost819.newbv.data.datastore.DanmakuType
@@ -75,158 +50,92 @@ fun DanmakuMenuList(
     onDanmakuMaskChange: (Boolean) -> Unit,
     onFocusStateChange: (MenuFocusState) -> Unit,
 ) {
-    val focusState = LocalMenuFocusStateData.current
-    val restorerFocusRequester = remember { FocusRequester() }
-    val focusRequester = remember { FocusRequester() }
-    var selectedDanmakuMenuItem by remember { mutableStateOf(VideoPlayerDanmakuMenuItem.Switch) }
-
-    Row(
-        modifier = modifier.fillMaxHeight(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val menuItemsModifier =
-            Modifier
-                .width(216.dp)
-                .padding(horizontal = 8.dp)
-
-        AnimatedVisibility(visible = focusState.focusState != MenuFocusState.MenuNav) {
-            when (selectedDanmakuMenuItem) {
-                VideoPlayerDanmakuMenuItem.Switch ->
-                    CheckBoxMenuList(
-                        modifier = menuItemsModifier,
-                        items = DanmakuType.entries.map { it.displayName },
-                        selected = currentEnabledTypes.map { it.ordinal },
-                        onSelectedChanged = { indices ->
-                            handleDanmakuTypeChange(
-                                currentTypes = currentEnabledTypes,
-                                newIndices = indices,
-                                onChange = onDanmakuSwitchChange,
-                            )
-                        },
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-
-                VideoPlayerDanmakuMenuItem.Size ->
-                    StepLessMenuItem(
-                        modifier = menuItemsModifier,
-                        value = currentScale,
-                        step = 0.01f,
-                        range = 0.5f..4f,
-                        text =
-                            NumberFormat
-                                .getPercentInstance()
-                                .apply { maximumFractionDigits = 0 }
-                                .format(currentScale),
-                        onValueChange = onDanmakuSizeChange,
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-
-                VideoPlayerDanmakuMenuItem.Opacity ->
-                    StepLessMenuItem(
-                        modifier = menuItemsModifier,
-                        value = currentOpacity,
-                        step = 0.01f,
-                        range = 0f..1f,
-                        text =
-                            NumberFormat
-                                .getPercentInstance()
-                                .apply { maximumFractionDigits = 0 }
-                                .format(currentOpacity),
-                        onValueChange = onDanmakuOpacityChange,
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-
-                VideoPlayerDanmakuMenuItem.SpeedFactor ->
-                    StepLessMenuItem(
-                        modifier = menuItemsModifier,
-                        value = currentSpeedFactor,
-                        step = 0.1f,
-                        range = 0.2f..5f,
-                        text = "${String.format("%.1f", currentSpeedFactor)}x",
-                        onValueChange = onDanmakuSpeedFactorChange,
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-
-                VideoPlayerDanmakuMenuItem.Area ->
-                    StepLessMenuItem(
-                        modifier = menuItemsModifier,
-                        value = currentArea,
-                        step = 0.01f,
-                        range = 0.1f..1f,
-                        text =
-                            NumberFormat
-                                .getPercentInstance()
-                                .apply { maximumFractionDigits = 0 }
-                                .format(currentArea),
-                        onValueChange = onDanmakuAreaChange,
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-
-                VideoPlayerDanmakuMenuItem.Mask ->
-                    RadioMenuList(
-                        modifier = menuItemsModifier,
-                        items = listOf("关闭", "开启"),
-                        selected = if (currentMaskEnabled) 1 else 0,
-                        onSelectedChanged = { onDanmakuMaskChange(it == 1) },
-                        onFocusBackToParent = {
-                            onFocusStateChange(MenuFocusState.Menu)
-                            focusRequester.requestFocus()
-                        },
-                    )
-            }
-        }
-
-        LazyColumn(
-            modifier =
-                Modifier
-                    .focusRequester(focusRequester)
-                    .padding(horizontal = 8.dp)
-                    .onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp) {
-                            if (listOf(Key.Enter, Key.DirectionCenter).contains(it.key)) {
-                                return@onPreviewKeyEvent false
-                            }
-                            return@onPreviewKeyEvent true
-                        }
-                        when (it.key) {
-                            Key.DirectionRight -> onFocusStateChange(MenuFocusState.MenuNav)
-                            Key.DirectionLeft -> onFocusStateChange(MenuFocusState.Items)
-                            else -> {}
-                        }
-                        false
-                    }.focusRestorer(restorerFocusRequester),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(8.dp),
-        ) {
-            itemsIndexed(VideoPlayerDanmakuMenuItem.entries.toMutableList()) { index, item ->
-                MenuListItem(
-                    modifier =
-                        Modifier
-                            .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
-                    text = item.displayName,
-                    selected = selectedDanmakuMenuItem == item,
-                    onClick = {
-                        selectedDanmakuMenuItem = item
-                        onFocusStateChange(MenuFocusState.Items)
+    PlayerThreeLevelMenu(
+        modifier = modifier,
+        categories = VideoPlayerDanmakuMenuItem.entries,
+        categoryLabel = { it.displayName },
+        onFocusStateChange = onFocusStateChange,
+    ) { selectedItem, itemModifier, backToMenu ->
+        when (selectedItem) {
+            VideoPlayerDanmakuMenuItem.Switch ->
+                CheckBoxMenuList(
+                    modifier = itemModifier,
+                    items = DanmakuType.entries.map { it.displayName },
+                    selected = currentEnabledTypes.map { it.ordinal },
+                    onSelectedChanged = { indices ->
+                        handleDanmakuTypeChange(
+                            currentTypes = currentEnabledTypes,
+                            newIndices = indices,
+                            onChange = onDanmakuSwitchChange,
+                        )
                     },
-                    onFocus = { selectedDanmakuMenuItem = item },
+                    onFocusBackToParent = backToMenu,
                 )
-            }
+
+            VideoPlayerDanmakuMenuItem.Size ->
+                StepLessMenuItem(
+                    modifier = itemModifier,
+                    value = currentScale,
+                    step = 0.01f,
+                    range = 0.5f..4f,
+                    text =
+                        NumberFormat
+                            .getPercentInstance()
+                            .apply { maximumFractionDigits = 0 }
+                            .format(currentScale),
+                    onValueChange = onDanmakuSizeChange,
+                    onFocusBackToParent = backToMenu,
+                )
+
+            VideoPlayerDanmakuMenuItem.Opacity ->
+                StepLessMenuItem(
+                    modifier = itemModifier,
+                    value = currentOpacity,
+                    step = 0.01f,
+                    range = 0f..1f,
+                    text =
+                        NumberFormat
+                            .getPercentInstance()
+                            .apply { maximumFractionDigits = 0 }
+                            .format(currentOpacity),
+                    onValueChange = onDanmakuOpacityChange,
+                    onFocusBackToParent = backToMenu,
+                )
+
+            VideoPlayerDanmakuMenuItem.SpeedFactor ->
+                StepLessMenuItem(
+                    modifier = itemModifier,
+                    value = currentSpeedFactor,
+                    step = 0.1f,
+                    range = 0.2f..5f,
+                    text = "${String.format("%.1f", currentSpeedFactor)}x",
+                    onValueChange = onDanmakuSpeedFactorChange,
+                    onFocusBackToParent = backToMenu,
+                )
+
+            VideoPlayerDanmakuMenuItem.Area ->
+                StepLessMenuItem(
+                    modifier = itemModifier,
+                    value = currentArea,
+                    step = 0.01f,
+                    range = 0.1f..1f,
+                    text =
+                        NumberFormat
+                            .getPercentInstance()
+                            .apply { maximumFractionDigits = 0 }
+                            .format(currentArea),
+                    onValueChange = onDanmakuAreaChange,
+                    onFocusBackToParent = backToMenu,
+                )
+
+            VideoPlayerDanmakuMenuItem.Mask ->
+                RadioMenuList(
+                    modifier = itemModifier,
+                    items = listOf("关闭", "开启"),
+                    selected = if (currentMaskEnabled) 1 else 0,
+                    onSelectedChanged = { onDanmakuMaskChange(it == 1) },
+                    onFocusBackToParent = backToMenu,
+                )
         }
     }
 }

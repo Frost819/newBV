@@ -13,6 +13,8 @@ import dev.frost819.newbv.app.ui.component.livecard.formatOnlineCount
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
+import dev.frost819.newbv.biliapi.repositories.LivePlayInfo
+import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
 import dev.frost819.newbv.biliapi.websocket.LiveDataWebSocket
 import dev.frost819.newbv.core.log.Loggers
@@ -64,6 +66,8 @@ data class LivePlayerUiState(
     val errorMessage: String? = null,
     val availableQualities: List<Pair<Int, String>> = emptyList(),
     val currentQuality: Int = 0,
+    val availableLines: List<LivePlayLine> = emptyList(),
+    val currentLine: Int = 0,
 )
 
 /**
@@ -224,12 +228,10 @@ class LivePlayerViewModel
                         newState
                     }
 
-                    val qualities = liveRepository.getAvailableQualities(realRoomId)
-                    _uiState.update { it.copy(availableQualities = qualities) }
-
-                    val qn = _uiState.value.currentQuality.takeIf { it > 0 } ?: 0
-                    val streamInfo = liveRepository.getLiveStreamInfo(realRoomId, qn)
-                    if (streamInfo.url.isNullOrBlank()) {
+                    val requestedQn = _uiState.value.currentQuality.takeIf { it > 0 } ?: 0
+                    val playInfo = liveRepository.getLivePlayInfo(realRoomId, requestedQn)
+                    val line = resolveLine(playInfo, _uiState.value.currentLine)
+                    if (line == null) {
                         _uiState.update {
                             it.copy(
                                 playerState = LivePlayerState.Error,
@@ -239,11 +241,16 @@ class LivePlayerViewModel
                         return@launch
                     }
 
-                    if (streamInfo.currentQn > 0) {
-                        _uiState.update { it.copy(currentQuality = streamInfo.currentQn) }
+                    _uiState.update {
+                        it.copy(
+                            availableQualities = playInfo.qualities,
+                            currentQuality = playInfo.currentQn.takeIf { qn -> qn > 0 } ?: requestedQn,
+                            availableLines = playInfo.lines,
+                            currentLine = line.order,
+                        )
                     }
 
-                    videoPlayer?.playUrl(streamInfo.url)
+                    videoPlayer?.playUrl(line.url)
                     videoPlayer?.prepare()
                     videoPlayer?.start()
                     danmakuPlayer?.start(null)
@@ -315,6 +322,7 @@ class LivePlayerViewModel
                                         .firstOrNull { it.first == state.currentQuality }
                                         ?.second
                                 appendLine("quality: ${qnDesc ?: "?"}(${state.currentQuality})")
+                                appendLine("line: ${state.currentLine}/${state.availableLines.size}")
                                 appendLine("roomId: ${state.realRoomId}")
                                 appendLine("resolution: ${player.videoWidth} x ${player.videoHeight}")
                                 appendLine("buffered: ${player.bufferedPercentage}%")
@@ -389,25 +397,82 @@ class LivePlayerViewModel
 
         /**
          * 切换画质。
+         *
+         * 切换后线路重置为第一条（qn 变化会导致可用线路集合变化）。
          */
         fun changeQuality(qn: Int) {
-            _uiState.update { it.copy(currentQuality = qn) }
+            _uiState.update { it.copy(currentQuality = qn, currentLine = 0) }
+            reloadAndPlay(qn)
+        }
+
+        /**
+         * 手动切换线路。
+         *
+         * 重新请求直播流信息以刷新签名 URL（signed URL 会过期），再按 [order] 播放。
+         * 若服务端返回的线路数变化导致 [order] 越界，则回退到第一条线路。
+         *
+         * @param order 目标线路序号（从 1 开始）
+         */
+        fun changeLine(order: Int) {
+            _uiState.update { it.copy(currentLine = order) }
+            reloadAndPlay(_uiState.value.currentQuality)
+        }
+
+        /**
+         * 重新拉取直播流信息并播放当前选中的线路。
+         *
+         * @param qn 目标画质（0 = 自动）
+         */
+        private fun reloadAndPlay(qn: Int) {
             val realRoomId = _uiState.value.realRoomId
             if (realRoomId == 0) return
 
             viewModelScope.launch {
                 runCatching {
-                    val streamInfo = liveRepository.getLiveStreamInfo(realRoomId, qn)
-                    if (!streamInfo.url.isNullOrBlank()) {
-                        videoPlayer?.playUrl(streamInfo.url)
-                        videoPlayer?.prepare()
-                        videoPlayer?.start()
+                    val playInfo = liveRepository.getLivePlayInfo(realRoomId, qn)
+                    val line =
+                        resolveLine(playInfo, _uiState.value.currentLine)
+                            ?: error("获取直播流地址失败")
+                    _uiState.update {
+                        it.copy(
+                            availableQualities = playInfo.qualities.ifEmpty { it.availableQualities },
+                            currentQuality = playInfo.currentQn.takeIf { current -> current > 0 } ?: qn,
+                            availableLines = playInfo.lines,
+                            currentLine = line.order,
+                        )
                     }
+                    videoPlayer?.playUrl(line.url)
+                    videoPlayer?.prepare()
+                    videoPlayer?.start()
                 }.onFailure { error ->
-                    logger.error(error) { "Failed to change quality" }
+                    if (error is CancellationException) throw error
+                    logger.error(error) { "Failed to reload live stream" }
+                    _uiState.update {
+                        it.copy(
+                            playerState = LivePlayerState.Error,
+                            isBuffering = false,
+                            errorMessage = error.message,
+                        )
+                    }
                 }
             }
         }
+
+        /**
+         * 按线路序号解析目标线路；序号越界时回退到第一条。
+         *
+         * @param playInfo 直播流信息
+         * @param preferredOrder 期望的线路序号（从 1 开始），0 表示默认第一条
+         */
+        private fun resolveLine(
+            playInfo: LivePlayInfo,
+            preferredOrder: Int,
+        ): LivePlayLine? =
+            if (playInfo.lines.isEmpty()) {
+                null
+            } else {
+                playInfo.lines.firstOrNull { it.order == preferredOrder } ?: playInfo.lines.first()
+            }
 
         /**
          * 释放播放器资源。

@@ -8,9 +8,19 @@ import dev.frost819.newbv.biliapi.http.entity.live.LiveAreaParent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveListResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRecommendResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRoomItem
+import dev.frost819.newbv.biliapi.http.entity.live.MediaInfo
+import dev.frost819.newbv.biliapi.http.entity.live.PlayCodec
+import dev.frost819.newbv.biliapi.http.entity.live.PlayFormat
+import dev.frost819.newbv.biliapi.http.entity.live.PlayStream
+import dev.frost819.newbv.biliapi.http.entity.live.PlayUrl
+import dev.frost819.newbv.biliapi.http.entity.live.PlayUrlInfo
+import dev.frost819.newbv.biliapi.http.entity.live.PlayUrlInfoItem
+import dev.frost819.newbv.biliapi.http.entity.live.QnDesc
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInitData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
+import dev.frost819.newbv.biliapi.http.entity.live.SimpleDurl
+import dev.frost819.newbv.biliapi.http.entity.live.SimplePlayUrlData
 import io.mockk.coEvery
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -193,11 +203,11 @@ class LiveRepositoryUnitTest {
             coEvery { BiliLiveHttpApi.getRoomPlayInfoV2(any(), any()) } throws RuntimeException("v2 error")
             coEvery { BiliLiveHttpApi.getLiveStreamUrl(any(), any()) } returns
                 fakeResponse(
-                    dev.frost819.newbv.biliapi.http.entity.live.SimplePlayUrlData(
+                    SimplePlayUrlData(
                         currentQuality = 0,
                         durl =
                             listOf(
-                                dev.frost819.newbv.biliapi.http.entity.live.SimpleDurl(
+                                SimpleDurl(
                                     url = "http://fallback.flv",
                                 ),
                             ),
@@ -232,6 +242,124 @@ class LiveRepositoryUnitTest {
             assertThat(result).isNotNull()
         }
 
+    @Test
+    fun `getLivePlayInfo returns qualities and multiple lines`() =
+        runBlocking {
+            val playInfo =
+                fakeRoomPlayInfoV2Data(
+                    streams =
+                        listOf(
+                            fakeHttpStream(
+                                urlInfos =
+                                    listOf(
+                                        PlayUrlInfoItem(host = "https://cdn-a.example", extra = "?a=1"),
+                                        PlayUrlInfoItem(host = "https://cdn-b.example", extra = "?b=2"),
+                                    ),
+                            ),
+                        ),
+                )
+            coEvery { BiliLiveHttpApi.getRoomPlayInfoV2(any(), any()) } returns fakeResponse(playInfo)
+
+            val result = repository.getLivePlayInfo(1718159119, 10000)
+
+            assertThat(result.qualities).hasSize(2)
+            assertThat(result.qualities[0].first).isEqualTo(10000)
+            assertThat(result.lines).hasSize(2)
+            assertThat(result.lines[0].url).isEqualTo("https://cdn-a.example/live.flv?a=1")
+            assertThat(result.lines[1].url).isEqualTo("https://cdn-b.example/live.flv?b=2")
+        }
+
+    @Test
+    fun `getLivePlayInfo falls back to single line on v2 failure`() =
+        runBlocking {
+            coEvery { BiliLiveHttpApi.getRoomPlayInfoV2(any(), any()) } throws RuntimeException("v2 error")
+            coEvery { BiliLiveHttpApi.getLiveStreamUrl(any(), any()) } returns
+                fakeResponse(
+                    SimplePlayUrlData(
+                        currentQuality = 150,
+                        durl =
+                            listOf(
+                                SimpleDurl(url = "http://fallback.flv"),
+                            ),
+                    ),
+                )
+
+            val result = repository.getLivePlayInfo(1718159119, 0)
+
+            assertThat(result.lines).hasSize(1)
+            assertThat(result.lines[0].order).isEqualTo(1)
+            assertThat(result.lines[0].url).isEqualTo("http://fallback.flv")
+            assertThat(result.currentQn).isEqualTo(150)
+        }
+
+    @Test
+    fun `getLivePlayInfo returns empty lines when all methods fail`() =
+        runBlocking {
+            coEvery { BiliLiveHttpApi.getRoomPlayInfoV2(any(), any()) } throws RuntimeException("v2 error")
+            coEvery { BiliLiveHttpApi.getLiveStreamUrl(any(), any()) } throws RuntimeException("simple error")
+
+            val result = repository.getLivePlayInfo(1718159119, 0)
+
+            assertThat(result.lines).isEmpty()
+            assertThat(result.qualities).isEmpty()
+            assertThat(result.currentQn).isEqualTo(0)
+        }
+
+    @Test
+    fun `resolvePlayInfo deduplicates identical urls`() {
+        val data =
+            fakeRoomPlayInfoV2Data(
+                streams =
+                    listOf(
+                        fakeHttpStream(
+                            urlInfos =
+                                listOf(
+                                    PlayUrlInfoItem(host = "https://cdn.example", extra = "?a=1"),
+                                    PlayUrlInfoItem(host = "https://cdn.example", extra = "?a=1"),
+                                ),
+                        ),
+                    ),
+            )
+
+        val result = repository.resolvePlayInfo(data)
+
+        assertThat(result.lines).hasSize(1)
+        assertThat(result.lines[0].order).isEqualTo(1)
+    }
+
+    @Test
+    fun `resolvePlayInfo prefers http_stream over http_hls`() {
+        val data =
+            fakeRoomPlayInfoV2Data(
+                streams =
+                    listOf(
+                        fakeStream(
+                            protocol = "http_hls",
+                            formatName = "fmp4",
+                            currentQn = 20000,
+                            baseUrl = "/live.m3u8",
+                        ),
+                        fakeHttpStream(currentQn = 10000),
+                    ),
+            )
+
+        val result = repository.resolvePlayInfo(data)
+
+        assertThat(result.currentQn).isEqualTo(10000)
+        assertThat(result.lines[0].url).isEqualTo("https://cdn.example/live.flv?query=1")
+    }
+
+    @Test
+    fun `resolvePlayInfo returns empty qualities and lines when stream list is empty`() {
+        val data = fakeRoomPlayInfoV2Data(streams = emptyList())
+
+        val result = repository.resolvePlayInfo(data)
+
+        assertThat(result.qualities).isEmpty()
+        assertThat(result.lines).isEmpty()
+        assertThat(result.currentQn).isEqualTo(0)
+    }
+
     private fun <T> fakeResponse(data: T) =
         BiliResponse(
             code = 0,
@@ -250,57 +378,70 @@ class LiveRepositoryUnitTest {
             liveStatus = 1,
         )
 
-    private fun fakeRoomPlayInfoV2Data() =
+    private fun fakeRoomPlayInfoV2Data(streams: List<PlayStream> = listOf(fakeHttpStream())) =
         RoomPlayInfoV2Data(
             roomId = 1718159119,
             shortId = 0,
             uid = 1,
             liveStatus = 1,
             playUrlInfo =
-                dev.frost819.newbv.biliapi.http.entity.live.PlayUrlInfo(
+                PlayUrlInfo(
                     playUrl =
-                        dev.frost819.newbv.biliapi.http.entity.live.PlayUrl(
+                        PlayUrl(
                             cid = 1718159119,
                             qnDesc =
                                 listOf(
-                                    dev.frost819.newbv.biliapi.http.entity.live
-                                        .QnDesc(qn = 10000, desc = "原画"),
-                                    dev.frost819.newbv.biliapi.http.entity.live
-                                        .QnDesc(qn = 400, desc = "蓝光"),
+                                    QnDesc(qn = 10000, desc = "原画"),
+                                    QnDesc(qn = 400, desc = "蓝光"),
                                 ),
-                            stream =
-                                listOf(
-                                    dev.frost819.newbv.biliapi.http.entity.live.PlayStream(
-                                        protocolName = "http_stream",
-                                        format =
-                                            listOf(
-                                                dev.frost819.newbv.biliapi.http.entity.live.PlayFormat(
-                                                    formatName = "flv",
-                                                    codec =
-                                                        listOf(
-                                                            dev.frost819.newbv.biliapi.http.entity.live.PlayCodec(
-                                                                codecName = "avc",
-                                                                currentQn = 10000,
-                                                                acceptQn = listOf(10000, 400),
-                                                                baseUrl = "/live.flv",
-                                                                urlInfo =
-                                                                    listOf(
-                                                                        dev.frost819.newbv.biliapi.http.entity.live
-                                                                            .PlayUrlInfoItem(
-                                                                                host = "https://cdn.example",
-                                                                                extra = "?query=1",
-                                                                            ),
-                                                                    ),
-                                                                mediaInfo =
-                                                                    dev.frost819.newbv.biliapi.http.entity.live
-                                                                        .MediaInfo(),
-                                                            ),
-                                                        ),
-                                                ),
-                                            ),
-                                    ),
-                                ),
+                            stream = streams,
                         ),
                 ),
         )
+
+    private fun fakeHttpStream(
+        formatName: String = "flv",
+        codecName: String = "avc",
+        currentQn: Int = 10000,
+        acceptQn: List<Int> = listOf(10000, 400),
+        urlInfos: List<PlayUrlInfoItem> = listOf(PlayUrlInfoItem(host = "https://cdn.example", extra = "?query=1")),
+        baseUrl: String = "/live.flv",
+    ) = fakeStream(
+        protocol = "http_stream",
+        formatName = formatName,
+        codecName = codecName,
+        currentQn = currentQn,
+        acceptQn = acceptQn,
+        urlInfos = urlInfos,
+        baseUrl = baseUrl,
+    )
+
+    private fun fakeStream(
+        protocol: String,
+        formatName: String,
+        codecName: String = "avc",
+        currentQn: Int = 10000,
+        acceptQn: List<Int> = listOf(10000, 400),
+        urlInfos: List<PlayUrlInfoItem> = listOf(PlayUrlInfoItem(host = "https://cdn.example", extra = "?query=1")),
+        baseUrl: String = "/live.flv",
+    ) = PlayStream(
+        protocolName = protocol,
+        format =
+            listOf(
+                PlayFormat(
+                    formatName = formatName,
+                    codec =
+                        listOf(
+                            PlayCodec(
+                                codecName = codecName,
+                                currentQn = currentQn,
+                                acceptQn = acceptQn,
+                                baseUrl = baseUrl,
+                                urlInfo = urlInfos,
+                                mediaInfo = MediaInfo(),
+                            ),
+                        ),
+                ),
+            ),
+    )
 }

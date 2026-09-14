@@ -5,17 +5,13 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -27,23 +23,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
-import dev.frost819.newbv.app.ui.component.player.ifElse
-import dev.frost819.newbv.app.ui.component.player.menu.component.MenuListItem
-import dev.frost819.newbv.app.ui.component.player.menu.component.RadioMenuList
+import dev.frost819.newbv.app.ui.component.player.menu.component.PlayerTwoLevelMenu
 import dev.frost819.newbv.app.viewmodel.player.LocalMenuFocusStateData
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusState
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusStateData
+import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.DanmakuType
 
@@ -55,20 +48,24 @@ enum class LivePlayerMenuNavItem(
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
 ) {
     Picture("画质", Icons.Outlined.Image),
+    Line("线路", Icons.Outlined.Wifi),
     Danmaku("弹幕", Icons.Outlined.ClearAll),
 }
 
 /**
  * 直播播放器设置菜单控制器。
  *
- * 从右侧滑入的半透明面板，包含 2 个 Tab（画质/弹幕）。
+ * 从右侧滑入的半透明面板，包含 3 个 Tab（画质/线路/弹幕）。
  * 三态焦点模型与视频播放器一致：MenuNav ↔ Menu ↔ Items。
- * 画质 Tab 简化为二级：MenuNav ↔ Items（跳过 Menu 层级）。
+ * 画质、线路 Tab 简化为二级：MenuNav ↔ Items（跳过 Menu 层级）。
  *
  * @param show 是否显示
  * @param availableQualities 可用画质列表（qn, desc）
  * @param currentQuality 当前画质 qn
  * @param onQualityChange 画质变化回调
+ * @param availableLines 可用线路列表
+ * @param currentLine 当前线路序号（从 1 开始）
+ * @param onLineChange 线路变化回调
  * @param danmakuState 弹幕配置状态
  * @param onDanmakuSettingChange 弹幕设置变化回调
  */
@@ -80,6 +77,9 @@ fun LiveMenuController(
     availableQualities: List<Pair<Int, String>>,
     currentQuality: Int,
     onQualityChange: (Int) -> Unit,
+    availableLines: List<LivePlayLine>,
+    currentLine: Int,
+    onLineChange: (Int) -> Unit,
     danmakuState: DanmakuState,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
 ) {
@@ -107,6 +107,9 @@ fun LiveMenuController(
                 availableQualities = availableQualities,
                 currentQuality = currentQuality,
                 onQualityChange = onQualityChange,
+                availableLines = availableLines,
+                currentLine = currentLine,
+                onLineChange = onLineChange,
                 danmakuState = danmakuState,
                 onDanmakuSettingChange = onDanmakuSettingChange,
             )
@@ -120,6 +123,9 @@ private fun LiveMenuControllerContent(
     availableQualities: List<Pair<Int, String>>,
     currentQuality: Int,
     onQualityChange: (Int) -> Unit,
+    availableLines: List<LivePlayLine>,
+    currentLine: Int,
+    onLineChange: (Int) -> Unit,
     danmakuState: DanmakuState,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
 ) {
@@ -146,12 +152,15 @@ private fun LiveMenuControllerContent(
                     availableQualities = availableQualities,
                     currentQuality = currentQuality,
                     onQualityChange = onQualityChange,
+                    availableLines = availableLines,
+                    currentLine = currentLine,
+                    onLineChange = onLineChange,
                     danmakuState = danmakuState,
                     onDanmakuSettingChange = onDanmakuSettingChange,
                     navFocusRequester = navFocusRequester,
                     onFocusStateChange = { focusState = it },
                 )
-                LiveMenuNavList(
+                MenuNavList(
                     modifier =
                         Modifier.onPreviewKeyEvent {
                             if (it.type == KeyEventType.KeyUp) {
@@ -162,18 +171,21 @@ private fun LiveMenuControllerContent(
                             }
                             if (it.key == Key.DirectionLeft) {
                                 focusState =
-                                    if (selectedNavItem == LivePlayerMenuNavItem.Picture) {
-                                        MenuFocusState.Items
-                                    } else {
+                                    if (selectedNavItem == LivePlayerMenuNavItem.Danmaku) {
                                         MenuFocusState.Menu
+                                    } else {
+                                        MenuFocusState.Items
                                     }
                             }
                             false
                         },
-                    selectedMenu = selectedNavItem,
-                    onSelectedChanged = { selectedNavItem = it },
+                    items = LivePlayerMenuNavItem.entries,
+                    selected = selectedNavItem,
                     isFocusing = focusState == MenuFocusState.MenuNav,
-                    navFocusRequester = navFocusRequester,
+                    label = { it.displayName },
+                    icon = { it.icon },
+                    onSelectedChanged = { selectedNavItem = it },
+                    focusRequester = navFocusRequester,
                 )
             }
         }
@@ -190,6 +202,9 @@ private fun LiveMenuList(
     availableQualities: List<Pair<Int, String>>,
     currentQuality: Int,
     onQualityChange: (Int) -> Unit,
+    availableLines: List<LivePlayLine>,
+    currentLine: Int,
+    onLineChange: (Int) -> Unit,
     danmakuState: DanmakuState,
     onDanmakuSettingChange: (DanmakuSettingAction) -> Unit,
     navFocusRequester: FocusRequester,
@@ -198,10 +213,21 @@ private fun LiveMenuList(
     Box(contentAlignment = Alignment.Center) {
         when (selectedNavMenu) {
             LivePlayerMenuNavItem.Picture ->
-                LivePictureMenuList(
-                    availableQualities = availableQualities,
-                    currentQuality = currentQuality,
-                    onQualityChange = onQualityChange,
+                PlayerTwoLevelMenu(
+                    items = availableQualities,
+                    selected = availableQualities.firstOrNull { it.first == currentQuality },
+                    itemLabel = { it.second },
+                    onItemSelected = { onQualityChange(it.first) },
+                    navFocusRequester = navFocusRequester,
+                    onFocusStateChange = onFocusStateChange,
+                )
+
+            LivePlayerMenuNavItem.Line ->
+                PlayerTwoLevelMenu(
+                    items = availableLines,
+                    selected = availableLines.firstOrNull { it.order == currentLine },
+                    itemLabel = { "线路 ${it.order}" },
+                    onItemSelected = { onLineChange(it.order) },
                     navFocusRequester = navFocusRequester,
                     onFocusStateChange = onFocusStateChange,
                 )
@@ -234,89 +260,6 @@ private fun LiveMenuList(
                     onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
                 )
             }
-        }
-    }
-}
-
-/**
- * 直播画质设置面板（二级：MenuNav ↔ Items）。
- *
- * 直接展示画质选项列表（[RadioMenuList]），按 RIGHT 返回导航栏。
- */
-@Composable
-private fun LivePictureMenuList(
-    availableQualities: List<Pair<Int, String>>,
-    currentQuality: Int,
-    onQualityChange: (Int) -> Unit,
-    navFocusRequester: FocusRequester,
-    onFocusStateChange: (MenuFocusState) -> Unit,
-) {
-    val focusState = LocalMenuFocusStateData.current
-    val itemsFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(focusState.focusState) {
-        if (focusState.focusState == MenuFocusState.Items) {
-            runCatching { itemsFocusRequester.requestFocus() }
-        }
-    }
-
-    AnimatedVisibility(visible = true) {
-        RadioMenuList(
-            modifier =
-                Modifier
-                    .width(216.dp)
-                    .padding(horizontal = 8.dp)
-                    .focusRequester(itemsFocusRequester),
-            items = availableQualities.map { it.second },
-            selected = availableQualities.indexOfFirst { it.first == currentQuality }.coerceAtLeast(0),
-            onSelectedChanged = { onQualityChange(availableQualities[it].first) },
-            onFocusBackToParent = {
-                onFocusStateChange(MenuFocusState.MenuNav)
-                navFocusRequester.requestFocus()
-            },
-        )
-    }
-}
-
-/**
- * 直播菜单导航列表（右侧）。
- *
- * 与视频播放器的 [MenuNavList] 结构相同，仅 Tab 项不同。
- */
-@Composable
-private fun LiveMenuNavList(
-    modifier: Modifier = Modifier,
-    selectedMenu: LivePlayerMenuNavItem,
-    onSelectedChanged: (LivePlayerMenuNavItem) -> Unit,
-    isFocusing: Boolean,
-    navFocusRequester: FocusRequester,
-) {
-    val restorerFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        runCatching { navFocusRequester.requestFocus() }
-    }
-
-    LazyColumn(
-        modifier =
-            modifier
-                .focusRestorer(restorerFocusRequester)
-                .focusRequester(navFocusRequester),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp),
-    ) {
-        itemsIndexed(LivePlayerMenuNavItem.entries) { index, item ->
-            MenuListItem(
-                modifier =
-                    Modifier
-                        .ifElse(index == 0, Modifier.focusRequester(restorerFocusRequester)),
-                text = item.displayName,
-                icon = item.icon,
-                expanded = isFocusing,
-                selected = selectedMenu == item,
-                onClick = { onSelectedChanged(item) },
-                onFocus = { onSelectedChanged(item) },
-            )
         }
     }
 }
