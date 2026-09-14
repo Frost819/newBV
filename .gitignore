@@ -52,3 +52,6 @@ logs/
 # ========================================
 /bv/
 .playwright-mcp/
+
+# B 站 API 参考文档（第三方，不纳入版本控制）
+/docs/bilibili-API-collect-master/
