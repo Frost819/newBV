@@ -68,6 +68,7 @@ body:
     attributes:
       label: 设备类型
       options:
+        - 请选择
         - Android TV
         - Google TV
         - Fire TV
@@ -92,6 +93,7 @@ body:
     attributes:
       label: Android 版本
       options:
+        - 请选择
         - Android 5.x
         - Android 6.x
         - Android 7.x
@@ -112,6 +114,7 @@ body:
       label: 接口类型
       description: 见「设置 → 其他 → 接口选择」
       options:
+        - 请选择
         - Web
         - App
         - 不确定
