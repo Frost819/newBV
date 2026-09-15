@@ -71,14 +71,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: newBV_${{ env.versionName }}
-          path: app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
+          path: |
+            app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
+            mapping_${{ env.versionCode }}.zip
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
-            mapping_${{ env.versionCode }}.zip
           tag_name: ${{ github.ref_name }}
           name: newBV ${{ env.versionName }}
           generate_release_notes: true
