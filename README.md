@@ -18,7 +18,7 @@
 newBV 是基于 [BV](https://github.com/aaa1115910/bv) 重构的 [哔哩哔哩](https://www.bilibili.com) 第三方 `Android TV`
 客户端，使用 `Jetpack Compose` 开发，支持 `Android 5.0+`（minSdk 21）。
 
-**这不是 BV 的 1:1 复刻，而是架构重构 + 功能增强。保留了原版BV核心使用体验的同时，新增了许多呼声很高的功能，并重构了软件架构。**
+**这不是 BV 的 1:1 复刻，而是架构重构 + 功能增强。保留了原版 BV 核心使用体验的同时，新增了许多呼声很高的功能，并重构了软件架构。**
 
 > 原版 BV 的代码仍保留在本仓库的 [`bv-feature`](../../tree/bv-feature) 分支。
 
@@ -37,12 +37,21 @@ newBV 是基于 [BV](https://github.com/aaa1115910/bv) 重构的 [哔哩哔哩](
 
 ### 架构
 
-- 单 Activity + Navigation-Compose（禁止新增 Activity）
+- 单 Activity + Navigation-Compose
 - 完全基于 StateFlow 重构，单向数据流（UDF）
 - Hilt 依赖注入
 - 仅 Media3 播放器，VOD + Live 双兼容
 - 完全删除代理逻辑（ProxyArea / Ali CDN 等）
 - 模块化拆分：`app` / `core` / `data` / `bili-api` / `player` / `danmaku` / `danmaku-engine` / `bili-subtitle`
+
+### 性能
+
+在 TV 1080p 模拟器（x86 / API 28）、release 混淆构建下与原版 BV 对比：
+
+| 指标 | newBV | 原版 BV | 提升 |
+|---|---|---|---|
+| 冷启动 → 首页首帧 | 576 ms | 1076 ms | **快 46.5%**（约 1.87×） |
+| Release APK 体积 | 7.20 MiB | 11.97 MiB | **小 39.8%**（约 1.66×） |
 
 ### 测试
 
