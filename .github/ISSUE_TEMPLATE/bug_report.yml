@@ -1,0 +1,138 @@
+name: Bug 报告
+description: 报告 newBV 使用中遇到的问题
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 前置检查
+      description: 请确认已完成以下检查，避免重复提交
+      options:
+        - label: 我已搜索过现有 issue，确认没有重复
+          required: true
+        - label: 我使用的是最新 release 版本
+          required: true
+        - label: 该问题可以稳定复现
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 简明扼要地描述你遇到的问题
+      placeholder: 例如：播放视频时切换到下一集，弹幕不刷新
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 请分步列出能稳定复现该问题的操作
+      placeholder: |
+        1. 打开首页
+        2. 点击某个视频
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 你期望发生什么
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 实际发生了什么
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: newBV 版本
+      description: 见「设置 → 关于」，形如 0.1.0.r1234.abc123
+      placeholder: 0.1.0.r1234.abc123
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device_type
+    attributes:
+      label: 设备类型
+      options:
+        - Android TV
+        - Google TV
+        - Fire TV
+        - TV Box
+        - 手机
+        - 模拟器
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: device_model
+    attributes:
+      label: 设备型号
+      description: 可选。例如 小米电视 ES Pro、Chromecast with Google TV
+      placeholder: 小米电视 ES Pro
+    validations:
+      required: false
+
+  - type: dropdown
+    id: android_version
+    attributes:
+      label: Android 版本
+      options:
+        - Android 5.x
+        - Android 6.x
+        - Android 7.x
+        - Android 8.x
+        - Android 9.x
+        - Android 10
+        - Android 11
+        - Android 12
+        - Android 13
+        - Android 14
+        - Android 15+
+    validations:
+      required: true
+
+  - type: dropdown
+    id: api_type
+    attributes:
+      label: 接口类型
+      description: 见「设置 → 其他 → 接口选择」
+      options:
+        - Web
+        - App
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: |
+        粘贴「设置 → 查看日志」中的相关日志。
+        若为崩溃/闪退：建议先到「设置 → 其他」开启「上传崩溃日志」并复现一次；同时在此填写崩溃发生的具体时间（精确到分钟）+ 版本号 + 设备型号，便于开发者从崩溃后台查询。
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 可选。其他有帮助的信息，如截图、录屏、网络环境等
+    validations:
+      required: false
