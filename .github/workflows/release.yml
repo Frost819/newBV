@@ -51,9 +51,6 @@ jobs:
           echo "versionCode=$(jq -r '.elements[0].versionCode' "$META")" >> "$GITHUB_ENV"
           echo "versionName=$(jq -r '.elements[0].versionName' "$META")" >> "$GITHUB_ENV"
 
-      - name: Zip R8 mapping
-        run: zip -rj "mapping_${versionCode}.zip" app/build/outputs/mapping/release
-
       - name: Upload mapping to crash backend
         env:
           CRASH_UPLOAD_TOKEN: ${{ secrets.CRASH_UPLOAD_TOKEN }}
@@ -71,9 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: newBV_${{ env.versionName }}
-          path: |
-            app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
-            mapping_${{ env.versionCode }}.zip
+          path: app/build/outputs/apk/release/newBV_${{ env.versionCode }}_${{ env.versionName }}_release.apk
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
