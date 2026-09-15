@@ -58,9 +58,11 @@ jobs:
         env:
           CRASH_UPLOAD_TOKEN: ${{ secrets.CRASH_UPLOAD_TOKEN }}
         run: |
-          gzip -9 -c app/build/outputs/mapping/release/mapping.txt > mapping.txt.gz
+          MAPPING=app/build/outputs/mapping/release/mapping.txt
+          SIZE=$(stat -c%s "$MAPPING")
+          gzip -9 -c "$MAPPING" > mapping.txt.gz
           curl -sfS -X POST \
-            "https://crash-log.frost819.site/api/mapping/upload?versionCode=${versionCode}&gzip=1" \
+            "https://crash-log.frost819.site/api/mapping/upload?versionCode=${versionCode}&gzip=1&size=${SIZE}" \
             -H "Authorization: Bearer ${CRASH_UPLOAD_TOKEN}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @mapping.txt.gz
