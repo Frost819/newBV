@@ -105,6 +105,7 @@ import dev.frost819.newbv.biliapi.entity.video.Tag
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
+import dev.frost819.newbv.core.focus.focusInvertedColors
 import dev.frost819.newbv.core.focus.touchClickable
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -233,7 +234,7 @@ private fun ErrorScreen(
                             ),
                     ),
                 colors =
-                    ClickableSurfaceDefaults.colors(
+                    focusInvertedColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
@@ -241,7 +242,6 @@ private fun ErrorScreen(
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     text = "重试",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -681,7 +681,7 @@ private fun VideoInfoHeader(
                                     ),
                             ),
                         colors =
-                            ClickableSurfaceDefaults.colors(
+                            focusInvertedColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             ),
@@ -705,7 +705,6 @@ private fun VideoInfoHeader(
                             Text(
                                 text = detail.author.name,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -843,7 +842,7 @@ private fun ActionButton(
         onLongClick = onLongClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors =
-            ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor =
                     if (highlighted) {
                         MaterialTheme.colorScheme.primaryContainer
@@ -867,22 +866,10 @@ private fun ActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint =
-                    if (highlighted) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color =
-                    if (highlighted) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
             )
         }
     }
@@ -905,9 +892,8 @@ private fun VideoDescription(
                 .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("description") }
                 .touchClickable(onClick = { expanded = !expanded }),
         colors =
-            ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ),
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
@@ -932,7 +918,6 @@ private fun VideoDescription(
                     .animateContentSize(),
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
             maxLines = if (expanded) Int.MAX_VALUE else 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -986,7 +971,7 @@ private fun VideoPartRow(
                     modifier = Modifier.touchClickable(onClick = onShowPartListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors =
-                        ClickableSurfaceDefaults.colors(
+                        focusInvertedColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
@@ -1009,7 +994,7 @@ private fun VideoPartRow(
                         modifier = Modifier.touchClickable(onClick = { onClick(lastPage) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors =
-                            ClickableSurfaceDefaults.colors(
+                            focusInvertedColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             ),
@@ -1027,7 +1012,6 @@ private fun VideoPartRow(
                             Text(
                                 text = "上次看到 P${lastPage.index}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -1105,7 +1089,7 @@ private fun PartButton(
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors =
-            ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor =
                     if (isCurrent) {
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
@@ -1134,7 +1118,6 @@ private fun PartButton(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1189,7 +1172,7 @@ private fun VideoUgcSeasonRow(
                     modifier = Modifier.touchClickable(onClick = onShowListDialog),
                     shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     colors =
-                        ClickableSurfaceDefaults.colors(
+                        focusInvertedColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
@@ -1212,7 +1195,7 @@ private fun VideoUgcSeasonRow(
                         modifier = Modifier.touchClickable(onClick = { onClick(lastEpisode) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                         colors =
-                            ClickableSurfaceDefaults.colors(
+                            focusInvertedColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             ),
@@ -1230,7 +1213,6 @@ private fun VideoUgcSeasonRow(
                             Text(
                                 text = "上次看到 ${lastEpisode.title}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }

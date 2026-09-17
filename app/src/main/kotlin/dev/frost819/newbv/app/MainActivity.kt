@@ -19,6 +19,7 @@ import dev.frost819.newbv.core.interaction.InteractionTracker
 import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.core.theme.BVTheme
+import dev.frost819.newbv.core.theme.SystemBarsEffect
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
 import javax.inject.Inject
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
                 }
 
             BVTheme(themeMode = coreThemeMode, density = density) {
+                SystemBarsEffect()
                 CompositionLocalProvider(
                     LocalInteractionTracker provides interactionTracker,
                 ) {

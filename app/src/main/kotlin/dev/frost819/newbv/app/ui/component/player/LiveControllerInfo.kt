@@ -167,7 +167,7 @@ private fun LiveControllerInfoTop(
                     MaterialTheme.typography.headlineSmall.copy(
                         shadow = Shadow(color = Color.Black, blurRadius = 1f),
                     ),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -175,7 +175,7 @@ private fun LiveControllerInfoTop(
                 Text(
                     text = areaName,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     modifier = Modifier.padding(end = 16.dp),
                 )
             }
@@ -191,7 +191,7 @@ private fun LiveControllerInfoTop(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_player_watching),
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.85f),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
@@ -200,7 +200,7 @@ private fun LiveControllerInfoTop(
                         MaterialTheme.typography.bodySmall.copy(
                             shadow = Shadow(color = Color.Black, blurRadius = 1f),
                         ),
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                 )
             }
         }
@@ -276,7 +276,6 @@ private fun LiveControllerInfoBottom(
                             painter = painterResource(id = icon),
                             contentDescription = desc,
                             modifier = Modifier.padding(5.dp),
-                            tint = Color.White,
                         )
                     }
                 }
@@ -305,7 +304,7 @@ private fun Clock(
 ) {
     Text(
         modifier = modifier,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Bold,
         style = TextStyle(shadow = Shadow(color = Color.Black, blurRadius = 1f)),
         text =

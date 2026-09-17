@@ -274,13 +274,11 @@ private fun FollowHeader(
                 Text(
                     text = "更多",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
                 Spacer(Modifier.width(2.dp))
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.height(12.dp),
                 )
             }

@@ -72,7 +72,6 @@ fun UpCard(
             Text(
                 text = sign.ifBlank { "这个人很神秘" },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

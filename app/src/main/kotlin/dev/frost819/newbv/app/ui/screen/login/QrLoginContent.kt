@@ -34,6 +34,7 @@ import androidx.tv.material3.Text
 import dev.frost819.newbv.R
 import dev.frost819.newbv.app.viewmodel.login.LoginViewModel
 import dev.frost819.newbv.biliapi.entity.login.QrLoginState
+import dev.frost819.newbv.core.focus.focusInvertedColors
 import dev.frost819.newbv.core.focus.touchClickable
 import io.github.g0dkar.qrcode.QRCode
 
@@ -146,7 +147,7 @@ fun QrLoginContent(
                                         ),
                                 ),
                             colors =
-                                ClickableSurfaceDefaults.colors(
+                                focusInvertedColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 ),
@@ -154,7 +155,6 @@ fun QrLoginContent(
                             Text(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                                 text = stringResource(R.string.login_retry),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }

@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
@@ -44,6 +45,8 @@ import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.ui.state.player.SeekerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.biliapi.entity.video.Subtitle
+import dev.frost819.newbv.core.theme.BVTheme
+import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -451,161 +454,169 @@ fun VideoPlayerController(
                     gestureTipState = gestureTipState,
                 ),
     ) {
-        // 视频画面 + 弹幕层
-        content()
+        // 播放器画面与覆盖层始终基于黑色背景，固定使用深色主题，
+        // 避免浅色应用下默认取色变成深色文字叠在黑底上不可见
+        BVTheme(
+            themeMode = ThemeMode.Dark,
+            density = LocalDensity.current.density,
+        ) {
+            // 视频画面 + 弹幕层
+            content()
 
-        // 调试信息
-        if (Prefs.showPlayerDebugInfo) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(androidx.compose.ui.Alignment.TopStart)
-                        .padding(8.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(Color.Black.copy(alpha = 0.5f)),
-            ) {
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = seekerState.value.debugInfo,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
+            // 调试信息
+            if (Prefs.showPlayerDebugInfo) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(androidx.compose.ui.Alignment.TopStart)
+                            .padding(8.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                ) {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = seekerState.value.debugInfo,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+
+            // 常显进度条
+            if (showPersistentSeek && !showInfoSeekController) {
+                VideoProgressSeek(
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter),
+                    duration = seekerState.value.totalDuration,
+                    position = seekerState.value.currentTime,
+                    bufferedPercentage = seekerState.value.bufferedPercentage,
+                    isPersistentSeek = true,
                 )
             }
-        }
 
-        // 常显进度条
-        if (showPersistentSeek && !showInfoSeekController) {
-            VideoProgressSeek(
-                modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter),
-                duration = seekerState.value.totalDuration,
-                position = seekerState.value.currentTime,
-                bufferedPercentage = seekerState.value.bufferedPercentage,
-                isPersistentSeek = true,
+            // 字幕
+            if (uiState.subtitleId != -1L) {
+                BottomSubtitle(
+                    subtitleData = uiState.subtitleData,
+                    currentTime = seekerState.value.currentTime,
+                    fontSize =
+                        androidx.compose.ui.unit.TextUnit(
+                            uiState.subtitleState.fontSize.toFloat(),
+                            androidx.compose.ui.unit.TextUnitType.Sp,
+                        ),
+                    opacity = uiState.subtitleState.opacity,
+                    padding =
+                        androidx.compose.ui.unit
+                            .Dp(uiState.subtitleState.bottomPadding.toFloat()),
+                )
+            }
+
+            // 跳转提示
+            SkipTips(
+                showBackToStart = uiState.showBackToStart,
+                showSkipToNextEp = uiState.showSkipToNextEp,
+                showPreviewTip = uiState.showPreviewTip,
+                shortcutTipText = uiState.shortcutTipText,
+            )
+
+            // 播放状态提示
+            PlayStateTips(
+                isPlaying = uiState.playerState == PlayerState.Playing,
+                isBuffering = uiState.isBuffering,
+                isError = uiState.playerState is PlayerState.Error,
+                errorMessage = (uiState.playerState as? PlayerState.Error)?.message,
+            )
+
+            // 手势提示（亮度/音量/倍速反馈）
+            GestureTip(
+                state = gestureTipState.value,
+                modifier = Modifier.align(Alignment.Center),
+            )
+
+            // 相关视频
+            RelatedVideosController(
+                show = showRelatedVideosController,
+                relatedVideos = uiState.relatedVideos,
+                onVideoClicked = onRelatedVideoClicked,
+            )
+
+            // 信息栏 + 进度条 + 按钮
+            ControllerVideoInfo(
+                modifier = Modifier.focusable(),
+                show = showInfoSeekController,
+                isSeeking = isSeeking,
+                goTime = goTime,
+                seekerState = seekerState.value,
+                title = uiState.title,
+                clock = uiState.clock,
+                onlineWatching = uiState.onlineWatching,
+                videoShot = uiState.videoShot,
+                videoShotCache = videoShotCache,
+                isPgc = isPgc,
+                danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
+                isLooping = isLooping,
+                onDirectionLeft = ::onDirectionLeft,
+                onDirectionRight = ::onDirectionRight,
+                onSeekGoTime = ::onSeekGoTime,
+                onSeekToPosition = ::onSeekToPosition,
+                onPlayPause = {
+                    onPlay()
+                    startControllerAutoHide()
+                },
+                onDanmakuSwitchChange = {
+                    onToggleDanmaku()
+                    startControllerAutoHide()
+                },
+                onShowSettings = { showMenuController = true },
+                onShowRelatedVideos = { showRelatedVideosController = true },
+                onGoToVideoInfo = onGoToVideoDetail,
+                onToggleLoop = {
+                    onToggleLoop()
+                    startControllerAutoHide()
+                },
+                onGoToUpPage = onGoToUpPage,
+                onShowInteraction = onShowInteraction,
+                onShowComments = onShowComments,
+            )
+
+            // 分集列表
+            VideoListController(
+                show = showListController,
+                currentCid = uiState.cid,
+                videoList = uiState.videoList,
+                onPlayNewVideo = { item ->
+                    onPlayNewVideo(item)
+                    showListController = false
+                },
+            )
+
+            // 设置菜单
+            MenuController(
+                show = showMenuController,
+                uiState = uiState,
+                onResolutionChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetQuality(it)) },
+                onCodecChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetVideoCodec(it)) },
+                onAspectRatioChange = onAspectRatioChange,
+                onPlaySpeedChange = onPlaySpeedChange,
+                onAudioChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetAudio(it)) },
+                onDanmakuSwitchChange = { types ->
+                    // data DanmakuType → danmaku entity DanmakuType
+                    val entityTypes =
+                        types.mapNotNull {
+                            runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }
+                                .getOrNull()
+                        }
+                    onDanmakuSettingChange(DanmakuSettingAction.SetEnabledTypes(entityTypes))
+                },
+                onDanmakuSizeChange = { onDanmakuSettingChange(DanmakuSettingAction.SetScale(it)) },
+                onDanmakuOpacityChange = { onDanmakuSettingChange(DanmakuSettingAction.SetOpacity(it)) },
+                onDanmakuSpeedFactorChange = { onDanmakuSettingChange(DanmakuSettingAction.SetSpeedFactor(it)) },
+                onDanmakuAreaChange = { onDanmakuSettingChange(DanmakuSettingAction.SetArea(it)) },
+                onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
+                onSubtitleChange = { subtitle -> onSubtitleChange(subtitle) },
+                onSubtitleSizeChange = { onSubtitleSettingChange(SubtitleSettingAction.SetFontSize(it)) },
+                onSubtitleBackgroundOpacityChange = { onSubtitleSettingChange(SubtitleSettingAction.SetOpacity(it)) },
+                onSubtitleBottomPadding = { onSubtitleSettingChange(SubtitleSettingAction.SetBottomPadding(it)) },
             )
         }
-
-        // 字幕
-        if (uiState.subtitleId != -1L) {
-            BottomSubtitle(
-                subtitleData = uiState.subtitleData,
-                currentTime = seekerState.value.currentTime,
-                fontSize =
-                    androidx.compose.ui.unit.TextUnit(
-                        uiState.subtitleState.fontSize.toFloat(),
-                        androidx.compose.ui.unit.TextUnitType.Sp,
-                    ),
-                opacity = uiState.subtitleState.opacity,
-                padding =
-                    androidx.compose.ui.unit
-                        .Dp(uiState.subtitleState.bottomPadding.toFloat()),
-            )
-        }
-
-        // 跳转提示
-        SkipTips(
-            showBackToStart = uiState.showBackToStart,
-            showSkipToNextEp = uiState.showSkipToNextEp,
-            showPreviewTip = uiState.showPreviewTip,
-            shortcutTipText = uiState.shortcutTipText,
-        )
-
-        // 播放状态提示
-        PlayStateTips(
-            isPlaying = uiState.playerState == PlayerState.Playing,
-            isBuffering = uiState.isBuffering,
-            isError = uiState.playerState is PlayerState.Error,
-            errorMessage = (uiState.playerState as? PlayerState.Error)?.message,
-        )
-
-        // 手势提示（亮度/音量/倍速反馈）
-        GestureTip(
-            state = gestureTipState.value,
-            modifier = Modifier.align(Alignment.Center),
-        )
-
-        // 相关视频
-        RelatedVideosController(
-            show = showRelatedVideosController,
-            relatedVideos = uiState.relatedVideos,
-            onVideoClicked = onRelatedVideoClicked,
-        )
-
-        // 信息栏 + 进度条 + 按钮
-        ControllerVideoInfo(
-            modifier = Modifier.focusable(),
-            show = showInfoSeekController,
-            isSeeking = isSeeking,
-            goTime = goTime,
-            seekerState = seekerState.value,
-            title = uiState.title,
-            clock = uiState.clock,
-            onlineWatching = uiState.onlineWatching,
-            videoShot = uiState.videoShot,
-            videoShotCache = videoShotCache,
-            isPgc = isPgc,
-            danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
-            isLooping = isLooping,
-            onDirectionLeft = ::onDirectionLeft,
-            onDirectionRight = ::onDirectionRight,
-            onSeekGoTime = ::onSeekGoTime,
-            onSeekToPosition = ::onSeekToPosition,
-            onPlayPause = {
-                onPlay()
-                startControllerAutoHide()
-            },
-            onDanmakuSwitchChange = {
-                onToggleDanmaku()
-                startControllerAutoHide()
-            },
-            onShowSettings = { showMenuController = true },
-            onShowRelatedVideos = { showRelatedVideosController = true },
-            onGoToVideoInfo = onGoToVideoDetail,
-            onToggleLoop = {
-                onToggleLoop()
-                startControllerAutoHide()
-            },
-            onGoToUpPage = onGoToUpPage,
-            onShowInteraction = onShowInteraction,
-            onShowComments = onShowComments,
-        )
-
-        // 分集列表
-        VideoListController(
-            show = showListController,
-            currentCid = uiState.cid,
-            videoList = uiState.videoList,
-            onPlayNewVideo = { item ->
-                onPlayNewVideo(item)
-                showListController = false
-            },
-        )
-
-        // 设置菜单
-        MenuController(
-            show = showMenuController,
-            uiState = uiState,
-            onResolutionChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetQuality(it)) },
-            onCodecChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetVideoCodec(it)) },
-            onAspectRatioChange = onAspectRatioChange,
-            onPlaySpeedChange = onPlaySpeedChange,
-            onAudioChange = { onMediaProfileSettingChange(MediaProfileSettingAction.SetAudio(it)) },
-            onDanmakuSwitchChange = { types ->
-                // data DanmakuType → danmaku entity DanmakuType
-                val entityTypes =
-                    types.mapNotNull {
-                        runCatching { dev.frost819.newbv.danmaku.entity.DanmakuType.entries[it.ordinal] }.getOrNull()
-                    }
-                onDanmakuSettingChange(DanmakuSettingAction.SetEnabledTypes(entityTypes))
-            },
-            onDanmakuSizeChange = { onDanmakuSettingChange(DanmakuSettingAction.SetScale(it)) },
-            onDanmakuOpacityChange = { onDanmakuSettingChange(DanmakuSettingAction.SetOpacity(it)) },
-            onDanmakuSpeedFactorChange = { onDanmakuSettingChange(DanmakuSettingAction.SetSpeedFactor(it)) },
-            onDanmakuAreaChange = { onDanmakuSettingChange(DanmakuSettingAction.SetArea(it)) },
-            onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
-            onSubtitleChange = { subtitle -> onSubtitleChange(subtitle) },
-            onSubtitleSizeChange = { onSubtitleSettingChange(SubtitleSettingAction.SetFontSize(it)) },
-            onSubtitleBackgroundOpacityChange = { onSubtitleSettingChange(SubtitleSettingAction.SetOpacity(it)) },
-            onSubtitleBottomPadding = { onSubtitleSettingChange(SubtitleSettingAction.SetBottomPadding(it)) },
-        )
     }
 }

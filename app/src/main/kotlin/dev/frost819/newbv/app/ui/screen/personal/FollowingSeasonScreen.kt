@@ -47,6 +47,7 @@ import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonStatus
 import dev.frost819.newbv.biliapi.entity.season.FollowingSeasonType
+import dev.frost819.newbv.core.focus.focusInvertedColors
 import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -299,24 +300,24 @@ private fun FilterChip(
                         .RoundedCornerShape(50),
             ),
         colors =
-            androidx.tv.material3.ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor =
                     if (selected) {
                         androidx.tv.material3.MaterialTheme.colorScheme.primary
                     } else {
                         androidx.tv.material3.MaterialTheme.colorScheme.surfaceVariant
                     },
+                contentColor =
+                    if (selected) {
+                        androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+                    },
             ),
     ) {
         androidx.tv.material3.Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color =
-                if (selected) {
-                    androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
-                } else {
-                    androidx.tv.material3.MaterialTheme.colorScheme.onSurface
-                },
         )
     }
 }

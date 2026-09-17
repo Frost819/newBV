@@ -22,6 +22,9 @@ object BVColors {
     val Secondary = Color(0xFF5B9B94)
     val SecondaryLight = Color(0xFF79B8AE)
 
+    /** 浅色背景下使用的中性绿色变体，作为强调色文字/图标时保证对比度。 */
+    val SecondaryStrong = Color(0xFF3F7A73)
+
     /** 黄色，用于投币/警告。 */
     val Yellow = Color(0xFFC49B5C)
 

@@ -71,6 +71,7 @@ import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailUiState
 import dev.frost819.newbv.app.viewmodel.pgc.SeasonDetailViewModel
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
+import dev.frost819.newbv.core.focus.focusInvertedColors
 import dev.frost819.newbv.core.focus.touchClickable
 
 /**
@@ -366,7 +367,7 @@ private fun SeasonActionButton(
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors =
-            ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor =
                     if (highlighted) {
                         accentColor.copy(alpha = 0.2f)
@@ -390,17 +391,10 @@ private fun SeasonActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint = if (highlighted) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color =
-                    if (highlighted) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
             )
         }
     }
@@ -614,7 +608,7 @@ private fun SeasonChip(
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors =
-            ClickableSurfaceDefaults.colors(
+            focusInvertedColors(
                 containerColor =
                     if (isCurrent) {
                         MaterialTheme.colorScheme.secondaryContainer
@@ -633,12 +627,6 @@ private fun SeasonChip(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color =
-                if (isCurrent) {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
         )
     }
 }
@@ -685,7 +673,7 @@ private fun SeasonErrorScreen(
                             ),
                     ),
                 colors =
-                    ClickableSurfaceDefaults.colors(
+                    focusInvertedColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
@@ -693,7 +681,6 @@ private fun SeasonErrorScreen(
                 Text(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     text = "重试",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

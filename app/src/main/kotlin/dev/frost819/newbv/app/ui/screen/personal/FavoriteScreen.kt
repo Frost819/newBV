@@ -34,6 +34,7 @@ import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
 import dev.frost819.newbv.app.viewmodel.personal.PersonalViewModel
+import dev.frost819.newbv.core.focus.focusInvertedColors
 import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -115,12 +116,18 @@ fun FavoriteScreen(
                                         .RoundedCornerShape(50),
                             ),
                         colors =
-                            androidx.tv.material3.ClickableSurfaceDefaults.colors(
+                            focusInvertedColors(
                                 containerColor =
                                     if (state.currentFolderId == folder.id) {
                                         androidx.tv.material3.MaterialTheme.colorScheme.primary
                                     } else {
                                         androidx.tv.material3.MaterialTheme.colorScheme.surface
+                                    },
+                                contentColor =
+                                    if (state.currentFolderId == folder.id) {
+                                        androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
+                                    } else {
+                                        androidx.tv.material3.MaterialTheme.colorScheme.onSurface
                                     },
                             ),
                     ) {
@@ -128,12 +135,6 @@ fun FavoriteScreen(
                             text = "${folder.title} (${folder.mediaCount})",
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             style = androidx.tv.material3.MaterialTheme.typography.labelLarge,
-                            color =
-                                if (state.currentFolderId == folder.id) {
-                                    androidx.tv.material3.MaterialTheme.colorScheme.onPrimary
-                                } else {
-                                    androidx.tv.material3.MaterialTheme.colorScheme.onSurface
-                                },
                         )
                     }
                 }

@@ -27,10 +27,13 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.LiveMenuController
 import dev.frost819.newbv.biliapi.repositories.LivePlayLine
+import dev.frost819.newbv.core.theme.BVTheme
+import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.Job
@@ -260,72 +263,79 @@ fun LivePlayerController(
                     gestureTipState = gestureTipState,
                 ),
     ) {
-        content()
+        // 播放器画面与覆盖层始终基于黑色背景，固定使用深色主题，
+        // 避免浅色应用下默认取色变成深色文字叠在黑底上不可见
+        BVTheme(
+            themeMode = ThemeMode.Dark,
+            density = LocalDensity.current.density,
+        ) {
+            content()
 
-        // 调试信息
-        if (Prefs.showPlayerDebugInfo && debugInfo.isNotBlank()) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(Color.Black.copy(alpha = 0.5f)),
-            ) {
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = debugInfo,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            // 调试信息
+            if (Prefs.showPlayerDebugInfo && debugInfo.isNotBlank()) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                ) {
+                    Text(
+                        modifier = Modifier.padding(8.dp),
+                        text = debugInfo,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
+
+            PlayStateTips(
+                isPlaying = isPlaying,
+                isBuffering = isBuffering,
+                isError = isError,
+                errorMessage = errorMessage,
+            )
+
+            GestureTip(
+                state = gestureTipState.value,
+                modifier = Modifier.align(Alignment.Center),
+            )
+
+            LiveControllerInfo(
+                show = showInfoController && !showMenuController,
+                title = title,
+                areaName = areaName,
+                onlineCount = onlineCount,
+                clock = clock,
+                isPlaying = isPlaying,
+                danmakuEnabled = danmakuEnabled,
+                onPlayPause = {
+                    onPlayPause()
+                    startControllerAutoHide()
+                },
+                onRefresh = {
+                    onRefresh()
+                    startControllerAutoHide()
+                },
+                onDanmakuSwitchChange = {
+                    onToggleDanmaku()
+                    startControllerAutoHide()
+                },
+                onShowSettings = { showMenuController = true },
+            )
+
+            LiveMenuController(
+                show = showMenuController,
+                availableQualities = availableQualities,
+                currentQuality = currentQuality,
+                onQualityChange = onQualityChange,
+                availableLines = availableLines,
+                currentLine = currentLine,
+                onLineChange = onLineChange,
+                danmakuState = danmakuState,
+                onDanmakuSettingChange = onDanmakuSettingChange,
+            )
         }
-
-        PlayStateTips(
-            isPlaying = isPlaying,
-            isBuffering = isBuffering,
-            isError = isError,
-            errorMessage = errorMessage,
-        )
-
-        GestureTip(
-            state = gestureTipState.value,
-            modifier = Modifier.align(Alignment.Center),
-        )
-
-        LiveControllerInfo(
-            show = showInfoController && !showMenuController,
-            title = title,
-            areaName = areaName,
-            onlineCount = onlineCount,
-            clock = clock,
-            isPlaying = isPlaying,
-            danmakuEnabled = danmakuEnabled,
-            onPlayPause = {
-                onPlayPause()
-                startControllerAutoHide()
-            },
-            onRefresh = {
-                onRefresh()
-                startControllerAutoHide()
-            },
-            onDanmakuSwitchChange = {
-                onToggleDanmaku()
-                startControllerAutoHide()
-            },
-            onShowSettings = { showMenuController = true },
-        )
-
-        LiveMenuController(
-            show = showMenuController,
-            availableQualities = availableQualities,
-            currentQuality = currentQuality,
-            onQualityChange = onQualityChange,
-            availableLines = availableLines,
-            currentLine = currentLine,
-            onLineChange = onLineChange,
-            danmakuState = danmakuState,
-            onDanmakuSettingChange = onDanmakuSettingChange,
-        )
     }
 }

@@ -42,6 +42,15 @@ class ColorPaletteTest {
             .isAtLeast(MIN_TEXT_CONTRAST)
     }
 
+    @Test
+    fun `light theme secondary accent is readable as foreground text`() {
+        // secondary 在浅色主题中用作选中态文字/图标等前景色，必须满足文字对比度
+        assertThat(contrastRatio(BVColors.LightSurface, BVColors.SecondaryStrong))
+            .isAtLeast(MIN_TEXT_CONTRAST)
+        assertThat(contrastRatio(BVColors.LightBackground, BVColors.SecondaryStrong))
+            .isAtLeast(MIN_TEXT_CONTRAST)
+    }
+
     private fun contrastRatio(
         first: Color,
         second: Color,

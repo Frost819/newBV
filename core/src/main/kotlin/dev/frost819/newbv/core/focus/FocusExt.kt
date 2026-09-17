@@ -9,6 +9,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.material3.ShapeDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.ClickableSurfaceColors
+import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.core.interaction.InputMethod
 import dev.frost819.newbv.core.interaction.LocalInteractionTracker
@@ -122,3 +126,32 @@ fun FocusRequester.requestFocus(scope: CoroutineScope) {
         }
     }
 }
+
+/**
+ * 构建「聚焦反色」的可点击 Surface 配色。
+ *
+ * TV 遥控器场景焦点必须足够醒目：聚焦时容器切换为
+ * [androidx.tv.material3.ColorScheme.inverseSurface]，
+ * 内容切换为 [androidx.tv.material3.ColorScheme.inverseOnSurface]，
+ * 实现整体明暗反色。未聚焦时使用调用方传入的容器/内容色，
+ * 以便表达「已选中 / 已激活」等常态。
+ *
+ * 注意：Surface 的内容色通过 [androidx.tv.material3.LocalContentColor] 下传，
+ * 子组件（[androidx.tv.material3.Text] / [androidx.tv.material3.Icon]）**不要**再硬编码颜色，
+ * 否则聚焦时不会随容器一起反色。
+ *
+ * @param containerColor 未聚焦时的容器色。
+ * @param contentColor 未聚焦时的内容色。
+ */
+@Composable
+@ReadOnlyComposable
+fun focusInvertedColors(
+    containerColor: Color,
+    contentColor: Color,
+): ClickableSurfaceColors =
+    ClickableSurfaceDefaults.colors(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+        focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+    )
