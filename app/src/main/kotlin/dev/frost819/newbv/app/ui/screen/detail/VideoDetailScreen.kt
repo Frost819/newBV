@@ -86,13 +86,12 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
-import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.SearchResultRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.ToastUtils
-import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
@@ -389,18 +388,7 @@ private fun VideoDetailContent(
         if (detail.relatedVideos.isNotEmpty()) {
             RelatedVideoRow(
                 videos = detail.relatedVideos,
-                onClick = { relatedVideo ->
-                    val epid = relatedVideo.epid
-                    if (relatedVideo.jumpToSeason && epid != null) {
-                        navController.navigate(
-                            PgcFeatureRoute(seasonId = epid.toLong()),
-                        )
-                    } else {
-                        navController.navigate(
-                            VideoDetailRoute(aid = relatedVideo.aid),
-                        )
-                    }
-                },
+                onClick = { cardData -> navController.navigateFromVideoCard(cardData) },
                 navController = navController,
                 focusSaver = focusSaver,
             )
@@ -1283,7 +1271,7 @@ private fun VideoUgcSeasonRow(
 @Composable
 private fun RelatedVideoRow(
     videos: List<RelatedVideo>,
-    onClick: (RelatedVideo) -> Unit,
+    onClick: (VideoCardData) -> Unit,
     navController: NavController,
     focusSaver: FocusSaver,
 ) {
@@ -1311,18 +1299,7 @@ private fun RelatedVideoRow(
                     .PaddingValues(horizontal = 50.dp),
         ) {
             items(videos) { video ->
-                val cardData =
-                    VideoCardData(
-                        avid = video.aid,
-                        cid = video.cid,
-                        title = video.title,
-                        cover = video.cover,
-                        upName = video.author?.name ?: "",
-                        upMid = video.author?.mid,
-                        playString = video.view.toWanString(),
-                        danmakuString = video.danmaku.toWanString(),
-                        timeString = video.duration.formatHourMinSec(),
-                    )
+                val cardData = VideoCardData.fromRelatedVideo(video)
                 SmallVideoCard(
                     modifier =
                         if (video == videos.first()) {
@@ -1336,8 +1313,8 @@ private fun RelatedVideoRow(
                                 .focusSaverItem(focusSaver, "related_${video.aid}")
                         },
                     data = cardData,
-                    onClick = { onClick(video) },
-                    onGoToDetailPage = { onClick(video) },
+                    onClick = { onClick(cardData) },
+                    onGoToDetailPage = { onClick(cardData) },
                     onGoToUpPage =
                         video.author?.mid?.let { mid ->
                             {

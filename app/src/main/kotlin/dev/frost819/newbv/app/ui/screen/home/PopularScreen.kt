@@ -23,7 +23,6 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
@@ -98,7 +97,7 @@ fun PopularScreen(
                     navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = item.aid, bvid = item.bvid))
+                    navController.navigateFromVideoCard(cardData, forceDetail = true)
                 },
                 onGoToUpPage =
                     item.authorMid?.let { mid ->

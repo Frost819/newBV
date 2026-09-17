@@ -16,8 +16,9 @@ data class RelatedVideo(
     val danmaku: Int,
 ) {
     companion object {
-        fun fromRelate(relate: bilibili.app.view.v1.Relate) =
-            RelatedVideo(
+        fun fromRelate(relate: bilibili.app.view.v1.Relate): RelatedVideo {
+            val epId = parseEpIdFromUri(relate.uri).takeIf { relate.goto.needJumpToSeason() }
+            return RelatedVideo(
                 aid = relate.aid,
                 cid = relate.cid,
                 cover = relate.pic,
@@ -26,34 +27,42 @@ data class RelatedVideo(
                 author =
                     relate.authorOrNull?.let { Author.fromAuthor(it) }
                         ?: relate.desc?.let { Author(0, it, "") },
-                jumpToSeason = relate.goto.needJumpToSeason(),
-                epid =
-                    if (relate.goto.needJumpToSeason()) {
-                        relate.uri
-                            .substringBeforeLast("?")
-                            .substringAfterLast("/ep")
-                            .toInt()
-                    } else {
-                        null
-                    },
+                jumpToSeason = epId != null,
+                epid = epId,
                 view = relate.stat.view,
                 danmaku = relate.stat.danmaku,
             )
+        }
 
-        fun fromRelate(relate: dev.frost819.newbv.biliapi.http.entity.video.RelatedVideoInfo) =
-            RelatedVideo(
+        fun fromRelate(relate: dev.frost819.newbv.biliapi.http.entity.video.RelatedVideoInfo): RelatedVideo {
+            val epId = parseEpIdFromUri(relate.redirectUrl)
+            return RelatedVideo(
                 aid = relate.aid,
                 cid = relate.cid,
                 cover = relate.pic,
                 title = relate.title,
                 duration = relate.duration,
                 author = relate.owner.let { Author.fromVideoOwner(it) },
-                jumpToSeason = false,
-                epid = null,
+                jumpToSeason = epId != null,
+                epid = epId,
                 view = relate.stat.view,
                 danmaku = relate.stat.danmaku,
             )
+        }
     }
+}
+
+private val EP_ID_REGEX = Regex("""/ep(\d+)""")
+
+/**
+ * 从跳转链接 / uri 中解析番剧 EP ID。
+ *
+ * 兼容 `https://www.bilibili.com/bangumi/play/ep1364037?theme=movie`、
+ * `.../ep284272/`、`bilibili://.../ep12345` 等格式；解析失败返回 null。
+ */
+internal fun parseEpIdFromUri(url: String?): Int? {
+    val match = url?.let { EP_ID_REGEX.find(it) } ?: return null
+    return match.groupValues.getOrNull(1)?.toIntOrNull()
 }
 
 private fun String.needJumpToSeason() = this.contains("bangumi_ep") || this.contains("special")

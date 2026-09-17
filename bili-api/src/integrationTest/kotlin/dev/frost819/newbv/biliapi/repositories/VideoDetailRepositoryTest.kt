@@ -2,9 +2,11 @@ package dev.frost819.newbv.biliapi.repositories
 
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.ApiType
+import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Paths
@@ -157,5 +159,66 @@ class VideoDetailRepositoryTest {
                 )
             println("app season title=${result.title}")
             assertThat(result.title).isNotEmpty()
+        }
+
+    @Test
+    fun `web related videos season jump always carries ep id`() =
+        runBlocking {
+            val detail = videoDetailRepository.getVideoDetail(aid = 170001, preferApiType = ApiType.Web)
+            detail.relatedVideos.forEach { related ->
+                println("related aid=${related.aid} jumpToSeason=${related.jumpToSeason} epid=${related.epid}")
+                if (related.jumpToSeason) {
+                    assertThat(related.epid).isNotNull()
+                }
+            }
+        }
+
+    /**
+     * Web 相关视频番剧跳转端到端：
+     * `Related.redirect_url` → 解析 EP ID → 按 EP 加载番剧详情。
+     *
+     * 番剧推荐是算法概率出现，故扫描多个候选视频，全部未命中时跳过（不误报失败）。
+     */
+    @Test
+    fun `web related season jump resolves ep and loads season`() =
+        runBlocking {
+            val candidates =
+                listOf(
+                    114204052819750L,
+                    113934275188418L,
+                    114193869114095L,
+                    114192392656984L,
+                    114239704405288L,
+                    170001L,
+                    2L,
+                )
+            var seasonJumpRelated: RelatedVideo? = null
+            for (aid in candidates) {
+                val detail =
+                    runCatching {
+                        videoDetailRepository.getVideoDetail(aid = aid, preferApiType = ApiType.Web)
+                    }.getOrNull() ?: continue
+                seasonJumpRelated = detail.relatedVideos.firstOrNull { it.jumpToSeason && it.epid != null }
+                if (seasonJumpRelated != null) break
+            }
+
+            assumeTrue(seasonJumpRelated != null, "候选视频当前均无番剧相关推荐，跳过")
+
+            val epId = seasonJumpRelated!!.epid!!
+            println(
+                "web season jump related: aid=${seasonJumpRelated.aid}, epid=$epId, " +
+                    "title=${seasonJumpRelated.title}",
+            )
+            assertThat(epId).isGreaterThan(0)
+
+            // 用解析出的 EP ID 按 ep 加载番剧详情（与 SeasonDetailViewModel 修复后的路径一致）
+            val season =
+                videoDetailRepository.getPgcVideoDetail(
+                    epid = epId,
+                    preferApiType = ApiType.Web,
+                )
+            println("season title=${season.title}, seasonId=${season.seasonId}, eps=${season.episodes.size}")
+            assertThat(season.seasonId).isGreaterThan(0)
+            assertThat(season.episodes.any { it.epid == epId }).isTrue()
         }
 }

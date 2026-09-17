@@ -196,7 +196,7 @@ class ToViewEntityTest {
     }
 
     @Test
-    fun `fromToViewItem gRPC CARD_OGV maps seasonId from kid`() {
+    fun `fromToViewItem gRPC CARD_OGV does not map seasonId from kid`() {
         val item =
             cursorItem {
                 oid = 100L
@@ -216,7 +216,8 @@ class ToViewEntityTest {
         assertThat(result.bvid).isEmpty()
         assertThat(result.cid).isEqualTo(0L)
         assertThat(result.kid).isEqualTo(40000)
-        assertThat(result.seasonId).isEqualTo(40000)
+        // kid 是历史记录 id，不是 season id，不能用于导航
+        assertThat(result.seasonId).isNull()
         assertThat(result.epid).isNull()
         assertThat(result.title).isEqualTo("番剧标题")
         assertThat(result.cover).isEqualTo("http://pgc-cover.test")

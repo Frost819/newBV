@@ -73,6 +73,8 @@ data class RelatedVideoInfo(
     val isOgv: Boolean = false,
     @SerialName("ogv_info")
     val ogvInfo: String? = null,
+    @SerialName("redirect_url")
+    val redirectUrl: String? = null,
     @SerialName("rcmd_reason")
     val rcmdReason: String,
 )

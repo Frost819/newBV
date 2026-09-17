@@ -29,7 +29,7 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
@@ -168,10 +168,10 @@ fun FavoriteScreen(
                     modifier = Modifier.focusSaverItem(focusSaver, "favorite_$index"),
                     data = cardData,
                     onClick = {
-                        navController.navigate(VideoDetailRoute(aid = item.id))
+                        navController.navigateFromVideoCard(cardData)
                     },
                     onGoToDetailPage = {
-                        navController.navigate(VideoDetailRoute(aid = item.id))
+                        navController.navigateFromVideoCard(cardData, forceDetail = true)
                     },
                     onGoToUpPage = {
                         navController.navigate(UserSpaceRoute(mid = item.upper.mid, name = item.upper.name))

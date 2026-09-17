@@ -81,7 +81,7 @@ import kotlinx.coroutines.delay
  * @param onlineWatching 同时观看人数文案（空串时不显示）
  * @param videoShot 缩略图数据（为 null 时不显示预览）
  * @param videoShotCache 缩略图缓存
- * @param fromSeason 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
+ * @param isPgc 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
  * @param danmakuEnabled 弹幕是否开启
  * @param isLooping 是否循环播放
  * @param onDirectionLeft seek 左移回调
@@ -110,7 +110,7 @@ fun ControllerVideoInfo(
     onlineWatching: String,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
-    fromSeason: Boolean,
+    isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
     onDirectionLeft: () -> Unit,
@@ -156,7 +156,7 @@ fun ControllerVideoInfo(
                 seekerState = seekerState,
                 videoShot = videoShot,
                 videoShotCache = videoShotCache,
-                fromSeason = fromSeason,
+                isPgc = isPgc,
                 danmakuEnabled = danmakuEnabled,
                 isLooping = isLooping,
                 onDirectionLeft = onDirectionLeft,
@@ -267,7 +267,7 @@ fun ControllerVideoInfoBottom(
     seekerState: SeekerState,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
-    fromSeason: Boolean,
+    isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
     onDirectionLeft: () -> Unit,
@@ -427,7 +427,7 @@ fun ControllerVideoInfoBottom(
                     ),
                 )
                 add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
-                if (!fromSeason) {
+                if (!isPgc) {
                     add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
                     add(ControllerIcon(R.drawable.contact_page_24px, "up主页", onGoToUpPage))
                     add(ControllerIcon(R.drawable.related_videos_24px, "相关视频", onShowRelatedVideos))
@@ -548,7 +548,7 @@ private fun ControllerVideoInfoPreview() {
             onlineWatching = "9.4万+",
             videoShot = null,
             videoShotCache = VideoShotImageCache(),
-            fromSeason = false,
+            isPgc = false,
             danmakuEnabled = true,
             isLooping = false,
             onDirectionLeft = {},

@@ -176,7 +176,7 @@ class HistoryEntityTest {
     }
 
     @Test
-    fun `fromHistoryItem gRPC CARD_OGV maps seasonId from kid`() {
+    fun `fromHistoryItem gRPC CARD_OGV does not map seasonId from kid`() {
         val item =
             cursorItem {
                 oid = 100L
@@ -202,7 +202,8 @@ class HistoryEntityTest {
         assertThat(result.duration).isEqualTo(1200)
         assertThat(result.progress).isEqualTo(600)
         assertThat(result.type).isEqualTo(HistoryItemType.Pgc)
-        assertThat(result.seasonId).isEqualTo(40000)
+        // kid 是历史记录 id，不是 season id，不能用于导航
+        assertThat(result.seasonId).isNull()
         assertThat(result.epid).isNull()
     }
 

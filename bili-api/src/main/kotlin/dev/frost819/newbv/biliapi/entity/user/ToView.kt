@@ -92,11 +92,8 @@ data class ToViewItem(
                     },
                 kid = item.kid.toInt(),
                 epid = null,
-                seasonId =
-                    when (item.cardItemCase) {
-                        CursorItem.CardItemCase.CARD_OGV -> item.kid.toInt()
-                        else -> null
-                    },
+                // App 接口不提供 season id（item.kid 是历史记录 id，非 season id）
+                seasonId = null,
                 title = item.title,
                 cover =
                     when (item.cardItemCase) {

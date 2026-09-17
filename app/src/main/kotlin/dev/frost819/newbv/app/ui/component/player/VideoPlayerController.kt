@@ -34,6 +34,7 @@ import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutAction
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutCatalog
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutKeys
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutsStore
+import dev.frost819.newbv.app.entity.player.shortcut.pgcUnsupportedShortcutActions
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
@@ -68,7 +69,7 @@ import kotlinx.coroutines.launch
 @Suppress("LongParameterList", "CyclomaticComplexMethod")
 fun VideoPlayerController(
     modifier: Modifier = Modifier,
-    fromSeason: Boolean,
+    isPgc: Boolean,
     isLooping: Boolean,
     videoShotCache: VideoShotImageCache,
     uiState: PlayerUiState,
@@ -234,6 +235,11 @@ fun VideoPlayerController(
     }
 
     fun executeCustomShortcut(action: PlayerCustomShortcutAction) {
+        // PGC 默认走详情页且无 UP/相关视频，对应的路由类快捷键直接禁用并提示
+        if (isPgc && action in pgcUnsupportedShortcutActions) {
+            showShortcutTip(action, "番剧不支持")
+            return
+        }
         var status: String? = null
         when (action) {
             PlayerCustomShortcutAction.OpenSettings -> showMenuController = true
@@ -536,7 +542,7 @@ fun VideoPlayerController(
             onlineWatching = uiState.onlineWatching,
             videoShot = uiState.videoShot,
             videoShotCache = videoShotCache,
-            fromSeason = fromSeason,
+            isPgc = isPgc,
             danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
             isLooping = isLooping,
             onDirectionLeft = ::onDirectionLeft,

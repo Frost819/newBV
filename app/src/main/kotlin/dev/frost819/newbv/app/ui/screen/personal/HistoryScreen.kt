@@ -26,7 +26,6 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
@@ -117,7 +116,9 @@ fun HistoryScreen(
                         }
                     VideoCardData(
                         avid = item.oid,
+                        bvid = item.bvid,
                         cid = item.cid,
+                        epid = item.epid,
                         title = item.title,
                         cover = item.cover,
                         playString = "",
@@ -135,7 +136,7 @@ fun HistoryScreen(
                     navController.navigateFromVideoCard(cardData)
                 },
                 onGoToDetailPage = {
-                    navController.navigate(VideoDetailRoute(aid = item.oid))
+                    navController.navigateFromVideoCard(cardData, forceDetail = true)
                 },
                 onGoToUpPage =
                     item.mid?.let { mid ->

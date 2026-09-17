@@ -98,7 +98,8 @@ data class FollowRoute(
 /** 番剧详情页。 */
 @Serializable
 data class PgcFeatureRoute(
-    val seasonId: Long,
+    val seasonId: Long = 0,
+    val epid: Long? = null,
 )
 
 // ── 设置 ──────────────────────────────────────────────────────────────

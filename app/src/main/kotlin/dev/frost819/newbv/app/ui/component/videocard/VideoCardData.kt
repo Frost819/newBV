@@ -1,5 +1,9 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
+import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.app.util.toWanString
+import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+
 /**
  * 视频卡片数据。
  *
@@ -34,4 +38,28 @@ data class VideoCardData(
     val timeString: String = "",
     val pubTime: String? = null,
     val progress: Float? = null,
-)
+) {
+    companion object {
+        /**
+         * 由相关视频 [RelatedVideo] 转换。
+         *
+         * 番剧条目只保留 EP ID（用于跳转番剧详情），UGC 条目携带 cid。
+         */
+        fun fromRelatedVideo(related: RelatedVideo): VideoCardData =
+            VideoCardData(
+                avid = related.aid,
+                cid = related.cid,
+                epid = related.epid?.takeIf { related.jumpToSeason },
+                title = related.title,
+                cover = related.cover,
+                upName = related.author?.name ?: "",
+                upMid = related.author?.mid,
+                playString = related.view.toWanString(),
+                danmakuString = related.danmaku.toWanString(),
+                timeString = (related.duration * 1000L).formatHourMinSec(),
+            )
+    }
+}
+
+/** 视频卡是否为番剧（有有效 EP ID）。 */
+val VideoCardData.isPgc: Boolean get() = (epid ?: 0) != 0

@@ -69,7 +69,7 @@ sealed interface SeasonDetailUiEffect {
  *
  * @param videoDetailRepository 视频详情仓库（含 PGC 详情获取）。
  * @param userRepository 用户仓库（含追番操作）。
- * @param savedStateHandle Navigation 参数（用于读取 [PgcFeatureRoute.seasonId]）。
+ * @param savedStateHandle Navigation 参数（读取 [PgcFeatureRoute.seasonId] 或 [PgcFeatureRoute.epid]）。
  */
 @HiltViewModel
 class SeasonDetailViewModel
@@ -82,6 +82,7 @@ class SeasonDetailViewModel
         private val logger = Loggers.get("SeasonDetailViewModel")
 
         private val seasonId: Int = savedStateHandle.get<Long>("seasonId")?.toInt() ?: 0
+        private val epid: Int? = savedStateHandle.get<Long>("epid")?.toInt()?.takeIf { it != 0 }
 
         private val _uiState = MutableStateFlow(SeasonDetailUiState())
         val uiState: StateFlow<SeasonDetailUiState> = _uiState.asStateFlow()
@@ -112,7 +113,8 @@ class SeasonDetailViewModel
                     withTimeout(LOAD_TIMEOUT_MS) {
                         val detail =
                             videoDetailRepository.getPgcVideoDetail(
-                                seasonId = seasonId,
+                                epid = epid,
+                                seasonId = seasonId.takeIf { it != 0 },
                                 preferApiType = prefApiType(),
                             )
                         _uiState.update {
@@ -126,7 +128,7 @@ class SeasonDetailViewModel
                     if (error is CancellationException && error !is TimeoutCancellationException) {
                         throw error
                     }
-                    logger.error(error) { "Failed to load season detail: $seasonId" }
+                    logger.error(error) { "Failed to load season detail: seasonId=$seasonId, epid=$epid" }
                     _uiState.update {
                         it.copy(
                             error = true,

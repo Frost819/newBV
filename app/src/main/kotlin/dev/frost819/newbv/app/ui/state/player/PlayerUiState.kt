@@ -65,7 +65,16 @@ data class PlayerUiState(
     // 列表
     val videoList: List<VideoListItem> = emptyList(),
     val relatedVideos: List<VideoCardData> = emptyList(),
-)
+) {
+    /**
+     * 是否为番剧（PGC）播放内容。
+     *
+     * 由 [epid] 推导：有有效 EP ID 即视为番剧。UI 层据此隐藏
+     * “视频信息 / up主页 / 相关视频”等仅 UGC 适用的入口。
+     * 与播放侧 [fromSeason]（走 PGC 播放接口/心跳）相互独立。
+     */
+    val isPgc: Boolean get() = (epid ?: 0) != 0
+}
 
 /**
  * 播放器进度条状态（高频更新，100ms 间隔）。

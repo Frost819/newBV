@@ -49,7 +49,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -77,15 +76,11 @@ import dev.frost819.newbv.core.focus.touchClickable
 /**
  * 番剧详情页路由注册。
  *
- * 从 [PgcFeatureRoute] 读取 seasonId，通过 Hilt 注入 [SeasonDetailViewModel]。
+ * [SeasonDetailViewModel] 通过 SavedStateHandle 读取 [PgcFeatureRoute.seasonId]/[PgcFeatureRoute.epid]。
  */
 fun NavGraphBuilder.pgcFeatureScreen(navController: NavController) {
-    composable<PgcFeatureRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<PgcFeatureRoute>()
-        SeasonDetailScreen(
-            navController = navController,
-            seasonId = route.seasonId,
-        )
+    composable<PgcFeatureRoute> {
+        SeasonDetailScreen(navController = navController)
     }
 }
 
@@ -98,10 +93,7 @@ fun NavGraphBuilder.pgcFeatureScreen(navController: NavController) {
  * 3. 附加分集（PV/SP 等）
  */
 @Composable
-private fun SeasonDetailScreen(
-    navController: NavController,
-    seasonId: Long,
-) {
+private fun SeasonDetailScreen(navController: NavController) {
     val viewModel: SeasonDetailViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current

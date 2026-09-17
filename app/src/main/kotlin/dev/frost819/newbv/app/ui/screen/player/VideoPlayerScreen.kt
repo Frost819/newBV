@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,12 +29,13 @@ import dev.frost819.newbv.app.ui.component.player.VideoInteractionDialog
 import dev.frost819.newbv.app.ui.component.player.VideoPlayerController
 import dev.frost819.newbv.app.ui.component.rememberDoublePressExit
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
+import dev.frost819.newbv.app.ui.component.videocard.isPgc
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
+import dev.frost819.newbv.app.ui.navigation.navigateToVideoDetailFromPlayer
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.VideoShotImageCache
-import dev.frost819.newbv.app.util.formatHourMinSec
-import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.comment.CommentViewModel
 import dev.frost819.newbv.app.viewmodel.player.DanmakuViewModel
 import dev.frost819.newbv.app.viewmodel.player.PlayerViewModel
@@ -114,20 +116,7 @@ fun VideoPlayerScreen(
                 subtitleData = subtitleData,
                 subtitleList = subtitleList,
                 videoList = videoListState.videoList,
-                relatedVideos =
-                    videoListState.relatedVideos.map { related ->
-                        VideoCardData(
-                            avid = related.aid,
-                            cid = related.cid,
-                            title = related.title,
-                            cover = related.cover,
-                            upName = related.author?.name ?: "",
-                            upMid = related.author?.mid,
-                            playString = related.view.toWanString(),
-                            danmakuString = related.danmaku.toWanString(),
-                            timeString = (related.duration * 1000L).formatHourMinSec(),
-                        )
-                    },
+                relatedVideos = videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) },
             )
         }
 
@@ -229,17 +218,17 @@ fun VideoPlayerScreen(
     }
 
     // 生命周期管理：onResume 恢复播放，onPause 暂停
-    LaunchedEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_RESUME -> {
-                        if (uiState.playerState == PlayerState.Paused) {
+                        if (playerViewModel.uiState.value.playerState == PlayerState.Paused) {
                             playerViewModel.togglePlayPause()
                         }
                     }
                     Lifecycle.Event.ON_PAUSE -> {
-                        if (uiState.playerState == PlayerState.Playing) {
+                        if (playerViewModel.uiState.value.playerState == PlayerState.Playing) {
                             playerViewModel.togglePlayPause()
                         }
                     }
@@ -247,6 +236,9 @@ fun VideoPlayerScreen(
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     // 双击退出：TV 遥控器（Controller onExit）和非 TV（BackHandler）共用同一计时器
@@ -259,7 +251,7 @@ fun VideoPlayerScreen(
 
     VideoPlayerController(
         modifier = Modifier.fillMaxSize(),
-        fromSeason = uiState.fromSeason,
+        isPgc = uiState.isPgc,
         isLooping = uiState.isLooping,
         videoShotCache = videoShotCache,
         uiState = mergedUiState,
@@ -296,10 +288,13 @@ fun VideoPlayerScreen(
         onToggleSubtitle = { subtitleViewModel.toggleSubtitle() },
         onGoToUpPage = {
             logger.info { "[NAV] playerToUp mid=${uiState.authorMid}" }
-            navController.navigate(UserSpaceRoute(mid = uiState.authorMid, name = uiState.authorName))
+            navController.navigate(UserSpaceRoute(mid = uiState.authorMid, name = uiState.authorName)) {
+                launchSingleTop = true
+            }
         },
         onGoToVideoDetail = {
-            navController.popBackStack()
+            logger.info { "[NAV] playerToVideoDetail aid=${uiState.aid}" }
+            navController.navigateToVideoDetailFromPlayer(uiState.aid)
         },
         onShowInteraction = {
             logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
@@ -326,14 +321,18 @@ fun VideoPlayerScreen(
         onSubtitleChange = { subtitle -> subtitleViewModel.selectSubtitle(subtitle.id) },
         onSubtitleSettingChange = { action -> subtitleViewModel.updateSubtitleState(action) },
         onRelatedVideoClicked = { video: VideoCardData ->
-            logger.info { "[CARD] relatedVideo aid=${video.avid}, cid=${video.cid ?: 0L}" }
-            playerViewModel.playNewVideo(
-                VideoListItem(
-                    aid = video.avid,
-                    cid = video.cid ?: 0,
-                    title = video.title,
-                ),
-            )
+            logger.info { "[CARD] relatedVideo aid=${video.avid}, cid=${video.cid ?: 0L}, epid=${video.epid}" }
+            if (video.isPgc) {
+                navController.navigateFromVideoCard(video)
+            } else {
+                playerViewModel.playNewVideo(
+                    VideoListItem(
+                        aid = video.avid,
+                        cid = video.cid ?: 0,
+                        title = video.title,
+                    ),
+                )
+            }
         },
         onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
         onShowShortcutTip = { text -> playerViewModel.showShortcutTip(text) },

@@ -1505,19 +1505,18 @@ suspend fun loadVideoDetail(aid: Long, bvid: String = "") {
 }
 ```
 
-#### 11.10.8 播放器→详情页路由应 popBackStack 而非 navigate
+#### 11.10.8 播放器↔详情页路由：保留播放器 + 播放器单例
 
-**问题**：播放器中点击"详情"按钮会 `navigate(VideoDetailRoute)` 新建一个详情页路由，导致路由堆栈中出现：详情页 → 播放器 → 详情页。
+**目标行为**：
+- 播放器内点“详情”**始终在播放器之上新开详情页**，播放器保留（返回后可继续播放）；即使下层已是详情页也再开一层，保证“从播放器打开详情”语义一致。
+- 浏览链路（`详情 → 播放 → 播放器 → 详情 → 推荐详情`）全部保留，可逐步返回原始播放器。
+- 详情页里点播放（含 `showVideoInfo=false` 时相关视频直接播放）用 `popUpTo<VideoPlayerRoute> { inclusive = true }`，**保证返回栈中只有一个播放器**；代价是旧播放器及其上方从播放器打开的详情页会一并弹出（线性返回栈无法只删中间播放器）。
 
-**原因**：`showVideoInfo=false` 时用户从详情页进入播放器，播放器就在详情页路由之上。再 `navigate` 会创建第二层详情页。
+**历史坑**：曾把 `onGoToVideoDetail` 改成无条件 `popBackStack()`，在“直进播放器”（`showVideoInfo=false`，来源→播放器，无下层详情页）时会误退出到来源页而非打开详情。现统一由 `NavController.navigateToVideoDetailFromPlayer(aid)` 处理（恒 `navigate(VideoDetailRoute)`）。
 
-**解决方案**：`onGoToVideoDetail` 改为 `popBackStack()`，返回已有的详情页而非新建：
-
-```kotlin
-onGoToVideoDetail = {
-    navController.popBackStack()
-}
-```
+**关键辅助**（`app/ui/navigation/`）：
+- `navigateToVideoDetailFromPlayer(aid)` — 播放器内打开详情
+- `navigateFromVideoCard(data, forceDetail)` — 视频卡统一导航：番剧（有 EP ID）→ 番剧详情；否则按 `showVideoInfo` 进详情或直进播放器（`popUpTo<VideoPlayerRoute>{inclusive}` 保证播放器单例）；`forceDetail=true` 用于卡片“详情”操作
 
 ### 11.11 TV Material3 触屏适配
 

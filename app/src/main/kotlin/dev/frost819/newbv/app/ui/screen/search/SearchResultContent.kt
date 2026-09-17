@@ -62,7 +62,7 @@ import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
 import dev.frost819.newbv.app.ui.navigation.PgcFeatureRoute
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
+import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.ui.state.search.SearchResultItem
 import dev.frost819.newbv.app.ui.state.search.TypedSearchResult
 import dev.frost819.newbv.app.util.formatHourMinSec
@@ -245,25 +245,26 @@ fun SearchResultContent(
                         is SearchResultItem.VideoItem -> {
                             val v = item.video
                             val focusKey = "video_${v.aid}"
+                            val cardData =
+                                VideoCardData(
+                                    avid = v.aid,
+                                    title = v.title.removeHtmlTags(),
+                                    cover = v.cover,
+                                    playString = v.play.toWanString(),
+                                    danmakuString = v.danmaku.toWanString(),
+                                    timeString = v.duration.formatHourMinSec(),
+                                    upName = v.author,
+                                    upMid = v.mid,
+                                    pubTime = v.pubTime,
+                                )
                             SmallVideoCard(
                                 modifier = Modifier.focusSaverItem(focusSaver, focusKey),
-                                data =
-                                    VideoCardData(
-                                        avid = v.aid,
-                                        title = v.title.removeHtmlTags(),
-                                        cover = v.cover,
-                                        playString = v.play.toWanString(),
-                                        danmakuString = v.danmaku.toWanString(),
-                                        timeString = v.duration.formatHourMinSec(),
-                                        upName = v.author,
-                                        upMid = v.mid,
-                                        pubTime = v.pubTime,
-                                    ),
+                                data = cardData,
                                 onClick = {
-                                    navController.navigate(VideoDetailRoute(aid = v.aid))
+                                    navController.navigateFromVideoCard(cardData)
                                 },
                                 onGoToDetailPage = {
-                                    navController.navigate(VideoDetailRoute(aid = v.aid))
+                                    navController.navigateFromVideoCard(cardData, forceDetail = true)
                                 },
                                 onGoToUpPage = {
                                     navController.navigate(UserSpaceRoute(mid = v.mid, name = v.author))

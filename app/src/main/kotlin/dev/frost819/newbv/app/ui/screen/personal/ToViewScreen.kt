@@ -26,7 +26,6 @@ import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
-import dev.frost819.newbv.app.ui.navigation.VideoDetailRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
 import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatHourMinSec
@@ -112,7 +111,9 @@ fun ToViewScreen(
                             }
                         VideoCardData(
                             avid = item.oid,
+                            bvid = item.bvid,
                             cid = item.cid,
+                            epid = item.epid,
                             title = item.title,
                             cover = item.cover,
                             playString = "",
@@ -130,7 +131,7 @@ fun ToViewScreen(
                         navController.navigateFromVideoCard(cardData)
                     },
                     onGoToDetailPage = {
-                        navController.navigate(VideoDetailRoute(aid = item.oid))
+                        navController.navigateFromVideoCard(cardData, forceDetail = true)
                     },
                     onRemoveWatchLater = {
                         viewModel.delToView(aid = item.oid)
@@ -153,7 +154,9 @@ fun ToViewScreen(
                         val durationMs = item.duration * 1000L
                         VideoCardData(
                             avid = item.oid,
+                            bvid = item.bvid,
                             cid = item.cid,
+                            epid = item.epid,
                             title = item.title,
                             cover = item.cover,
                             playString = "",
@@ -171,7 +174,7 @@ fun ToViewScreen(
                         navController.navigateFromVideoCard(cardData)
                     },
                     onGoToDetailPage = {
-                        navController.navigate(VideoDetailRoute(aid = item.oid))
+                        navController.navigateFromVideoCard(cardData, forceDetail = true)
                     },
                     onRemoveWatchLater = {
                         viewModel.delToView(aid = item.oid)
