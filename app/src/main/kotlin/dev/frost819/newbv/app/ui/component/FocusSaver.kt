@@ -55,6 +55,16 @@ class FocusSaver(
     fun savedKeyValue(): String = savedKey.value
 
     /**
+     * 清除保存的焦点 key。
+     *
+     * 用于首次进入页面时丢弃"启动阶段系统自动聚焦"产生的 key，
+     * 避免 [RestoreFocus] 将焦点错误恢复到该元素（如左侧栏头像）。
+     */
+    fun clearFocusedKey() {
+        savedKey.value = ""
+    }
+
+    /**
      * 恢复焦点到之前保存的 key。
      *
      * 应在 composition 恢复后调用（通常在屏幕顶层调一次）。
