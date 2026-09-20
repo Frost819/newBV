@@ -108,7 +108,9 @@ class HomeViewModel
         /**
          * 加载更多推荐视频。
          *
-         * 首次加载时连续请求直到 >= 24 条或达到 3 次重试上限。
+         * 每次调用至少请求一页（do-while：凑满一屏后再次触发时仍需请求下一页，
+         * 否则上滑分页在首次凑满后永远不再加载），并连续请求直到 >= 24 条、
+         * 达到 3 页上限或接口返回空页。
          * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
          */
         fun loadRecommend() {
@@ -122,7 +124,7 @@ class HomeViewModel
                 val maxLoadCount = 3
                 runCatching {
                     withTimeout(LOAD_TIMEOUT_MS) {
-                        while (_uiState.value.recommendItems.size < 24 && loadCount < maxLoadCount) {
+                        do {
                             val data =
                                 recommendVideoRepository.getRecommendVideos(
                                     page = recommendNextPage,
@@ -133,7 +135,11 @@ class HomeViewModel
                                 it.copy(recommendItems = it.recommendItems + data.items)
                             }
                             loadCount++
-                        }
+                        } while (
+                            data.items.isNotEmpty() &&
+                            _uiState.value.recommendItems.size < 24 &&
+                            loadCount < maxLoadCount
+                        )
                     }
                 }.onFailure { error ->
                     if (error is CancellationException && error !is TimeoutCancellationException) {

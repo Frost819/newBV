@@ -467,6 +467,56 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `loadRecommend fetches next page after initial fill`() =
+        runTest(testDispatcher) {
+            // 回归测试（issue #286）：Web 接口单页 30 条，首次加载凑满一屏后，
+            // 再次 loadMore 仍必须请求下一页，否则推荐永远停在 30 条
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = (1..30).map { fakeUgcItem(it.toLong()) },
+                    nextPage = RecommendPage(nextWebIdx = 2),
+                )
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.recommendItems).hasSize(30)
+
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = (31..60).map { fakeUgcItem(it.toLong()) },
+                    nextPage = RecommendPage(nextWebIdx = 3),
+                )
+            viewModel.loadMore(dev.frost819.newbv.data.datastore.HomeTopNavItem.Recommend)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertThat(state.recommendItems).hasSize(60)
+            coVerify(exactly = 2) { recommendRepo.getRecommendVideos(any(), any()) }
+        }
+
+    @Test
+    fun `loadRecommend stops when a page returns empty items`() =
+        runTest(testDispatcher) {
+            // 页返回空时停止连续请求，避免空转；但仍保留已加载数据
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returnsMany
+                listOf(
+                    RecommendData(
+                        items = (1..10).map { fakeUgcItem(it.toLong()) },
+                        nextPage = RecommendPage(nextWebIdx = 2),
+                    ),
+                    RecommendData(items = emptyList(), nextPage = RecommendPage(nextWebIdx = 3)),
+                    RecommendData(
+                        items = (11..20).map { fakeUgcItem(it.toLong()) },
+                        nextPage = RecommendPage(nextWebIdx = 4),
+                    ),
+                )
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.recommendItems).hasSize(10)
+            coVerify(exactly = 2) { recommendRepo.getRecommendVideos(any(), any()) }
+        }
+
+    @Test
     fun `refresh dispatches Popular tab`() =
         runTest(testDispatcher) {
             viewModel = createViewModel()
