@@ -106,9 +106,10 @@ class HomeViewModel
         }
 
         /**
-         * 加载更多推荐视频。
+         * 加载推荐视频。
          *
-         * 首次加载时连续请求直到 >= 24 条或达到 3 次重试上限。
+         * 列表为空时视为首次加载，连续请求直到 >= 24 条或达到 3 次上限；
+         * 列表非空时视为加载更多，只请求一页。
          * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
          */
         fun loadRecommend() {
@@ -118,21 +119,28 @@ class HomeViewModel
 
                 _uiState.update { it.copy(recommendLoading = true, recommendError = false) }
 
+                // 首次加载（列表为空）需要连续请求补齐首屏；已有数据时每次只追加一页，
+                val isFirstLoad = current.recommendItems.isEmpty()
+                val maxLoadCount = if (isFirstLoad) 3 else 1
                 var loadCount = 0
-                val maxLoadCount = 3
                 runCatching {
                     withTimeout(LOAD_TIMEOUT_MS) {
-                        while (_uiState.value.recommendItems.size < 24 && loadCount < maxLoadCount) {
+                        while (loadCount < maxLoadCount) {
                             val data =
                                 recommendVideoRepository.getRecommendVideos(
                                     page = recommendNextPage,
                                     preferApiType = prefApiType(),
                                 )
                             recommendNextPage = data.nextPage
+                            if (data.items.isEmpty()) {
+                                _uiState.update { it.copy(recommendHasMore = false) }
+                                break
+                            }
                             _uiState.update {
                                 it.copy(recommendItems = it.recommendItems + data.items)
                             }
                             loadCount++
+                            if (!isFirstLoad || _uiState.value.recommendItems.size >= 24) break
                         }
                     }
                 }.onFailure { error ->

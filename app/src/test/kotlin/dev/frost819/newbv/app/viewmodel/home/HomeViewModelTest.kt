@@ -467,6 +467,47 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `loadRecommend with existing items appends exactly one more page`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // 首次加载：列表为空，最多补齐 3 页（每页 2 条），共 6 条
+            assertThat(viewModel.uiState.value.recommendItems).hasSize(6)
+            coVerify(exactly = 3) { recommendRepo.getRecommendVideos(any(), any()) }
+
+            viewModel.loadRecommend()
+            advanceUntilIdle()
+
+            // 已有数据时「加载更多」只追加一页，而非空转（issue #286）
+            assertThat(viewModel.uiState.value.recommendItems).hasSize(8)
+            coVerify(exactly = 4) { recommendRepo.getRecommendVideos(any(), any()) }
+        }
+
+    @Test
+    fun `loadRecommend sets hasMore false when page is empty`() =
+        runTest(testDispatcher) {
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = listOf(fakeUgcItem(1)),
+                    nextPage = RecommendPage(),
+                )
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.recommendHasMore).isTrue()
+
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = emptyList(),
+                    nextPage = RecommendPage(),
+                )
+            viewModel.loadRecommend()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.recommendHasMore).isFalse()
+        }
+
+    @Test
     fun `refresh dispatches Popular tab`() =
         runTest(testDispatcher) {
             viewModel = createViewModel()
