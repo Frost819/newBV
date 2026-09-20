@@ -311,7 +311,10 @@ class PlayerViewModel
             videoInfoRepository.videoDetail.value?.let { detail ->
                 _uiState.update {
                     it.copy(
-                        cid = detail.cid,
+                        // 详情接口返回的 cid 是视频默认分P（第一个分P）。仅当进入时
+                        // 未携带 cid（直进播放器，cid=0）才用它补齐；点击指定分P进入时
+                        // 必须保留传入的 cid，覆盖会导致播放的不是所选分P
+                        cid = if (it.cid == 0L) detail.cid else it.cid,
                         authorMid = detail.author.mid,
                         authorName = detail.author.name,
                     )
