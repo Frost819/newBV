@@ -726,7 +726,8 @@ private fun VideoInfoHeader(
 
             if (detail.tags.isNotEmpty()) {
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    // SpaceBetween 可能挤压行间距，padding 保证聚焦边框与上一行至少 6dp 间隙
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(detail.tags) { tag ->
@@ -749,7 +750,7 @@ private fun VideoInfoHeader(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
