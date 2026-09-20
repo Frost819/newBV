@@ -1,7 +1,12 @@
 package dev.frost819.newbv.app.ui.screen.player
 
+import android.app.Activity
+import android.view.WindowManager
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,6 +20,8 @@ import dev.frost819.newbv.app.ui.component.PlaceholderScreen
 import dev.frost819.newbv.app.ui.navigation.LivePlayerRoute
 import dev.frost819.newbv.app.ui.navigation.SeasonPlayerRoute
 import dev.frost819.newbv.app.ui.navigation.VideoPlayerRoute
+import dev.frost819.newbv.app.ui.state.player.PlayerState
+import dev.frost819.newbv.app.viewmodel.live.LivePlayerState
 import dev.frost819.newbv.app.viewmodel.player.DanmakuViewModel
 import dev.frost819.newbv.app.viewmodel.player.PlayerViewModel
 import dev.frost819.newbv.app.viewmodel.player.SubtitleViewModel
@@ -82,25 +89,11 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             }
         }
 
-        // 全屏 + 隐藏系统栏
-        DisposableEffect(Unit) {
-            val window = (context as? android.app.Activity)?.window
-            window?.let {
-                WindowCompat.setDecorFitsSystemWindows(it, false)
-                WindowInsetsControllerCompat(it, it.decorView).apply {
-                    hide(WindowInsetsCompat.Type.systemBars())
-                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                }
-            }
-            onDispose {
-                window?.let {
-                    WindowCompat.setDecorFitsSystemWindows(it, true)
-                    WindowInsetsControllerCompat(it, it.decorView).apply {
-                        show(WindowInsetsCompat.Type.systemBars())
-                    }
-                }
-            }
-        }
+        // 全屏 + 隐藏系统栏，并按播放状态保持屏幕常亮（issue #283）
+        val playerUiState by playerViewModel.uiState.collectAsState()
+        PlayerWindowEffect(
+            keepScreenOn = playerUiState.playerState == PlayerState.Playing || playerUiState.isBuffering,
+        )
 
         VideoPlayerScreen(
             navController = navController,
@@ -144,29 +137,62 @@ fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
             }
         }
 
-        DisposableEffect(Unit) {
-            val window = (context as? android.app.Activity)?.window
-            window?.let {
-                WindowCompat.setDecorFitsSystemWindows(it, false)
-                WindowInsetsControllerCompat(it, it.decorView).apply {
-                    hide(WindowInsetsCompat.Type.systemBars())
-                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                }
-            }
-            onDispose {
-                window?.let {
-                    WindowCompat.setDecorFitsSystemWindows(it, true)
-                    WindowInsetsControllerCompat(it, it.decorView).apply {
-                        show(WindowInsetsCompat.Type.systemBars())
-                    }
-                }
-            }
-        }
+        // 全屏 + 隐藏系统栏，并按播放状态保持屏幕常亮（issue #283）
+        val liveUiState by viewModel.uiState.collectAsState()
+        PlayerWindowEffect(
+            keepScreenOn = liveUiState.playerState == LivePlayerState.Playing || liveUiState.isBuffering,
+        )
 
         LivePlayerScreen(
             navController = navController,
             viewModel = viewModel,
             danmakuViewModel = danmakuViewModel,
         )
+    }
+}
+
+/**
+ * 播放器页面通用窗口效果。
+ *
+ * 进入时全屏 + 隐藏系统栏，离开时恢复系统栏；播放/缓冲期间
+ * 添加 [WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON]，暂停/结束/出错后清除，
+ * 使暂停后可正常进入系统屏保，且离开播放页时兜底清除避免常亮泄漏。
+ *
+ * 全屏与常亮拆成两个 [DisposableEffect]：全屏仅在进入/离开时切换，
+ * 常亮随 [keepScreenOn] 变化，避免暂停时反复 show/hide 系统栏造成闪烁。
+ *
+ * @param keepScreenOn 是否需要保持屏幕常亮。
+ */
+@Composable
+private fun PlayerWindowEffect(keepScreenOn: Boolean) {
+    val window = (LocalContext.current as? Activity)?.window
+
+    // 全屏 + 隐藏系统栏
+    DisposableEffect(window) {
+        window?.let {
+            WindowCompat.setDecorFitsSystemWindows(it, false)
+            WindowInsetsControllerCompat(it, it.decorView).apply {
+                hide(WindowInsetsCompat.Type.systemBars())
+                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
+        onDispose {
+            window?.let {
+                WindowCompat.setDecorFitsSystemWindows(it, true)
+                WindowInsetsControllerCompat(it, it.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
+
+    // 播放/缓冲期间保持屏幕常亮
+    DisposableEffect(window, keepScreenOn) {
+        if (keepScreenOn) {
+            window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 }
