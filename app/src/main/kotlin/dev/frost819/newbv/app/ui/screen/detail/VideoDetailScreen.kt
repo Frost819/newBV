@@ -510,8 +510,8 @@ private fun FavoriteFolderDialog(
                         Modifier
                             .heightIn(max = 300.dp)
                             .verticalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     folders.forEachIndexed { index, folder ->
                         val selected = selectedIds.contains(folder.id)
@@ -630,7 +630,9 @@ private fun VideoInfoHeader(
                     .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // TV Material3 组件聚焦时会放大 1.1 倍且焦点边框绘制在布局边界之外，
+            // 间距需大于（宽度 × 0.1 / 2 + 边框宽度），否则与相邻元素边框交叠（issue #290）
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = detail.title,
                     style = MaterialTheme.typography.titleLarge,
@@ -658,7 +660,7 @@ private fun VideoInfoHeader(
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Surface(
                         onClick = onClickUp,
@@ -725,7 +727,7 @@ private fun VideoInfoHeader(
             if (detail.tags.isNotEmpty()) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(detail.tags) { tag ->
                         val tagKey = "tag_${tag.id}"
@@ -749,7 +751,7 @@ private fun VideoInfoHeader(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ActionButton(
                     text = "点赞",
@@ -1040,7 +1042,7 @@ private fun VideoPartRow(
                 Modifier
                     .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("parts") }
                     .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding =
                 androidx.compose.foundation.layout
                     .PaddingValues(horizontal = 50.dp),
@@ -1133,7 +1135,7 @@ private fun PartButton(
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -1243,7 +1245,7 @@ private fun VideoUgcSeasonRow(
                 Modifier
                     .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("seasons") }
                     .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding =
                 androidx.compose.foundation.layout
                     .PaddingValues(horizontal = 50.dp),
@@ -1434,8 +1436,8 @@ private fun VideoPartListDialog(
                             .fillMaxSize()
                             .padding(8.dp),
                     columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(pageSlice) { page ->
                         val played = if (page.cid == lastPlayedCid) lastPlayedTime else 0
@@ -1562,8 +1564,8 @@ private fun VideoEpisodeListDialog(
                             .fillMaxSize()
                             .padding(8.dp),
                     columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(episodeSlice) { episode ->
                         val played = if (episode.cid == lastPlayedCid) lastPlayedTime else 0
