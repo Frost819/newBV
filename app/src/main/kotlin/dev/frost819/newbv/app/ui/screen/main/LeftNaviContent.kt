@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
@@ -51,7 +53,9 @@ import dev.frost819.newbv.data.datastore.LeftNaviItem
  * 使用 Material3 [NavigationRail]，顶部为用户头像（或登录按钮），
  * 中间为 6 个导航项（含直播），底部为设置入口。
  *
- * D-Pad 右键触发 [onFocusToContent] 将焦点移至内容区。
+ * D-Pad 右键触发 [onFocusToContent] 将焦点移至内容区；若内容区入口当前不可聚焦
+ * （如直播页滚动后入口 item 被懒列表回收），则回退到焦点系统的默认右向搜索，
+ * 避免焦点卡在导航栏无法返回内容区（issue #287）。
  *
  * @param isLogin 是否已登录。
  * @param avatar 头像 URL。
@@ -59,7 +63,7 @@ import dev.frost819.newbv.data.datastore.LeftNaviItem
  * @param onLeftNaviItemChanged 导航项切换回调。
  * @param onOpenSettings 打开设置回调。
  * @param onShowUserPanel 显示用户面板回调。
- * @param onFocusToContent 焦点移至内容区回调。
+ * @param onFocusToContent 聚焦内容区回调，返回是否成功。
  * @param onLogin 登录回调。
  * @param focusSaver 焦点恢复器（由 MainScreen 共享传入）。
  */
@@ -72,18 +76,20 @@ fun LeftNaviContent(
     onLeftNaviItemChanged: (LeftNaviItem) -> Unit,
     onOpenSettings: () -> Unit,
     onShowUserPanel: () -> Unit,
-    onFocusToContent: () -> Unit,
+    onFocusToContent: () -> Boolean,
     onLogin: () -> Unit,
     focusSaver: FocusSaver,
 ) {
+    val focusManager = LocalFocusManager.current
     NavigationRail(
         modifier =
             modifier
                 .fillMaxHeight()
                 .onPreviewKeyEvent { keyEvent ->
-                    if (keyEvent.isDpadRight()) {
-                        if (keyEvent.isKeyDown()) {
-                            onFocusToContent()
+                    if (keyEvent.isDpadRight() && keyEvent.isKeyDown()) {
+                        // 入口成功聚焦则消费事件；否则（入口被回收）回退到默认右向搜索，
+                        // 让焦点进入内容区最近的可聚焦元素。
+                        if (onFocusToContent() || focusManager.moveFocus(FocusDirection.Right)) {
                             return@onPreviewKeyEvent true
                         }
                     }
@@ -236,7 +242,7 @@ private fun LeftNaviContentPreview() {
             onLeftNaviItemChanged = {},
             onOpenSettings = {},
             onShowUserPanel = {},
-            onFocusToContent = {},
+            onFocusToContent = { true },
             onLogin = {},
             focusSaver =
                 dev.frost819.newbv.app.ui.component
