@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -67,6 +69,7 @@ import androidx.navigation.toRoute
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.ClickableChipScale
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
@@ -727,13 +730,24 @@ private fun VideoInfoHeader(
             if (detail.tags.isNotEmpty()) {
                 LazyRow(
                     // SpaceBetween 可能挤压行间距，padding 保证聚焦边框与上一行至少 6dp 间隙
-                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                            // 视口左右各外扩 12dp 并用 contentPadding 补偿，
+                            // 避免聚焦态（1.1 倍放大 + 外画边框）被 LazyRow 视口裁剪，
+                            // 负 offset 保证首个 tag 仍与上方 UP 按钮左对齐
+                            .offset(x = (-12).dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(detail.tags) { tag ->
                         val tagKey = "tag_${tag.id}"
                         SuggestionChip(
                             onClick = { onClickTag(tag) },
+                            // 禁用聚焦放大：外扩量随 tag 宽度增长（宽度 × 0.05），
+                            // 长 tag 时会超出视口余量被裁剪；聚焦反馈由容器变色 + 边框承担
+                            scale = ClickableChipScale.None,
                             modifier =
                                 Modifier
                                     .focusRequester(focusSaver.focusRequesterFor(tagKey))
@@ -1435,7 +1449,9 @@ private fun VideoPartListDialog(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(8.dp),
+                            // 16dp 内边距容纳聚焦卡片的外扩量（200dp 宽 × 0.05 + 2dp 边框），
+                            // 避免首末列卡片聚焦时被弹窗边界裁剪
+                            .padding(16.dp),
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1563,7 +1579,9 @@ private fun VideoEpisodeListDialog(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(8.dp),
+                            // 16dp 内边距容纳聚焦卡片的外扩量（200dp 宽 × 0.05 + 2dp 边框），
+                            // 避免首末列卡片聚焦时被弹窗边界裁剪
+                            .padding(16.dp),
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
