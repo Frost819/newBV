@@ -11,7 +11,9 @@ import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
+import dev.frost819.newbv.biliapi.entity.user.Author
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
 import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
@@ -844,5 +846,45 @@ class PlayerViewModelTest {
             viewModel.trySendHeartbeat()
 
             verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any()) }
+        }
+
+    // ── loadVideoDetail cid tests ────────────────────────────
+
+    private fun fakeVideoDetail(cid: Long): VideoDetail {
+        val detail = mockk<VideoDetail>()
+        every { detail.cid } returns cid
+        every { detail.author } returns Author(mid = 42L, name = "UP", face = "face")
+        return detail
+    }
+
+    @Test
+    fun `loadVideoDetail preserves clicked part cid`() =
+        runTest(testDispatcher) {
+            // 回归：点击指定分P进入播放器时，详情接口返回的默认分P cid（第一个分P）
+            // 不得覆盖传入的 cid，否则播放的不是所选分P
+            every { videoInfoRepository.videoDetail } returns MutableStateFlow(fakeVideoDetail(cid = 111L))
+            initSession(aid = 10, cid = 333L)
+
+            viewModel.loadVideoDetail(aid = 10)
+            runCurrent()
+
+            val state = viewModel.uiState.value
+            assertThat(state.cid).isEqualTo(333L)
+            assertThat(state.authorMid).isEqualTo(42L)
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `loadVideoDetail fills default cid when entry cid is zero`() =
+        runTest(testDispatcher) {
+            // 直进播放器（route.cid = 0）时用详情返回的默认分P补齐
+            every { videoInfoRepository.videoDetail } returns MutableStateFlow(fakeVideoDetail(cid = 111L))
+            initSession(aid = 10, cid = 0L)
+
+            viewModel.loadVideoDetail(aid = 10)
+            runCurrent()
+
+            assertThat(viewModel.uiState.value.cid).isEqualTo(111L)
+            viewModel.viewModelScope.cancel()
         }
 }
