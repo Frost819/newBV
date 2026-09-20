@@ -2,7 +2,6 @@ package dev.frost819.newbv.app.ui.screen.detail
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,6 +71,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.SuggestionChip
+import androidx.tv.material3.SuggestionChipDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
@@ -588,6 +588,8 @@ private fun VideoInfoHeader(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 50.dp, vertical = 16.dp),
+        // 封面与右侧信息列垂直居中对齐
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Card(
             modifier =
@@ -624,125 +626,96 @@ private fun VideoInfoHeader(
         Spacer(modifier = Modifier.width(24.dp))
 
         Column(
-            modifier =
-                Modifier
-                    .weight(7f)
-                    .fillMaxHeight(),
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.weight(7f),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = detail.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    val stat = detail.stat
-                    StatText("播放 ${stat.view.toWanString()}")
-                    StatSeparator()
-                    StatText("弹幕 ${stat.danmaku.toWanString()}")
-                    StatSeparator()
-                    StatText("点赞 ${stat.like.toWanString()}")
-                    StatSeparator()
-                    StatText("投币 ${stat.coin.toWanString()}")
-                    StatSeparator()
-                    StatText("收藏 ${stat.favorite.toWanString()}")
-                    StatSeparator()
-                    StatText(dateFormat.format(detail.publishDate))
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Surface(
-                        onClick = onClickUp,
-                        modifier =
-                            Modifier
-                                .focusRequester(upFocusRequester)
-                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") }
-                                .touchClickable(onClick = onClickUp),
-                        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
-                        border =
-                            ClickableSurfaceDefaults.border(
-                                focusedBorder =
-                                    Border(
-                                        border =
-                                            androidx.compose.foundation.BorderStroke(
-                                                2.dp,
-                                                MaterialTheme.colorScheme.border,
-                                            ),
-                                        shape = MaterialTheme.shapes.small,
-                                    ),
-                            ),
-                        colors =
-                            focusInvertedColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            ),
-                    ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            AsyncImage(
-                                model = detail.author.face,
-                                contentDescription = null,
-                                modifier =
-                                    Modifier
-                                        .size(24.dp)
-                                        .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop,
-                            )
-                            Text(
-                                text = detail.author.name,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        }
-                    }
-                    ActionButton(
-                        text = if (isFollowing) "已关注" else "关注",
-                        icon = if (isFollowing) Icons.Rounded.PersonAdd else Icons.Outlined.PersonAdd,
-                        highlighted = isFollowing,
-                        onClick = onToggleFollow,
-                        modifier =
-                            Modifier
-                                .focusRequester(followFocusRequester)
-                                .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
-                    )
-                }
+            Text(
+                text = detail.title,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                val stat = detail.stat
+                StatText("播放 ${stat.view.toWanString()}")
+                StatSeparator()
+                StatText("弹幕 ${stat.danmaku.toWanString()}")
+                StatSeparator()
+                StatText("点赞 ${stat.like.toWanString()}")
+                StatSeparator()
+                StatText("投币 ${stat.coin.toWanString()}")
+                StatSeparator()
+                StatText("收藏 ${stat.favorite.toWanString()}")
+                StatSeparator()
+                StatText("发布于 ${dateFormat.format(detail.publishDate)}")
             }
-
-            if (detail.tags.isNotEmpty()) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Surface(
+                    onClick = onClickUp,
+                    modifier =
+                        Modifier
+                            .focusRequester(upFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("up") }
+                            .touchClickable(onClick = onClickUp),
+                    shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                    border =
+                        ClickableSurfaceDefaults.border(
+                            focusedBorder =
+                                Border(
+                                    border =
+                                        androidx.compose.foundation.BorderStroke(
+                                            2.dp,
+                                            MaterialTheme.colorScheme.border,
+                                        ),
+                                    shape = MaterialTheme.shapes.small,
+                                ),
+                        ),
+                    colors =
+                        focusInvertedColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                 ) {
-                    items(detail.tags) { tag ->
-                        val tagKey = "tag_${tag.id}"
-                        SuggestionChip(
-                            onClick = { onClickTag(tag) },
+                    Row(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        AsyncImage(
+                            model = detail.author.face,
+                            contentDescription = null,
                             modifier =
                                 Modifier
-                                    .focusRequester(focusSaver.focusRequesterFor(tagKey))
-                                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) }
-                                    .touchClickable(onClick = { onClickTag(tag) }),
-                        ) {
-                            Text(
-                                text = tag.name,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        }
+                                    .size(24.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
+                        Text(
+                            text = detail.author.name,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
                     }
                 }
+                ActionButton(
+                    text = if (isFollowing) "已关注" else "关注",
+                    icon = if (isFollowing) Icons.Rounded.PersonAdd else Icons.Outlined.PersonAdd,
+                    highlighted = isFollowing,
+                    onClick = onToggleFollow,
+                    modifier =
+                        Modifier
+                            .focusRequester(followFocusRequester)
+                            .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("follow") },
+                )
             }
 
             Row(
@@ -792,6 +765,32 @@ private fun VideoInfoHeader(
                             .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey("comments") },
                 )
             }
+
+            if (detail.tags.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(detail.tags) { tag ->
+                        val tagKey = "tag_${tag.id}"
+                        SuggestionChip(
+                            onClick = { onClickTag(tag) },
+                            modifier =
+                                Modifier
+                                    .focusRequester(focusSaver.focusRequesterFor(tagKey))
+                                    .onFocusChanged { if (it.hasFocus) focusSaver.saveFocusedKey(tagKey) }
+                                    .touchClickable(onClick = { onClickTag(tag) }),
+                            // tag 不做聚焦放大：否则首尾 tag 会被 LazyRow 视口裁切
+                            scale = SuggestionChipDefaults.scale(focusedScale = 1f),
+                        ) {
+                            Text(
+                                text = tag.name,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -824,20 +823,8 @@ private fun ActionButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier =
-            modifier
-                .clip(MaterialTheme.shapes.small)
-                .then(
-                    if (highlighted) {
-                        Modifier.border(
-                            2.dp,
-                            MaterialTheme.colorScheme.border,
-                            MaterialTheme.shapes.small,
-                        )
-                    } else {
-                        Modifier
-                    },
-                ).touchClickable(onClick = onClick, onLongClick = onLongClick),
+        // 不要在外层用 .clip()：它会裁剪掉 Surface 内部的聚焦放大，导致漂浮被裁切
+        modifier = modifier.touchClickable(onClick = onClick, onLongClick = onLongClick),
         onClick = onClick,
         onLongClick = onLongClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
@@ -854,6 +841,22 @@ private fun ActionButton(
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            ),
+        border =
+            ClickableSurfaceDefaults.border(
+                border =
+                    if (highlighted) {
+                        Border(
+                            border =
+                                androidx.compose.foundation.BorderStroke(
+                                    2.dp,
+                                    MaterialTheme.colorScheme.border,
+                                ),
+                            shape = MaterialTheme.shapes.small,
+                        )
+                    } else {
+                        Border.None
                     },
             ),
     ) {
@@ -897,6 +900,7 @@ private fun VideoDescription(
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ),
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.03f),
         border =
             ClickableSurfaceDefaults.border(
                 focusedBorder =
@@ -917,7 +921,7 @@ private fun VideoDescription(
                     .padding(16.dp)
                     .animateContentSize(),
             text = description,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             maxLines = if (expanded) Int.MAX_VALUE else 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -993,6 +997,8 @@ private fun VideoPartRow(
                         onClick = { onClick(lastPage) },
                         modifier = Modifier.touchClickable(onClick = { onClick(lastPage) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                        // 不做聚焦放大：否则会盖住左侧的网格列表按钮
+                        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
                         colors =
                             focusInvertedColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -1007,7 +1013,7 @@ private fun VideoPartRow(
                             Icon(
                                 imageVector = Icons.Outlined.History,
                                 contentDescription = "历史",
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(20.dp),
                             )
                             Text(
                                 text = "上次看到 P${lastPage.index}",
@@ -1070,22 +1076,12 @@ private fun PartButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
+        // 不要在外层用 .clip()：它会裁剪掉 Surface 内部的聚焦放大，导致没有漂浮效果
         modifier =
             modifier
                 .width(200.dp)
                 .height(64.dp)
-                .clip(MaterialTheme.shapes.small)
-                .then(
-                    if (isCurrent) {
-                        Modifier.border(
-                            2.dp,
-                            MaterialTheme.colorScheme.border,
-                            MaterialTheme.shapes.small,
-                        )
-                    } else {
-                        Modifier
-                    },
-                ).touchClickable(onClick = onClick),
+                .touchClickable(onClick = onClick),
         onClick = onClick,
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
         colors =
@@ -1117,7 +1113,7 @@ private fun PartButton(
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1194,6 +1190,8 @@ private fun VideoUgcSeasonRow(
                         onClick = { onClick(lastEpisode) },
                         modifier = Modifier.touchClickable(onClick = { onClick(lastEpisode) }),
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+                        // 不做聚焦放大：否则会盖住左侧的网格列表按钮
+                        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
                         colors =
                             focusInvertedColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -1208,10 +1206,10 @@ private fun VideoUgcSeasonRow(
                             Icon(
                                 imageVector = Icons.Outlined.History,
                                 contentDescription = "历史",
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(20.dp),
                             )
                             Text(
-                                text = "上次看到 ${lastEpisode.title}",
+                                text = "上次播放到：${lastEpisode.title}",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }
