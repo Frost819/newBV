@@ -154,28 +154,19 @@ fun VideoPlayerScreen(
         }
     }
 
-    // 弹幕分段加载：进度驱动（高频喂入，VM 内部按段号去重）
+    // 弹幕时间轴同步：喂入视频位置，VM 内驱动分段加载并按位置跳变自动对齐引擎时钟
     LaunchedEffect(Unit) {
         playerViewModel.seekerState
             .map { it.currentTime }
-            .collect { danmakuViewModel.onProgressChanged(it) }
+            .collect { danmakuViewModel.onVideoPositionChanged(it) }
     }
 
-    // 弹幕播放/暂停同步：跟随播放器状态
-    LaunchedEffect(uiState.playerState) {
-        when (val state = uiState.playerState) {
-            PlayerState.Playing -> danmakuViewModel.play()
-            PlayerState.Paused, is PlayerState.Error, PlayerState.Ended -> danmakuViewModel.pause()
-            else -> {}
-        }
-    }
-
-    // 弹幕缓冲同步：缓冲时暂停弹幕
-    LaunchedEffect(uiState.isBuffering) {
-        if (uiState.isBuffering) {
-            danmakuViewModel.pause()
-        } else if (uiState.playerState == PlayerState.Playing) {
+    // 弹幕运行同步：视频播放中且未缓冲时弹幕运行，其余情况（暂停/出错/结束/缓冲）暂停
+    LaunchedEffect(uiState.playerState, uiState.isBuffering) {
+        if (uiState.playerState == PlayerState.Playing && !uiState.isBuffering) {
             danmakuViewModel.play()
+        } else {
+            danmakuViewModel.pause()
         }
     }
 
@@ -270,8 +261,8 @@ fun VideoPlayerScreen(
         },
         onGoTime = { time ->
             logger.info { "[PLAYBACK] seek aid=${uiState.aid}, cid=${uiState.cid}, positionMs=$time" }
+            // 弹幕引擎时钟由进度喂入按位置跳变自动对齐，无需在此单独通知弹幕
             playerViewModel.seekToTime(time)
-            danmakuViewModel.seekTo(time)
         },
         onBackToStart = { playerViewModel.backToStart() },
         onCancelSkipToNextEp = { playerViewModel.cancelPlayNext() },
