@@ -1,9 +1,13 @@
 package dev.frost819.newbv.app.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.frost819.newbv.app.util.MediaCodecVideoCapabilityProvider
+import dev.frost819.newbv.app.util.VideoCapabilityProvider
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
 import javax.inject.Singleton
 
@@ -25,4 +29,16 @@ object PlayerModule {
     @Provides
     @Singleton
     fun provideExoPlayerFactory(): ExoPlayerFactory = ExoPlayerFactory()
+
+    /**
+     * 提供设备视频解码能力查询器。
+     *
+     * 基于 Media3 `MediaCodecVideoRenderer.supportsFormat` 实现，供播放选流时
+     * 过滤超出本机解码能力的编码/画质组合。
+     */
+    @Provides
+    @Singleton
+    fun provideVideoCapabilityProvider(
+        @ApplicationContext context: Context,
+    ): VideoCapabilityProvider = MediaCodecVideoCapabilityProvider(context)
 }

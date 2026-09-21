@@ -313,6 +313,11 @@ class ExoMediaPlayer(
             tryRecoverBehindLiveWindow(error)
             return
         }
+        // 解码器无法处理当前格式：上报专用信号，交由上层尝试回退编码/画质
+        if (isVideoDecodeError(error.errorCode)) {
+            mPlayerEventListener?.onVideoDecodeUnsupported()
+            return
+        }
         mPlayerEventListener?.onError(error)
     }
 
@@ -423,3 +428,21 @@ private class ExtXStartStrippingParser(
         return delegate.parse(uri, ByteArrayInputStream(filtered.toByteArray(Charsets.UTF_8)))
     }
 }
+
+/**
+ * 是否为视频解码能力相关错误（可尝试换编码 / 降画质重试）。
+ *
+ * 覆盖解码器初始化失败、查询失败、解码失败、格式超出能力、格式不支持；
+ * 其余错误（网络、解析容器等）交由普通 [VideoPlayerListener.onError] 处理。
+ */
+internal fun isVideoDecodeError(errorCode: Int): Boolean =
+    when (errorCode) {
+        PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
+        PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED,
+        PlaybackException.ERROR_CODE_DECODING_FAILED,
+        PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+        PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+        -> true
+
+        else -> false
+    }

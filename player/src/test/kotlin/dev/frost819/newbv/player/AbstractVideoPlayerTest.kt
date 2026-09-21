@@ -1069,11 +1069,13 @@ class AbstractVideoPlayerTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `VideoPlayerListener has all eight callback methods`() {
-        val methods = VideoPlayerListener::class.java.declaredMethods
+    fun `VideoPlayerListener has all nine callback methods`() {
+        // 过滤合成方法（默认实现会生成 access$...$jd 合成桥接）
+        val methods = VideoPlayerListener::class.java.declaredMethods.filterNot { it.isSynthetic }
 
         assertThat(methods.map { it.name }).containsExactly(
             "onError",
+            "onVideoDecodeUnsupported",
             "onReady",
             "onPlay",
             "onPause",

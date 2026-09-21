@@ -11,12 +11,23 @@ import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
+import dev.frost819.newbv.app.ui.component.settings.displayName
+import dev.frost819.newbv.app.ui.state.player.MediaProfileState
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.ui.state.player.SeekerState
+import dev.frost819.newbv.app.util.PlaybackCandidate
 import dev.frost819.newbv.app.util.PlayerConstants
+import dev.frost819.newbv.app.util.VideoCapabilityProvider
+import dev.frost819.newbv.app.util.VideoDecodeProfile
+import dev.frost819.newbv.app.util.collectCodecs
+import dev.frost819.newbv.app.util.findTrack
+import dev.frost819.newbv.app.util.orderQualities
+import dev.frost819.newbv.app.util.pickDecodableProfile
+import dev.frost819.newbv.app.util.trackMatchesCodec
 import dev.frost819.newbv.biliapi.entity.ApiType
+import dev.frost819.newbv.biliapi.entity.DashVideo
 import dev.frost819.newbv.biliapi.entity.PlayData
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
@@ -82,6 +93,7 @@ private const val ONLINE_WATCH_REFRESH_MS = 60_000L
  * @param favoriteRepository 视频收藏仓库
  * @param oneClickTripleActionRepository 一键三连仓库
  * @param exoPlayerFactory ExoPlayer 工厂
+ * @param videoCapabilityProvider 设备视频解码能力查询器（选流时过滤超能力组合）
  */
 @HiltViewModel
 class PlayerViewModel
@@ -91,6 +103,7 @@ class PlayerViewModel
         private val videoInfoRepository: VideoInfoRepository,
         private val authRepository: AuthRepository,
         private val exoPlayerFactory: ExoPlayerFactory,
+        private val videoCapabilityProvider: VideoCapabilityProvider,
         private val likeRepository: LikeRepository,
         private val coinRepository: CoinRepository,
         private val favoriteRepository: FavoriteRepository,
@@ -103,6 +116,9 @@ class PlayerViewModel
             private set
 
         private var playData: PlayData? = null
+
+        /** 本次播放已尝试过的「画质|编码」组合，用于解码回退去重与终止。 */
+        private val attemptedDecodeProfiles = mutableSetOf<String>()
 
         private val detachedWorkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -159,6 +175,14 @@ class PlayerViewModel
                             isBuffering = false,
                         )
                     }
+                }
+
+                override fun onVideoDecodeUnsupported() {
+                    logger.info {
+                        "onVideoDecodeUnsupported: qn=${_uiState.value.mediaProfileState.qualityId}, " +
+                            "codec=${_uiState.value.mediaProfileState.videoCodec}"
+                    }
+                    viewModelScope.launch { handleDecodeUnsupported() }
                 }
 
                 override fun onReady() {
@@ -239,6 +263,13 @@ class PlayerViewModel
                     subType = subType,
                     authorMid = authorMid,
                     authorName = authorName,
+                    // 按用户偏好重置媒体格式，避免沿用上一个视频的画质/编码
+                    mediaProfileState =
+                        MediaProfileState(
+                            qualityId = Prefs.defaultQuality.code,
+                            videoCodec = Prefs.defaultVideoCodec,
+                            audio = Prefs.defaultAudio,
+                        ),
                 )
             }
 
@@ -663,8 +694,15 @@ class PlayerViewModel
                     showSkipToNextEp = false,
                     showBackToStart = false,
                     shortcutTipText = null,
+                    mediaProfileState =
+                        MediaProfileState(
+                            qualityId = Prefs.defaultQuality.code,
+                            videoCodec = Prefs.defaultVideoCodec,
+                            audio = Prefs.defaultAudio,
+                        ),
                 )
             }
+            resetDecodeFallbackState()
 
             // 通知 UI 层重载弹幕/字幕（非阻塞，避免卡住 playNewVideo）
             viewModelScope.launch { _videoSwitchEvent.emit(VideoSwitchEvent(newVideo.aid, newVideo.cid)) }
@@ -763,7 +801,16 @@ class PlayerViewModel
                 }
             if (old == new) return
 
-            _uiState.update { it.copy(mediaProfileState = new) }
+            // 用户手动切换，重置回退状态，避免误判为「已尝试」
+            resetDecodeFallbackState()
+
+            // 同步刷新该画质下的可用编码列表（编码菜单随画质联动）
+            _uiState.update {
+                it.copy(
+                    mediaProfileState = new,
+                    availableVideoCodec = codecsFor(new.qualityId),
+                )
+            }
 
             videoPlayer?.let { player ->
                 player.pause()
@@ -777,6 +824,131 @@ class PlayerViewModel
                 }
             }
         }
+
+        // ── 解码回退 ──────────────────────────────────────────────
+
+        /** 清除解码回退状态（切集 / 手动切换媒体格式时调用）。 */
+        private fun resetDecodeFallbackState() {
+            attemptedDecodeProfiles.clear()
+        }
+
+        /**
+         * 处理「当前编码本机解码不了」：按候选顺序回退到下一个未尝试的组合并重播。
+         *
+         * 每次回退 toast 提示用户；候选组合（画质 × 编码）被穷尽后上报播放错误。
+         * 由于每个组合只会被尝试一次（[attemptedDecodeProfiles] 去重），
+         * 而候选空间有限，循环必然终止，无需额外次数上限。
+         */
+        private suspend fun handleDecodeUnsupported() {
+            val state = _uiState.value
+            val current = state.mediaProfileState
+            attemptedDecodeProfiles.add(profileKey(current.qualityId, current.videoCodec))
+
+            val next = nextDecodeCandidate(current)
+            if (next == null) {
+                failPlayback("解码器不支持该视频")
+                return
+            }
+
+            val qualityName = Resolution.fromCode(next.quality).displayName
+            val codecName = next.codec.displayName
+            _uiEffect.emit(PlayerUiEffect.ShowToast("当前编码不受支持，正在回退到 $qualityName · $codecName"))
+
+            val urls = resolveMediaUrls(next.quality, next.codec, current.audio)
+            val player =
+                videoPlayer ?: run {
+                    failPlayback("播放器未初始化")
+                    return
+                }
+            if (urls == null) {
+                failPlayback("视频源解析失败")
+                return
+            }
+
+            val position = player.currentPosition
+            _uiState.update {
+                it.copy(
+                    mediaProfileState =
+                        it.mediaProfileState.copy(
+                            qualityId = next.quality,
+                            videoCodec = next.codec,
+                        ),
+                    availableVideoCodec = codecsFor(next.quality),
+                    isBuffering = true,
+                )
+            }
+            player.pause()
+            player.playUrl(urls.videoUrl, urls.audioUrl)
+            player.prepare()
+            if (position > 0) player.seekTo(position)
+            player.start()
+        }
+
+        /**
+         * 计算下一个可回退的「画质 + 编码」组合。
+         *
+         * 优先返回本机判定可解码且未尝试过的组合；若能力判定认为全部不可解码，
+         * 则退而求其次返回任意未尝试过的组合（能力判定可能因厂商实现而偏差）。
+         */
+        private fun nextDecodeCandidate(current: MediaProfileState): PlaybackCandidate? {
+            val data = playData ?: return null
+            val qualities = orderQualities(data.dashVideos.map { it.quality }, Prefs.defaultQuality.code)
+            val codecOrder =
+                listOf(
+                    Prefs.defaultVideoCodec,
+                    VideoCodec.HEVC,
+                    VideoCodec.AV1,
+                    VideoCodec.AVC,
+                    VideoCodec.DVH1,
+                ).distinct()
+
+            // 按画质序 × 编码序生成候选，排除当前项与已尝试项；
+            // requireDecodable=true 时再排除本机判定不可解码的项
+            fun filteredCandidates(requireDecodable: Boolean): List<PlaybackCandidate> =
+                qualities.flatMap { quality ->
+                    val available = codecsFor(quality).toSet()
+                    codecOrder
+                        .filter { it in available }
+                        .mapNotNull { codec ->
+                            if (quality == current.qualityId && codec == current.videoCodec) return@mapNotNull null
+                            if (profileKey(quality, codec) in attemptedDecodeProfiles) return@mapNotNull null
+                            if (requireDecodable) {
+                                val track = trackFor(quality, codec) ?: return@mapNotNull null
+                                val decodable =
+                                    videoCapabilityProvider.isDecodable(
+                                        VideoDecodeProfile(
+                                            codec = codec,
+                                            width = track.width,
+                                            height = track.height,
+                                            frameRate = track.frameRate.toFloatOrNull(),
+                                            codecs = track.codecs,
+                                        ),
+                                    )
+                                if (!decodable) return@mapNotNull null
+                            }
+                            PlaybackCandidate(quality, codec)
+                        }
+                }
+
+            return filteredCandidates(requireDecodable = true).firstOrNull()
+                ?: filteredCandidates(requireDecodable = false).firstOrNull()
+        }
+
+        /** 置播放错误状态。 */
+        private fun failPlayback(message: String) {
+            _uiState.update {
+                it.copy(
+                    playerState = PlayerState.Error(message),
+                    isBuffering = false,
+                )
+            }
+        }
+
+        /** 「画质|编码」组合键。 */
+        private fun profileKey(
+            quality: Int,
+            codec: VideoCodec,
+        ): String = "$quality|${codec.name}"
 
         // ── 私有方法 ──────────────────────────────────────────────
 
@@ -827,17 +999,26 @@ class PlayerViewModel
                     playData.flac?.let { add(Audio.fromCode(it.codecId)) }
                 }.distinct()
 
-            val targetQualityId = calculateTargetQuality(resolutionMap.keys, Prefs.defaultQuality.code)
+            val requestedQualityId = calculateTargetQuality(resolutionMap.keys, Prefs.defaultQuality.code)
+            // 能力感知选流：目标画质优先、逐档降级；同档按编码偏好，取第一个本机可解码的组合
+            val candidate = pickProfile(requestedQualityId)
+            val targetQualityId = candidate?.quality ?: requestedQualityId
+            val availableCodecs = codecsFor(targetQualityId)
+            val targetCodec =
+                candidate?.codec
+                    ?: Prefs.defaultVideoCodec.takeIf { it in availableCodecs }
+                    ?: availableCodecs.minByOrNull { it.ordinal }
             val targetAudio = calculateTargetAudio(availableAudioList, Prefs.defaultAudio)
-            val targetCodec = getTargetVideoCodec()
 
             _uiState.update {
                 it.copy(
                     availableQuality = resolutionMap,
+                    availableVideoCodec = availableCodecs,
                     availableAudio = availableAudioList,
                     mediaProfileState =
                         it.mediaProfileState.copy(
                             qualityId = targetQualityId,
+                            videoCodec = targetCodec ?: VideoCodec.AVC,
                             audio = targetAudio,
                         ),
                 )
@@ -898,45 +1079,26 @@ class PlayerViewModel
             }
         }
 
-        private fun getTargetVideoCodec(): VideoCodec? {
-            val state = _uiState.value
-            val data = playData ?: return null
-            val apiType = getApiType()
+        /** 指定画质下的可用编码（对当前 [playData] 取，空播放数据返回空）。 */
+        private fun codecsFor(qualityId: Int): List<VideoCodec> =
+            playData?.let { collectCodecs(it, qualityId) } ?: emptyList()
 
-            if (apiType == ApiType.App && data.codec.isEmpty()) {
-                val videoItem =
-                    data.dashVideos.find { it.quality == state.mediaProfileState.qualityId }
-                        ?: data.dashVideos.firstOrNull() ?: return null
-                val codec = VideoCodec.fromCodecId(videoItem.codecId)
-                _uiState.update {
-                    it.copy(
-                        availableVideoCodec = listOf(codec),
-                        mediaProfileState = it.mediaProfileState.copy(videoCodec = codec),
-                    )
-                }
-                return codec
-            }
+        /** 查找指定画质 + 编码的 DASH 流（对当前 [playData] 取）。 */
+        private fun trackFor(
+            quality: Int,
+            codec: VideoCodec,
+        ): DashVideo? = playData?.let { findTrack(it, quality, codec) }
 
-            val codecList =
-                data.codec[state.mediaProfileState.qualityId]
-                    ?.mapNotNull { VideoCodec.fromCodecString(it) }
-                    ?.takeIf { it.isNotEmpty() } ?: return null
-
-            val targetCodec =
-                if (codecList.contains(Prefs.defaultVideoCodec)) {
-                    Prefs.defaultVideoCodec
-                } else {
-                    codecList.minByOrNull { it.ordinal } ?: return null
-                }
-
-            _uiState.update {
-                it.copy(
-                    availableVideoCodec = codecList,
-                    mediaProfileState = it.mediaProfileState.copy(videoCodec = targetCodec),
+        /** 能力感知选流（对当前 [playData] 取）。 */
+        private fun pickProfile(requestedQualityId: Int): PlaybackCandidate? =
+            playData?.let {
+                pickDecodableProfile(
+                    data = it,
+                    requestedQualityId = requestedQualityId,
+                    preferredCodec = Prefs.defaultVideoCodec,
+                    capabilityProvider = videoCapabilityProvider,
                 )
             }
-            return targetCodec
-        }
 
         private fun resolveMediaUrls(
             qn: Int? = null,
@@ -948,26 +1110,14 @@ class PlayerViewModel
             val targetQn = qn ?: state.mediaProfileState.qualityId
             val targetCodec = codec ?: state.mediaProfileState.videoCodec
             val targetAudio = audio ?: state.mediaProfileState.audio
-            val apiType = getApiType()
 
+            // 优先按目标画质 + 目标编码匹配（Web 用 codecs 串，App 退用 codecId），
+            // 再退到同画质任意流，最后才全局兜底。
             val foundVideo =
-                data.dashVideos.find {
-                    val codecStr = it.codecs
-                    when (apiType) {
-                        ApiType.Web ->
-                            it.quality == targetQn &&
-                                codecStr != null &&
-                                targetCodec.prefixes.any { p -> codecStr.startsWith(p) }
-                        ApiType.App ->
-                            if (data.codec.isEmpty()) {
-                                it.quality == targetQn
-                            } else {
-                                it.quality == targetQn &&
-                                    codecStr != null &&
-                                    targetCodec.prefixes.any { p -> codecStr.startsWith(p) }
-                            }
-                    }
-                } ?: data.dashVideos.firstOrNull() ?: return null
+                data.dashVideos.firstOrNull { it.quality == targetQn && trackMatchesCodec(it, targetCodec) }
+                    ?: data.dashVideos.firstOrNull { it.quality == targetQn }
+                    ?: data.dashVideos.firstOrNull()
+                    ?: return null
 
             val videoUrls = mutableListOf<String?>()
             videoUrls.add(foundVideo.baseUrl)

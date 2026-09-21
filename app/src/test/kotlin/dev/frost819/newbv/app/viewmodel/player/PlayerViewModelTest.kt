@@ -8,9 +8,13 @@ import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
+import dev.frost819.newbv.app.ui.state.player.MediaProfileState
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
+import dev.frost819.newbv.app.util.VideoCapabilityProvider
+import dev.frost819.newbv.biliapi.entity.DashVideo
+import dev.frost819.newbv.biliapi.entity.PlayData
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
@@ -68,6 +72,7 @@ class PlayerViewModelTest {
     private lateinit var videoInfoRepository: VideoInfoRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var exoPlayerFactory: ExoPlayerFactory
+    private lateinit var videoCapabilityProvider: VideoCapabilityProvider
     private lateinit var likeRepository: LikeRepository
     private lateinit var coinRepository: CoinRepository
     private lateinit var favoriteRepository: FavoriteRepository
@@ -83,6 +88,8 @@ class PlayerViewModelTest {
         videoInfoRepository = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
         exoPlayerFactory = mockk()
+        videoCapabilityProvider = mockk()
+        every { videoCapabilityProvider.isDecodable(any()) } returns true
         likeRepository = mockk(relaxed = true)
         coinRepository = mockk(relaxed = true)
         favoriteRepository = mockk(relaxed = true)
@@ -111,6 +118,7 @@ class PlayerViewModelTest {
                 videoInfoRepository = videoInfoRepository,
                 authRepository = authRepository,
                 exoPlayerFactory = exoPlayerFactory,
+                videoCapabilityProvider = videoCapabilityProvider,
                 likeRepository = likeRepository,
                 coinRepository = coinRepository,
                 favoriteRepository = favoriteRepository,
@@ -844,5 +852,233 @@ class PlayerViewModelTest {
             viewModel.trySendHeartbeat()
 
             verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any()) }
+        }
+
+    // ── 解码回退 (#288) ───────────────────────────────────────
+
+    private fun setPlayData(data: PlayData) {
+        val field = PlayerViewModel::class.java.getDeclaredField("playData")
+        field.isAccessible = true
+        field.set(viewModel, data)
+    }
+
+    private fun dashVideo(
+        quality: Int,
+        codecId: Int,
+        codecs: String,
+        width: Int = 1920,
+        height: Int = 1080,
+    ) = DashVideo(
+        quality = quality,
+        baseUrl = "https://example.com/$quality-$codecId.m4s",
+        bandwidth = 1_000_000,
+        codecId = codecId,
+        width = width,
+        height = height,
+        frameRate = "30",
+        backUrl = emptyList(),
+        codecs = codecs,
+    )
+
+    @Test
+    fun `onVideoDecodeUnsupported falls back to next decodable codec and toasts`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 1000L
+            setPlayData(
+                PlayData(
+                    dashVideos =
+                        listOf(
+                            dashVideo(120, 7, "avc1.640034", 2160, 3840),
+                            dashVideo(120, 12, "hev1.1.6.L153.90", 2160, 3840),
+                        ),
+                    dashAudios = emptyList(),
+                ),
+            )
+            updateUiState {
+                it.copy(
+                    mediaProfileState =
+                        MediaProfileState(
+                            qualityId = 120,
+                            videoCodec = VideoCodec.AVC,
+                            audio = Audio.A192K,
+                        ),
+                )
+            }
+            every { videoCapabilityProvider.isDecodable(match { it.codec == VideoCodec.AVC }) } returns false
+            every { videoCapabilityProvider.isDecodable(match { it.codec == VideoCodec.HEVC }) } returns true
+
+            viewModel.uiEffect.test {
+                getVideoPlayerListener().onVideoDecodeUnsupported()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(PlayerUiEffect.ShowToast::class.java)
+                assertThat((effect as PlayerUiEffect.ShowToast).message).contains("HEVC/H.265")
+            }
+
+            assertThat(viewModel.uiState.value.mediaProfileState.videoCodec).isEqualTo(VideoCodec.HEVC)
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(120)
+            verify { mockPlayer.playUrl(any(), any()) }
+        }
+
+    @Test
+    fun `onVideoDecodeUnsupported falls back to untried combo even if capability rejects all`() =
+        runTest(testDispatcher) {
+            // 能力判定认为全部不可解，但仍有未尝试组合 → 应兜底尝试而非直接报错
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 1000L
+            setPlayData(
+                PlayData(
+                    dashVideos =
+                        listOf(
+                            dashVideo(120, 7, "avc1.640034", 2160, 3840),
+                            dashVideo(80, 7, "avc1.640028"),
+                        ),
+                    dashAudios = emptyList(),
+                ),
+            )
+            updateUiState {
+                it.copy(
+                    mediaProfileState =
+                        MediaProfileState(qualityId = 120, videoCodec = VideoCodec.AVC, audio = Audio.A192K),
+                )
+            }
+            every { videoCapabilityProvider.isDecodable(any()) } returns false
+
+            viewModel.uiEffect.test {
+                getVideoPlayerListener().onVideoDecodeUnsupported()
+                advanceUntilIdle()
+                awaitItem()
+            }
+
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(80)
+            assertThat(viewModel.uiState.value.mediaProfileState.videoCodec).isEqualTo(VideoCodec.AVC)
+            verify { mockPlayer.playUrl(any(), any()) }
+        }
+
+    @Test
+    fun `playNewVideo resets media profile from prefs`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            updateUiState {
+                it.copy(
+                    mediaProfileState =
+                        MediaProfileState(
+                            qualityId = 120,
+                            videoCodec = VideoCodec.HEVC,
+                            audio = Audio.ADolbyAtoms,
+                        ),
+                )
+            }
+
+            viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
+
+            val profile = viewModel.uiState.value.mediaProfileState
+            assertThat(profile.qualityId).isEqualTo(Resolution.R1080P.code)
+            assertThat(profile.videoCodec).isEqualTo(VideoCodec.AVC)
+            assertThat(profile.audio).isEqualTo(Audio.A192K)
+        }
+
+    @Test
+    fun `init resets media profile from prefs`() {
+        updateUiState {
+            it.copy(
+                mediaProfileState =
+                    MediaProfileState(qualityId = 120, videoCodec = VideoCodec.HEVC, audio = Audio.ADolbyAtoms),
+            )
+        }
+
+        viewModel.init(
+            aid = 1L,
+            cid = 2L,
+            epid = null,
+            title = "t",
+            lastPlayed = 0,
+            fromSeason = false,
+            subType = 0,
+            seasonId = 0,
+            authorName = "",
+        )
+
+        val profile = viewModel.uiState.value.mediaProfileState
+        assertThat(profile.qualityId).isEqualTo(Resolution.R1080P.code)
+        assertThat(profile.videoCodec).isEqualTo(VideoCodec.AVC)
+        assertThat(profile.audio).isEqualTo(Audio.A192K)
+    }
+
+    @Test
+    fun `updateMediaProfile refreshes available codecs for new quality`() =
+        runTest(testDispatcher) {
+            setPlayData(
+                PlayData(
+                    dashVideos =
+                        listOf(
+                            dashVideo(116, 12, "hev1.1.6.L120.90"),
+                            dashVideo(80, 7, "avc1.640028"),
+                        ),
+                    dashAudios = emptyList(),
+                ),
+            )
+
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
+
+            assertThat(viewModel.uiState.value.availableVideoCodec).containsExactly(VideoCodec.HEVC)
+        }
+
+    @Test
+    fun `updateMediaProfile resolves url by target codec`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 0L
+            setPlayData(
+                PlayData(
+                    dashVideos =
+                        listOf(
+                            dashVideo(80, 7, "avc1.640028"),
+                            dashVideo(80, 12, "hev1.1.6.L120.90"),
+                        ),
+                    dashAudios = emptyList(),
+                ),
+            )
+            updateUiState {
+                it.copy(
+                    mediaProfileState =
+                        MediaProfileState(qualityId = 80, videoCodec = VideoCodec.AVC, audio = Audio.A192K),
+                )
+            }
+
+            viewModel.updateMediaProfile(MediaProfileSettingAction.SetVideoCodec(VideoCodec.HEVC))
+
+            // baseUrl 形如 https://example.com/<quality>-<codecId>.m4s
+            verify { mockPlayer.playUrl(match { it.contains("80-12") }, any()) }
+        }
+
+    @Test
+    fun `onVideoDecodeUnsupported fails when no candidate left`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 1000L
+            setPlayData(
+                PlayData(
+                    dashVideos = listOf(dashVideo(120, 7, "avc1.640034", 2160, 3840)),
+                    dashAudios = emptyList(),
+                ),
+            )
+            updateUiState {
+                it.copy(
+                    mediaProfileState =
+                        MediaProfileState(qualityId = 120, videoCodec = VideoCodec.AVC, audio = Audio.A192K),
+                )
+            }
+            every { videoCapabilityProvider.isDecodable(any()) } returns false
+
+            getVideoPlayerListener().onVideoDecodeUnsupported()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
         }
 }
