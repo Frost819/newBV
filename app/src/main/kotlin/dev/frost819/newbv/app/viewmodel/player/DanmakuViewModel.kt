@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
+import kotlin.math.abs
 import dev.frost819.newbv.danmaku.entity.DanmakuType as DanmakuEntityDanmakuType
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
@@ -48,15 +49,16 @@ import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
  *
  * 弹幕数据采用分段加载（每段时长由 dm/view 元数据决定，通常 6 分钟）：
  * - [loadDanmaku] 获取元数据并按初始位置加载首段
- * - [onProgressChanged] 由 UI 层喂入播放进度，内部按段号去重后驱动加载
+ * - [onVideoPositionChanged] 由 UI 层喂入播放进度，内部按段号去重后驱动加载
  * - 每次加载目标段及预取下一段，已加载/加载中的段自动跳过
  * - 失败重试若干次后放弃（不降级 XML），进度进入下一段时自然恢复
  *
  * 与 [PlayerViewModel] 的同步由 UI 层协调：
- * - 播放进度 → 调用 [onProgressChanged]
- * - 视频播放/暂停 → 调用 [play] / [pause]
- * - seek → 调用 [seekTo]
- * - 切换视频 → 调用 [release] + [init] + [loadDanmaku]
+ * - 播放进度 → 调用 [onVideoPositionChanged]：既驱动分段加载，也自动对齐弹幕
+ *   引擎时钟（位置跳变超过阈值时 seek 引擎），因此任何改变视频位置的入口
+ *   （断点续播、切集、用户 seek、回到开头）都无需单独通知本 VM
+ * - 视频播放/暂停/缓冲 → 调用 [play] / [pause]
+ * - 切换视频 → 调用 [clearDanmaku] + [loadDanmaku]
  */
 @HiltViewModel
 class DanmakuViewModel
@@ -66,9 +68,12 @@ class DanmakuViewModel
     ) : ViewModel() {
         private val logger = Loggers.get("DanmakuViewModel")
 
-        /** 弹幕播放器实例，供 Compose `AndroidView` 绑定。 */
+        /**
+         * 弹幕播放器实例，供 Compose `AndroidView` 绑定。
+         * internal set 供单元测试注入 MockK 引擎，生产代码仅在 [init] / [release] 中赋值。
+         */
         var danmakuPlayer: DanmakuPlayer? by mutableStateOf(null)
-            private set
+            internal set
 
         private var danmakuConfig = DanmakuConfig()
         private val danmakuTypeFilter = TypeFilter()
@@ -226,12 +231,32 @@ class DanmakuViewModel
         }
 
         /**
-         * 由 UI 层喂入播放进度（毫秒），驱动分段加载。
+         * 由 UI 层喂入视频播放位置（毫秒），弹幕时间轴的唯一同步入口。
          *
-         * 高频调用安全：内部换算段号后去重，仅段号变化时触发请求。
+         * - 驱动分段加载：内部换算段号后去重，仅段号变化时触发请求，高频调用安全
+         * - 对齐引擎时钟：引擎按自身时钟渲染、分段只加载目标段附近，时钟一旦
+         *   偏离视频位置（断点续播 seek、切集、用户 seek 等）窗口内将无弹幕可
+         *   渲染且不会自愈，因此位置跳变时必须显式对齐（见 [reconcileEngineTime]）
          */
-        fun onProgressChanged(timeMs: Long) {
+        fun onVideoPositionChanged(timeMs: Long) {
             currentTimeFlow.value = timeMs
+            reconcileEngineTime(videoTimeMs = timeMs, player = danmakuPlayer)
+        }
+
+        /**
+         * 对齐弹幕引擎时钟：与视频位置偏差超过 [ENGINE_TIME_JUMP_THRESHOLD_MS] 时 seek 引擎。
+         *
+         * [player] 参数化仅为可测性（单元测试注入 MockK 引擎），生产调用方传 [danmakuPlayer]。
+         */
+        internal fun reconcileEngineTime(
+            videoTimeMs: Long,
+            player: DanmakuPlayer?,
+        ) {
+            if (player == null) return
+            val engineTimeMs = player.getCurrentTimeMs()
+            if (abs(videoTimeMs - engineTimeMs) <= ENGINE_TIME_JUMP_THRESHOLD_MS) return
+            logger.info { "Align danmaku engine clock: video=$videoTimeMs ms, engine=$engineTimeMs ms" }
+            player.seekTo(videoTimeMs)
         }
 
         /**
@@ -405,17 +430,6 @@ class DanmakuViewModel
             danmakuPlayer?.pause()
         }
 
-        /**
-         * 跳转到指定位置（毫秒），暂停弹幕等待缓冲。
-         *
-         * 同时喂入进度驱动分段加载：seek 跨段时立即请求目标段。
-         */
-        fun seekTo(time: Long) {
-            danmakuPlayer?.seekTo(time)
-            danmakuPlayer?.pause()
-            onProgressChanged(time)
-        }
-
         /** 更新弹幕播放速度。 */
         fun updateSpeed(speed: Float) {
             danmakuPlayer?.updatePlaySpeed(speed)
@@ -549,6 +563,14 @@ class DanmakuViewModel
 
         companion object {
             private const val LOAD_TIMEOUT_MS = 10_000L
+
+            /**
+             * 引擎时钟与视频位置的对齐阈值（毫秒）。
+             *
+             * 下限须高于 10Hz 进度喂入的正常采样抖动（约 200-300ms），
+             * 避免正常播放中频繁 seek 引擎；上限远低于用户可感知的弹幕错位。
+             */
+            private const val ENGINE_TIME_JUMP_THRESHOLD_MS = 500L
 
             /** 分段请求超时（毫秒）。 */
             private const val SEGMENT_FETCH_TIMEOUT_MS = 10_000L

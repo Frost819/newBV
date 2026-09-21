@@ -439,7 +439,7 @@ dependencies {
     testImplementation("app.cash.turbine:turbine:1.1.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation("com.google.truth:truth:1.4.2")
-    
+
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.1")
@@ -477,7 +477,7 @@ class VideoPlayRepositoryTest {
     @Test
     fun `getPlayData with Web API returns merged codec data`() = runTest {
         // Given
-        coEvery { mockHttpApi.getVideoPlayUrl(any(), any(), any(), any()) } 
+        coEvery { mockHttpApi.getVideoPlayUrl(any(), any(), any(), any()) }
             returns fakePlayUrlResponse()
 
         // When
@@ -491,7 +491,7 @@ class VideoPlayRepositoryTest {
     @Test
     fun `getPlayData falls back to App gRPC when Web returns risk control`() = runTest {
         // Given
-        coEvery { mockHttpApi.getVideoPlayUrl(any(), any(), any(), any()) } 
+        coEvery { mockHttpApi.getVideoPlayUrl(any(), any(), any(), any()) }
             throws RiskControlException(-352)
 
         // When
@@ -1426,34 +1426,22 @@ if (historyCid == _uiState.value.cid && historyTime > 0) {
 
 **解决方案**：在 `NetworkModule` 中 `@Provides` 共享 `HttpClient` 单例，构造注入到 `SubtitleViewModel`。
 
-#### 11.10.6 弹幕 play/pause/seek 未与播放器同步
+#### 11.10.6 弹幕 play/pause 未与播放器同步
 
-**问题**：5-way ViewModel 拆分后，`DanmakuViewModel` 的 `play()`/`pause()`/`seekTo()` 从未被调用，弹幕不随播放器播放/暂停/seek 而动。
+**问题**：5-way ViewModel 拆分后，`DanmakuViewModel` 的 `play()`/`pause()` 从未被调用，弹幕不随播放器播放/暂停而动。
 
 **原因**：`PlayerViewModel` 无法直接调用 `DanmakuViewModel` 方法，UI 层（`VideoPlayerScreen`）需要充当协调者。
 
 **解决方案**：在 `VideoPlayerScreen` 中添加 `LaunchedEffect` 监听播放器状态，同步调用 DanmakuViewModel：
 
 ```kotlin
-// 播放/暂停同步
-LaunchedEffect(uiState.playerState) {
-    when (uiState.playerState) {
-        PlayerState.Playing -> danmakuViewModel.play()
-        PlayerState.Paused, is PlayerState.Error, PlayerState.Ended -> danmakuViewModel.pause()
-        else -> {}
+// 运行同步：视频播放中且未缓冲时弹幕运行，其余情况（暂停/出错/结束/缓冲）暂停
+LaunchedEffect(uiState.playerState, uiState.isBuffering) {
+    if (uiState.playerState == PlayerState.Playing && !uiState.isBuffering) {
+        danmakuViewModel.play()
+    } else {
+        danmakuViewModel.pause()
     }
-}
-
-// 缓冲同步
-LaunchedEffect(uiState.isBuffering) {
-    if (uiState.isBuffering) danmakuViewModel.pause()
-    else if (uiState.playerState == PlayerState.Playing) danmakuViewModel.play()
-}
-
-// seek 同步
-onGoTime = { time ->
-    playerViewModel.seekToTime(time)
-    danmakuViewModel.seekTo(time)
 }
 
 // 倍速同步
@@ -1462,6 +1450,8 @@ onPlaySpeedChange = { speed ->
     danmakuViewModel.updateSpeed(speed)
 }
 ```
+
+seek 无需单独同步：弹幕引擎时钟由进度喂入（`onVideoPositionChanged`）按位置跳变自动对齐，见 11.10.9。
 
 #### 11.10.7 直接进播放器时 cid=0 导致 playurl 请求错误
 
@@ -1517,6 +1507,14 @@ suspend fun loadVideoDetail(aid: Long, bvid: String = "") {
 **关键辅助**（`app/ui/navigation/`）：
 - `navigateToVideoDetailFromPlayer(aid)` — 播放器内打开详情
 - `navigateFromVideoCard(data, forceDetail)` — 视频卡统一导航：番剧（有 EP ID）→ 番剧详情；否则按 `showVideoInfo` 进详情或直进播放器（`popUpTo<VideoPlayerRoute>{inclusive}` 保证播放器单例）；`forceDetail=true` 用于卡片“详情”操作
+
+#### 11.10.9 断点续播/切集后弹幕引擎时钟不对齐（长时间无弹幕）
+
+**问题**：点开有观看历史的分 P（断点续播生效）或播放器内切集后，弹幕长时间空白或整体错位；手动拖一下进度条又恢复正常。首次观看（从 0 播放）则一切正常。
+
+**根因**：akdanmaku 引擎是**自计时**实体（`DanmakuTimer` 从 0 起步、独立推进，`DataSystem` 按引擎时钟的时间窗二分选取弹幕渲染），而修复杂度此前被表达为“引擎自由走 + UI 在个别入口记得单独 seek”（仅用户 `onGoTime` 同步）。断点续播 seek 在 `PlayerViewModel.onPlay` 内部发生、切集后引擎时钟残留在旧视频位置，两者都绕过了该入口。叠加分段加载只加载目标段附近（时钟在 0 时第 1 段根本没加载），引擎窗口内无数据可渲染且不会自愈——引擎时钟要按真实时间“爬”进已加载分段才恢复。
+
+**解决方案（结构性修复，不逐入口打补丁）**：把“引擎时钟 = 视频位置”收敛为进度喂入通道的不变量。UI 层本就以 10Hz 把 `seekerState.currentTime` 喂给 `DanmakuViewModel.onVideoPositionChanged()`，该方法除驱动分段加载外，还检测位置与引擎时钟的偏差，超过阈值（500ms，高于采样抖动、低于可感知错位）即自动 `seekTo` 引擎。任何改变视频位置的路径（断点续播、切集、用户 seek、回到开头、循环重播，含未来新增入口）自动被覆盖，无需各自记得通知弹幕。原 `DanmakuViewModel.seekTo()` 因失去存在意义而删除；seek 时的引擎暂停由缓冲同步（`isBuffering`）承接。
 
 ### 11.11 TV Material3 触屏适配
 
@@ -1736,7 +1734,7 @@ wsClient.newWebSocket(request, listener)
 **问题**：fantasytyx/bv 用 `while(isActive) { loadSegment(); delay(15s) }` 轮询驱动分段加载，ViewModel 内自调度循环会让测试的 `advanceUntilIdle` 无限推进（踩坑 11.5.4 同源问题）。
 
 **解决方案**：
-1. UI 层把 `seekerState.currentTime` 喂给 `DanmakuViewModel.onProgressChanged()`（写 conflated StateFlow，10Hz 调用无成本）
+1. UI 层把 `seekerState.currentTime` 喂给 `DanmakuViewModel.onVideoPositionChanged()`（写 conflated StateFlow，10Hz 调用无成本；同时承担引擎时钟对齐，见 11.10.9）
 2. VM 内 `currentTimeFlow.map { 段号 }.distinctUntilChanged().collectLatest { ensureSegments(it) }`——无循环、可 `advanceUntilIdle` 安全测试
 3. 初始段定位：`loadDanmaku` 元数据就绪后启动 watcher，StateFlow 订阅即收到当前值，无需显式触发
 4. `collectLatest` 自带防陈旧：段号变化时自动取消旧段的 in-flight 请求；切集用 generation 计数兜底

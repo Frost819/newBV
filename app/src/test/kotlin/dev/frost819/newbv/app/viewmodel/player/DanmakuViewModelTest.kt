@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.viewmodel.player
 
 import com.google.common.truth.Truth.assertThat
+import com.kuaishou.akdanmaku.ui.DanmakuPlayer
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMeta
 import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuData
@@ -354,7 +355,7 @@ class DanmakuViewModelTest {
             viewModel.loadDanmaku(aid = 1, cid = 2)
             advanceUntilIdle()
             // 已加载全部段后，进度推进到下一分段：目标段越界，不发起请求
-            viewModel.onProgressChanged(360_000)
+            viewModel.onVideoPositionChanged(360_000)
             advanceUntilIdle()
 
             coVerify(exactly = 0) {
@@ -363,7 +364,7 @@ class DanmakuViewModelTest {
         }
 
     @Test
-    fun `onProgressChanged within loaded segment does not refetch`() =
+    fun `onVideoPositionChanged within loaded segment does not refetch`() =
         runTest(testDispatcher) {
             coEvery { videoPlayRepository.getDanmakuMeta(any(), any()) } returns DanmakuMeta(360_000, 3, false, 100)
             coEvery { videoPlayRepository.getDanmakuSegment(any(), any(), any(), any()) } returns
@@ -374,7 +375,7 @@ class DanmakuViewModelTest {
             val callsAfterInit = 2 // 初始段 + 预取段
 
             // 同段内多次进度更新（10Hz 喂入），不产生新请求
-            repeat(5) { viewModel.onProgressChanged(it * 1_000L) }
+            repeat(5) { viewModel.onVideoPositionChanged(it * 1_000L) }
             advanceUntilIdle()
 
             coVerify(exactly = callsAfterInit) {
@@ -383,7 +384,7 @@ class DanmakuViewModelTest {
         }
 
     @Test
-    fun `onProgressChanged crossing boundary loads next segment`() =
+    fun `onVideoPositionChanged crossing boundary loads next segment`() =
         runTest(testDispatcher) {
             coEvery { videoPlayRepository.getDanmakuMeta(any(), any()) } returns DanmakuMeta(360_000, 5, false, 100)
             coEvery { videoPlayRepository.getDanmakuSegment(any(), any(), any(), any()) } returns
@@ -392,7 +393,7 @@ class DanmakuViewModelTest {
             viewModel.loadDanmaku(aid = 1, cid = 2)
             advanceUntilIdle()
 
-            viewModel.onProgressChanged(360_000)
+            viewModel.onVideoPositionChanged(360_000)
             advanceUntilIdle()
 
             coVerify(exactly = 1) {
@@ -448,4 +449,37 @@ class DanmakuViewModelTest {
                 videoPlayRepository.getDanmakuSegment(aid = 1, cid = 2, segmentIndex = 1, preferApiType = any())
             }
         }
+
+    // === 引擎时钟对齐 ===
+
+    @Test
+    fun `onVideoPositionChanged seeks engine when position jumps beyond threshold`() {
+        // 回归：断点续播/切集使视频位置跳变（如恢复到 20 分钟）而引擎时钟仍在 0，
+        // 引擎按自身时钟渲染会长时间无弹幕，喂入位置时必须自动对齐引擎
+        val player = mockk<DanmakuPlayer>(relaxed = true)
+        every { player.getCurrentTimeMs() } returns 0L
+        viewModel.danmakuPlayer = player
+
+        viewModel.onVideoPositionChanged(1_200_000)
+
+        verify(exactly = 1) { player.seekTo(1_200_000) }
+    }
+
+    @Test
+    fun `onVideoPositionChanged does not seek engine within threshold`() {
+        val player = mockk<DanmakuPlayer>(relaxed = true)
+        every { player.getCurrentTimeMs() } returns 1_000_000L
+        viewModel.danmakuPlayer = player
+
+        // 正常播放的采样抖动（< 500ms）不应触发引擎 seek
+        viewModel.onVideoPositionChanged(1_000_300)
+
+        verify(exactly = 0) { player.seekTo(any()) }
+    }
+
+    @Test
+    fun `onVideoPositionChanged is safe before engine is initialized`() {
+        // 引擎尚未 init（danmakuPlayer 为 null）时喂入位置不应抛异常
+        viewModel.onVideoPositionChanged(1_200_000)
+    }
 }
