@@ -209,24 +209,22 @@ class UserRepository(
             }
 
             ApiType.App -> {
-                var result: DynamicVideoData? = null
+                // App 通道未就绪时给出明确异常，而不是在 !! 处抛 NPE，
+                // 便于上层统一处理为错误状态并提供重试
+                val stub = dynamicStub ?: throw IllegalStateException("App gRPC channel is not initialized")
                 runCatching {
-                    val dynVideoReply =
-                        dynamicStub?.dynVideo(
-                            dynVideoReq {
-                                this.page = page
-                                this.offset = offset
-                                this.updateBaseline = updateBaseline
-                                localTime = 8
-                                refreshType =
-                                    if (offset == "") Refresh.refresh_new else Refresh.refresh_history
-                            },
-                        )
-                    result = DynamicVideoData.fromDynamicData(dynVideoReply!!)
-                }.onFailure {
-                    handleGrpcException(it)
-                }
-                result!!
+                    stub.dynVideo(
+                        dynVideoReq {
+                            this.page = page
+                            this.offset = offset
+                            this.updateBaseline = updateBaseline
+                            localTime = 8
+                            refreshType =
+                                if (offset == "") Refresh.refresh_new else Refresh.refresh_history
+                        },
+                    )
+                }.getOrElse { handleGrpcException(it) }
+                    .let { DynamicVideoData.fromDynamicData(it) }
             }
         }
 

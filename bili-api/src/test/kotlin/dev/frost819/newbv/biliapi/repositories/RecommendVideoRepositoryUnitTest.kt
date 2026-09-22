@@ -202,16 +202,18 @@ class RecommendVideoRepositoryUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `getPopularVideos App returns empty list when gRPC stub is null`() =
+    fun `getPopularVideos App throws when gRPC stub is null`() =
         runTest {
-            val result =
-                repository.getPopularVideos(
-                    page = PopularVideoPage(),
-                    preferApiType = ApiType.App,
-                )
+            // 通道未就绪时不回退 Web，也不静默返回空列表，而是抛明确异常供上层报错重试
+            val error =
+                runCatching {
+                    repository.getPopularVideos(
+                        page = PopularVideoPage(),
+                        preferApiType = ApiType.App,
+                    )
+                }.exceptionOrNull()
 
-            assertThat(result.list).isEmpty()
-            assertThat(result.noMore).isTrue()
+            assertThat(error).isInstanceOf(IllegalStateException::class.java)
         }
 
     // ------------------------------------------------------------------
@@ -248,6 +250,30 @@ class RecommendVideoRepositoryUnitTest {
             assertThat(result.items[0].title).isEqualTo("app-rcmd-1")
             assertThat(result.items[1].title).isEqualTo("app-rcmd-2")
             assertThat(result.nextPage.nextAppIdx).isEqualTo(3)
+        }
+
+    @Test
+    fun `getRecommendVideos App advances cursor from raw items when all filtered out`() =
+        runTest {
+            authRepository.accessToken = "test-access-token"
+            // 两个卡片都不是 av，会被过滤掉；游标应基于原始列表的最后 idx(9) 推进到 10，
+            // 而不是停留原地导致重复请求同一页
+            val raw =
+                listOf(
+                    fakeAppRcmdItem(idx = 5).copy(cardGoto = "live"),
+                    fakeAppRcmdItem(idx = 9).copy(cardGoto = "bangumi"),
+                )
+            coEvery { BiliHttpApi.getFeedIndex(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = fakeRcmdIndexData(raw))
+
+            val result =
+                repository.getRecommendVideos(
+                    page = RecommendPage(nextAppIdx = 1),
+                    preferApiType = ApiType.App,
+                )
+
+            assertThat(result.items).isEmpty()
+            assertThat(result.nextPage.nextAppIdx).isEqualTo(10)
         }
 
     // ------------------------------------------------------------------

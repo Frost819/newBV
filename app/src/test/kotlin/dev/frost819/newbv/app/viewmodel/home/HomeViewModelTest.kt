@@ -508,6 +508,41 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `loadRecommend keeps partial data and no error when a later page fails`() =
+        runTest(testDispatcher) {
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
+                RecommendData(
+                    items = listOf(fakeUgcItem(1)),
+                    nextPage = RecommendPage(),
+                ) andThenThrows RuntimeException("boom")
+
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            // 第 2 页失败：保留第 1 页数据，不整块报错
+            assertThat(state.recommendItems).hasSize(1)
+            assertThat(state.recommendError).isFalse()
+            assertThat(state.recommendLoading).isFalse()
+        }
+
+    @Test
+    fun `loadRecommend load-more failure sets error but keeps items`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.recommendItems).isNotEmpty()
+
+            coEvery { recommendRepo.getRecommendVideos(any(), any()) } throws RuntimeException("boom")
+            viewModel.loadRecommend()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertThat(state.recommendItems).isNotEmpty()
+            assertThat(state.recommendError).isTrue()
+        }
+
+    @Test
     fun `refresh dispatches Popular tab`() =
         runTest(testDispatcher) {
             viewModel = createViewModel()

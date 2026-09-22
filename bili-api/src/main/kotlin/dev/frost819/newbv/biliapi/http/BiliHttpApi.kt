@@ -79,6 +79,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -109,6 +110,15 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 @Suppress("SpellCheckingInspection")
 object BiliHttpApi {
+    /** 单次 HTTP 请求的整体超时（毫秒），防止慢速滴流响应永久挂起。 */
+    private const val REQUEST_TIMEOUT_MS = 20_000L
+
+    /** 建立连接超时（毫秒）。 */
+    private const val CONNECT_TIMEOUT_MS = 10_000L
+
+    /** 单次 socket 读写超时（毫秒）。 */
+    private const val SOCKET_TIMEOUT_MS = 20_000L
+
     private var endPoint: String = "api.bilibili.com"
     private var clientInstance: HttpClient? = null
     private val client: HttpClient
@@ -230,6 +240,13 @@ object BiliHttpApi {
                 gzip(0.9F)
             }
             install(HttpRequestRetry) { retryOnException(maxRetries = 2) }
+            // OkHttp 引擎默认无整体超时，慢速滴流的响应可能永久挂起；
+            // 这里加整体请求超时，配合 OkHttp 的连接/读取超时兜底
+            install(HttpTimeout) {
+                requestTimeoutMillis = REQUEST_TIMEOUT_MS
+                connectTimeoutMillis = CONNECT_TIMEOUT_MS
+                socketTimeoutMillis = SOCKET_TIMEOUT_MS
+            }
             install(JsoupPlugin)
             defaultRequest {
                 url {

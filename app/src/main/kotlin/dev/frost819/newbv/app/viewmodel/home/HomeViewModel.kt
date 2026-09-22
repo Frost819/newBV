@@ -110,7 +110,10 @@ class HomeViewModel
          *
          * 列表为空时视为首次加载，连续请求直到 >= 24 条或达到 3 次上限；
          * 列表非空时视为加载更多，只请求一页。
-         * 超过 [LOAD_TIMEOUT_MS] 未返回时标记为加载失败。
+         *
+         * 每页请求使用独立的 [LOAD_TIMEOUT_MS] 超时：首次补齐首屏时某一页超时
+         * 不应导致已加载的数据被标记为失败（避免"部分列表 + 报错"）。仅当列表
+         * 最终为空时才置 [HomeUiState.recommendError]。
          */
         fun loadRecommend() {
             viewModelScope.launch {
@@ -123,35 +126,46 @@ class HomeViewModel
                 val isFirstLoad = current.recommendItems.isEmpty()
                 val maxLoadCount = if (isFirstLoad) 3 else 1
                 var loadCount = 0
-                runCatching {
-                    withTimeout(LOAD_TIMEOUT_MS) {
-                        while (loadCount < maxLoadCount) {
-                            val data =
+                var failed = false
+                while (loadCount < maxLoadCount) {
+                    val data =
+                        try {
+                            withTimeout(LOAD_TIMEOUT_MS) {
                                 recommendVideoRepository.getRecommendVideos(
                                     page = recommendNextPage,
                                     preferApiType = prefApiType(),
                                 )
-                            recommendNextPage = data.nextPage
-                            if (data.items.isEmpty()) {
-                                _uiState.update { it.copy(recommendHasMore = false) }
-                                break
                             }
-                            _uiState.update {
-                                it.copy(recommendItems = it.recommendItems + data.items)
-                            }
-                            loadCount++
-                            if (!isFirstLoad || _uiState.value.recommendItems.size >= 24) break
+                        } catch (error: TimeoutCancellationException) {
+                            logger.error(error) { "Load recommend videos timeout" }
+                            failed = true
+                            break
+                        } catch (error: CancellationException) {
+                            // 非超时的取消（如 ViewModel cleared）必须重新抛出，否则破坏取消机制
+                            throw error
+                        } catch (error: Throwable) {
+                            logger.error(error) { "Failed to load recommend videos" }
+                            failed = true
+                            break
                         }
+
+                    recommendNextPage = data.nextPage
+                    if (data.items.isEmpty()) {
+                        _uiState.update { it.copy(recommendHasMore = false) }
+                        break
                     }
-                }.onFailure { error ->
-                    if (error is CancellationException && error !is TimeoutCancellationException) {
-                        throw error
+                    _uiState.update {
+                        it.copy(recommendItems = it.recommendItems + data.items)
                     }
-                    logger.error(error) { "Failed to load recommend videos" }
-                    _uiState.update { it.copy(recommendError = true) }
+                    loadCount++
+                    if (!isFirstLoad || _uiState.value.recommendItems.size >= 24) break
                 }
 
-                _uiState.update { it.copy(recommendLoading = false) }
+                // 首屏补齐失败时，只要已拿到部分数据就静默停止（避免"部分列表 + 报错"）；
+                // 加载更多失败则照常报错，让底部提示可重试
+                val hasItems = _uiState.value.recommendItems.isNotEmpty()
+                val showError = failed && (!hasItems || !isFirstLoad)
+                _uiState.update { it.copy(recommendLoading = false, recommendError = showError) }
             }
         }
 

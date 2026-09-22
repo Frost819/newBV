@@ -16,7 +16,11 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.MethodDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import java.util.concurrent.TimeUnit
 import io.grpc.Metadata as GrpcMetadata
+
+/** 单个 gRPC 调用的默认截止时间（秒），防止连接半开或网络异常时无限等待。 */
+private const val GRPC_DEADLINE_SECONDS = 20L
 
 fun generateChannel(
     accessKey: String,
@@ -24,13 +28,22 @@ fun generateChannel(
     endPoint: String = BiliAppConf.GRPC_HOST,
     port: Int = BiliAppConf.GRPC_PORT,
     enableTransportSecurity: Boolean = true,
-): ManagedChannel =
-    ManagedChannelBuilder
-        .forAddress(endPoint, port)
-        .apply { if (enableTransportSecurity) useTransportSecurity() else usePlaintext() }
+): ManagedChannel {
+    val builder = ManagedChannelBuilder.forAddress(endPoint, port)
+    if (enableTransportSecurity) {
+        builder.useTransportSecurity()
+    } else {
+        builder.usePlaintext()
+    }
+    // 定期保活以及时发现被 NAT/防火墙静默断开的连接，避免请求挂起
+    builder.keepAliveTime(30, TimeUnit.SECONDS)
+    builder.keepAliveTimeout(10, TimeUnit.SECONDS)
+    builder.keepAliveWithoutCalls(false)
+    return builder
         .executor(Dispatchers.IO.asExecutor())
         .intercept(MetadataInterceptor(accessKey, buvid))
         .build()
+}
 
 private class MetadataInterceptor(
     private val accessKey: String,
@@ -40,8 +53,15 @@ private class MetadataInterceptor(
         method: MethodDescriptor<ReqT, RespT>,
         callOptions: CallOptions,
         next: Channel,
-    ): ClientCall<ReqT, RespT> =
-        object : SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    ): ClientCall<ReqT, RespT> {
+        // 调用方未显式设置截止时间时，附加默认截止时间，避免请求无限挂起
+        val options =
+            if (callOptions.deadline == null) {
+                callOptions.withDeadlineAfter(GRPC_DEADLINE_SECONDS, TimeUnit.SECONDS)
+            } else {
+                callOptions
+            }
+        return object : SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, options)) {
             override fun start(
                 responseListener: Listener<RespT>,
                 headers: GrpcMetadata,
@@ -56,6 +76,7 @@ private class MetadataInterceptor(
                 super.start(responseListener, headers)
             }
         }
+    }
 }
 
 fun GrpcMetadata.putAuthorization(accessKey: String) {
