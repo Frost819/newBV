@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.data.VideoInfoRepository
+import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.ApiType
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
@@ -34,6 +36,8 @@ private const val LOAD_TIMEOUT_MS = 15_000L
  * @property error 是否加载失败。
  * @property errorTip 错误提示文本。
  * @property isFollowing 是否已追番。
+ * @property historyLastPlayedCid 最近播放的分集 CID（来自本地共享状态或服务端观看记录）。
+ * @property historyLastPlayedTime 最近播放位置（秒）。
  */
 data class SeasonDetailUiState(
     val seasonDetail: SeasonDetail? = null,
@@ -41,6 +45,8 @@ data class SeasonDetailUiState(
     val error: Boolean = false,
     val errorTip: String = "",
     val isFollowing: Boolean = false,
+    val historyLastPlayedCid: Long = 0L,
+    val historyLastPlayedTime: Int = 0,
 )
 
 /**
@@ -69,6 +75,7 @@ sealed interface SeasonDetailUiEffect {
  *
  * @param videoDetailRepository 视频详情仓库（含 PGC 详情获取）。
  * @param userRepository 用户仓库（含追番操作）。
+ * @param videoInfoRepository 视频共享状态仓库（同步播放历史与播放列表）。
  * @param savedStateHandle Navigation 参数（读取 [PgcFeatureRoute.seasonId] 或 [PgcFeatureRoute.epid]）。
  */
 @HiltViewModel
@@ -77,6 +84,7 @@ class SeasonDetailViewModel
     constructor(
         private val videoDetailRepository: VideoDetailRepository,
         private val userRepository: UserRepository,
+        private val videoInfoRepository: VideoInfoRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val logger = Loggers.get("SeasonDetailViewModel")
@@ -95,6 +103,21 @@ class SeasonDetailViewModel
 
         init {
             loadSeasonDetail()
+            // 与 UGC 详情页一致：监听播放器写入的共享历史，返回详情页后实时回显"上次看到"
+            viewModelScope.launch {
+                videoInfoRepository.videoSharedState.collect { shared ->
+                    val cid = shared?.lastPlayedCid ?: return@collect
+                    val detail = _uiState.value.seasonDetail ?: return@collect
+                    // 仅在 CID 属于本季分集时才采纳，避免其它视频的播放记录串入
+                    if (cid == 0L || !containsCid(detail, cid)) return@collect
+                    _uiState.update {
+                        it.copy(
+                            historyLastPlayedCid = cid,
+                            historyLastPlayedTime = shared.lastPlayedTime,
+                        )
+                    }
+                }
+            }
         }
 
         /**
@@ -121,6 +144,8 @@ class SeasonDetailViewModel
                             it.copy(
                                 seasonDetail = detail,
                                 isFollowing = detail.userStatus.follow,
+                                historyLastPlayedCid = serverLastPlayedCid(detail),
+                                historyLastPlayedTime = detail.userStatus.progress?.lastTime ?: 0,
                             )
                         }
                     }
@@ -180,12 +205,21 @@ class SeasonDetailViewModel
         /**
          * 点击播放按钮。
          *
-         * 如果有观看记录，续播上次的分集；否则播放第一集。
+         * 优先续播本地记录的最近分集（本会话内刚播放过的），
+         * 其次使用服务端观看记录，最后播放第一集。
          */
         fun onPlay() {
             val detail = _uiState.value.seasonDetail ?: return
-            val progress = detail.userStatus.progress
 
+            val lastCid = _uiState.value.historyLastPlayedCid
+            if (lastCid != 0L) {
+                findEpisodeByCid(detail, lastCid)?.let {
+                    emitNavigateToPlayer(it)
+                    return
+                }
+            }
+
+            val progress = detail.userStatus.progress
             if (progress != null) {
                 val lastEp = findEpisodeById(detail, progress.lastEpId)
                 if (lastEp != null) {
@@ -227,6 +261,8 @@ class SeasonDetailViewModel
                             it.copy(
                                 seasonDetail = detail,
                                 isFollowing = detail.userStatus.follow,
+                                historyLastPlayedCid = serverLastPlayedCid(detail),
+                                historyLastPlayedTime = detail.userStatus.progress?.lastTime ?: 0,
                             )
                         }
                     }
@@ -261,7 +297,45 @@ class SeasonDetailViewModel
             return null
         }
 
+        /** 在正片和附加分集中查找指定 cid 的分集。 */
+        private fun findEpisodeByCid(
+            detail: SeasonDetail,
+            cid: Long,
+        ): Episode? {
+            detail.episodes.firstOrNull { it.cid == cid }?.let { return it }
+            detail.sections.forEach { section ->
+                section.episodes.firstOrNull { it.cid == cid }?.let { return it }
+            }
+            return null
+        }
+
+        /** 判断 cid 是否属于本季的某个分集。 */
+        private fun containsCid(
+            detail: SeasonDetail,
+            cid: Long,
+        ): Boolean = findEpisodeByCid(detail, cid) != null
+
+        /** 服务端观看记录对应的分集 cid；无记录或找不到时为 0。 */
+        private fun serverLastPlayedCid(detail: SeasonDetail): Long =
+            detail.userStatus.progress?.let { findEpisodeById(detail, it.lastEpId)?.cid } ?: 0L
+
         private fun emitNavigateToPlayer(episode: Episode) {
+            // 与 UGC 详情页一致：跳转播放器前填充播放列表，使播放器内选集列表可用
+            _uiState.value.seasonDetail?.let { detail ->
+                val episodeList =
+                    (detail.episodes + detail.sections.flatMap { it.episodes })
+                        .map { ep ->
+                            VideoListItem(
+                                aid = ep.aid,
+                                cid = ep.cid,
+                                epid = ep.epid,
+                                seasonId = detail.seasonId,
+                                title = ep.title,
+                            )
+                        }
+                videoInfoRepository.updateVideoList(episodeList)
+            }
+
             viewModelScope.launch {
                 _uiEffect.emit(
                     SeasonDetailUiEffect.NavigateToPlayer(

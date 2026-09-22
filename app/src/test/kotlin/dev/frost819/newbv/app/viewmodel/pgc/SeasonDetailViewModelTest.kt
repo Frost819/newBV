@@ -3,6 +3,9 @@ package dev.frost819.newbv.app.viewmodel.pgc
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.data.VideoInfoRepository
+import dev.frost819.newbv.app.data.VideoSharedState
+import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.video.Dimension
 import dev.frost819.newbv.biliapi.entity.video.season.Episode
 import dev.frost819.newbv.biliapi.entity.video.season.PgcSeason
@@ -10,10 +13,16 @@ import dev.frost819.newbv.biliapi.entity.video.season.SeasonDetail
 import dev.frost819.newbv.biliapi.entity.video.season.Section
 import dev.frost819.newbv.biliapi.repositories.UserRepository
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -34,6 +43,8 @@ class SeasonDetailViewModelTest {
 
     private lateinit var videoDetailRepository: VideoDetailRepository
     private lateinit var userRepository: UserRepository
+    private lateinit var videoInfoRepository: VideoInfoRepository
+    private lateinit var sharedState: MutableStateFlow<VideoSharedState?>
     private lateinit var viewModel: SeasonDetailViewModel
 
     @BeforeEach
@@ -41,6 +52,10 @@ class SeasonDetailViewModelTest {
         Dispatchers.setMain(testDispatcher)
         videoDetailRepository = mockk()
         userRepository = mockk()
+        videoInfoRepository = mockk()
+        sharedState = MutableStateFlow(null)
+        every { videoInfoRepository.videoSharedState } returns sharedState
+        every { videoInfoRepository.updateVideoList(any()) } just Runs
     }
 
     @AfterEach
@@ -53,6 +68,7 @@ class SeasonDetailViewModelTest {
         return SeasonDetailViewModel(
             videoDetailRepository = videoDetailRepository,
             userRepository = userRepository,
+            videoInfoRepository = videoInfoRepository,
             savedStateHandle = savedStateHandle,
         )
     }
@@ -457,5 +473,75 @@ class SeasonDetailViewModelTest {
                 assertThat(navEffect.aid).isEqualTo(10003L)
                 assertThat(navEffect.epid).isEqualTo(1003)
             }
+        }
+
+    @Test
+    fun `init seeds historyLastPlayed from server progress`() =
+        runTest(testDispatcher) {
+            val detail =
+                fakeSeasonDetail(
+                    progress =
+                        SeasonDetail.UserStatus.Progress(
+                            lastEpId = 1002,
+                            lastEpIndex = "第2话",
+                            lastTime = 300,
+                        ),
+                )
+            coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+
+            viewModel = createViewModel(seasonId = 100L)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.historyLastPlayedCid).isEqualTo(20002L)
+            assertThat(viewModel.uiState.value.historyLastPlayedTime).isEqualTo(300)
+        }
+
+    @Test
+    fun `shared playback history updates lastPlayed when cid belongs to season`() =
+        runTest(testDispatcher) {
+            coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns fakeSeasonDetail()
+
+            viewModel = createViewModel(seasonId = 100L)
+            advanceUntilIdle()
+
+            sharedState.value = VideoSharedState(aid = 10002L, lastPlayedCid = 20002L, lastPlayedTime = 120)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.historyLastPlayedCid).isEqualTo(20002L)
+            assertThat(viewModel.uiState.value.historyLastPlayedTime).isEqualTo(120)
+        }
+
+    @Test
+    fun `shared playback history ignores cid not in season`() =
+        runTest(testDispatcher) {
+            coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns fakeSeasonDetail()
+
+            viewModel = createViewModel(seasonId = 100L)
+            advanceUntilIdle()
+
+            sharedState.value = VideoSharedState(aid = 999L, lastPlayedCid = 99999L, lastPlayedTime = 60)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.historyLastPlayedCid).isEqualTo(0L)
+        }
+
+    @Test
+    fun `onPlayEpisode populates player video list from season episodes`() =
+        runTest(testDispatcher) {
+            val detail = fakeSeasonDetail()
+            coEvery { videoDetailRepository.getPgcVideoDetail(any(), any(), any()) } returns detail
+
+            viewModel = createViewModel(seasonId = 100L)
+            advanceUntilIdle()
+
+            viewModel.onPlayEpisode(detail.episodes[1])
+            advanceUntilIdle()
+
+            val slot = slot<List<VideoListItem>>()
+            verify { videoInfoRepository.updateVideoList(capture(slot)) }
+            assertThat(slot.captured).hasSize(2)
+            assertThat(slot.captured[1].cid).isEqualTo(20002L)
+            assertThat(slot.captured[1].epid).isEqualTo(1002)
+            assertThat(slot.captured[1].seasonId).isEqualTo(100)
         }
 }
