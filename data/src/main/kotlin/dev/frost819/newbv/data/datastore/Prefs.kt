@@ -242,6 +242,13 @@ object Prefs {
     /** 是否启用崩溃日志上传（默认关闭）。 */
     var crashReportEnabled by pref(PrefKeys.crashReportEnabled, false)
 
+    /**
+     * 起播前自动测速并选择最优 CDN（默认关闭）。
+     *
+     * 开启后会对候选播放地址做小流量测速，选择吞吐最优的节点，并缓存测速结果。
+     */
+    var autoSelectCdn by pref(PrefKeys.autoSelectCdn, false)
+
     // --- 播放器 - 视频（PRD 7.1） ---
 
     /** 默认画质。 */

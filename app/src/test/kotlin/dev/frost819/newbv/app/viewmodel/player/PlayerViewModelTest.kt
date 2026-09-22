@@ -29,6 +29,7 @@ import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.Resolution
 import dev.frost819.newbv.data.datastore.VideoCodec
 import dev.frost819.newbv.player.AbstractVideoPlayer
+import dev.frost819.newbv.player.CdnSelector
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
 import io.mockk.coEvery
@@ -77,6 +78,7 @@ class PlayerViewModelTest {
     private lateinit var coinRepository: CoinRepository
     private lateinit var favoriteRepository: FavoriteRepository
     private lateinit var oneClickTripleActionRepository: OneClickTripleActionRepository
+    private lateinit var cdnSelector: CdnSelector
     private lateinit var viewModel: PlayerViewModel
     private lateinit var mockPlayer: AbstractVideoPlayer
 
@@ -94,6 +96,7 @@ class PlayerViewModelTest {
         coinRepository = mockk(relaxed = true)
         favoriteRepository = mockk(relaxed = true)
         oneClickTripleActionRepository = mockk(relaxed = true)
+        cdnSelector = mockk(relaxed = true)
 
         mockkObject(Prefs)
         every { Prefs.apiType } returns DataApiType.Web
@@ -105,6 +108,7 @@ class PlayerViewModelTest {
         every { Prefs.defaultPlaySpeed } returns PlaySpeed.X1
         every { Prefs.enableFfmpegAudioRenderer } returns false
         every { Prefs.enableSoftwareVideoDecoder } returns false
+        every { Prefs.autoSelectCdn } returns false
 
         mockPlayer = mockk(relaxed = true)
 
@@ -123,6 +127,7 @@ class PlayerViewModelTest {
                 coinRepository = coinRepository,
                 favoriteRepository = favoriteRepository,
                 oneClickTripleActionRepository = oneClickTripleActionRepository,
+                cdnSelector = cdnSelector,
             )
     }
 
@@ -814,6 +819,7 @@ class PlayerViewModelTest {
             every { mockPlayer.currentPosition } returns 5000L
 
             viewModel.updateMediaProfile(MediaProfileSettingAction.SetQuality(116))
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value.mediaProfileState.qualityId).isEqualTo(116)
             verify { mockPlayer.pause() }
@@ -861,6 +867,75 @@ class PlayerViewModelTest {
         field.isAccessible = true
         field.set(viewModel, data)
     }
+
+    private fun setCdnCandidates(
+        video: List<String>,
+        audio: List<String>,
+    ) {
+        PlayerViewModel::class.java
+            .getDeclaredField("videoCdnCandidates")
+            .apply {
+                isAccessible = true
+                set(viewModel, video)
+            }
+        PlayerViewModel::class.java
+            .getDeclaredField("audioCdnCandidates")
+            .apply {
+                isAccessible = true
+                set(viewModel, audio)
+            }
+    }
+
+    @Test
+    fun `onError falls back to next CDN candidate when autoSelectCdn enabled`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { Prefs.autoSelectCdn } returns true
+            every { mockPlayer.currentPosition } returns 5000L
+            setCdnCandidates(
+                video = listOf("https://cdn1.example/v.m4s", "https://cdn2.example/v.m4s"),
+                audio = listOf("https://cdn1.example/a.m4s"),
+            )
+
+            getVideoPlayerListener().onError(RuntimeException("source error"))
+
+            verify { mockPlayer.playUrl("https://cdn2.example/v.m4s", "https://cdn1.example/a.m4s") }
+            verify { mockPlayer.prepare() }
+            verify { mockPlayer.seekTo(5000L) }
+            verify { mockPlayer.start() }
+            assertThat(viewModel.uiState.value.playerState).isNotInstanceOf(PlayerState.Error::class.java)
+        }
+
+    @Test
+    fun `onError sets error when no remaining CDN candidate`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { Prefs.autoSelectCdn } returns true
+            setCdnCandidates(
+                video = listOf("https://cdn1.example/v.m4s"),
+                audio = emptyList(),
+            )
+
+            getVideoPlayerListener().onError(RuntimeException("boom"))
+
+            assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
+        }
+
+    @Test
+    fun `onError sets error when autoSelectCdn disabled`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { Prefs.autoSelectCdn } returns false
+            setCdnCandidates(
+                video = listOf("https://cdn1.example/v.m4s", "https://cdn2.example/v.m4s"),
+                audio = emptyList(),
+            )
+
+            getVideoPlayerListener().onError(RuntimeException("boom"))
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+            assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
+        }
 
     private fun dashVideo(
         quality: Int,
@@ -1052,6 +1127,7 @@ class PlayerViewModelTest {
             }
 
             viewModel.updateMediaProfile(MediaProfileSettingAction.SetVideoCodec(VideoCodec.HEVC))
+            advanceUntilIdle()
 
             // baseUrl 形如 https://example.com/<quality>-<codecId>.m4s
             verify { mockPlayer.playUrl(match { it.contains("80-12") }, any()) }

@@ -43,6 +43,7 @@ import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.Resolution
 import dev.frost819.newbv.data.datastore.VideoCodec
 import dev.frost819.newbv.player.AbstractVideoPlayer
+import dev.frost819.newbv.player.CdnSelector
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.VideoPlayerOptions
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
@@ -94,6 +95,7 @@ private const val ONLINE_WATCH_REFRESH_MS = 60_000L
  * @param oneClickTripleActionRepository 一键三连仓库
  * @param exoPlayerFactory ExoPlayer 工厂
  * @param videoCapabilityProvider 设备视频解码能力查询器（选流时过滤超能力组合）
+ * @param cdnSelector CDN 测速选择器（开启自动选源时用于排序候选地址）
  */
 @HiltViewModel
 class PlayerViewModel
@@ -108,6 +110,7 @@ class PlayerViewModel
         private val coinRepository: CoinRepository,
         private val favoriteRepository: FavoriteRepository,
         private val oneClickTripleActionRepository: OneClickTripleActionRepository,
+        private val cdnSelector: CdnSelector,
     ) : ViewModel() {
         private val logger = Loggers.get("PlayerViewModel")
 
@@ -119,6 +122,15 @@ class PlayerViewModel
 
         /** 本次播放已尝试过的「画质|编码」组合，用于解码回退去重与终止。 */
         private val attemptedDecodeProfiles = mutableSetOf<String>()
+
+        /** 当前视频轨道按推荐顺序排列的 CDN 候选（开启自动选源时按测速排序）。 */
+        private var videoCdnCandidates: List<String> = emptyList()
+
+        /** 当前音频轨道按推荐顺序排列的 CDN 候选。 */
+        private var audioCdnCandidates: List<String> = emptyList()
+
+        /** 运行时 CDN 回退已尝试到的候选下标。 */
+        private var cdnFallbackIndex = 0
 
         private val detachedWorkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -169,6 +181,8 @@ class PlayerViewModel
             object : VideoPlayerListener {
                 override fun onError(error: Exception) {
                     logger.info { "onError: $error" }
+                    // 自动选源模式下，优先尝试切换到下一个候选 CDN，避免单个节点故障导致播放中断
+                    if (Prefs.autoSelectCdn && tryNextCdnFallback()) return
                     _uiState.update {
                         it.copy(
                             playerState = PlayerState.Error(error.message ?: "Unknown error"),
@@ -813,14 +827,17 @@ class PlayerViewModel
             }
 
             videoPlayer?.let { player ->
-                player.pause()
-                val currentPosition = player.currentPosition
-                val mediaUrls = resolveMediaUrls(new.qualityId, new.videoCodec, new.audio)
-                if (mediaUrls != null) {
-                    player.playUrl(mediaUrls.videoUrl, mediaUrls.audioUrl)
-                    player.prepare()
-                    if (currentPosition > 0) player.seekTo(currentPosition)
-                    player.start()
+                // resolveMediaUrls 在开启自动选源时会做测速（挂起），需放入协程
+                viewModelScope.launch {
+                    player.pause()
+                    val currentPosition = player.currentPosition
+                    val mediaUrls = resolveMediaUrls(new.qualityId, new.videoCodec, new.audio)
+                    if (mediaUrls != null) {
+                        player.playUrl(mediaUrls.videoUrl, mediaUrls.audioUrl)
+                        player.prepare()
+                        if (currentPosition > 0) player.seekTo(currentPosition)
+                        player.start()
+                    }
                 }
             }
         }
@@ -1100,7 +1117,7 @@ class PlayerViewModel
                 )
             }
 
-        private fun resolveMediaUrls(
+        private suspend fun resolveMediaUrls(
             qn: Int? = null,
             codec: VideoCodec? = null,
             audio: Audio? = null,
@@ -1133,8 +1150,22 @@ class PlayerViewModel
             audioItem?.baseUrl?.let { audioUrls.add(it) }
             audioUrls.addAll(audioItem?.backUrl ?: emptyList())
 
-            val videoUrl = selectOfficialCdnUrl(videoUrls.filterNotNull())
-            val audioUrl = if (audioUrls.isNotEmpty()) selectOfficialCdnUrl(audioUrls) else null
+            val videoCandidates = officialCdnCandidates(videoUrls.filterNotNull())
+            val audioCandidates = officialCdnCandidates(audioUrls)
+
+            // 开启自动选源时对候选测速排序（结果按 host 缓存），否则沿用原有顺序
+            videoCdnCandidates =
+                if (Prefs.autoSelectCdn) cdnSelector.rank(videoCandidates) else videoCandidates
+            audioCdnCandidates =
+                if (Prefs.autoSelectCdn && audioCandidates.isNotEmpty()) {
+                    cdnSelector.rank(audioCandidates)
+                } else {
+                    audioCandidates
+                }
+            cdnFallbackIndex = 0
+
+            val videoUrl = videoCdnCandidates.firstOrNull() ?: return null
+            val audioUrl = audioCdnCandidates.firstOrNull()
 
             _uiState.update { it.copy(videoHeight = foundVideo.height, videoWidth = foundVideo.width) }
             return MediaUrls(videoUrl, audioUrl)
@@ -1319,11 +1350,11 @@ class PlayerViewModel
         }
 
         /**
-         * 选择官方 CDN URL。
+         * 过滤出官方 CDN 候选地址。
          *
-         * 过滤掉 mcdn/szbdyd/IP 地址的 URL，优先使用官方 CDN。
+         * 过滤掉 mcdn/szbdyd/IP 地址的 URL，优先使用官方 CDN；若全部被过滤则回退原列表。
          */
-        private fun selectOfficialCdnUrl(urls: List<String>): String {
+        private fun officialCdnCandidates(urls: List<String>): List<String> {
             val filtered =
                 urls
                     .filter { !it.contains(".mcdn.bilivideo.") }
@@ -1333,7 +1364,29 @@ class PlayerViewModel
                             "^(https?://)?(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d{1,5})?)(/.*)?(\\?.*)?$",
                         ).matches(it)
                     }
-            return filtered.firstOrNull() ?: urls.first()
+            return filtered.ifEmpty { urls }
+        }
+
+        /**
+         * 尝试切换到下一个候选 CDN 地址重播。
+         *
+         * 仅在开启自动选源且仍有未尝试的候选时生效。保留当前播放位置，
+         * 切换成功返回 `true`，无候选可用返回 `false`（由调用方上报错误）。
+         */
+        private fun tryNextCdnFallback(): Boolean {
+            val player = videoPlayer ?: return false
+            val nextIndex = cdnFallbackIndex + 1
+            val videoUrl = videoCdnCandidates.getOrNull(nextIndex) ?: return false
+            cdnFallbackIndex = nextIndex
+            val audioUrl = audioCdnCandidates.firstOrNull()
+            val position = player.currentPosition
+            logger.info { "CDN fallback #$nextIndex -> $videoUrl" }
+            _uiState.update { it.copy(isBuffering = true) }
+            player.playUrl(videoUrl, audioUrl)
+            player.prepare()
+            if (position > 0) player.seekTo(position)
+            player.start()
+            return true
         }
 
         private fun findNextPlayTarget(): NextPlayTarget? {

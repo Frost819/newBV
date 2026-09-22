@@ -38,6 +38,7 @@ internal object PrefKeys {
     // ===== 网络 & API =====
     val apiType = intPreferencesKey("api_type")
     val crashReportEnabled = booleanPreferencesKey("crash_report_enabled")
+    val autoSelectCdn = booleanPreferencesKey("auto_select_cdn")
 
     // ===== 播放器 - 视频 =====
     val defaultQuality = intPreferencesKey("dq")

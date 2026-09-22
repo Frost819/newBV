@@ -57,6 +57,7 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
     var enableFfmpegAudioRenderer by remember { mutableStateOf(Prefs.enableFfmpegAudioRenderer) }
     var enableSoftwareVideoDecoder by remember { mutableStateOf(Prefs.enableSoftwareVideoDecoder) }
     var showPlayerDebugInfo by remember { mutableStateOf(Prefs.showPlayerDebugInfo) }
+    var autoSelectCdn by remember { mutableStateOf(Prefs.autoSelectCdn) }
 
     Column(
         modifier =
@@ -127,6 +128,15 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
             onCheckedChange = {
                 showPlayerDebugInfo = it
                 Prefs.showPlayerDebugInfo = it
+            },
+        )
+        SettingSwitchListItem(
+            title = "自动选择最优 CDN",
+            supportText = "起播前对候选节点测速并选择最快者，失败时自动切换；可能略微增加起播等待",
+            checked = autoSelectCdn,
+            onCheckedChange = {
+                autoSelectCdn = it
+                Prefs.autoSelectCdn = it
             },
         )
     }

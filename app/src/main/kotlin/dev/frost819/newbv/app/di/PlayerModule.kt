@@ -8,6 +8,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.frost819.newbv.app.util.MediaCodecVideoCapabilityProvider
 import dev.frost819.newbv.app.util.VideoCapabilityProvider
+import dev.frost819.newbv.player.CdnSelector
+import dev.frost819.newbv.player.OkHttpCdnSelector
+import dev.frost819.newbv.player.OkHttpUtil
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
 import javax.inject.Singleton
 
@@ -41,4 +44,16 @@ object PlayerModule {
     fun provideVideoCapabilityProvider(
         @ApplicationContext context: Context,
     ): VideoCapabilityProvider = MediaCodecVideoCapabilityProvider(context)
+
+    /**
+     * 提供 CDN 自动选择器。
+     *
+     * 基于带自定义 SSL 配置的 OkHttpClient 对候选播放地址测速，
+     * 结果按 host 缓存，供 [dev.frost819.newbv.app.viewmodel.player.PlayerViewModel] 选流使用。
+     */
+    @Provides
+    @Singleton
+    fun provideCdnSelector(
+        @ApplicationContext context: Context,
+    ): CdnSelector = OkHttpCdnSelector(OkHttpUtil.generateCustomSslOkHttpClient(context))
 }
