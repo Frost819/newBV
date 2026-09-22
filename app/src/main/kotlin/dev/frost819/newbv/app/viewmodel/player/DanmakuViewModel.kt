@@ -75,6 +75,14 @@ class DanmakuViewModel
         var danmakuPlayer: DanmakuPlayer? by mutableStateOf(null)
             internal set
 
+        /**
+         * 引擎是否应处于运行态（由最近一次 [play]/[pause] 决定）。
+         *
+         * `DanmakuPlayer.seekTo` 内部会 `timer.start()` 解暂停，对齐时钟时需据此还原，
+         * 否则暂停/缓冲期间喂入跳变位置会让弹幕继续滚动。
+         */
+        private var danmakuRunning = false
+
         private var danmakuConfig = DanmakuConfig()
         private val danmakuTypeFilter = TypeFilter()
 
@@ -247,6 +255,9 @@ class DanmakuViewModel
          * 对齐弹幕引擎时钟：与视频位置偏差超过 [ENGINE_TIME_JUMP_THRESHOLD_MS] 时 seek 引擎。
          *
          * [player] 参数化仅为可测性（单元测试注入 MockK 引擎），生产调用方传 [danmakuPlayer]。
+         *
+         * 注意 `DanmakuPlayer.seekTo` 会经 `DanmakuTimer.start()` 把引擎从暂停态解开，
+         * 因此 seek 后需按 [danmakuRunning] 还原暂停态，避免暂停/缓冲期间弹幕继续滚动。
          */
         internal fun reconcileEngineTime(
             videoTimeMs: Long,
@@ -257,6 +268,7 @@ class DanmakuViewModel
             if (abs(videoTimeMs - engineTimeMs) <= ENGINE_TIME_JUMP_THRESHOLD_MS) return
             logger.info { "Align danmaku engine clock: video=$videoTimeMs ms, engine=$engineTimeMs ms" }
             player.seekTo(videoTimeMs)
+            if (!danmakuRunning) player.pause()
         }
 
         /**
@@ -422,11 +434,13 @@ class DanmakuViewModel
 
         /** 播放弹幕（与视频播放同步）。 */
         fun play() {
+            danmakuRunning = true
             danmakuPlayer?.start()
         }
 
         /** 暂停弹幕。 */
         fun pause() {
+            danmakuRunning = false
             danmakuPlayer?.pause()
         }
 

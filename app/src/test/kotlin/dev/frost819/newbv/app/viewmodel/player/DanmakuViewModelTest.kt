@@ -482,4 +482,31 @@ class DanmakuViewModelTest {
         // 引擎尚未 init（danmakuPlayer 为 null）时喂入位置不应抛异常
         viewModel.onVideoPositionChanged(1_200_000)
     }
+
+    @Test
+    fun `onVideoPositionChanged keeps engine paused after jump when not playing`() {
+        // DanmakuPlayer.seekTo 会内部解暂停；暂停/缓冲期间喂入跳变位置后必须还原暂停态，
+        // 否则弹幕会在视频暂停时继续滚动
+        val player = mockk<DanmakuPlayer>(relaxed = true)
+        every { player.getCurrentTimeMs() } returns 0L
+        viewModel.danmakuPlayer = player
+
+        viewModel.onVideoPositionChanged(1_200_000)
+
+        verify { player.seekTo(1_200_000) }
+        verify { player.pause() }
+    }
+
+    @Test
+    fun `onVideoPositionChanged after jump does not pause engine when playing`() {
+        val player = mockk<DanmakuPlayer>(relaxed = true)
+        every { player.getCurrentTimeMs() } returns 0L
+        viewModel.danmakuPlayer = player
+        viewModel.play()
+
+        viewModel.onVideoPositionChanged(1_200_000)
+
+        verify { player.seekTo(1_200_000) }
+        verify(exactly = 0) { player.pause() }
+    }
 }
