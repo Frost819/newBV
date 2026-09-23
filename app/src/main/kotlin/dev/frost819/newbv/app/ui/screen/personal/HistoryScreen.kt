@@ -3,7 +3,7 @@ package dev.frost819.newbv.app.ui.screen.personal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -59,7 +59,7 @@ fun HistoryScreen(
 
     if (state.historyItems.isEmpty() && !state.historyLoading && !state.historyError) {
         Box(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
             androidx.tv.material3.Text(
