@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.component.comment
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -275,6 +277,9 @@ private fun CommentsContent(
     val rows = remember(state.commentList) { buildCommentRows(state.commentList) }
     val rowsByKey = remember(rows) { rows.associateBy { it.key } }
 
+    // 评论文本展开状态：纯 UI 态，按 rpid 记录，切换排序/分页重排时保持
+    val expandedCommentIds = remember { mutableStateMapOf<Long, Boolean>() }
+
     // 主评论滚动接近末尾时自动加载下一页
     LaunchedEffect(listState, state.hasMore, state.loadingMore, state.loadMoreError, rows.size) {
         snapshotFlow {
@@ -371,6 +376,11 @@ private fun CommentsContent(
                                     showReplyButton = row.comment.replyCount > 0,
                                     isExpanded = replyList?.expanded == true,
                                     isLoadingReplies = replyList?.initialLoading == true,
+                                    isTextExpanded = expandedCommentIds[row.comment.rpid] == true,
+                                    onToggleTextExpand = {
+                                        expandedCommentIds[row.comment.rpid] =
+                                            expandedCommentIds[row.comment.rpid] != true
+                                    },
                                     onToggleReplies = { onToggleReplies(row.comment.rpid) },
                                     onToggleLike = { onToggleLike(row.comment.rpid) },
                                     onImageClick = onImageClick,
@@ -384,6 +394,11 @@ private fun CommentsContent(
                                     showReplyButton = false,
                                     isExpanded = false,
                                     isLoadingReplies = false,
+                                    isTextExpanded = expandedCommentIds[row.comment.rpid] == true,
+                                    onToggleTextExpand = {
+                                        expandedCommentIds[row.comment.rpid] =
+                                            expandedCommentIds[row.comment.rpid] != true
+                                    },
                                     indent = REPLY_INDENT,
                                     onToggleReplies = {},
                                     onToggleLike = { onToggleLike(row.comment.rpid) },
@@ -431,21 +446,32 @@ private fun CommentsContent(
 /**
  * 单条评论卡片。
  *
- * 主评论与楼中楼回复共用；[showReplyButton] 为 false 时（回复行）不展示展开按钮。
+ * 主评论与楼中楼回复共用；[showReplyButton] 为 false 时（回复行）不展示回复展开按钮。
+ * 评论文本超出最大行数时可展开全文，仅在实际溢出时展示"展开/收起"按钮。
  */
 @Composable
-private fun CommentCard(
+internal fun CommentCard(
     comment: Comment,
     compact: Boolean,
     isLiking: Boolean,
     showReplyButton: Boolean,
     isExpanded: Boolean,
     isLoadingReplies: Boolean,
+    isTextExpanded: Boolean,
+    onToggleTextExpand: () -> Unit,
     onToggleReplies: () -> Unit,
     onToggleLike: () -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
     indent: Dp = 0.dp,
 ) {
+    // 记录文本在折叠状态下是否溢出；溢出过一次后按钮常驻，避免展开后回落到 false 导致按钮消失
+    var isTextOverflowing by remember(comment.rpid) { mutableStateOf(false) }
+    val textMaxLines =
+        when {
+            isTextExpanded -> Int.MAX_VALUE
+            compact -> 4
+            else -> 8
+        }
     Column(
         modifier =
             Modifier
@@ -476,9 +502,10 @@ private fun CommentCard(
                 Text(
                     text = comment.message,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = if (compact) 4 else 8,
+                    maxLines = textMaxLines,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp),
+                    onTextLayout = { result -> if (result.hasVisualOverflow) isTextOverflowing = true },
+                    modifier = Modifier.padding(top = 4.dp).animateContentSize(),
                 )
                 if (comment.pictures.isNotEmpty()) {
                     Row(
@@ -535,6 +562,13 @@ private fun CommentCard(
                             icon = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                             onClick = onToggleReplies,
                             enabled = !isLoadingReplies,
+                        )
+                    }
+                    if (isTextOverflowing) {
+                        DialogActionButton(
+                            text = if (isTextExpanded) "收起" else "展开",
+                            icon = if (isTextExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                            onClick = onToggleTextExpand,
                         )
                     }
                 }
