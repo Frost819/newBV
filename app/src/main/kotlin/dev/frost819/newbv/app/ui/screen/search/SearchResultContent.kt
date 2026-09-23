@@ -44,7 +44,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
-import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TopNav
@@ -199,7 +198,6 @@ fun SearchResultContent(
                 modifier = Modifier.focusRequester(tabRowFocusRequester),
                 items = SearchType.entries.map { SearchTypeNavItem(it) },
                 isLargePadding = !focusOnContent,
-                accentColor = MaterialTheme.colorScheme.primary,
                 onSelectedChanged = { item ->
                     viewModel.switchType((item as SearchTypeNavItem).type)
                 },

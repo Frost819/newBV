@@ -73,7 +73,6 @@ fun PersonalContent(
                 items = reorderedItems,
                 selectedIndex = reorderedItems.indexOf(PersonalTabItem(selectedTab)),
                 isLargePadding = !focusOnContent,
-                accentColor = androidx.tv.material3.MaterialTheme.colorScheme.primary,
                 onSelectedChanged = { nav ->
                     selectedTab = (nav as PersonalTabItem).item
                 },

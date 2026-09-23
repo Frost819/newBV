@@ -26,7 +26,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.HomeTabItem
 import dev.frost819.newbv.app.ui.component.TopNav
@@ -75,12 +74,6 @@ fun HomeContent(
                 items = reorderedItems,
                 selectedIndex = reorderedItems.indexOf(HomeTabItem(selectedTab)),
                 isLargePadding = !focusOnContent,
-                accentColor =
-                    if (selectedTab == HomeTopNavItem.Dynamics) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
                 onSelectedChanged = { nav ->
                     val tab = (nav as HomeTabItem).item
                     selectedTab = tab

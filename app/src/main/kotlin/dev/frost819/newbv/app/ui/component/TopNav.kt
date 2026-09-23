@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -43,7 +45,6 @@ import dev.frost819.newbv.core.focus.touchClickable
  * @param items Tab 项列表（已按首选项排序）。
  * @param selectedIndex 当前选中的 Tab 索引（由外部控制，用于导航返回后恢复）。
  * @param isLargePadding 内容区未获焦点时使用较大内边距。
- * @param accentColor 当前页面 Tab 的强调色。
  * @param onSelectedChanged Tab 焦点切换回调。
  * @param onClick Tab 点击回调。
  */
@@ -53,7 +54,6 @@ fun TopNav(
     items: List<TopNavItem>,
     selectedIndex: Int = 0,
     isLargePadding: Boolean,
-    accentColor: Color? = null,
     onSelectedChanged: (TopNavItem) -> Unit = {},
     onClick: (TopNavItem) -> Unit = {},
 ) {
@@ -92,7 +92,6 @@ fun TopNav(
                         selectedTabIndex = index
                         onSelectedChanged(tab)
                     },
-                    accentColor = accentColor ?: MaterialTheme.colorScheme.primary,
                     onClick = { onClick(tab) },
                 )
             }
@@ -105,10 +104,11 @@ private fun TabRowScope.NavItemTab(
     modifier: Modifier = Modifier,
     topNavItem: TopNavItem,
     selected: Boolean,
-    accentColor: Color,
     onClick: () -> Unit,
     onFocus: () -> Unit,
 ) {
+    // 统一使用品牌青绿作为 TopNav 强调色，避免各页面颜色不一致
+    val accentColor = MaterialTheme.colorScheme.secondary
     var hasFocus by remember { mutableStateOf(false) }
     val containerColor =
         if (selected) {
@@ -129,15 +129,21 @@ private fun TabRowScope.NavItemTab(
         onFocus = onFocus,
         onClick = onClick,
     ) {
-        Text(
+        // 用固定高度的 Box 居中文字：直接对 Text 设 height 会把字形顶对齐，
+        // 字体行高与剩余空间不等时文字就偏上，不同字体/字号下表现不一致。
+        Box(
             modifier =
                 Modifier
                     .height(32.dp)
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-            text = topNavItem.displayName,
-            color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.labelLarge,
-        )
+                    .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = topNavItem.displayName,
+                color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
     }
 }
 

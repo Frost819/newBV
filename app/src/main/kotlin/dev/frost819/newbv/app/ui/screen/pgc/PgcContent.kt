@@ -32,7 +32,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.PgcCarousel
@@ -97,7 +96,6 @@ fun PgcContent(
                 items = PgcTabItem.entries.toList(),
                 selectedIndex = PgcTabItem.entries.indexOf(selectedTab),
                 isLargePadding = !focusOnContent,
-                accentColor = MaterialTheme.colorScheme.secondary,
                 onSelectedChanged = { nav ->
                     val tab = nav as PgcTabItem
                     if (tab != selectedTab) {
