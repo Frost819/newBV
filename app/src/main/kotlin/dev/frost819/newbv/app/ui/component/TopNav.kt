@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -129,15 +131,19 @@ private fun TabRowScope.NavItemTab(
         onFocus = onFocus,
         onClick = onClick,
     ) {
-        Text(
-            modifier =
-                Modifier
-                    .height(32.dp)
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-            text = topNavItem.displayName,
-            color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.labelLarge,
-        )
+        // 固定高度胶囊按钮内用 Box 居中：Text 在固定高度约束里按顶部对齐绘制段落，
+        // 直接给 Text 设 height 会让文字在按钮内偏上。
+        Box(
+            modifier = Modifier.height(32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                text = topNavItem.displayName,
+                color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
     }
 }
 
