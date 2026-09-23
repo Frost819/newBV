@@ -1,7 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.settings
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -253,15 +253,8 @@ private fun SettingsMenuButton(
     ListItem(
         modifier =
             modifier
-                .background(
-                    color =
-                        if (selected) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            androidx.compose.ui.graphics.Color.Transparent
-                        },
-                    shape = RoundedCornerShape(12.dp),
-                ).onFocusChanged { if (it.hasFocus) onFocus() }
+                .clip(RoundedCornerShape(12.dp))
+                .onFocusChanged { if (it.hasFocus) onFocus() }
                 .touchClickable(onClick = { onFocus() }),
         selected = selected,
         onClick = { onFocus() },
@@ -270,12 +263,6 @@ private fun SettingsMenuButton(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 text = text,
                 style = MaterialTheme.typography.titleLarge,
-                color =
-                    if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
             )
         },
     )
