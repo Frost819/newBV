@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.tv.material3.SurfaceDefaults
 import androidx.compose.material3.MaterialTheme as CommonMaterialTheme
 import androidx.compose.material3.Surface as CommonSurface
 import androidx.compose.material3.darkColorScheme as commonDark
@@ -36,6 +37,8 @@ import androidx.tv.material3.lightColorScheme as tvLight
  *
  * @param themeMode 主题模式（跟随系统 / 深色 / 浅色）。
  * @param density 屏幕密度（TV 场景通常为 2.0）。
+ * @param surfaceColor 主题 Surface 的底色，null 表示使用 `colorScheme.surface`。
+ *                     嵌套调用时（如播放器强制深色）可传 [Color.Black] 覆盖默认深灰底色。
  * @param content 主题包裹的内容。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +46,7 @@ import androidx.tv.material3.lightColorScheme as tvLight
 fun BVTheme(
     themeMode: ThemeMode = ThemeMode.FollowSystem,
     density: Float = 1f,
+    surfaceColor: Color? = null,
     content: @Composable () -> Unit,
 ) {
     val fontScale = LocalDensity.current.fontScale
@@ -140,7 +144,18 @@ fun BVTheme(
                 LocalDensity provides Density(density = density, fontScale = fontScale),
             ) {
                 CommonSurface(color = Color.Transparent) {
-                    TvSurface(shape = RoundedCornerShape(0.dp)) {
+                    TvSurface(
+                        shape = RoundedCornerShape(0.dp),
+                        // 显式给 contentColor：SurfaceDefaults.colors 默认按
+                        // contentColorFor(containerColor) 自动配对，但 Black 不在配色方案中，
+                        // 会回退到外层继承的 LocalContentColor（浅色 App 主题下是深色文字），
+                        // 叠在黑底上不可见。旧值 colorScheme.surface 恰好命中 surface 才自动得到 onSurface。
+                        colors =
+                            SurfaceDefaults.colors(
+                                containerColor = surfaceColor ?: tvColorScheme.surface,
+                                contentColor = tvColorScheme.onSurface,
+                            ),
+                    ) {
                         content()
                     }
                 }

@@ -455,10 +455,13 @@ fun VideoPlayerController(
                 ),
     ) {
         // 播放器画面与覆盖层始终基于黑色背景，固定使用深色主题，
-        // 避免浅色应用下默认取色变成深色文字叠在黑底上不可见
+        // 避免浅色应用下默认取色变成深色文字叠在黑底上不可见。
+        // surfaceColor = Black：BVTheme 内部的 TvSurface 默认会用 colorScheme.surface
+        // （深灰 #222222）铺满整屏，导致 4:3 视频在 16:9 屏上左右留白呈灰色。
         BVTheme(
             themeMode = ThemeMode.Dark,
             density = LocalDensity.current.density,
+            surfaceColor = Color.Black,
         ) {
             // 视频画面 + 弹幕层
             content()

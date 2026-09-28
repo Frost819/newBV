@@ -1750,3 +1750,21 @@ wsClient.newWebSocket(request, listener)
 2. 引擎从 1.0.1 → 1.5.0 后全项目暴露 ~8700 条存量违规（danmaku-engine ~4900 条中 4093 条是上游 2 空格缩进），经决策执行全库 `ktlintFormat` 一次性修复（独立格式化提交，368 文件）
 3. `ktlintFormat` 遇 `cannot be auto-corrected` 会中断：需手动修复"双 KDoc/KDoc 后接注释"（文件级 KDoc 转普通块注释 `/* */` 即可）与超长行，再重跑
 4. 升级注意：detekt 与 ktlint 配置互相独立；`.editorconfig` 需要为新引擎规则（如 `standard:no-consecutive-comments`）复核既有代码
+
+### 11.14 主题与背景
+
+#### 11.14.1 播放器留白变灰：嵌套 BVTheme 的 Surface 会重绘底色
+
+**问题**：16:9 屏播放 4:3 视频，左右留白不是纯黑而是深灰（`#222222`）；`modifier.background(Color.Black)` 明明在，却不生效。
+
+**原因**：`BVTheme` 内部用 `TvSurface` 铺底，其默认 `containerColor = colorScheme.surface`。深色主题下该值为 `BVColors.DarkSurface = #222222`。播放器为了在浅色应用下固定深色覆盖层文字，在 `VideoPlayerController`/`LivePlayerController` 内**嵌套**调用了一次 `BVTheme`，于是这层 `TvSurface` 在外层 `Box(background(Color.Black))` **之上**又铺了一层 `#222222`，4:3 画面两侧露出的就是它。原版 BV 是纯深色、全应用只在 Activity 根部调一次 `BVTheme`，播放器黑底直接盖在主题 Surface 之上，所以没有这个问题。
+
+**解决方案（方案 B）**：给 `BVTheme` 增加 `surfaceColor: Color? = null` 参数（null = `colorScheme.surface`），播放器传 `Color.Black`：
+
+```kotlin
+BVTheme(themeMode = ThemeMode.Dark, density = ..., surfaceColor = Color.Black) { ... }
+```
+
+注意：`TvSurface` 的 `contentColor` 必须**显式**给 `colorScheme.onSurface`。`SurfaceDefaults.colors` 默认是 `contentColor = contentColorFor(containerColor)`；`ColorScheme.contentColorFor` 只对配色方案中已有的容器色配对，`Color.Black` 配不上会返回 `Unspecified`，composable 版 `contentColorFor` 再用 `takeOrElse { LocalContentColor.current }` 回退到**外层继承**的内容色（浅色 App 主题下是深色文字），叠在黑底上会看不见。原实现 `containerColor = colorScheme.surface` 恰好命中 `surface` 才自动得到 `onSurface`——**改 containerColor 会连带影响 contentColor 的自动配对**。
+
+**备选**：① 在主题内层、content 之前再铺一层黑 Box（局部绕过）；② 让 `TvSurface` 恒透明、背景交给 `MainActivity` 的 `Surface`；③ 拆分"提供配色"与"绘制 Surface"两个 composable（最彻底）。当前只有 `MainActivity` + 两个播放器 Controller 三处调用 `BVTheme`，改动面很小。
