@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.viewmodel.search
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.repositories.SearchFilterDuration
 import dev.frost819.newbv.biliapi.repositories.SearchFilterOrderType
@@ -218,7 +219,7 @@ class SearchResultViewModelTest {
             )
         } returns fakeLiveRoomSearchResult(listOf(fakeLiveRoomResult(1718159119L)))
 
-        viewModel = SearchResultViewModel(searchRepo)
+        viewModel = SearchResultViewModel(searchRepo, SavedStateHandle())
     }
 
     @AfterEach
@@ -276,6 +277,54 @@ class SearchResultViewModelTest {
             assertThat(videoResult.items).hasSize(20)
             val first = videoResult.items[0] as dev.frost819.newbv.app.ui.state.search.SearchResultItem.VideoItem
             assertThat(first.video.aid).isEqualTo(1)
+        }
+
+    @Test
+    fun `init loads keyword from SavedStateHandle automatically`() =
+        runTest(testDispatcher) {
+            val vm =
+                SearchResultViewModel(
+                    searchRepo,
+                    SavedStateHandle(mapOf("keyword" to "测试")),
+                )
+            advanceUntilIdle()
+
+            val state = vm.uiState.value
+            assertThat(state.keyword).isEqualTo("测试")
+            assertThat(state.results[SearchType.Video]!!.items).hasSize(20)
+
+            // init 只应触发一次搜索（每个类型一次）
+            coVerify(exactly = 1) {
+                searchRepo.searchType(
+                    keyword = "测试",
+                    type = SearchType.Video,
+                    tid = any(),
+                    order = any(),
+                    duration = any(),
+                    page = any(),
+                    preferApiType = any(),
+                )
+            }
+        }
+
+    @Test
+    fun `init does not search when SavedStateHandle keyword is blank`() =
+        runTest(testDispatcher) {
+            val vm = SearchResultViewModel(searchRepo, SavedStateHandle())
+            advanceUntilIdle()
+
+            assertThat(vm.uiState.value.keyword).isEmpty()
+            coVerify(exactly = 0) {
+                searchRepo.searchType(
+                    keyword = any(),
+                    type = any(),
+                    tid = any(),
+                    order = any(),
+                    duration = any(),
+                    page = any(),
+                    preferApiType = any(),
+                )
+            }
         }
 
     @Test

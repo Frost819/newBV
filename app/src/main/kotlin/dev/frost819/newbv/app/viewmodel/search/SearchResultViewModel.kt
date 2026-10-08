@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.search
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,15 +29,24 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
  *
  * 管理 5 类搜索结果（视频/番剧/影视/用户/直播间）的加载、分页、筛选。
  *
+ * 搜索关键词由导航路由 [dev.frost819.newbv.app.ui.navigation.SearchResultRoute] 经
+ * [SavedStateHandle] 传入，在初始化时自动加载。ViewModel 在导航返回时被保留，
+ * 因此从详情页返回不会重复加载。
+ *
  * @param searchRepository 搜索数据仓库
+ * @param savedStateHandle 导航参数（keyword）
  */
 @HiltViewModel
 class SearchResultViewModel
     @Inject
     constructor(
         private val searchRepository: SearchRepository,
+        savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val logger = Loggers.get("SearchResultViewModel")
+
+        /** 路由传入的搜索关键词。 */
+        private val routeKeyword: String = savedStateHandle.get<String>("keyword").orEmpty()
 
         companion object {
             private const val LOAD_TIMEOUT_MS = 10_000L
@@ -44,6 +54,12 @@ class SearchResultViewModel
 
         private val _uiState = MutableStateFlow(SearchResultUiState())
         val uiState = _uiState.asStateFlow()
+
+        init {
+            if (routeKeyword.isNotBlank()) {
+                search(routeKeyword)
+            }
+        }
 
         /**
          * 设置搜索关键词并启动搜索。
