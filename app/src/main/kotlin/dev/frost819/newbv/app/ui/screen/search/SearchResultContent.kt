@@ -134,12 +134,6 @@ fun SearchResultContent(
         runCatching { tabRowFocusRequester.requestFocus() }
     }
 
-    LaunchedEffect(keyword) {
-        if (keyword.isNotBlank()) {
-            viewModel.search(keyword)
-        }
-    }
-
     LaunchedEffect(gridState) {
         snapshotFlow {
             val lastIndex =
