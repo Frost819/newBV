@@ -246,6 +246,26 @@ class DanmakuViewModelTest {
         assertThat(viewModel.danmakuPlayer).isNull()
     }
 
+    // === 播放倍速同步 ===
+
+    @Test
+    fun `updateSpeed applies speed to engine`() {
+        val player = mockk<DanmakuPlayer>(relaxed = true)
+        viewModel.danmakuPlayer = player
+
+        viewModel.updateSpeed(2f)
+
+        verify(exactly = 1) { player.updatePlaySpeed(2f) }
+    }
+
+    @Test
+    fun `updateSpeed before engine init does not throw`() {
+        // 回归 #298：起播默认倍速与手动切换都需同步到弹幕引擎；引擎未创建时忽略即可
+        viewModel.updateSpeed(2f)
+
+        assertThat(viewModel.danmakuPlayer).isNull()
+    }
+
     // === 分段加载 ===
 
     /** 构造一条 Web 分段接口返回的弹幕数据（time 为秒）。 */

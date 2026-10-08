@@ -58,6 +58,7 @@ import dev.frost819.newbv.data.datastore.DanmakuType as DataDanmakuType
  *   引擎时钟（位置跳变超过阈值时 seek 引擎），因此任何改变视频位置的入口
  *   （断点续播、切集、用户 seek、回到开头）都无需单独通知本 VM
  * - 视频播放/暂停/缓冲 → 调用 [play] / [pause]
+ * - 播放倍速 → 调用 [updateSpeed]：引擎时钟按倍速缩放，与视频同速，避免弹幕乱跳
  * - 切换视频 → 调用 [clearDanmaku] + [loadDanmaku]
  */
 @HiltViewModel
@@ -444,7 +445,12 @@ class DanmakuViewModel
             danmakuPlayer?.pause()
         }
 
-        /** 更新弹幕播放速度。 */
+        /**
+         * 更新弹幕播放速度，与视频播放速度保持一致。
+         *
+         * 由 UI 层随播放器的 `playSpeed` 状态驱动：起播时的默认倍速与后续手动切换
+         * 都经此应用到引擎（引擎时钟按倍速缩放，避免与视频不同速导致弹幕乱跳）。
+         */
         fun updateSpeed(speed: Float) {
             danmakuPlayer?.updatePlaySpeed(speed)
         }
