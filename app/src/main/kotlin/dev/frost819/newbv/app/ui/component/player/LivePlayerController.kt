@@ -8,13 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,9 +34,6 @@ import dev.frost819.newbv.core.theme.BVTheme
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.Prefs
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * 直播播放器根控制器。
@@ -106,7 +101,6 @@ fun LivePlayerController(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     var showInfoController by remember { mutableStateOf(true) }
     var showMenuController by remember { mutableStateOf(false) }
@@ -114,28 +108,25 @@ fun LivePlayerController(
         derivedStateOf { showInfoController || showMenuController }
     }
 
-    var hideInfoCountdown: Job? by remember { mutableStateOf(null) }
-
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
 
-    fun startControllerAutoHide() {
-        if (!showInfoController) return
-        hideInfoCountdown?.cancel()
-        hideInfoCountdown =
-            scope.launch {
-                delay(5000)
-                showInfoController = false
-            }
+    /** 隐藏信息栏控制器。 */
+    fun hideController() {
+        showInfoController = false
     }
 
-    LaunchedEffect(Unit) {
-        startControllerAutoHide()
-    }
+    // 控制器自动隐藏：可见时 5 秒无交互自动收起，输入入口调用 onInteraction 续期。
+    // 默认 showInfoController = true，首次组合即自动开始计时。
+    val onInteraction =
+        rememberControllerAutoHide(
+            visible = showInfoController,
+            onHide = { hideController() },
+        )
 
     fun closeAllControllers() {
         showMenuController = false
-        showInfoController = false
+        hideController()
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
@@ -159,7 +150,7 @@ fun LivePlayerController(
             Key.Menu -> {
                 if (event.type == KeyEventType.KeyUp) return true
                 showMenuController = !showMenuController
-                showInfoController = false
+                hideController()
                 return true
             }
 
@@ -192,7 +183,6 @@ fun LivePlayerController(
                         return true
                     } else {
                         onPlayPause()
-                        startControllerAutoHide()
                         return true
                     }
                 }
@@ -200,7 +190,6 @@ fun LivePlayerController(
                 Key.DirectionDown -> {
                     if (event.type == KeyEventType.KeyUp) return true
                     showInfoController = true
-                    startControllerAutoHide()
                     return true
                 }
             }
@@ -215,7 +204,7 @@ fun LivePlayerController(
                 .background(Color.Black)
                 .focusable()
                 .onPreviewKeyEvent { event ->
-                    startControllerAutoHide()
+                    onInteraction()
                     handleKeyEvent(event)
                 }.playerGestures(
                     totalDuration = { 0L },
@@ -224,8 +213,11 @@ fun LivePlayerController(
                         PlayerGestureCallbacks(
                             onSingleTap = {
                                 if (!showClickableControllers) {
-                                    showInfoController = !showInfoController
-                                    if (showInfoController) startControllerAutoHide()
+                                    if (showInfoController) {
+                                        hideController()
+                                    } else {
+                                        showInfoController = true
+                                    }
                                 } else {
                                     closeAllControllers()
                                 }
@@ -259,6 +251,7 @@ fun LivePlayerController(
                                         )
                                 }
                             },
+                            onUserInteraction = onInteraction,
                         ),
                     gestureTipState = gestureTipState,
                 ),
@@ -313,18 +306,9 @@ fun LivePlayerController(
                 clock = clock,
                 isPlaying = isPlaying,
                 danmakuEnabled = danmakuEnabled,
-                onPlayPause = {
-                    onPlayPause()
-                    startControllerAutoHide()
-                },
-                onRefresh = {
-                    onRefresh()
-                    startControllerAutoHide()
-                },
-                onDanmakuSwitchChange = {
-                    onToggleDanmaku()
-                    startControllerAutoHide()
-                },
+                onPlayPause = { onPlayPause() },
+                onRefresh = { onRefresh() },
+                onDanmakuSwitchChange = { onToggleDanmaku() },
                 onShowSettings = { showMenuController = true },
             )
 

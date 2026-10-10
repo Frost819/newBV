@@ -49,6 +49,7 @@ enum class GestureTipType {
  * @param onSeekCommit seek 提交（手指松开时调用）。
  * @param onBrightnessChange 亮度变化：deltaY > 0 增加亮度，< 0 降低亮度。
  * @param onVolumeChange 音量变化：deltaY > 0 增加音量，< 0 降低音量。
+ * @param onUserInteraction 任意触摸交互（含被子组件消费的按钮点击），用于重置控制器自动隐藏倒计时。
  */
 data class PlayerGestureCallbacks(
     val onSingleTap: () -> Unit,
@@ -57,6 +58,7 @@ data class PlayerGestureCallbacks(
     val onSeekCommit: () -> Unit,
     val onBrightnessChange: (deltaY: Float) -> Unit,
     val onVolumeChange: (deltaY: Float) -> Unit,
+    val onUserInteraction: () -> Unit = {},
 )
 
 /**
@@ -105,6 +107,9 @@ fun Modifier.playerGestures(
 
         awaitEachGesture {
             val firstDown = awaitFirstDown(requireUnconsumed = false)
+            // 触摸按下即视为一次交互：即使 DOWN 已被子组件（如按钮）消费，
+            // 根节点仍能在 Main pass 收到，用于统一续期控制器自动隐藏倒计时
+            callbacks.onUserInteraction()
             val startTime = System.currentTimeMillis()
             val startX = firstDown.position.x
             val startY = firstDown.position.y

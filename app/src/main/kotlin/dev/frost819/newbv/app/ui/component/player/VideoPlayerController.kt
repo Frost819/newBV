@@ -126,7 +126,6 @@ fun VideoPlayerController(
     var seekChangeCount by remember { mutableLongStateOf(0L) }
     var lastSeekChangeTime by remember { mutableLongStateOf(0L) }
     var seekCountdown: Job? by remember { mutableStateOf(null) }
-    var hideInfoSeekCountdown: Job? by remember { mutableStateOf(null) }
 
     // 常显进度条
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
@@ -160,6 +159,18 @@ fun VideoPlayerController(
         lastSeekChangeTime = System.currentTimeMillis()
     }
 
+    /** 隐藏信息栏 + 进度条控制器。 */
+    fun hideController() {
+        showInfoSeekController = false
+    }
+
+    // 控制器自动隐藏：可见时 5 秒无交互自动收起，输入入口调用 onInteraction 续期
+    val onInteraction =
+        rememberControllerAutoHide(
+            visible = showInfoSeekController,
+            onHide = { hideController() },
+        )
+
     fun startSeekCountdown() {
         seekCountdown?.cancel()
         seekCountdown =
@@ -168,7 +179,7 @@ fun VideoPlayerController(
                 onGoTime(goTime)
                 if (uiState.playerState != PlayerState.Playing) onPlay()
                 isSeeking = false
-                showInfoSeekController = false
+                hideController()
             }
     }
 
@@ -189,20 +200,7 @@ fun VideoPlayerController(
         onGoTime(goTime)
         if (uiState.playerState != PlayerState.Playing) onPlay()
         isSeeking = false
-        showInfoSeekController = false
-    }
-
-    /**
-     * 控制器自动隐藏计时器。触屏交互后 5 秒无操作自动收起控制器。
-     */
-    fun startControllerAutoHide() {
-        if (!showInfoSeekController) return
-        hideInfoSeekCountdown?.cancel()
-        hideInfoSeekCountdown =
-            scope.launch {
-                delay(5000)
-                showInfoSeekController = false
-            }
+        hideController()
     }
 
     fun onSeekToPosition(positionMs: Long) {
@@ -210,13 +208,12 @@ fun VideoPlayerController(
         goTime = positionMs.coerceIn(0L, seekerState.value.totalDuration)
         lastSeekChangeTime = System.currentTimeMillis()
         startSeekCountdown()
-        startControllerAutoHide()
     }
 
     fun closeAllControllers() {
+        hideController()
         showListController = false
         showMenuController = false
-        showInfoSeekController = false
         showRelatedVideosController = false
     }
 
@@ -323,7 +320,7 @@ fun VideoPlayerController(
             }
 
             Key.Menu, Key(763) -> {
-                showInfoSeekController = false
+                hideController()
                 showMenuController = !showMenuController
                 return true
             }
@@ -400,7 +397,7 @@ fun VideoPlayerController(
                 .background(Color.Black)
                 .focusable()
                 .onPreviewKeyEvent { event ->
-                    startControllerAutoHide()
+                    onInteraction()
                     handleKeyEvent(event)
                 }.playerGestures(
                     totalDuration = { seekerState.value.totalDuration },
@@ -409,8 +406,11 @@ fun VideoPlayerController(
                         PlayerGestureCallbacks(
                             onSingleTap = {
                                 if (!showClickableControllers) {
-                                    showInfoSeekController = !showInfoSeekController
-                                    if (showInfoSeekController) startControllerAutoHide()
+                                    if (showInfoSeekController) {
+                                        hideController()
+                                    } else {
+                                        showInfoSeekController = true
+                                    }
                                 } else {
                                     closeAllControllers()
                                 }
@@ -450,6 +450,7 @@ fun VideoPlayerController(
                                         )
                                 }
                             },
+                            onUserInteraction = onInteraction,
                         ),
                     gestureTipState = gestureTipState,
                 ),
@@ -561,21 +562,12 @@ fun VideoPlayerController(
                 onDirectionRight = ::onDirectionRight,
                 onSeekGoTime = ::onSeekGoTime,
                 onSeekToPosition = ::onSeekToPosition,
-                onPlayPause = {
-                    onPlay()
-                    startControllerAutoHide()
-                },
-                onDanmakuSwitchChange = {
-                    onToggleDanmaku()
-                    startControllerAutoHide()
-                },
+                onPlayPause = { onPlay() },
+                onDanmakuSwitchChange = { onToggleDanmaku() },
                 onShowSettings = { showMenuController = true },
                 onShowRelatedVideos = { showRelatedVideosController = true },
                 onGoToVideoInfo = onGoToVideoDetail,
-                onToggleLoop = {
-                    onToggleLoop()
-                    startControllerAutoHide()
-                },
+                onToggleLoop = { onToggleLoop() },
                 onGoToUpPage = onGoToUpPage,
                 onShowInteraction = onShowInteraction,
                 onShowComments = onShowComments,
