@@ -176,9 +176,11 @@ class DanmakuEngine(
 
     internal fun release() {
         timer.paused = true
-        systems.forEach { system ->
+        systems.toList().forEach { system ->
             removeSystem(system)
         }
+        // 释放 CacheManager 的缓存线程，防止 AkDanmaku-Cache 线程泄漏。
+        context.cacheManager.release()
     }
 
     internal fun seekTo(positionMs: Long) {

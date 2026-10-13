@@ -242,8 +242,11 @@ class DanmakuPlayer(
         actionHandler.removeCallbacksAndMessages(null)
 //    Choreographer.getInstance().removeFrameCallback(frameCallback)
         started = false
+        // 放行信号量，解除 ActionThread 在 drawSemaphore.acquire() 上的阻塞，
+        // 否则 quitSafely() 无法终止线程，导致线程及整个引擎对象图泄漏。
+        drawSemaphore.release()
         actionThread.quitSafely()
-        actionThread.join(50L)
+        actionThread.join(100L)
         engine.release()
     }
 
