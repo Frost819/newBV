@@ -568,6 +568,23 @@ class VideoDetailRepositoryUnitTest {
         }
 
     @Test
+    fun `fillUserActions queries App channel and keeps prior flags on failure`() =
+        runTest {
+            coEvery { favoriteRepository.checkVideoFavoured(AID, ApiType.App) } returns true
+            coEvery { likeRepository.checkVideoLiked(AID, ApiType.App) } throws RuntimeException("err")
+            coEvery { coinRepository.checkVideoCoined(AID, ApiType.App) } returns true
+            val detail =
+                dev.frost819.newbv.biliapi.entity.video.VideoDetail
+                    .fromVideoDetail(fakeHttpVideoDetail())
+
+            val result = repository.fillUserActions(detail, ApiType.App)
+
+            assertThat(result.userActions.favorite).isTrue()
+            assertThat(result.userActions.like).isFalse()
+            assertThat(result.userActions.coin).isTrue()
+        }
+
+    @Test
     fun `getUgcPages Web returns empty list when API throws`() =
         runTest {
             coEvery { BiliHttpApi.getVideoInfo(any(), any()) } throws RuntimeException("network error")

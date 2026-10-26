@@ -51,7 +51,6 @@ ksp {
 dependencies {
     implementation(project(":bili-api"))
 
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)
@@ -60,19 +59,17 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines)
-    implementation(libs.kotlinx.serialization)
 
     testImplementation(libs.junit.jupiter)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
-    testImplementation(libs.androidx.room.testing)
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
-    testImplementation("androidx.test:core:1.6.1")
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testImplementation(libs.androidx.test.core)
 
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)

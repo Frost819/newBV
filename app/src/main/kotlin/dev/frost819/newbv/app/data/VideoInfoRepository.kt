@@ -65,6 +65,14 @@ class VideoInfoRepository
         val videoSharedState = _videoSharedState.asStateFlow()
 
         /**
+         * 最近一次详情请求的 aid。
+         *
+         * 快速连续切换视频时，先发出的请求可能后返回；只允许最新请求写入共享状态，
+         * 避免旧视频的详情/相关视频覆盖新视频（调用方都在主线程，读写无需加锁）。
+         */
+        private var latestDetailRequestAid = 0L
+
+        /**
          * 更新视频详情（同步相关视频和共享状态）。
          *
          * 供详情页 ViewModel 在加载完成后调用，确保播放器页面能获取相关视频数据。
@@ -97,8 +105,14 @@ class VideoInfoRepository
             preferApiType: ApiType,
             bvid: String = "",
         ) {
+            latestDetailRequestAid = aid
             runCatching {
                 val detail = videoDetailRepository.getVideoDetail(aid = aid, preferApiType = preferApiType, bvid = bvid)
+                // 已有更新的请求：丢弃本次过期响应，避免旧视频数据覆盖新视频
+                if (latestDetailRequestAid != aid) {
+                    logger.info { "Discard stale video detail: aid=$aid, latest=$latestDetailRequestAid" }
+                    return@runCatching
+                }
                 _videoDetail.update { detail }
                 _relatedVideos.update { detail.relatedVideos }
                 _videoSharedState.update {
@@ -216,6 +230,7 @@ class VideoInfoRepository
 
         /** 重置所有状态。 */
         fun reset() {
+            latestDetailRequestAid = 0L
             _videoList.update { emptyList() }
             _videoDetail.update { null }
             _relatedVideos.update { emptyList() }

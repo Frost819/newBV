@@ -28,6 +28,18 @@ class VideoCardDataTest {
         assertThat(ugc.cid).isEqualTo(999L)
     }
 
+    @Test
+    fun `fromRelatedVideo formats pubdate as year-included date for past years`() {
+        val card = VideoCardData.fromRelatedVideo(related(epid = null, jumpToSeason = false, pubdate = 1700000000L))
+        assertThat(card.pubTime).contains("2023年")
+    }
+
+    @Test
+    fun `fromRelatedVideo has no pubTime when pubdate unknown`() {
+        val card = VideoCardData.fromRelatedVideo(related(epid = null, jumpToSeason = false, pubdate = 0L))
+        assertThat(card.pubTime).isNull()
+    }
+
     private fun videoCard(epid: Int?): VideoCardData =
         VideoCardData(
             avid = 1L,
@@ -40,6 +52,7 @@ class VideoCardDataTest {
     private fun related(
         epid: Int?,
         jumpToSeason: Boolean,
+        pubdate: Long = 0L,
     ): RelatedVideo =
         RelatedVideo(
             aid = 1L,
@@ -52,5 +65,6 @@ class VideoCardDataTest {
             epid = epid,
             view = 0,
             danmaku = 0,
+            pubdate = pubdate,
         )
 }

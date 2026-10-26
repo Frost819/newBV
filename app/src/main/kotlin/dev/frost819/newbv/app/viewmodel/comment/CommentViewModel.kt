@@ -29,6 +29,7 @@ private const val COMMENT_LOAD_TIMEOUT_MS = 10_000L
  * CommentUiState
  * └── commentLists: Map<CommentSort, CommentListState>     每个排序一份主评论列表
  *     ├── comments: List<Comment>                          主评论（一级评论）
+ *     ├── replyPreviews: Map<Long, List<Comment>>      rootRpid -> 收起态楼中楼预览
  *     └── replyLists: Map<Long, ReplyListState>        rootRpid -> 楼中楼（二级评论容器）
  *         └── replies: List<Comment>                       楼中楼内的回复
  */
@@ -91,6 +92,7 @@ data class ReplyListState(
  * @property loadingMore 是否正在加载后续页
  * @property loadMoreError 后续页是否加载失败
  * @property replyLists 根评论 ID 到楼中楼状态的映射
+ * @property replyPreviews 根评论 ID 到楼中楼预览的映射（来自主评论接口，收起态展示）
  */
 data class CommentListState(
     val comments: List<Comment> = emptyList(),
@@ -103,9 +105,13 @@ data class CommentListState(
     val loadingMore: Boolean = false,
     val loadMoreError: Boolean = false,
     val replyLists: Map<Long, ReplyListState> = emptyMap(),
+    val replyPreviews: Map<Long, List<Comment>> = emptyMap(),
 ) {
     /** 获取指定根评论的楼中楼状态。 */
     fun replyList(rootRpid: Long): ReplyListState? = replyLists[rootRpid]
+
+    /** 获取指定根评论的楼中楼预览（收起态展示，可能为空）。 */
+    fun replyPreview(rootRpid: Long): List<Comment> = replyPreviews[rootRpid].orEmpty()
 
     /** 当前排序是否具备加载下一页的条件。 */
     internal fun canLoadMore(): Boolean = loaded && !initialLoading && !loadingMore && hasMore
@@ -142,12 +148,15 @@ data class CommentUiState(
     /** 当前排序后续页是否加载失败。 */
     val loadMoreError: Boolean get() = commentList.loadMoreError
 
-    /** 在全部排序缓存中查找指定评论（含楼中楼）。 */
+    /** 在全部排序缓存中查找指定评论（含楼中楼与收起态预览）。 */
     fun findComment(rpid: Long): Comment? {
         commentLists.values.forEach { commentList ->
             commentList.comments.firstOrNull { it.rpid == rpid }?.let { return it }
             commentList.replyLists.values.forEach { replyList ->
                 replyList.replies.firstOrNull { it.rpid == rpid }?.let { return it }
+            }
+            commentList.replyPreviews.values.forEach { previews ->
+                previews.firstOrNull { it.rpid == rpid }?.let { return it }
             }
         }
         return null
@@ -279,6 +288,7 @@ class CommentViewModel
                                 hasMore = page.hasMore && appended.isNotEmpty(),
                                 loadingMore = false,
                                 loadMoreError = false,
+                                replyPreviews = it.replyPreviews + page.replyPreviews,
                             )
                         }
                     } catch (error: Throwable) {
@@ -416,6 +426,7 @@ class CommentViewModel
                                 initialError = false,
                                 loadingMore = false,
                                 loadMoreError = false,
+                                replyPreviews = it.replyPreviews + page.replyPreviews,
                             )
                         }
                     } catch (error: Throwable) {
@@ -593,6 +604,10 @@ private fun CommentListState.withCommentLike(
         replyLists =
             replyLists.mapValues { (_, replyList) ->
                 replyList.copy(replies = replyList.replies.map { transform(it) })
+            },
+        replyPreviews =
+            replyPreviews.mapValues { (_, previews) ->
+                previews.map { transform(it) }
             },
     )
 }

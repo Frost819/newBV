@@ -53,7 +53,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,6 +116,20 @@ class PlayerViewModel
         /** 视频播放器实例，供 Compose `AndroidView` 绑定。 */
         var videoPlayer: AbstractVideoPlayer? by mutableStateOf(null)
             private set
+
+        /**
+         * 本播放会话是否已完成首次加载（视频详情、弹幕、播放地址）。
+         *
+         * 播放页被详情/UP 主空间覆盖后再返回时，页面会重新组合，但 ViewModel 与播放器仍然存活，
+         * 据此跳过重复加载，避免从头播放。
+         */
+        var isSessionStarted: Boolean = false
+            private set
+
+        /** 标记播放会话已完成首次加载，见 [isSessionStarted]。 */
+        fun markSessionStarted() {
+            isSessionStarted = true
+        }
 
         private var playData: PlayData? = null
 
@@ -402,6 +415,7 @@ class PlayerViewModel
          * 创建 ExoPlayer 并绑定事件监听器。
          */
         fun initVideoPlayer(context: Context) {
+            if (videoPlayer != null) return
             val apiType = Prefs.apiType
             val options =
                 VideoPlayerOptions(
@@ -704,6 +718,10 @@ class PlayerViewModel
                     epid = newVideo.epid,
                     seasonId = newVideo.seasonId ?: 0,
                     title = newVideo.title,
+                    // 作者信息立即取列表项携带值（相关视频卡片已有），详情加载完成后以详情为准覆盖；
+                    // 缺失时置空而不是沿用，避免 UP 主页仍指向上一个视频的 UP 主
+                    authorMid = newVideo.authorMid ?: 0L,
+                    authorName = newVideo.authorName.orEmpty(),
                     lastPlayed = 0,
                     isBuffering = true,
                     playerState = PlayerState.Ready,
@@ -735,14 +753,27 @@ class PlayerViewModel
 
             // 异步加载详情 + 历史进度（不阻塞 playVideoWithResources）
             if (shouldUpdateDetail) {
-                viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch {
                     videoInfoRepository.loadVideoDetail(newVideo.aid, getApiType())
+                    val detail = videoInfoRepository.videoDetail.value?.takeIf { it.aid == newVideo.aid }
                     // 仅当历史 cid 与当前播放 cid 一致时才应用断点续播
                     val sharedState = videoInfoRepository.videoSharedState.value
                     val historyCid = sharedState?.lastPlayedCid ?: 0L
                     val historyTime = sharedState?.lastPlayedTime ?: 0
-                    if (historyCid == newVideo.cid && historyTime > 0) {
-                        _uiState.update { it.copy(lastPlayed = historyTime) }
+                    _uiState.update { state ->
+                        // 快速连续切换时，过期视频的详情不得覆盖当前视频的状态
+                        if (state.aid != newVideo.aid) return@update state
+                        state.copy(
+                            lastPlayed =
+                                if (historyCid == newVideo.cid && historyTime > 0) {
+                                    historyTime
+                                } else {
+                                    state.lastPlayed
+                                },
+                            // 详情中的作者信息最权威，覆盖列表项携带的初值
+                            authorMid = detail?.author?.mid ?: state.authorMid,
+                            authorName = detail?.author?.name ?: state.authorName,
+                        )
                     }
                 }
             }
@@ -1038,6 +1069,16 @@ class PlayerViewModel
                     ?: Prefs.defaultVideoCodec.takeIf { it in availableCodecs }
                     ?: availableCodecs.minByOrNull { it.ordinal }
             val targetAudio = calculateTargetAudio(availableAudioList, Prefs.defaultAudio)
+
+            // 因设备解码能力而降档时提示用户实际使用的组合（服务端缺档不提示）
+            decodeFallbackNotice(
+                requestedQualityId = requestedQualityId,
+                selected = candidate,
+                preferredCodec = Prefs.defaultVideoCodec,
+                targetQualityCodecs = availableCodecs,
+            )?.let { message ->
+                viewModelScope.launch { _uiEffect.emit(PlayerUiEffect.ShowToast(message)) }
+            }
 
             _uiState.update {
                 it.copy(
@@ -1393,6 +1434,9 @@ class PlayerViewModel
             val audioUrl = audioCdnCandidates.firstOrNull()
             val position = player.currentPosition
             logger.info { "CDN fallback #$nextIndex -> $videoUrl" }
+            viewModelScope.launch {
+                _uiEffect.emit(PlayerUiEffect.ShowToast("当前播放线路异常，已切换到备用线路"))
+            }
             _uiState.update { it.copy(isBuffering = true) }
             player.playUrl(videoUrl, audioUrl)
             player.prepare()
@@ -1513,7 +1557,48 @@ class PlayerViewModel
         )
 
         override fun onCleared() {
+            // 退出页面时才真正释放播放器（进入详情等覆盖页面不会走到这里）
+            detachPlayer()
             super.onCleared()
-            detachedWorkScope.cancel()
+            // 不取消 detachedWorkScope：退出前的最后一次进度上报需要在 VM 清理后继续完成，由超时兜底
         }
     }
+
+/**
+ * 生成起播自动选流因设备解码能力受限而降档时的提示文案。
+ *
+ * 只在「服务端提供、但本机解不了」时提示：
+ * - 画质：[requestedQualityId] 取自服务端可用画质，选中画质低于它说明目标画质因能力被放弃；
+ * - 编码：偏好编码在选中画质下可选却未被选中，说明是能力限制而非服务端缺档。
+ *
+ * 服务端本身不提供的画质 / 编码不提示，避免把资源缺失误报成设备限制。
+ *
+ * @param requestedQualityId 服务端可用且最接近用户偏好的画质（qn）
+ * @param selected 能力感知选流选中的组合；null 表示能力判定无可用组合（交由运行时回退提示）
+ * @param preferredCodec 用户偏好的编码
+ * @param targetQualityCodecs 选中画质下服务端提供的编码
+ * @return 提示文案；无需提示时返回 null
+ */
+internal fun decodeFallbackNotice(
+    requestedQualityId: Int,
+    selected: PlaybackCandidate?,
+    preferredCodec: VideoCodec,
+    targetQualityCodecs: List<VideoCodec>,
+): String? {
+    if (selected == null) return null
+    val qualityDowngraded = selected.quality < requestedQualityId
+    val codecDowngraded = selected.codec != preferredCodec && preferredCodec in targetQualityCodecs
+    if (!qualityDowngraded && !codecDowngraded) return null
+
+    val unsupported =
+        buildList {
+            if (qualityDowngraded) add(Resolution.fromCode(requestedQualityId).displayName)
+            if (codecDowngraded) add(preferredCodec.displayName)
+        }
+    val actual =
+        buildList {
+            if (qualityDowngraded) add(Resolution.fromCode(selected.quality).displayName)
+            if (codecDowngraded) add(selected.codec.displayName)
+        }
+    return "当前设备不支持 ${unsupported.joinToString(" · ")}，已切换到 ${actual.joinToString(" · ")}"
+}

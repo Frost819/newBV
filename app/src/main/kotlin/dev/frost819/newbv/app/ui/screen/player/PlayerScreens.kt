@@ -44,6 +44,8 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
 
         // 初始化播放器状态 + 加载视频资源（顺序执行，避免竞态）
         LaunchedEffect(route.aid) {
+            // 返回本页时播放器仍在 ViewModel 中，跳过重复加载以保留进度
+            if (playerViewModel.isSessionStarted) return@LaunchedEffect
             // 1. 设置播放状态（aid/cid/title 等）
             playerViewModel.init(
                 aid = route.aid,
@@ -78,14 +80,15 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             danmakuViewModel.loadDanmakuMask(route.aid, actualCid)
             subtitleViewModel.loadSubtitleList(route.aid, actualCid)
             // 7. 获取播放地址并开始播放
+            playerViewModel.markSessionStarted()
             playerViewModel.loadVideoWithResources()
         }
 
-        // 释放播放器资源
+        // 离开页面（如打开详情/UP 主空间）时暂停；播放器与弹幕保留在 ViewModel 中，返回后保持暂停
         DisposableEffect(Unit) {
             onDispose {
-                playerViewModel.detachPlayer()
-                danmakuViewModel.release()
+                playerViewModel.pausePlayback()
+                danmakuViewModel.pause()
             }
         }
 

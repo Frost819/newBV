@@ -65,6 +65,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.util.ToastUtils
+import dev.frost819.newbv.app.util.formatCommentTime
 import dev.frost819.newbv.app.viewmodel.comment.CommentListState
 import dev.frost819.newbv.app.viewmodel.comment.CommentSort
 import dev.frost819.newbv.app.viewmodel.comment.CommentUiEffect
@@ -110,8 +111,8 @@ private sealed interface CommentRow {
         override val key: String get() = "comment:${comment.rpid}"
     }
 
-    /** 楼中楼回复行。 */
-    data class ReplyComment(
+    /** 楼中楼回复行（收起态预览与展开后的分页回复共用同一套渲染）。 */
+    data class Reply(
         val rootRpid: Long,
         val comment: Comment,
     ) : CommentRow {
@@ -134,8 +135,8 @@ private sealed interface CommentRow {
 /**
  * 将当前排序的评论分页状态扁平化为 LazyColumn 行。
  *
- * 楼中楼展开时，在根评论后依次追加回复行与分页 footer，从而支持滚动到 footer 时
- * 按需加载下一页，而无需把全部回复塞进单个 Lazy item。
+ * 楼中楼收起时展示接口自带的预览（条数已由数据层限制）；展开后替换为真实分页回复
+ * 与 footer，footer 内的「更多」按钮每次触发一页加载（不随滚动自动加载）。
  *
  * @param commentList 当前排序的评论分页状态
  */
@@ -146,7 +147,7 @@ private fun buildCommentRows(commentList: CommentListState): List<CommentRow> =
             val replyList = commentList.replyList(root.rpid)
             if (replyList?.expanded == true) {
                 replyList.replies.forEach { reply ->
-                    add(CommentRow.ReplyComment(rootRpid = root.rpid, comment = reply))
+                    add(CommentRow.Reply(rootRpid = root.rpid, comment = reply))
                 }
                 val showFooter =
                     replyList.initialLoading ||
@@ -155,6 +156,11 @@ private fun buildCommentRows(commentList: CommentListState): List<CommentRow> =
                         replyList.loadMoreError ||
                         replyList.hasMore
                 if (showFooter) add(CommentRow.ReplyFooter(root.rpid))
+            } else if (root.replyCount > 0) {
+                // 收起态直接展示接口预览，避免为预览额外请求第一页
+                commentList.replyPreview(root.rpid).forEach { preview ->
+                    add(CommentRow.Reply(rootRpid = root.rpid, comment = preview))
+                }
             }
         }
         add(CommentRow.MainFooter)
@@ -164,7 +170,8 @@ private fun buildCommentRows(commentList: CommentListState): List<CommentRow> =
  * 视频评论弹窗。
  *
  * 详情页和播放器共用该组件，不创建独立评论路由。主评论热门/最新各自缓存，楼中楼
- * 默认收起，点击回复数量后在对应根评论下方按需分页加载并展开。
+ * 默认收起；展开时加载第一页，后续分页由 footer 的「更多」按钮手动触发，不随滚动
+ * 自动加载。
  *
  * @param aid 视频 AV 号
  * @param mode 弹窗展示模式
@@ -275,10 +282,14 @@ private fun CommentsContent(
     val latestListState = rememberLazyListState()
     val listState = if (state.sort == CommentSort.Hot) hotListState else latestListState
     val rows = remember(state.commentList) { buildCommentRows(state.commentList) }
-    val rowsByKey = remember(rows) { rows.associateBy { it.key } }
 
     // 评论文本展开状态：纯 UI 态，按 rpid 记录，切换排序/分页重排时保持
     val expandedCommentIds = remember { mutableStateMapOf<Long, Boolean>() }
+
+    /** 切换单条评论正文的展开/收起状态。 */
+    fun toggleCommentText(rpid: Long) {
+        expandedCommentIds[rpid] = expandedCommentIds[rpid] != true
+    }
 
     // 主评论滚动接近末尾时自动加载下一页
     LaunchedEffect(listState, state.hasMore, state.loadingMore, state.loadMoreError, rows.size) {
@@ -298,23 +309,8 @@ private fun CommentsContent(
             }
     }
 
-    // 楼中楼分页 footer 进入可见区时自动加载下一页
-    LaunchedEffect(listState, rowsByKey) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { info -> info.key } }
-            .distinctUntilChanged()
-            .collect { visibleKeys ->
-                visibleKeys.forEach { key ->
-                    val row = rowsByKey[key]
-                    if (row is CommentRow.ReplyFooter) {
-                        val replyList = state.commentList.replyList(row.rootRpid)
-                        // 错误态停止自动加载，改由 footer 的重试按钮触发
-                        if (replyList != null && !replyList.initialError && !replyList.loadMoreError) {
-                            onLoadMoreReplies(row.rootRpid)
-                        }
-                    }
-                }
-            }
-    }
+    // 楼中楼分页不随滚动自动加载：由 footer 的「更多」按钮手动触发，避免展开后
+    // 一次性拉取全部回复（也便于用户按需控制请求）
 
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Text(
@@ -368,40 +364,33 @@ private fun CommentsContent(
                     items(rows, key = { it.key }) { row ->
                         when (row) {
                             is CommentRow.MainComment -> {
-                                val replyList = state.commentList.replyList(row.comment.rpid)
+                                val comment = row.comment
+                                val rpid = comment.rpid
+                                val replyList = state.commentList.replyList(rpid)
                                 CommentCard(
-                                    comment = row.comment,
+                                    comment = comment,
                                     compact = mode == CommentDialogMode.Player,
-                                    isLiking = row.comment.rpid in state.likingIds,
-                                    showReplyButton = row.comment.replyCount > 0,
+                                    isLiking = rpid in state.likingIds,
+                                    showReplyButton = comment.replyCount > 0,
                                     isExpanded = replyList?.expanded == true,
                                     isLoadingReplies = replyList?.initialLoading == true,
-                                    isTextExpanded = expandedCommentIds[row.comment.rpid] == true,
-                                    onToggleTextExpand = {
-                                        expandedCommentIds[row.comment.rpid] =
-                                            expandedCommentIds[row.comment.rpid] != true
-                                    },
-                                    onToggleReplies = { onToggleReplies(row.comment.rpid) },
-                                    onToggleLike = { onToggleLike(row.comment.rpid) },
+                                    previewReplyCount = state.commentList.replyPreview(rpid).size,
+                                    isTextExpanded = expandedCommentIds[rpid] == true,
+                                    onToggleTextExpand = { toggleCommentText(rpid) },
+                                    onToggleReplies = { onToggleReplies(rpid) },
+                                    onToggleLike = { onToggleLike(rpid) },
                                     onImageClick = onImageClick,
                                 )
                             }
-                            is CommentRow.ReplyComment -> {
-                                CommentCard(
-                                    comment = row.comment,
-                                    compact = true,
-                                    isLiking = row.comment.rpid in state.likingIds,
-                                    showReplyButton = false,
-                                    isExpanded = false,
-                                    isLoadingReplies = false,
-                                    isTextExpanded = expandedCommentIds[row.comment.rpid] == true,
-                                    onToggleTextExpand = {
-                                        expandedCommentIds[row.comment.rpid] =
-                                            expandedCommentIds[row.comment.rpid] != true
-                                    },
-                                    indent = REPLY_INDENT,
-                                    onToggleReplies = {},
-                                    onToggleLike = { onToggleLike(row.comment.rpid) },
+                            is CommentRow.Reply -> {
+                                val comment = row.comment
+                                val rpid = comment.rpid
+                                ReplyCommentCard(
+                                    comment = comment,
+                                    isLiking = rpid in state.likingIds,
+                                    isTextExpanded = expandedCommentIds[rpid] == true,
+                                    onToggleTextExpand = { toggleCommentText(rpid) },
+                                    onToggleLike = { onToggleLike(rpid) },
                                     onImageClick = onImageClick,
                                 )
                             }
@@ -444,10 +433,43 @@ private fun CommentsContent(
 }
 
 /**
+ * 楼中楼回复卡片（已加载回复与收起态预览共用）。
+ *
+ * 回复行统一紧凑样式、带左缩进，且不展示「回复」展开按钮。
+ */
+@Composable
+private fun ReplyCommentCard(
+    comment: Comment,
+    isLiking: Boolean,
+    isTextExpanded: Boolean,
+    onToggleTextExpand: () -> Unit,
+    onToggleLike: () -> Unit,
+    onImageClick: (List<String>, Int) -> Unit,
+) {
+    CommentCard(
+        comment = comment,
+        compact = true,
+        isLiking = isLiking,
+        showReplyButton = false,
+        isExpanded = false,
+        isLoadingReplies = false,
+        isTextExpanded = isTextExpanded,
+        onToggleTextExpand = onToggleTextExpand,
+        onToggleReplies = {},
+        onToggleLike = onToggleLike,
+        onImageClick = onImageClick,
+        indent = REPLY_INDENT,
+    )
+}
+
+/**
  * 单条评论卡片。
  *
  * 主评论与楼中楼回复共用；[showReplyButton] 为 false 时（回复行）不展示回复展开按钮。
  * 评论文本超出最大行数时可展开全文，仅在实际溢出时展示"展开/收起"按钮。
+ *
+ * @param previewReplyCount 收起态已经展示的楼中楼预览条数；大于 0 时回复按钮文案
+ *   变为「共 N 条回复」，提示点击后进入完整分页列表
  */
 @Composable
 internal fun CommentCard(
@@ -463,6 +485,7 @@ internal fun CommentCard(
     onToggleLike: () -> Unit,
     onImageClick: (List<String>, Int) -> Unit,
     indent: Dp = 0.dp,
+    previewReplyCount: Int = 0,
 ) {
     // 记录文本在折叠状态下是否溢出；溢出过一次后按钮常驻，避免展开后回落到 false 导致按钮消失
     var isTextOverflowing by remember(comment.rpid) { mutableStateOf(false) }
@@ -489,16 +512,27 @@ internal fun CommentCard(
                 contentScale = ContentScale.Crop,
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text =
-                        buildString {
-                            append(comment.userName)
-                            if (comment.level > 0) append("  Lv.${comment.level}")
-                            if (comment.isUp) append("  UP主")
-                        },
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text =
+                            buildString {
+                                append(comment.userName)
+                                if (comment.level > 0) append("  Lv.${comment.level}")
+                                if (comment.isUp) append("  UP主")
+                            },
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    val timeText = remember(comment.ctime) { comment.ctime.formatCommentTime() }
+                    if (timeText.isNotEmpty()) {
+                        Text(
+                            text = timeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 Text(
                     text = comment.message,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -557,8 +591,16 @@ internal fun CommentCard(
                         enabled = !isLiking,
                     )
                     if (showReplyButton) {
+                        val replyActionText =
+                            when {
+                                isLoadingReplies -> "加载中"
+                                isExpanded -> "收起"
+                                // 收起态已有接口预览时，点击按钮进入完整分页列表
+                                previewReplyCount > 0 -> "共 ${comment.replyCount} 条回复"
+                                else -> "回复 ${comment.replyCount}"
+                            }
                         DialogActionButton(
-                            text = if (isLoadingReplies) "加载中" else "回复 ${comment.replyCount}",
+                            text = replyActionText,
                             icon = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                             onClick = onToggleReplies,
                             enabled = !isLoadingReplies,
@@ -577,9 +619,14 @@ internal fun CommentCard(
     }
 }
 
-/** 楼中楼分页 footer：展示加载中、加载失败重试或加载更多。 */
+/**
+ * 楼中楼分页 footer。
+ *
+ * 第一页由展开自动加载，后续页仅在用户点击「更多」时加载一页，
+ * 加载中/失败分别展示状态与重试入口。
+ */
 @Composable
-private fun ReplyFooterRow(
+internal fun ReplyFooterRow(
     replyList: ReplyListState,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
@@ -610,7 +657,7 @@ private fun ReplyFooterRow(
                 Text(text = "回复加载中…", style = MaterialTheme.typography.labelMedium)
             }
             else -> {
-                DialogActionButton(text = "加载更多回复", icon = Icons.Outlined.ExpandMore, onClick = onLoadMore)
+                DialogActionButton(text = "更多回复", icon = Icons.Outlined.ExpandMore, onClick = onLoadMore)
             }
         }
     }

@@ -3,6 +3,10 @@ package dev.frost819.newbv.app.viewmodel.player
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoListItem
+import dev.frost819.newbv.biliapi.entity.user.Author
+import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+import dev.frost819.newbv.biliapi.entity.video.UserActions
+import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.entity.video.VideoPage
 import dev.frost819.newbv.biliapi.repositories.VideoDetailRepository
 import io.mockk.mockk
@@ -15,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.Date
 
 /**
  * [VideoListViewModel] 的单元测试。
@@ -267,6 +272,100 @@ class VideoListViewModelTest {
         runTest(testDispatcher) {
             viewModel.setCurrentAid(42L)
             assertThat(viewModel.videoListState.value.videoList).isEmpty()
+        }
+
+    private fun fakeRelatedVideo(aid: Long): RelatedVideo =
+        RelatedVideo(
+            aid = aid,
+            cid = aid * 10,
+            cover = "",
+            title = "相关视频$aid",
+            duration = 60,
+            author = Author(mid = 1L, name = "UP", face = ""),
+            jumpToSeason = false,
+            epid = null,
+            view = 0,
+            danmaku = 0,
+        )
+
+    private fun fakeVideoDetail(
+        aid: Long,
+        relatedVideos: List<RelatedVideo> = emptyList(),
+    ): VideoDetail =
+        VideoDetail(
+            bvid = "BV$aid",
+            aid = aid,
+            cid = aid * 10,
+            cover = "",
+            title = "视频$aid",
+            publishDate = Date(0),
+            description = "",
+            stat = VideoDetail.Stat(0, 0, 0, 0, 0, 0, 0, 0),
+            author = Author(mid = aid, name = "UP$aid", face = ""),
+            pages = emptyList(),
+            ugcSeason = null,
+            relatedVideos = relatedVideos,
+            redirectToEp = false,
+            epid = null,
+            argueTip = null,
+            tags = emptyList(),
+            userActions = UserActions(),
+            history = VideoDetail.History(0, 0),
+        )
+
+    @Test
+    fun `related videos follow current aid after switching video`() =
+        runTest(testDispatcher) {
+            videoInfoRepository.updateVideoDetail(
+                fakeVideoDetail(aid = 1, relatedVideos = listOf(fakeRelatedVideo(11))),
+            )
+            viewModel.setCurrentAid(1L)
+            advanceUntilIdle()
+            val firstRelatedAids =
+                viewModel.videoListState.value.relatedVideos
+                    .map { it.aid }
+            assertThat(firstRelatedAids).containsExactly(11L)
+
+            // 播放器内切到 B：详情与相关视频都应换成 B 的
+            videoInfoRepository.updateVideoDetail(
+                fakeVideoDetail(aid = 2, relatedVideos = listOf(fakeRelatedVideo(21), fakeRelatedVideo(22))),
+            )
+            viewModel.setCurrentAid(2L)
+            advanceUntilIdle()
+
+            val secondRelatedAids =
+                viewModel.videoListState.value.relatedVideos
+                    .map { it.aid }
+            assertThat(secondRelatedAids).containsExactly(21L, 22L).inOrder()
+        }
+
+    @Test
+    fun `related videos stay empty when loaded detail belongs to another video`() =
+        runTest(testDispatcher) {
+            videoInfoRepository.updateVideoDetail(
+                fakeVideoDetail(aid = 1, relatedVideos = listOf(fakeRelatedVideo(11))),
+            )
+            viewModel.setCurrentAid(2L)
+            advanceUntilIdle()
+
+            // 不得把视频 1 的相关视频串到视频 2
+            assertThat(viewModel.videoListState.value.relatedVideos).isEmpty()
+        }
+
+    @Test
+    fun `switching aid clears old related videos until new detail arrives`() =
+        runTest(testDispatcher) {
+            videoInfoRepository.updateVideoDetail(
+                fakeVideoDetail(aid = 1, relatedVideos = listOf(fakeRelatedVideo(11))),
+            )
+            viewModel.setCurrentAid(1L)
+            advanceUntilIdle()
+            assertThat(viewModel.videoListState.value.relatedVideos).isNotEmpty()
+
+            // 切到 B 但 B 的详情还没返回：先清空，避免显示 A 的列表
+            viewModel.setCurrentAid(2L)
+            advanceUntilIdle()
+            assertThat(viewModel.videoListState.value.relatedVideos).isEmpty()
         }
 
     @Test

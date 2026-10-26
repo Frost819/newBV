@@ -3,7 +3,6 @@ package dev.frost819.newbv.biliapi.entity.comment
 import bilibili.main.community.reply.v1.ReplyInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -35,10 +34,20 @@ data class Comment(
 ) {
     /** 从 B 站 Web/App HTTP 评论 JSON 转换为统一模型。 */
     companion object {
+        /**
+         * 解析单条评论 JSON。
+         *
+         * @param json 评论条目 JSON
+         * @param oid 评论区对象 id（缺失时兜底）
+         * @param defaultType 评论区类型（缺失时兜底）
+         * @param upperMid 视频 UP 主 mid；评论作者 mid 与之相同才标记为「UP主」，
+         *   0 表示未知（此时不标记）
+         */
         fun fromJson(
             json: JsonObject,
             oid: Long,
             defaultType: Int = 1,
+            upperMid: Long = 0L,
         ): Comment {
             val member = json["member"] as? JsonObject
             val content = json["content"] as? JsonObject
@@ -53,16 +62,13 @@ data class Comment(
                 control?.get("action")?.jsonPrimitive?.intOrNull
                     ?: json["user_action"]?.jsonPrimitive?.intOrNull
                     ?: 0
+            val mid = json.long("mid", member?.long("mid", 0L) ?: 0L)
 
             return Comment(
                 rpid = json.long("rpid", json.long("id", 0L)),
                 oid = json.long("oid", oid),
                 type = json.int("type", defaultType),
-                mid =
-                    json.long(
-                        "mid",
-                        member?.long("mid", 0L) ?: 0L,
-                    ),
+                mid = mid,
                 rootRpid = json.long("root", 0L),
                 parentRpid = json.long("parent", 0L),
                 userName = member?.string("uname") ?: "未知用户",
@@ -78,17 +84,22 @@ data class Comment(
                         json.int("count", 0),
                     ),
                 isLiked = action == 1,
-                isUp =
-                    control?.get("up_like")?.jsonPrimitive?.booleanOrNull == true ||
-                        control?.get("is_up_top")?.jsonPrimitive?.booleanOrNull == true,
+                // reply_control.up_like 表示「UP 主点赞」，与评论者是否为 UP 主无关，
+                // 因此只能用作者 mid 与视频 UP 主 mid 比对
+                isUp = upperMid > 0L && mid == upperMid,
             )
         }
 
-        /** 将 App gRPC 评论模型转换为统一评论模型。 */
+        /**
+         * 将 App gRPC 评论模型转换为统一评论模型。
+         *
+         * @param upperMid 视频 UP 主 mid，规则与 [fromJson] 一致
+         */
         fun fromGrpc(
             reply: ReplyInfo,
             oid: Long,
             defaultType: Int = 1,
+            upperMid: Long = 0L,
         ): Comment =
             Comment(
                 rpid = reply.id,
@@ -106,7 +117,7 @@ data class Comment(
                 likeCount = reply.like,
                 replyCount = reply.count.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 isLiked = reply.replyControl.action == 1L,
-                isUp = reply.replyControl.upLike || reply.replyControl.isUpTop,
+                isUp = upperMid > 0L && reply.mid == upperMid,
             )
     }
 }
@@ -119,6 +130,8 @@ data class Comment(
  * @property total 服务端返回的评论总数，未知时为 0
  * @property hasMore 是否还有下一页
  * @property nextCursor App gRPC 通道的下一页游标，Web 通道为 null
+ * @property replyPreviews 根评论 rpid -> 接口自带的楼中楼预览（仅一层，通常 3 条），
+ *   用于收起态直接展示，避免为预览额外请求
  */
 @Serializable
 data class CommentPage(
@@ -127,6 +140,7 @@ data class CommentPage(
     val total: Int,
     val hasMore: Boolean,
     val nextCursor: Long? = null,
+    val replyPreviews: Map<Long, List<Comment>> = emptyMap(),
 )
 
 private fun JsonObject.string(name: String): String? = this[name]?.jsonPrimitive?.contentOrNull

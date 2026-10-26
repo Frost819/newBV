@@ -1,6 +1,7 @@
 package dev.frost819.newbv.biliapi.repositories
 
 import bilibili.main.community.reply.v1.ReplyGrpcKt
+import bilibili.main.community.reply.v1.ReplyInfo
 import bilibili.main.community.reply.v1.cursorReq
 import bilibili.main.community.reply.v1.detailListReq
 import bilibili.main.community.reply.v1.mainListReq
@@ -74,13 +75,14 @@ class CommentRepository(
                 CommentPage(
                     comments =
                         reply.repliesList
-                            .map { Comment.fromGrpc(it, aid) }
+                            .map { Comment.fromGrpc(it, aid, upperMid = reply.subjectControl.upMid) }
                             .filter { it.rpid > 0L }
                             .distinctBy { it.rpid },
                     page = page,
                     total = 0,
                     hasMore = !reply.cursor.isEnd,
                     nextCursor = reply.cursor.next.takeIf { !reply.cursor.isEnd },
+                    replyPreviews = parseGrpcReplyPreviews(reply.repliesList, aid, reply.subjectControl.upMid),
                 )
             }
         }
@@ -130,7 +132,7 @@ class CommentRepository(
                 CommentPage(
                     comments =
                         root.repliesList
-                            .map { Comment.fromGrpc(it, aid) }
+                            .map { Comment.fromGrpc(it, aid, upperMid = reply.subjectControl.upMid) }
                             .filter { it.rpid > 0L && it.rpid != rootRpid }
                             .distinctBy { it.rpid },
                     page = page,
@@ -186,13 +188,27 @@ class CommentRepository(
         val pageObject = data["page"] as? JsonObject
         val repliesJson = data["replies"] as? JsonArray
         val rawCount = repliesJson?.count { it is JsonObject } ?: 0
-        val comments =
+        // UP 主 mid 用于标记「UP主」评论；主评论与楼中楼响应均携带 data.upper.mid
+        val upperMid = (data["upper"] as? JsonObject)?.longValue("mid") ?: 0L
+        val rawComments =
             repliesJson
                 ?.mapNotNull { it as? JsonObject }
-                ?.map { Comment.fromJson(it, oid = aid, defaultType = defaultType) }
-                .orEmpty()
+                ?.map { obj ->
+                    obj to
+                        Comment.fromJson(
+                            obj,
+                            oid = aid,
+                            defaultType = defaultType,
+                            upperMid = upperMid,
+                        )
+                }.orEmpty()
+        val comments =
+            rawComments
+                .map { it.second }
                 .filter { it.rpid > 0L }
                 .distinctBy { it.rpid }
+        // 主评论接口自带一层楼中楼预览；楼中楼分页接口的条目没有可用的嵌套预览
+        val replyPreviews = if (isThread) emptyMap() else parseReplyPreviews(rawComments, aid, defaultType, upperMid)
         val total =
             (
                 if (isThread) {
@@ -208,12 +224,73 @@ class CommentRepository(
             page = pageNum,
             total = total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
             hasMore = rawCount > 0 && (total <= 0L || pageNum.toLong() * pageSize < total),
+            replyPreviews = replyPreviews,
         )
     }
+
+    /**
+     * 解析主评论条目内嵌的楼中楼预览（接口保证只嵌套一层）。
+     *
+     * 每个根评论最多取前 3 条（与 B 站 Web 端一致），过滤非法 rpid 与根评论自身，
+     * 避免收起态展示重复或错误数据。
+     */
+    private fun parseReplyPreviews(
+        rawComments: List<Pair<JsonObject, Comment>>,
+        aid: Long,
+        defaultType: Int,
+        upperMid: Long,
+    ): Map<Long, List<Comment>> =
+        buildMap {
+            rawComments.forEach { (obj, root) ->
+                if (root.rpid <= 0L) return@forEach
+                val previews =
+                    (obj["replies"] as? JsonArray)
+                        ?.mapNotNull { it as? JsonObject }
+                        ?.map { preview ->
+                            Comment.fromJson(
+                                preview,
+                                oid = aid,
+                                defaultType = defaultType,
+                                upperMid = upperMid,
+                            )
+                        }.orEmpty()
+                        .filter { it.rpid > 0L && it.rpid != root.rpid }
+                        .distinctBy { it.rpid }
+                        .take(MAX_REPLY_PREVIEW_COUNT)
+                if (previews.isNotEmpty()) put(root.rpid, previews)
+            }
+        }
+
+    /** 解析 gRPC 主评论列表内嵌的楼中楼预览（`ReplyInfo.replies`，仅一层）。 */
+    private fun parseGrpcReplyPreviews(
+        roots: List<ReplyInfo>,
+        aid: Long,
+        upperMid: Long,
+    ): Map<Long, List<Comment>> =
+        buildMap {
+            roots.forEach { info ->
+                val root = Comment.fromGrpc(info, aid, upperMid = upperMid)
+                if (root.rpid <= 0L) return@forEach
+                val previews =
+                    info.repliesList
+                        .map { Comment.fromGrpc(it, aid, upperMid = upperMid) }
+                        .filter { it.rpid > 0L && it.rpid != root.rpid }
+                        .distinctBy { it.rpid }
+                        .take(MAX_REPLY_PREVIEW_COUNT)
+                if (previews.isNotEmpty()) put(root.rpid, previews)
+            }
+        }
 
     private companion object {
         /** 服务端未返回 `page.size` 时的默认每页数量。 */
         const val DEFAULT_PAGE_SIZE = 20
+
+        /**
+         * 楼中楼预览条数上限（与 B 站 Web 端一致）。
+         *
+         * Web 与 gRPC 两条通道都在解析时截断，UI 直接展示即可，无需再次限制。
+         */
+        const val MAX_REPLY_PREVIEW_COUNT = 3
     }
 }
 

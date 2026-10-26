@@ -8,7 +8,8 @@ import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,17 +31,19 @@ class VideoListViewModel
         private val _videoListState = MutableStateFlow(VideoListState())
         val videoListState = _videoListState.asStateFlow()
 
-        private var currentAid = 0L
+        /** 当前播放视频 AV 号（驱动相关视频归属，随播放器内切视频变化）。 */
+        private val currentAid = MutableStateFlow(0L)
 
         /**
-         * 设置当前播放视频 AV 号，用于过滤 repository 的数据。
+         * 设置当前播放视频 AV 号，用于确定相关视频归属。
          *
-         * 必须在 [init] 之前或同时调用，否则相关视频可能因 aid 不匹配而被过滤。
+         * 播放器内切换视频（相关视频、上下集）不会改变导航路由参数，
+         * 因此每次切换后都必须重新调用，否则相关视频会停留在上一个视频的列表。
          *
          * @param aid 当前视频 AV 号
          */
         fun setCurrentAid(aid: Long) {
-            currentAid = aid
+            currentAid.value = aid
         }
 
         init {
@@ -52,10 +55,12 @@ class VideoListViewModel
                     }
             }
             viewModelScope.launch {
-                videoInfoRepository.relatedVideos
-                    .filter { videoInfoRepository.videoDetail.value?.aid == currentAid }
+                // 直接取详情内的 relatedVideos：详情（含相关视频）由 repository 整体原子更新，
+                // 按 aid 校验归属可避免上一个视频的列表串入当前视频（快速切视频时不显示旧数据）
+                combine(currentAid, videoInfoRepository.videoDetail) { aid, detail ->
+                    if (aid != 0L && detail?.aid == aid) detail.relatedVideos else emptyList()
+                }.distinctUntilChanged()
                     .collect { list ->
-                        if (currentAid == 0L) return@collect
                         _videoListState.update { it.copy(relatedVideos = list) }
                     }
             }

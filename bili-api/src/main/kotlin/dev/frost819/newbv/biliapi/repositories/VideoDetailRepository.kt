@@ -124,8 +124,59 @@ class VideoDetailRepository(
                             },
                         ) ?: throw IllegalStateException("Player stub is not initialized")
                     }.onFailure { handleGrpcException(it) }.getOrThrow()
-                VideoDetail.fromViewReply(viewReply)
+                val detail = VideoDetail.fromViewReply(viewReply)
+                // gRPC view 的 reqUser 由客户端上报，服务端不会回填真实互动状态，
+                // 未登录时也无从查询，因此仅在登录后按 App 通道补查，避免详情页误显示"未操作"
+                if (authRepository.sessionData == null && authRepository.accessToken == null) {
+                    detail
+                } else {
+                    fillUserActions(detail, ApiType.App)
+                }
             }
+        }
+
+    /**
+     * 补查当前账号对视频的点赞/投币/收藏状态。
+     *
+     * App gRPC 的 `view` 请求中 `reqUser` 由客户端上报，服务端不会回填，
+     * 因此 App 通道需要单独查询，否则详情页会把已点赞/已投币/已收藏显示为未操作。
+     *
+     * 查询失败时保持 `false`，不影响详情展示。
+     *
+     * @param detail 已加载的视频详情
+     * @param preferApiType 查询互动状态使用的接口类型
+     */
+    internal suspend fun fillUserActions(
+        detail: VideoDetail,
+        preferApiType: ApiType,
+    ): VideoDetail =
+        withContext(Dispatchers.IO) {
+            val isFavoured =
+                async {
+                    runCatching {
+                        favoriteRepository.checkVideoFavoured(aid = detail.aid, preferApiType = preferApiType)
+                    }.getOrDefault(false)
+                }
+            val isLiked =
+                async {
+                    runCatching {
+                        likeRepository.checkVideoLiked(aid = detail.aid, preferApiType = preferApiType)
+                    }.getOrDefault(false)
+                }
+            val isCoined =
+                async {
+                    runCatching {
+                        coinRepository.checkVideoCoined(aid = detail.aid, preferApiType = preferApiType)
+                    }.getOrDefault(false)
+                }
+            detail.copy(
+                userActions =
+                    detail.userActions.copy(
+                        favorite = isFavoured.await(),
+                        like = isLiked.await(),
+                        coin = isCoined.await(),
+                    ),
+            )
         }
 
     suspend fun getUgcPages(

@@ -257,6 +257,99 @@ class CommentViewModelTest {
         }
 
     @Test
+    fun `load keeps reply previews from main page`() =
+        runTest(dispatcher) {
+            val root = comment(rpid = 1L, replyCount = 2)
+            val preview = comment(rpid = 11L, rootRpid = 1L)
+            coEvery { repository.getComments(any(), any(), any(), any(), any()) } returns
+                page(
+                    listOf(root),
+                    page = 1,
+                    total = 1,
+                    hasMore = false,
+                    replyPreviews = mapOf(1L to listOf(preview)),
+                )
+
+            viewModel.load(100L)
+            advanceUntilIdle()
+
+            assertThat(
+                viewModel.uiState.value.commentList
+                    .replyPreview(1L),
+            ).containsExactly(preview)
+        }
+
+    @Test
+    fun `load more merges reply previews of appended comments`() =
+        runTest(dispatcher) {
+            val first = comment(rpid = 1L, replyCount = 1)
+            val second = comment(rpid = 2L, replyCount = 1)
+            val firstPreview = comment(rpid = 11L, rootRpid = 1L)
+            val secondPreview = comment(rpid = 22L, rootRpid = 2L)
+            coEvery { repository.getComments(100L, 1, 1, null, any()) } returns
+                page(
+                    listOf(first),
+                    page = 1,
+                    total = 2,
+                    hasMore = true,
+                    replyPreviews = mapOf(1L to listOf(firstPreview)),
+                )
+            coEvery { repository.getComments(100L, 1, 2, null, any()) } returns
+                page(
+                    listOf(second),
+                    page = 2,
+                    total = 2,
+                    hasMore = false,
+                    replyPreviews = mapOf(2L to listOf(secondPreview)),
+                )
+
+            viewModel.load(100L)
+            advanceUntilIdle()
+            viewModel.loadMoreComments()
+            advanceUntilIdle()
+
+            val commentList = viewModel.uiState.value.commentList
+            assertThat(commentList.replyPreview(1L)).containsExactly(firstPreview)
+            assertThat(commentList.replyPreview(2L)).containsExactly(secondPreview)
+        }
+
+    @Test
+    fun `toggle like updates preview reply only after success`() =
+        runTest(dispatcher) {
+            val root = comment(rpid = 1L, replyCount = 1)
+            val preview = comment(rpid = 11L, rootRpid = 1L)
+            coEvery { repository.getComments(any(), any(), any(), any(), any()) } returns
+                page(
+                    listOf(root),
+                    page = 1,
+                    total = 1,
+                    hasMore = false,
+                    replyPreviews = mapOf(1L to listOf(preview)),
+                )
+            coEvery { repository.toggleCommentLike(any(), any(), any(), any()) } returns Unit
+
+            viewModel.load(100L)
+            advanceUntilIdle()
+
+            viewModel.toggleLike(11L)
+            // 请求完成前不乐观更新
+            assertThat(
+                viewModel.uiState.value
+                    .findComment(11L)
+                    ?.isLiked,
+            ).isFalse()
+
+            advanceUntilIdle()
+            val updated =
+                viewModel.uiState.value.commentList
+                    .replyPreview(1L)
+                    .single()
+            assertThat(updated.isLiked).isTrue()
+            assertThat(updated.likeCount).isEqualTo(1L)
+            coVerify { repository.toggleCommentLike(100L, 11L, true, any()) }
+        }
+
+    @Test
     fun `load more replies appends next page`() =
         runTest(dispatcher) {
             val root = comment(rpid = 1L, replyCount = 25)
@@ -350,7 +443,14 @@ class CommentViewModelTest {
         page: Int,
         total: Int = comments.size,
         hasMore: Boolean,
-    ) = CommentPage(comments = comments, page = page, total = total, hasMore = hasMore)
+        replyPreviews: Map<Long, List<Comment>> = emptyMap(),
+    ) = CommentPage(
+        comments = comments,
+        page = page,
+        total = total,
+        hasMore = hasMore,
+        replyPreviews = replyPreviews,
+    )
 
     private fun comment(
         rpid: Long,

@@ -3,6 +3,7 @@ package dev.frost819.newbv.app.ui.component.videocard
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+import dev.frost819.newbv.biliapi.http.util.toSmartDate
 
 /**
  * 视频卡片数据。
@@ -57,6 +58,7 @@ data class VideoCardData(
                 playString = related.view.toWanString(),
                 danmakuString = related.danmaku.toWanString(),
                 timeString = (related.duration * 1000L).formatHourMinSec(),
+                pubTime = related.pubdate.toSmartDate(),
             )
     }
 }

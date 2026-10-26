@@ -45,7 +45,7 @@ class CommentTest {
                     """.trimIndent(),
                 ).jsonObject
 
-        val comment = Comment.fromJson(json, oid = 456)
+        val comment = Comment.fromJson(json, oid = 456, upperMid = 789L)
 
         assertEquals(123L, comment.rpid)
         assertEquals("测试用户", comment.userName)
@@ -56,6 +56,26 @@ class CommentTest {
         assertEquals("https://example.com/picture.png", comment.pictures.single())
         assertTrue(comment.isLiked)
         assertTrue(comment.isUp)
+    }
+
+    @Test
+    fun `fromJson does not mark UP when author differs from upper mid`() {
+        // up_like 只表示「UP 主点赞」，不能作为评论者是 UP 主的依据
+        val json =
+            Json
+                .parseToJsonElement(
+                    """
+                    {
+                      "rpid": 123,
+                      "mid": 789,
+                      "reply_control": { "up_like": true }
+                    }
+                    """.trimIndent(),
+                ).jsonObject
+
+        val comment = Comment.fromJson(json, oid = 456, upperMid = 999L)
+
+        assertFalse(comment.isUp)
     }
 
     @Test
@@ -101,6 +121,7 @@ class CommentTest {
                         }
                 },
                 oid = 456L,
+                upperMid = 789L,
             )
 
         assertEquals(123L, comment.rpid)
@@ -111,5 +132,24 @@ class CommentTest {
         assertEquals(6, comment.level)
         assertTrue(comment.isLiked)
         assertTrue(comment.isUp)
+    }
+
+    @Test
+    fun `fromGrpc does not mark UP when author differs from upper mid`() {
+        val comment =
+            Comment.fromGrpc(
+                replyInfo {
+                    id = 123L
+                    mid = 789L
+                    replyControl =
+                        replyControl {
+                            upLike = true
+                        }
+                },
+                oid = 456L,
+                upperMid = 999L,
+            )
+
+        assertFalse(comment.isUp)
     }
 }

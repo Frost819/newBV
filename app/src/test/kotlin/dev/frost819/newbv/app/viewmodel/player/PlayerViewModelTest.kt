@@ -13,6 +13,7 @@ import dev.frost819.newbv.app.ui.state.player.MediaProfileState
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
+import dev.frost819.newbv.app.util.PlaybackCandidate
 import dev.frost819.newbv.app.util.VideoCapabilityProvider
 import dev.frost819.newbv.biliapi.entity.DashVideo
 import dev.frost819.newbv.biliapi.entity.PlayData
@@ -56,6 +57,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.suspendCoroutine
 import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 
 /**
@@ -117,6 +121,7 @@ class PlayerViewModelTest {
 
         every { videoInfoRepository.videoList } returns MutableStateFlow(emptyList())
         every { videoInfoRepository.relatedVideos } returns MutableStateFlow(emptyList())
+        every { videoInfoRepository.videoDetail } returns MutableStateFlow(null)
         every { videoInfoRepository.videoSharedState } returns MutableStateFlow(null)
 
         viewModel =
@@ -352,6 +357,75 @@ class PlayerViewModelTest {
             viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
 
             verify { mockPlayer.pause() }
+        }
+
+    @Test
+    fun `playNewVideo applies author from list item immediately`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+
+            viewModel.playNewVideo(
+                VideoListItem(
+                    aid = 10,
+                    cid = 20,
+                    title = "New",
+                    authorMid = 555L,
+                    authorName = "卡片UP",
+                ),
+            )
+
+            val state = viewModel.uiState.value
+            assertThat(state.authorMid).isEqualTo(555L)
+            assertThat(state.authorName).isEqualTo("卡片UP")
+        }
+
+    @Test
+    fun `playNewVideo overrides author with loaded detail`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            val detail = mockk<VideoDetail>()
+            every { detail.aid } returns 10L
+            every { detail.author } returns Author(mid = 777L, name = "详情UP", face = "")
+            every { videoInfoRepository.videoDetail } returns MutableStateFlow(detail)
+
+            viewModel.playNewVideo(
+                VideoListItem(
+                    aid = 10,
+                    cid = 20,
+                    title = "New",
+                    authorMid = 555L,
+                    authorName = "卡片UP",
+                ),
+            )
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertThat(state.authorMid).isEqualTo(777L)
+            assertThat(state.authorName).isEqualTo("详情UP")
+        }
+
+    @Test
+    fun `playNewVideo clears stale author when list item has none`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            initSession(aid = 1, cid = 2)
+
+            viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New"))
+
+            // 详情返回前不能沿用上一个视频的 UP 主，否则“UP 主页”会跳错人
+            val state = viewModel.uiState.value
+            assertThat(state.authorMid).isEqualTo(0L)
+            assertThat(state.authorName).isEmpty()
+            viewModel.viewModelScope.cancel()
         }
 
     // ── online watching polling tests ────────────────────────
@@ -849,6 +923,18 @@ class PlayerViewModelTest {
             assertThat(viewModel.videoPlayer).isNull()
         }
 
+    // ── session flag test ─────────────────────────────────────
+
+    @Test
+    fun `markSessionStarted flips isSessionStarted from false to true`() =
+        runTest(testDispatcher) {
+            assertThat(viewModel.isSessionStarted).isFalse()
+
+            viewModel.markSessionStarted()
+
+            assertThat(viewModel.isSessionStarted).isTrue()
+        }
+
     // ── trySendHeartbeat test ─────────────────────────────────
 
     @Test
@@ -938,6 +1024,29 @@ class PlayerViewModelTest {
 
             verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
             assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
+        }
+
+    @Test
+    fun `onError CDN fallback toasts the line switch`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { Prefs.autoSelectCdn } returns true
+            every { mockPlayer.currentPosition } returns 5000L
+            setCdnCandidates(
+                video = listOf("https://cdn1.example/v.m4s", "https://cdn2.example/v.m4s"),
+                audio = listOf("https://cdn1.example/a.m4s"),
+            )
+
+            viewModel.uiEffect.test {
+                getVideoPlayerListener().onError(RuntimeException("source error"))
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(PlayerUiEffect.ShowToast::class.java)
+                assertThat((effect as PlayerUiEffect.ShowToast).message).contains("备用线路")
+            }
+
+            verify { mockPlayer.playUrl("https://cdn2.example/v.m4s", "https://cdn1.example/a.m4s") }
         }
 
     private fun dashVideo(
@@ -1159,6 +1268,172 @@ class PlayerViewModelTest {
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
+        }
+
+    // ── 起播自动降档提示 ─────────────────────────────────────
+
+    /**
+     * 反射调用私有 suspend 方法 `loadPlaybackConfig`。
+     *
+     * Kotlin 的 suspend 方法编译后末尾多一个 [Continuation] 参数，这里手动补齐后
+     * 把调用方协程的续体交进去，避免依赖额外反射库。
+     */
+    private suspend fun loadPlaybackConfigForTest(
+        aid: Long,
+        cid: Long,
+    ) {
+        suspendCoroutine<Any?> { continuation ->
+            val method =
+                PlayerViewModel::class.java.getDeclaredMethod(
+                    "loadPlaybackConfig",
+                    java.lang.Long.TYPE,
+                    java.lang.Long.TYPE,
+                    java.lang.Integer.TYPE,
+                    Continuation::class.java,
+                )
+            method.isAccessible = true
+            try {
+                val result = method.invoke(viewModel, aid, cid, 0, continuation)
+                // 未发生挂起时（如 mock 直接返回）不会回调续体，这里手动恢复，避免测试永久挂住
+                if (result !== COROUTINE_SUSPENDED) continuation.resumeWith(Result.success(result))
+            } catch (e: Throwable) {
+                continuation.resumeWith(Result.failure(e))
+            }
+        }
+    }
+
+    @Test
+    fun `decodeFallbackNotice reports quality downgrade only`() {
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R4K.code,
+                selected = PlaybackCandidate(Resolution.R1080P.code, VideoCodec.AVC),
+                preferredCodec = VideoCodec.AVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC),
+            )
+
+        assertThat(notice).isEqualTo("当前设备不支持 4K，已切换到 1080P")
+    }
+
+    @Test
+    fun `decodeFallbackNotice reports codec downgrade only`() {
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R1080P.code,
+                selected = PlaybackCandidate(Resolution.R1080P.code, VideoCodec.HEVC),
+                preferredCodec = VideoCodec.AVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC, VideoCodec.HEVC),
+            )
+
+        assertThat(notice).isEqualTo("当前设备不支持 AVC/H.264，已切换到 HEVC/H.265")
+    }
+
+    @Test
+    fun `decodeFallbackNotice reports both quality and codec downgrade`() {
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R4K.code,
+                selected = PlaybackCandidate(Resolution.R1080P.code, VideoCodec.AVC),
+                preferredCodec = VideoCodec.HEVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC, VideoCodec.HEVC),
+            )
+
+        assertThat(notice).isEqualTo("当前设备不支持 4K · HEVC/H.265，已切换到 1080P · AVC/H.264")
+    }
+
+    @Test
+    fun `decodeFallbackNotice stays silent when preferred codec absent on server`() {
+        // 偏好 HEVC 但该画质只有 AVC：服务端缺档，不算设备限制
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R1080P.code,
+                selected = PlaybackCandidate(Resolution.R1080P.code, VideoCodec.AVC),
+                preferredCodec = VideoCodec.HEVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC),
+            )
+
+        assertThat(notice).isNull()
+    }
+
+    @Test
+    fun `decodeFallbackNotice stays silent when quality upgraded instead of lowered`() {
+        // 目标 720P 但服务端只有更高画质：属于服务端缺档，不提示
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R720P.code,
+                selected = PlaybackCandidate(Resolution.R1080P.code, VideoCodec.AVC),
+                preferredCodec = VideoCodec.AVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC),
+            )
+
+        assertThat(notice).isNull()
+    }
+
+    @Test
+    fun `decodeFallbackNotice stays silent when capability rejects every profile`() {
+        // selected == null 表示能力判定无可用组合，交由运行时回退提示
+        val notice =
+            decodeFallbackNotice(
+                requestedQualityId = Resolution.R4K.code,
+                selected = null,
+                preferredCodec = VideoCodec.AVC,
+                targetQualityCodecs = listOf(VideoCodec.AVC),
+            )
+
+        assertThat(notice).isNull()
+    }
+
+    @Test
+    fun `loadPlaybackConfig toasts when device cannot decode requested quality`() =
+        runTest(testDispatcher) {
+            every { Prefs.defaultQuality } returns Resolution.R4K
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } returns
+                PlayData(
+                    dashVideos =
+                        listOf(
+                            dashVideo(Resolution.R4K.code, 7, "avc1.640034", 2160, 3840),
+                            dashVideo(Resolution.R1080P.code, 7, "avc1.640028"),
+                        ),
+                    dashAudios = emptyList(),
+                )
+            // 本机只能解到 1080P
+            every { videoCapabilityProvider.isDecodable(match { it.height > 1080 }) } returns false
+
+            viewModel.uiEffect.test {
+                loadPlaybackConfigForTest(aid = 1L, cid = 2L)
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(PlayerUiEffect.ShowToast::class.java)
+                assertThat((effect as PlayerUiEffect.ShowToast).message)
+                    .isEqualTo("当前设备不支持 4K，已切换到 1080P")
+            }
+
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId)
+                .isEqualTo(Resolution.R1080P.code)
+        }
+
+    @Test
+    fun `loadPlaybackConfig does not toast when server lacks requested quality and codec`() =
+        runTest(testDispatcher) {
+            every { Prefs.defaultQuality } returns Resolution.R4K
+            every { Prefs.defaultVideoCodec } returns VideoCodec.HEVC
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } returns
+                PlayData(
+                    dashVideos = listOf(dashVideo(Resolution.R1080P.code, 7, "avc1.640028")),
+                    dashAudios = emptyList(),
+                )
+
+            viewModel.uiEffect.test {
+                loadPlaybackConfigForTest(aid = 1L, cid = 2L)
+                advanceUntilIdle()
+
+                expectNoEvents()
+            }
+
+            assertThat(viewModel.uiState.value.mediaProfileState.qualityId)
+                .isEqualTo(Resolution.R1080P.code)
+            assertThat(viewModel.uiState.value.mediaProfileState.videoCodec).isEqualTo(VideoCodec.AVC)
         }
 
     // ── loadVideoDetail cid tests ────────────────────────────

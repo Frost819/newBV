@@ -18,9 +18,10 @@ datastore = "1.1.7"
 room = "2.7.1"
 
 # === Compose ===
-compose = "1.8.2"
+# Compose 核心库（ui/foundation/animation/material/material-icons）由 BOM 统一版本，
+# 需单独锁版本的库（material3、tv-*）保留显式 version。
+compose-bom = "2025.06.00"
 compose-material3 = "1.4.0-alpha15"
-compose-material-icons = "1.7.8"
 compose-tv = "1.1.0-alpha01"
 compose-tv-foundation = "1.0.0-alpha12"
 
@@ -36,6 +37,9 @@ ktor = "3.1.3"
 grpc = "1.72.0"
 grpc-kotlin = "1.4.1"
 protobuf = "4.31.0"
+# 与 ktor-client-okhttp / media3-datasource-okhttp / coil-network-okhttp 的传递版本保持一致
+okhttp = "4.12.0"
+okio = "3.10.2"
 
 # === Kotlin libraries ===
 kotlinx-coroutines = "1.10.2"
@@ -58,15 +62,17 @@ material = "1.12.0"
 
 # === Testing ===
 junit-jupiter = "5.10.2"
+junit4 = "4.13.2"
+junit-platform-launcher = "1.10.2"
 mockk = "1.13.10"
 turbine = "1.1.0"
 truth = "1.4.2"
-kotlinx-coroutines-test = "1.8.0"
+kotlinx-coroutines-test = "1.10.2"
 robolectric = "4.12.2"
+androidx-test-core = "1.6.1"
 androidx-test-junit = "1.2.1"
 androidx-test-runner = "1.6.1"
 androidx-test-rules = "1.6.1"
-espresso = "3.5.1"
 leakcanary = "2.14"
 
 [libraries]
@@ -74,6 +80,7 @@ leakcanary = "2.14"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+# 仅用于 res/values/themes.xml 的 Theme.Material3.* 父主题（Kotlin 代码不引用）
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # === AndroidX - Lifecycle ===
@@ -92,22 +99,23 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore", version
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 
 # === Compose ===
-androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
-androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util", version.ref = "compose" }
-androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-runtime = { module = "androidx.compose.runtime:runtime" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-compose-animation = { module = "androidx.compose.animation:animation" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "compose-material3" }
-androidx-compose-material = { group = "androidx.compose.material", name = "material", version.ref = "compose" }
-androidx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
+androidx-compose-material-icons = { module = "androidx.compose.material:material-icons-extended" }
 androidx-compose-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "compose-tv-foundation" }
 androidx-compose-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "compose-tv" }
 
 # === Compose Testing ===
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "compose" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "compose" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 
 # === Media3 ===
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
@@ -132,10 +140,11 @@ ktor-client-encoding = { group = "io.ktor", name = "ktor-client-encoding", versi
 ktor-client-serialization-kotlinx = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
 ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "ktor" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 
 # === gRPC ===
 grpc-kotlin-stub = { group = "io.grpc", name = "grpc-kotlin-stub", version.ref = "grpc-kotlin" }
-grpc-android = { group = "io.grpc", name = "grpc-android", version.ref = "grpc" }
 grpc-okhttp = { group = "io.grpc", name = "grpc-okhttp", version.ref = "grpc" }
 grpc-protobuf = { group = "io.grpc", name = "grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { group = "io.grpc", name = "grpc-stub", version.ref = "grpc" }
@@ -160,17 +169,19 @@ brotli = { group = "org.brotli", name = "dec", version.ref = "brotli" }
 
 # === Testing ===
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit-jupiter" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit-jupiter" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform-launcher" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
-mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
 
 [plugins]

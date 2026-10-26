@@ -144,6 +144,7 @@ class DanmakuViewModel
 
         /** 初始化弹幕播放器。 */
         fun init() {
+            if (danmakuPlayer != null) return
             danmakuPlayer = DanmakuPlayer(SimpleRenderer())
             initDanmakuConfig()
         }
@@ -157,6 +158,11 @@ class DanmakuViewModel
             danmakuPlayer?.release()
             danmakuPlayer = null
             _danmakuMask.update { null }
+        }
+
+        override fun onCleared() {
+            release()
+            super.onCleared()
         }
 
         /**

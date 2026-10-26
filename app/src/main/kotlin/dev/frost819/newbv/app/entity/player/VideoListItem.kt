@@ -14,6 +14,9 @@ import dev.frost819.newbv.biliapi.entity.video.VideoPage
  * @property seasonId 番剧 season ID，UGC 视频为 null
  * @property title 视频标题
  * @property ugcPages UGC 合集内的分 P 列表，无分 P 时为 null
+ * @property authorMid UP 主 MID，来源（如相关视频卡片）缺失时为 null，
+ *   播放器加载视频详情后会以详情中的作者信息补全
+ * @property authorName UP 主名称，来源缺失时为 null
  */
 data class VideoListItem(
     val aid: Long,
@@ -22,4 +25,6 @@ data class VideoListItem(
     val seasonId: Int? = null,
     val title: String,
     val ugcPages: List<VideoPage>? = null,
+    val authorMid: Long? = null,
+    val authorName: String? = null,
 )

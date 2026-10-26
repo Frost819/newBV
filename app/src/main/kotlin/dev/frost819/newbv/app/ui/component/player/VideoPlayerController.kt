@@ -540,7 +540,12 @@ fun VideoPlayerController(
             RelatedVideosController(
                 show = showRelatedVideosController,
                 relatedVideos = uiState.relatedVideos,
-                onVideoClicked = onRelatedVideoClicked,
+                onVideoClicked = { video ->
+                    // 选中即收起浮层；否则切视频后浮层仍停留在屏幕上，
+                    // 焦点与旧列表会残留在新视频画面上
+                    showRelatedVideosController = false
+                    onRelatedVideoClicked(video)
+                },
             )
 
             // 信息栏 + 进度条 + 按钮

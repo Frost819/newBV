@@ -36,6 +36,7 @@ class CommentCardTest {
     private fun fakeComment(
         message: String,
         replyCount: Int = 0,
+        ctime: Long = 0L,
     ): Comment =
         Comment(
             rpid = 1L,
@@ -49,7 +50,7 @@ class CommentCardTest {
             level = 5,
             message = message,
             pictures = emptyList(),
-            ctime = 0L,
+            ctime = ctime,
             likeCount = 0L,
             replyCount = replyCount,
             isLiked = false,
@@ -63,6 +64,8 @@ class CommentCardTest {
         message: String,
         replyCount: Int = 0,
         initiallyExpanded: Boolean = false,
+        ctime: Long = 0L,
+        previewReplyCount: Int = 0,
         onToggleTextExpand: () -> Unit = {},
     ) {
         composeRule.setContent {
@@ -70,7 +73,7 @@ class CommentCardTest {
             TvMaterialTheme {
                 Box(modifier = Modifier.fillMaxSize().width(320.dp)) {
                     CommentCard(
-                        comment = fakeComment(message, replyCount),
+                        comment = fakeComment(message, replyCount, ctime),
                         compact = false,
                         isLiking = false,
                         showReplyButton = replyCount > 0,
@@ -84,6 +87,7 @@ class CommentCardTest {
                         onToggleReplies = {},
                         onToggleLike = {},
                         onImageClick = { _, _ -> },
+                        previewReplyCount = previewReplyCount,
                     )
                 }
             }
@@ -116,5 +120,35 @@ class CommentCardTest {
 
         assertThat(toggled).isTrue()
         composeRule.onNodeWithText("收起").assertIsDisplayed()
+    }
+
+    @Test
+    fun comment_showsRelativeTime() {
+        val ctime = (System.currentTimeMillis() - 5 * 60_000L) / 1000L
+        setContent("这是一条评论内容", ctime = ctime)
+
+        composeRule.onNodeWithText("分钟前", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun comment_withoutTime_hidesTimeText() {
+        setContent("这是一条评论内容", ctime = 0L)
+
+        composeRule.onNodeWithText("刚刚").assertDoesNotExist()
+        composeRule.onNodeWithText("分钟前", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun replyButton_withPreviews_showsTotalLabel() {
+        setContent("这是一条评论内容", replyCount = 5, previewReplyCount = 3)
+
+        composeRule.onNodeWithText("共 5 条回复").assertIsDisplayed()
+    }
+
+    @Test
+    fun replyButton_withoutPreviews_keepsReplyLabel() {
+        setContent("这是一条评论内容", replyCount = 5, previewReplyCount = 0)
+
+        composeRule.onNodeWithText("回复 5").assertIsDisplayed()
     }
 }

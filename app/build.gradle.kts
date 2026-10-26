@@ -148,14 +148,17 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     // === Compose ===
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.util)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.material.icons)
     implementation(libs.androidx.compose.tv.foundation)
     implementation(libs.androidx.compose.tv.material)
+    debugImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // === Hilt ===
@@ -183,6 +186,8 @@ dependencies {
     implementation(libs.ktor.client.serialization.kotlinx)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
+    implementation(libs.okhttp)
+    implementation(libs.okio)
 
     // === Kotlin ===
     implementation(libs.kotlinx.coroutines)
@@ -196,27 +201,22 @@ dependencies {
 
     // === Testing ===
     testImplementation(libs.junit.jupiter)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.hilt.android.testing)
-    kspTest(libs.hilt.compiler)
 
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.truth)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    testImplementation(libs.androidx.room.testing)
 }
 
 tasks.withType<Test> {
