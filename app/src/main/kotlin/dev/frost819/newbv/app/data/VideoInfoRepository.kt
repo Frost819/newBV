@@ -9,6 +9,7 @@ import dev.frost819.newbv.core.log.Loggers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -61,6 +62,9 @@ class VideoInfoRepository
 
         private val _videoSharedState = MutableStateFlow<VideoSharedState?>(null)
 
+        /** 最近一次本地播放位置，避免离开播放器后服务端历史请求竞态覆盖新进度。 */
+        private val localPlaybackHistory = ConcurrentHashMap<Long, VideoSharedState>()
+
         /** 当前视频的共享状态（交互 + 历史）。 */
         val videoSharedState = _videoSharedState.asStateFlow()
 
@@ -82,16 +86,7 @@ class VideoInfoRepository
         fun updateVideoDetail(detail: VideoDetail) {
             _videoDetail.update { detail }
             _relatedVideos.update { detail.relatedVideos }
-            _videoSharedState.update {
-                VideoSharedState(
-                    aid = detail.aid,
-                    liked = detail.userActions.like,
-                    coined = detail.userActions.coin,
-                    favorited = detail.userActions.favorite,
-                    lastPlayedCid = detail.history.lastPlayedCid,
-                    lastPlayedTime = detail.history.progress,
-                )
-            }
+            _videoSharedState.update { detailSharedState(detail, it) }
         }
 
         /**
@@ -115,16 +110,7 @@ class VideoInfoRepository
                 }
                 _videoDetail.update { detail }
                 _relatedVideos.update { detail.relatedVideos }
-                _videoSharedState.update {
-                    VideoSharedState(
-                        aid = detail.aid,
-                        liked = detail.userActions.like,
-                        coined = detail.userActions.coin,
-                        favorited = detail.userActions.favorite,
-                        lastPlayedCid = detail.history.lastPlayedCid,
-                        lastPlayedTime = detail.history.progress,
-                    )
-                }
+                _videoSharedState.update { detailSharedState(detail, it) }
                 logger.info { "Loaded video detail: aid=$aid, related=${detail.relatedVideos.size}" }
             }.onFailure { e ->
                 logger.error(e) { "Failed to load video detail: aid=$aid" }
@@ -188,16 +174,51 @@ class VideoInfoRepository
         /**
          * 更新播放历史（仅历史字段，不影响交互状态）。
          *
+         * @param aid 视频 AV 号
          * @param progress 播放进度（秒），-1 表示已看完
          * @param lastPlayedCid 最近播放的 CID
          */
         fun updateHistory(
+            aid: Long,
             progress: Int,
             lastPlayedCid: Long,
         ) {
+            val history = VideoSharedState(
+                aid = aid,
+                lastPlayedCid = lastPlayedCid,
+                lastPlayedTime = progress,
+            )
+            localPlaybackHistory[aid] = history
             _videoSharedState.update { old ->
-                old?.copy(lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
-                    ?: VideoSharedState(aid = 0, lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
+                val current = old?.takeIf { it.aid == aid }
+                history.copy(
+                    liked = current?.liked ?: false,
+                    coined = current?.coined ?: false,
+                    favorited = current?.favorited ?: false,
+                )
+            }
+        }
+
+        private fun detailSharedState(detail: VideoDetail, current: VideoSharedState?): VideoSharedState {
+            val localHistory = localPlaybackHistory[detail.aid]
+            val currentState = current?.takeIf { it.aid == detail.aid }
+            return VideoSharedState(
+                aid = detail.aid,
+                liked = detail.userActions.like,
+                coined = detail.userActions.coin,
+                favorited = detail.userActions.favorite,
+                lastPlayedCid = localHistory?.lastPlayedCid ?: detail.history.lastPlayedCid,
+                lastPlayedTime = localHistory?.lastPlayedTime ?: detail.history.progress,
+            ).let { loaded ->
+                if (localHistory != null && currentState != null) {
+                    loaded.copy(
+                        liked = currentState.liked,
+                        coined = currentState.coined,
+                        favorited = currentState.favorited,
+                    )
+                } else {
+                    loaded
+                }
             }
         }
 
@@ -231,6 +252,7 @@ class VideoInfoRepository
         /** 重置所有状态。 */
         fun reset() {
             latestDetailRequestAid = 0L
+            localPlaybackHistory.clear()
             _videoList.update { emptyList() }
             _videoDetail.update { null }
             _relatedVideos.update { emptyList() }

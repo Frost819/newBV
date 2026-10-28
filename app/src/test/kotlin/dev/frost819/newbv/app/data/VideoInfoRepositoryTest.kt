@@ -218,6 +218,23 @@ class VideoInfoRepositoryTest {
         }
 
     @Test
+    fun `loadVideoDetail does not overwrite newer local playback history`() =
+        runTest(testDispatcher) {
+            val response = CompletableDeferred<VideoDetail>()
+            coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } coAnswers { response.await() }
+
+            val loadJob = launch { repository.loadVideoDetail(aid = 1L, preferApiType = ApiType.Web) }
+            runCurrent()
+            repository.updateHistory(aid = 1L, progress = 650, lastPlayedCid = 20L)
+            response.complete(fakeVideoDetail(history = VideoDetail.History(progress = 300, lastPlayedCid = 10L)))
+            loadJob.join()
+
+            assertThat(repository.videoSharedState.value?.aid).isEqualTo(1L)
+            assertThat(repository.videoSharedState.value?.lastPlayedCid).isEqualTo(20L)
+            assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(650)
+        }
+
+    @Test
     fun `loadVideoDetail failure does not crash and leaves state unchanged`() =
         runTest(testDispatcher) {
             coEvery { videoDetailRepository.getVideoDetail(any(), any(), any()) } throws
@@ -331,9 +348,10 @@ class VideoInfoRepositoryTest {
     @Test
     fun `updateHistory sets lastPlayedCid and lastPlayedTime in sharedState`() =
         runTest(testDispatcher) {
-            repository.updateHistory(progress = 600, lastPlayedCid = 200L)
+            repository.updateHistory(aid = 1L, progress = 600, lastPlayedCid = 200L)
             advanceUntilIdle()
 
+            assertThat(repository.videoSharedState.value?.aid).isEqualTo(1L)
             assertThat(repository.videoSharedState.value?.lastPlayedCid).isEqualTo(200L)
             assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(600)
         }
@@ -341,7 +359,7 @@ class VideoInfoRepositoryTest {
     @Test
     fun `updateHistory with negative progress sets negative value`() =
         runTest(testDispatcher) {
-            repository.updateHistory(progress = -1, lastPlayedCid = 0L)
+            repository.updateHistory(aid = 1L, progress = -1, lastPlayedCid = 0L)
             advanceUntilIdle()
 
             assertThat(repository.videoSharedState.value?.lastPlayedTime).isEqualTo(-1)
@@ -353,7 +371,7 @@ class VideoInfoRepositoryTest {
             repository.videoSharedState.test {
                 assertThat(awaitItem()).isNull()
 
-                repository.updateHistory(progress = 100, lastPlayedCid = 42L)
+                repository.updateHistory(aid = 1L, progress = 100, lastPlayedCid = 42L)
                 advanceUntilIdle()
 
                 val shared = awaitItem()
@@ -369,7 +387,7 @@ class VideoInfoRepositoryTest {
             val items = listOf(VideoListItem(aid = 1, cid = 10, title = "视频1"))
             repository.updateVideoList(items)
             repository.updateVideoDetail(fakeVideoDetail())
-            repository.updateHistory(progress = 100, lastPlayedCid = 50L)
+            repository.updateHistory(aid = 1L, progress = 100, lastPlayedCid = 50L)
             advanceUntilIdle()
 
             assertThat(repository.videoList.value).isNotEmpty()

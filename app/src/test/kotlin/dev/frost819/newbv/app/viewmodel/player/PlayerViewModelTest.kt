@@ -946,7 +946,7 @@ class PlayerViewModelTest {
 
             viewModel.trySendHeartbeat()
 
-            verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any()) }
+            verify(exactly = 0) { videoInfoRepository.updateHistory(any(), any(), any()) }
         }
 
     // ── 解码回退 (#288) ───────────────────────────────────────
