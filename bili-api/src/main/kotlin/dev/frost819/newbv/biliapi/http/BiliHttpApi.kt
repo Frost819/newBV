@@ -10,7 +10,10 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi.getRegionDynamic
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
 import dev.frost819.newbv.biliapi.http.entity.BiliResponseWithoutData
 import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuData
+import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuFilterRule
+import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuFilterRuleData
 import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuResponse
+import dev.frost819.newbv.biliapi.http.entity.danmaku.toDanmakuDataList
 import dev.frost819.newbv.biliapi.http.entity.dynamic.DynamicData
 import dev.frost819.newbv.biliapi.http.entity.history.HistoryData
 import dev.frost819.newbv.biliapi.http.entity.home.RcmdIndexData
@@ -505,7 +508,8 @@ object BiliHttpApi {
                     parameter("pid", avid)
                     parameter("segment_index", segmentIndex)
                 }.readRawBytes()
-        return DmSegMobileReply.parseFrom(bytes).elemsList.map { DanmakuData.fromDanmakuElem(it) }
+        val reply = DmSegMobileReply.parseFrom(bytes)
+        return reply.toDanmakuDataList()
     }
 
     /**
@@ -534,6 +538,30 @@ object BiliHttpApi {
                 }.readRawBytes()
         return DmWebViewReply.parseFrom(bytes)
     }
+
+    /**
+     * 获取用户云端弹幕屏蔽规则（关键词 / 正则 / 用户）。
+     *
+     * 端点：GET /x/dm/filter/user（无 query 参数，非 WBI 端点）
+     * 鉴权：SESSDATA Cookie（injectCookies）；未登录返回 code=-101，由调用方降级为不使用云端规则。
+     *
+     * 真机实测响应样例（2026-10）：
+     * ```json
+     * {"code":0,"message":"0","ttl":1,"data":{
+     *   "rule":[
+     *     {"id":101,"mid":123456,"type":0,"filter":"关键词","comment":"","ctime":1700000000,"mtime":1700000000},
+     *     {"id":102,"mid":123456,"type":2,"filter":"5254a244","comment":"","ctime":1700000000,"mtime":1700000000}
+     *   ],
+     *   "toast":"已成功同步10条屏蔽词","ver":123}}
+     * ```
+     * `type`：0=关键词、1=正则、2=用户（`filter` 为 UID 的 crc32 hex，8 位小写）。
+     */
+    suspend fun getDanmakuFilterRules(): List<DanmakuFilterRule> =
+        client
+            .get("/x/dm/filter/user")
+            .body<BiliResponse<DanmakuFilterRuleData>>()
+            .getResponseData()
+            .rule
 
     /**
      * 获取动态列表

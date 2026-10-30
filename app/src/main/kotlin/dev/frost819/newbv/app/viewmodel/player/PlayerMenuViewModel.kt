@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.viewmodel.player
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.ClosedCaption
 import androidx.compose.material.icons.outlined.Image
@@ -83,6 +84,7 @@ enum class VideoPlayerMenuNavItem(
     PlaySpeed("倍速", Icons.Outlined.Speed),
     Picture("画质", Icons.Outlined.Image),
     Danmaku("弹幕", Icons.Outlined.ClearAll),
+    DanmakuFilter("屏蔽", Icons.Outlined.Block),
     ClosedCaption("字幕", Icons.Outlined.ClosedCaption),
 }
 
@@ -106,6 +108,17 @@ enum class VideoPlayerDanmakuMenuItem(
     SpeedFactor("速度"),
     Area("区域"),
     Mask("防遮挡"),
+}
+
+/** 弹幕屏蔽子项。 */
+enum class VideoPlayerDanmakuFilterMenuItem(
+    val displayName: String,
+) {
+    BlockColorful("屏蔽彩色弹幕"),
+    BlockRepeat("合并重复弹幕"),
+    BlockSpecial("屏蔽高级弹幕"),
+    BlockByUserFilter("账号屏蔽规则"),
+    AiCloudLevel("AI 云屏蔽等级"),
 }
 
 /** 字幕设置子项。 */

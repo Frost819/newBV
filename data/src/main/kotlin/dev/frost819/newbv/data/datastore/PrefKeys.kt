@@ -57,6 +57,13 @@ internal object PrefKeys {
     val defaultDanmakuSpeedFactor = floatPreferencesKey("ddsf")
     val defaultDanmakuArea = floatPreferencesKey("dda")
     val defaultDanmakuMask = booleanPreferencesKey("prefer_enable_webmark")
+    val defaultDanmakuBlockColorful = booleanPreferencesKey("dbc")
+    val defaultDanmakuBlockRepeat = booleanPreferencesKey("dbr")
+    val defaultDanmakuBlockSpecial = booleanPreferencesKey("dbs")
+    val defaultDanmakuBlockByUserFilter = booleanPreferencesKey("dbu")
+    val defaultDanmakuAiCloudLevel = intPreferencesKey("dai")
+    val danmakuBiliFilterSynced = booleanPreferencesKey("dbfs")
+    val danmakuBiliFilterSyncedMid = longPreferencesKey("dbfsm")
 
     // ===== 播放器 - 字幕 =====
     val defaultSubtitleFontSize = intPreferencesKey("dsfs")

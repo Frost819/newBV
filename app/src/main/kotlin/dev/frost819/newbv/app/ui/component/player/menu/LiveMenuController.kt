@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Wifi
@@ -36,6 +37,7 @@ import dev.frost819.newbv.app.ui.component.player.menu.component.PlayerTwoLevelM
 import dev.frost819.newbv.app.viewmodel.player.LocalMenuFocusStateData
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusState
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusStateData
+import dev.frost819.newbv.app.viewmodel.player.VideoPlayerDanmakuFilterMenuItem
 import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.biliapi.repositories.LiveQuality
 import dev.frost819.newbv.danmaku.config.DanmakuState
@@ -51,6 +53,7 @@ enum class LivePlayerMenuNavItem(
     Picture("画质", Icons.Outlined.Image),
     Line("线路", Icons.Outlined.Wifi),
     Danmaku("弹幕", Icons.Outlined.ClearAll),
+    DanmakuFilter("屏蔽", Icons.Outlined.Block),
 }
 
 /**
@@ -172,7 +175,9 @@ private fun LiveMenuControllerContent(
                             }
                             if (it.key == Key.DirectionLeft) {
                                 focusState =
-                                    if (selectedNavItem == LivePlayerMenuNavItem.Danmaku) {
+                                    if (selectedNavItem == LivePlayerMenuNavItem.Danmaku ||
+                                        selectedNavItem == LivePlayerMenuNavItem.DanmakuFilter
+                                    ) {
                                         MenuFocusState.Menu
                                     } else {
                                         MenuFocusState.Items
@@ -261,6 +266,37 @@ private fun LiveMenuList(
                     onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
                 )
             }
+
+            LivePlayerMenuNavItem.DanmakuFilter ->
+                DanmakuFilterMenuList(
+                    visibleItems =
+                        listOf(
+                            VideoPlayerDanmakuFilterMenuItem.BlockColorful,
+                            VideoPlayerDanmakuFilterMenuItem.BlockByUserFilter,
+                        ),
+                    currentBlockColorful = danmakuState.blockColorful,
+                    currentBlockRepeat = danmakuState.blockRepeat,
+                    currentBlockSpecial = danmakuState.blockSpecial,
+                    currentBlockByUserFilter = danmakuState.blockByUserFilter,
+                    currentAiCloudLevel = danmakuState.aiCloudLevel,
+                    userFilterRuleCount = danmakuState.userFilterRuleCount,
+                    onDanmakuBlockColorfulChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockColorful(it))
+                    },
+                    onDanmakuBlockRepeatChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeat(it))
+                    },
+                    onDanmakuBlockSpecialChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockSpecial(it))
+                    },
+                    onDanmakuBlockByUserFilterChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilter(it))
+                    },
+                    onDanmakuAiCloudLevelChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetAiCloudLevel(it))
+                    },
+                    onFocusStateChange = onFocusStateChange,
+                )
         }
     }
 }
