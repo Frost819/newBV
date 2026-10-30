@@ -41,7 +41,7 @@ import dev.frost819.newbv.core.theme.BVTheme
  * 在播放器左下角显示三种提示（可同时显示多个）：
  * - **试看提示**：视频需付费，当前为试看片段
  * - **跳下集提示**：播放结束，即将播放下一集
- * - **回到开头提示**：从上次播放位置继续，按确认键从头播放
+ * - **回到开头提示**：从上次播放位置继续，长按确认键从头播放
  * - **快捷键提示**：显示最近一次触发的快捷键或分集边界提示
  *
  * 每个提示通过 [PlayerTip] 独立做进出场动画，Column 自动堆叠。
@@ -80,7 +80,7 @@ fun SkipTips(
             )
             PlayerTip(
                 show = showBackToStart,
-                text = "从上次播放位置继续，按确认键从头播放",
+                text = "从上次播放位置继续，长按确认键从头播放；单击确认键暂停/播放",
                 icon = Icons.Outlined.Replay,
             )
             PlayerTip(

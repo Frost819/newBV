@@ -1353,7 +1353,7 @@ class PlayerViewModel
                 }
 
             if (updateLocal) {
-                videoInfoRepository.updateHistory(reportTime, state.cid)
+                videoInfoRepository.updateHistory(state.aid, reportTime, state.cid)
             }
 
             if (!Prefs.incognitoMode) {
