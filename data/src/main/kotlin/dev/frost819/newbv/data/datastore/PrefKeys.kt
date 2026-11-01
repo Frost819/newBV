@@ -48,6 +48,10 @@ internal object PrefKeys {
     val actionAfterPlay = intPreferencesKey("action_after_play")
     val playerCustomShortcuts = stringPreferencesKey("player_custom_shortcuts")
 
+    // ===== 播放器 - 空降助手 =====
+    val sponsorBlockEnabled = booleanPreferencesKey("sponsor_block_enabled")
+    val sponsorCategories = stringPreferencesKey("sponsor_categories")
+
     // ===== 播放器 - 音频 =====
     val defaultAudio = intPreferencesKey("da")
 
