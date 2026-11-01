@@ -55,6 +55,7 @@ class AbstractVideoPlayerTest {
         override fun setOptions() {}
 
         override var speed: Float = 1.0f
+        override var volume: Float = 1.0f
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "test"
         override val videoWidth: Int = 0
@@ -153,6 +154,7 @@ class AbstractVideoPlayerTest {
         private var _duration = 0L
         private var _bufferedPercentage = 0
         private var _speed = 1.0f
+        private var _volume = 1.0f
         private var _videoWidth = 0
         private var _videoHeight = 0
 
@@ -226,6 +228,12 @@ class AbstractVideoPlayerTest {
                 _speed = value
                 lastSpeed = value
                 calls.add("speed=$value")
+            }
+        override var volume: Float
+            get() = _volume
+            set(value) {
+                _volume = value
+                calls.add("volume=$value")
             }
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "spy-debug"
