@@ -65,7 +65,7 @@ class SponsorBlockRepositoryTest {
     @Test
     fun `filters response by videoID and cid`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns
+            val videos =
                 listOf(
                     SponsorHashVideo(
                         videoID = "BV1other",
@@ -73,12 +73,14 @@ class SponsorBlockRepositoryTest {
                     ),
                     SponsorHashVideo(
                         videoID = "BV1xx",
-                        segments = listOf(
-                            dto("a", 1.0, 2.0, cid = "100"),
-                            dto("b", 3.0, 4.0, cid = "200"),
-                        ),
+                        segments =
+                            listOf(
+                                dto("a", 1.0, 2.0, cid = "100"),
+                                dto("b", 3.0, 4.0, cid = "200"),
+                            ),
                     ),
                 )
+            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
 
@@ -88,16 +90,18 @@ class SponsorBlockRepositoryTest {
     @Test
     fun `returns all cid segments when cid invalid`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns
+            val videos =
                 listOf(
                     SponsorHashVideo(
                         videoID = "BV1xx",
-                        segments = listOf(
-                            dto("a", 1.0, 2.0, cid = "100"),
-                            dto("b", 3.0, 4.0, cid = "200"),
-                        ),
+                        segments =
+                            listOf(
+                                dto("a", 1.0, 2.0, cid = "100"),
+                                dto("b", 3.0, 4.0, cid = "200"),
+                            ),
                     ),
                 )
+            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 0L, listOf("sponsor"))
 
@@ -107,20 +111,22 @@ class SponsorBlockRepositoryTest {
     @Test
     fun `normalizes unknown actionType and invalid range away and dedupes by uuid`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns
+            val videos =
                 listOf(
                     SponsorHashVideo(
                         videoID = "BV1xx",
-                        segments = listOf(
-                            dto("a", 1.0, 2.0),
-                            dto("bad-action", 1.0, 2.0, actionType = "full"),
-                            dto("bad-range", 2.0, 1.0),
-                            // UUID 重复：高票者胜出
-                            dto("dup", 5.0, 6.0, votes = 1),
-                            dto("dup", 5.0, 6.0, votes = 10),
-                        ),
+                        segments =
+                            listOf(
+                                dto("a", 1.0, 2.0),
+                                dto("bad-action", 1.0, 2.0, actionType = "full"),
+                                dto("bad-range", 2.0, 1.0),
+                                // UUID 重复：高票者胜出
+                                dto("dup", 5.0, 6.0, votes = 1),
+                                dto("dup", 5.0, 6.0, votes = 10),
+                            ),
                     ),
                 )
+            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
 
