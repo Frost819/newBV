@@ -7,7 +7,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.data.SponsorBlockRepository
 import dev.frost819.newbv.app.data.VideoInfoRepository
+import dev.frost819.newbv.app.entity.player.SponsorCategories
+import dev.frost819.newbv.app.entity.player.SponsorSegment
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
@@ -38,6 +41,7 @@ import dev.frost819.newbv.biliapi.repositories.FavoriteRepository
 import dev.frost819.newbv.biliapi.repositories.LikeRepository
 import dev.frost819.newbv.biliapi.repositories.OneClickTripleActionRepository
 import dev.frost819.newbv.biliapi.repositories.VideoPlayRepository
+import dev.frost819.newbv.biliapi.util.AvBvConverter
 import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.data.datastore.Audio
 import dev.frost819.newbv.data.datastore.Prefs
@@ -106,6 +110,7 @@ private val AUDIO_FALLBACK_ORDER = listOf(Audio.A192K, Audio.A132K, Audio.A64K)
  * @param exoPlayerFactory ExoPlayer 工厂
  * @param videoCapabilityProvider 设备视频解码能力查询器（选流时过滤超能力组合）
  * @param cdnSelector CDN 测速选择器（开启自动选源时用于排序候选地址）
+ * @param sponsorBlockRepository 空降片段仓库（SponsorBlock 查询与缓存）
  */
 @HiltViewModel
 class PlayerViewModel
@@ -121,6 +126,7 @@ class PlayerViewModel
         private val favoriteRepository: FavoriteRepository,
         private val oneClickTripleActionRepository: OneClickTripleActionRepository,
         private val cdnSelector: CdnSelector,
+        private val sponsorBlockRepository: SponsorBlockRepository,
     ) : ViewModel() {
         private val logger = Loggers.get("PlayerViewModel")
 
@@ -192,6 +198,18 @@ class PlayerViewModel
         private var shortcutTipJob: Job? = null
         private var previewTipCountdownJob: Job? = null
         private var onlineWatchJob: Job? = null
+
+        /** 空降片段跳过状态机（随视频装载，切集复位）。 */
+        private val sponsorSkipEngine = SponsorSkipEngine()
+
+        /** 当前分 P 是否已尝试过空降片段加载（防止位置检测反复触发重试）。 */
+        @Volatile private var sponsorLoadAttempted = false
+
+        /** 空降静音片段的恢复时间点（毫秒）；null 表示当前无静音中的片段。 */
+        private var sponsorMuteUntilMs: Long? = null
+
+        /** 进入静音片段前的播放器音量，出段恢复用。 */
+        private var sponsorMutedOriginalVolume: Float? = null
 
         /**
          * 切换视频事件。
@@ -463,6 +481,7 @@ class PlayerViewModel
         /** 释放播放器资源，同步进度到 B 站。 */
         fun detachPlayer() {
             syncProgress(scope = detachedWorkScope, isDetaching = true)
+            restoreSponsorMuteVolume()
             videoPlayer?.release()
             videoPlayer = null
             stopSeekerUpdater()
@@ -624,11 +643,25 @@ class PlayerViewModel
             _seekerState.update { it.copy(currentTime = time) }
         }
 
+        /**
+         * 用户主动 seek 到指定位置（毫秒）。
+         *
+         * 与 [seekToTime] 的区别：通知空降状态机重定位（允许拖回片段内重播），
+         * 并恢复可能处于空降静音中的音量。所有用户 seek 入口（方向键快进快退、
+         * 触屏拖拽进度条、横向手势 seek）都应走此方法；空降自动跳过内部走
+         * [seekToTime]，不经此通知。
+         */
+        fun onUserSeek(time: Long) {
+            sponsorSkipEngine.onUserSeek(time)
+            restoreSponsorMuteVolume()
+            seekToTime(time)
+        }
+
         /** 回到开头。 */
         fun backToStart() {
             backToStartCountdownJob?.cancel()
             _uiState.update { it.copy(showBackToStart = false) }
-            videoPlayer?.seekTo(0)
+            onUserSeek(0)
         }
 
         /** 立即播放下一集。 */
@@ -740,6 +773,10 @@ class PlayerViewModel
             playData = null
             stopSeekerUpdater()
             stopDebugInfoUpdater()
+            // 旧集片段残留会按新集时间轴误触发跳过，必须随切集复位
+            sponsorSkipEngine.reset()
+            restoreSponsorMuteVolume()
+            sponsorLoadAttempted = false
 
             _uiState.update {
                 it.copy(
@@ -756,6 +793,7 @@ class PlayerViewModel
                     isBuffering = true,
                     playerState = PlayerState.Ready,
                     videoShot = null,
+                    skipSegments = emptyList(),
                     danmakuMask = null,
                     subtitleList = emptyList(),
                     subtitleData = emptyList(),
@@ -829,6 +867,7 @@ class PlayerViewModel
             val aid = state.aid
             val cid = state.cid
             val epid = state.epid
+            sponsorLoadAttempted = false
 
             loadVideoJob?.cancel()
             loadVideoJob =
@@ -837,6 +876,8 @@ class PlayerViewModel
                         resolveUrlsAndPlay(aid, cid, epid ?: 0)
                         launch { updateVideoShot() }
                         launch { updateVideoPages() }
+                        // 空降片段不在此并行拉取：由位置检测在起播后惰性触发
+                        // （checkSponsorSkip），对齐"先起播后补数据"，避免双发请求
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -1346,6 +1387,64 @@ class PlayerViewModel
             }.onFailure { logger.warn { "Load video shot failed: $it" } }
         }
 
+        /**
+         * 拉取并装载当前视频的空降片段（SponsorBlock）。
+         *
+         * bvid 优先取视频详情，缺失时由 aid 本地换算兜底；番剧分集的 aid 同样适用。
+         * 总开关关闭或用户未启用任何分类时不请求。加载失败静默降级为无片段，
+         * 不影响播放；响应归属校验防止快速切集时旧片段串台。
+         * internal 仅为单元测试可见性。
+         */
+        internal suspend fun updateSkipSegments() {
+            sponsorLoadAttempted = true
+            val state = _uiState.value
+            if (!Prefs.sponsorBlockEnabled) {
+                sponsorSkipEngine.reset()
+                _uiState.update { it.copy(skipSegments = emptyList()) }
+                return
+            }
+            val categories = SponsorCategories.parse(Prefs.sponsorCategories)
+            if (categories.isEmpty()) {
+                sponsorSkipEngine.reset()
+                _uiState.update { it.copy(skipSegments = emptyList()) }
+                return
+            }
+            val bvid = resolveSponsorBvid(state.aid)
+            if (bvid.isEmpty()) {
+                sponsorSkipEngine.reset()
+                _uiState.update { it.copy(skipSegments = emptyList()) }
+                return
+            }
+            runCatching {
+                sponsorBlockRepository.getSkipSegments(bvid, state.cid, categories)
+            }.onSuccess { segments ->
+                // 快速切集时丢弃过期响应，避免旧视频片段残留到新视频
+                val current = _uiState.value
+                if (current.aid == state.aid && current.cid == state.cid) {
+                    sponsorSkipEngine.loadSegments(segments)
+                    _uiState.update { it.copy(skipSegments = segments) }
+                    if (segments.isNotEmpty()) {
+                        logger.info {
+                            "Sponsor segments loaded: bvid=$bvid cid=${state.cid} count=${segments.size}"
+                        }
+                    }
+                }
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                logger.warn { "Load sponsor segments failed: $error" }
+            }
+        }
+
+        /**
+         * 解析空降查询用的视频 BV 号：优先视频详情携带值，缺失时由 aid 本地换算。
+         */
+        private fun resolveSponsorBvid(aid: Long): String =
+            videoInfoRepository.videoDetail.value
+                ?.takeIf { it.aid == aid }
+                ?.bvid
+                ?.takeIf { it.isNotBlank() }
+                ?: AvBvConverter.av2bv(aid)
+
         private suspend fun updateVideoPages() {
             videoInfoRepository.updateUgcPages(getApiType())
         }
@@ -1475,13 +1574,81 @@ class PlayerViewModel
 
         private fun updateSeekerState() {
             val player = videoPlayer ?: return
+            val position = player.currentPosition.coerceAtLeast(0L)
             _seekerState.update {
                 it.copy(
                     totalDuration = player.duration.coerceAtLeast(0L),
-                    currentTime = player.currentPosition.coerceAtLeast(0L),
+                    currentTime = position,
                     bufferedPercentage = player.bufferedPercentage,
                 )
             }
+            checkSponsorSkip(position, player.duration.coerceAtLeast(0L))
+        }
+
+        /**
+         * 空降片段位置检测入口（进度更新时调用）。
+         *
+         * 处理三件事：静音恢复、开关中途打开时的惰性补载、跳过状态机决策。
+         * 自动跳过走 [seekToTime]（非用户 seek），不经过 [onUserSeek] 的状态机通知，
+         * 由引擎内部的宽限期与消费记录防止重复触发。
+         */
+        private fun checkSponsorSkip(
+            positionMs: Long,
+            durationMs: Long,
+        ) {
+            // 静音恢复先于开关判断：静音中途关闭开关也要能恢复音量
+            restoreSponsorMuteIfNeeded(positionMs)
+            if (!Prefs.sponsorBlockEnabled) return
+            if (!sponsorLoadAttempted) {
+                sponsorLoadAttempted = true
+                viewModelScope.launch(Dispatchers.IO) { updateSkipSegments() }
+            }
+            val result = sponsorSkipEngine.checkPosition(positionMs) ?: return
+            when (result.action) {
+                SponsorSkipEngine.SkipAction.AUTO_SKIP -> {
+                    val target =
+                        SponsorSkipTargetPolicy.resolveSkipTargetPositionMs(
+                            requestedMs = result.segment.endMs,
+                            durationMs = durationMs,
+                            category = result.segment.category,
+                        )
+                    logger.info {
+                        "Sponsor auto skip: category=${result.segment.category} " +
+                            "position=$positionMs target=$target"
+                    }
+                    seekToTime(target)
+                    showShortcutTip("已跳过：${SponsorCategories.displayNameOf(result.segment.category)}")
+                }
+                SponsorSkipEngine.SkipAction.MUTE -> muteForSponsor(result.segment)
+                // 起播即落在片段内等非跨入场景：当前版本不自动处理
+                SponsorSkipEngine.SkipAction.SHOW_BUTTON -> Unit
+            }
+        }
+
+        /** 进入静音片段：记住原音量并置 0；连续静音片段只顺延恢复点。 */
+        private fun muteForSponsor(segment: SponsorSegment) {
+            val player = videoPlayer ?: return
+            if (sponsorMutedOriginalVolume == null) {
+                sponsorMutedOriginalVolume = player.volume
+                player.volume = 0f
+                logger.info { "Sponsor mute: category=${segment.category} until=${segment.endMs}" }
+                showShortcutTip("已静音：${SponsorCategories.displayNameOf(segment.category)}")
+            }
+            sponsorMuteUntilMs = segment.endMs
+        }
+
+        /** 位置越过静音片段终点时恢复音量。 */
+        private fun restoreSponsorMuteIfNeeded(positionMs: Long) {
+            val until = sponsorMuteUntilMs ?: return
+            if (positionMs >= until) restoreSponsorMuteVolume()
+        }
+
+        /** 恢复静音前的播放器音量（幂等）。 */
+        private fun restoreSponsorMuteVolume() {
+            val original = sponsorMutedOriginalVolume ?: return
+            videoPlayer?.volume = original
+            sponsorMutedOriginalVolume = null
+            sponsorMuteUntilMs = null
         }
 
         private fun startClockUpdater() {

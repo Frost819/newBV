@@ -134,6 +134,12 @@ fun VideoPlayerController(
     // 常显进度条
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
 
+    // 空降片段标记：总开关关闭时隐藏（跳过行为在 VM 侧同样被拦截）
+    val skipSegments =
+        remember(uiState.skipSegments) {
+            if (Prefs.sponsorBlockEnabled) uiState.skipSegments else emptyList()
+        }
+
     // 手势状态：亮度/音量都是 0~1 的比例，-1 表示尚未接管（首次以系统值为起点）
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
@@ -534,6 +540,7 @@ fun VideoPlayerController(
                     position = seekerState.value.currentTime,
                     bufferedPercentage = seekerState.value.bufferedPercentage,
                     isPersistentSeek = true,
+                    skipSegments = skipSegments,
                 )
             }
 
@@ -599,6 +606,7 @@ fun VideoPlayerController(
                 onlineWatching = uiState.onlineWatching,
                 videoShot = uiState.videoShot,
                 videoShotCache = videoShotCache,
+                skipSegments = skipSegments,
                 isPgc = isPgc,
                 danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
                 isLooping = isLooping,
