@@ -121,13 +121,14 @@ object SponsorCategories {
      * @param raw [Prefs.sponsorCategories] 存储的逗号连接字符串
      * @return 启用的分类名列表（保持存储顺序，去重）
      */
-    fun parse(raw: String?): List<String> =
-        raw
+    fun parse(raw: String?): List<String> {
+        return raw
             .orEmpty()
             .split(',')
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
+    }
 
     /**
      * 序列化启用的分类列表为存储字符串。

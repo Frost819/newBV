@@ -44,11 +44,12 @@ class SponsorBlockRepository
             categories: List<String>,
         ): List<SponsorSegment> {
             if (categories.isEmpty()) return emptyList()
-            val cacheKey = buildString {
-                append(bvid)
-                append(':')
-                append(categories.sorted().joinToString(","))
-            }
+            val cacheKey =
+                buildString {
+                    append(bvid)
+                    append(':')
+                    append(categories.sorted().joinToString(","))
+                }
             val cached =
                 cache[cacheKey]?.takeIf {
                     System.currentTimeMillis() - it.timestamp < CACHE_TTL_MS

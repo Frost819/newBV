@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import dev.frost819.newbv.app.ui.component.settings.SettingSwitchListItem
  * @param onDismiss 关闭弹窗回调
  * @param onCategoriesChanged 分类集合变化回调（含持久化后的最新值）
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SponsorCategoriesDialog(
     enabledCategories: Set<String>,

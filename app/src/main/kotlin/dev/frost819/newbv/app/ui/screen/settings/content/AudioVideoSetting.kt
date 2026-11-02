@@ -62,6 +62,16 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
     var sponsorBlockEnabled by remember { mutableStateOf(Prefs.sponsorBlockEnabled) }
     var sponsorCategories by remember { mutableStateOf(SponsorCategories.parse(Prefs.sponsorCategories).toSet()) }
 
+    // 摘要文案：全部关闭 / 已启用分类的中文列表
+    val sponsorCategoriesSummary =
+        if (sponsorCategories.isEmpty()) {
+            "全部关闭"
+        } else {
+            SponsorCategories.OPTIONS
+                .filter { it.category in sponsorCategories }
+                .joinToString("、") { it.displayName }
+        }
+
     Column(
         modifier =
             modifier
@@ -144,16 +154,7 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
         )
         SettingListItem(
             title = "空降助手跳过分类",
-            supportText =
-                if (sponsorCategories.isEmpty()) {
-                    "当前：全部关闭"
-                } else {
-                    "当前：${
-                        SponsorCategories.OPTIONS
-                            .filter { it.category in sponsorCategories }
-                            .joinToString("、") { it.displayName }
-                    }"
-                },
+            supportText = "当前：$sponsorCategoriesSummary",
             onClick = { showSponsorCategoriesDialog = true },
         )
     }
