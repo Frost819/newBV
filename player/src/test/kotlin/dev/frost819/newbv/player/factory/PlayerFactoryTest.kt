@@ -47,6 +47,7 @@ class PlayerFactoryTest {
         override fun setOptions() {}
 
         override var speed: Float = 1.0f
+        override var volume: Float = 1.0f
         override val tcpSpeed: Long = 0L
         override val debugInfo: String = "dummy"
         override val videoWidth: Int = 1920
