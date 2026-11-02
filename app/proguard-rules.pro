@@ -87,3 +87,11 @@
 -dontwarn ch.qos.logback.classic.spi.ILoggingEvent
 -dontwarn ch.qos.logback.classic.spi.LogbackServiceProvider
 -dontwarn ch.qos.logback.classic.spi.LoggingEvent
+
+# === media3 音频管线 ===
+# PlaybackErrors.isAudioRenderError() 靠堆栈里的
+# androidx.media3.exoplayer.audio.* 帧识别「音频帧超出解码器缓冲」这类
+# 被 media3 归为 ERROR_CODE_UNSPECIFIED 的错误，release 混淆后包名会丢失。
+# 只保留类名即可（判定只看 className），不保留成员可避免额外体积。
+# 体积实测：-keepnames +534B，-keep class **{*;} +26KB。
+-keepnames class androidx.media3.exoplayer.audio.**

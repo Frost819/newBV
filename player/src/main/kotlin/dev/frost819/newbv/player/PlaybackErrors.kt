@@ -47,7 +47,12 @@ private val VIDEO_DECODE_ERROR_CODES =
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
     )
 
-/** 音频输出链路所在的包名，用于从堆栈识别 media3 未能归类的音频错误。 */
+/**
+ * 音频输出链路所在的包名，用于从堆栈识别 media3 未能归类的音频错误。
+ *
+ * 依赖 release 构建的 `-keepnames class androidx.media3.exoplayer.audio.**`
+ * （`app/proguard-rules.pro`）：否则类名被混淆，栈帧不再匹配此前缀。
+ */
 private const val AUDIO_PACKAGE_PREFIX = "androidx.media3.exoplayer.audio."
 
 /** 异常链最多回溯层数（防异常链成环）。 */
