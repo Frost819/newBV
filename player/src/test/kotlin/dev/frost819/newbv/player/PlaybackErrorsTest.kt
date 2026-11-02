@@ -63,6 +63,40 @@ class PlaybackErrorsTest {
     }
 
     @Test
+    fun `network error codes are treated as retryable on another cdn`() {
+        listOf(
+            PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+            PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+            PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+            PlaybackException.ERROR_CODE_TIMEOUT,
+        ).forEach { code ->
+            assertThat(isNetworkError(errorCode = code, throwable = null)).isTrue()
+        }
+    }
+
+    @Test
+    fun `io exception without error code is treated as network error`() {
+        assertThat(IOException("HTTP 403").isNetworkError()).isTrue()
+        // 被包装的 IO 异常同样识别
+        assertThat(RuntimeException("Playback error", IOException("timeout")).isNetworkError()).isTrue()
+    }
+
+    @Test
+    fun `audio sink error is not retryable on another cdn`() {
+        assertThat(isNetworkError(errorCode = PlaybackException.ERROR_CODE_UNSPECIFIED, throwable = audioSinkError()))
+            .isFalse()
+    }
+
+    @Test
+    fun `unknown error is not retryable on another cdn`() {
+        assertThat(IllegalArgumentException("boom").isNetworkError()).isFalse()
+        assertThat(isNetworkError(errorCode = PlaybackException.ERROR_CODE_UNSPECIFIED, throwable = null))
+            .isFalse()
+    }
+
+    @Test
     fun `decoding error code maps to decode message`() {
         assertThat(playbackErrorMessage(PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED))
             .isEqualTo("解码失败，请尝试切换画质或编码")

@@ -48,6 +48,7 @@ import dev.frost819.newbv.player.CdnSelector
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.VideoPlayerOptions
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
+import dev.frost819.newbv.player.isNetworkError
 import dev.frost819.newbv.player.toPlaybackErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -207,8 +208,9 @@ class PlayerViewModel
             object : VideoPlayerListener {
                 override fun onError(error: Exception) {
                     logger.info { "onError: $error" }
-                    // 自动选源模式下，优先尝试切换到下一个候选 CDN，避免单个节点故障导致播放中断
-                    if (Prefs.autoSelectCdn && tryNextCdnFallback()) return
+                    // 仅网络类错误换 CDN 有意义：解码 / 音频管线错误换源地址不会改善，
+                    // 直接进入错误态（音频回退由 onAudioDecodeUnsupported 单独处理）
+                    if (Prefs.autoSelectCdn && error.isNetworkError() && tryNextCdnFallback()) return
                     // 其余错误进入错误态
                     failPlayback(error.toPlaybackErrorMessage())
                 }

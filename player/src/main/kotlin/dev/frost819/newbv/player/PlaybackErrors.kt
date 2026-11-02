@@ -1,6 +1,7 @@
 package dev.frost819.newbv.player
 
 import androidx.media3.common.PlaybackException
+import java.io.IOException
 
 /*
  * 播放错误分类与提示文案。
@@ -16,6 +17,24 @@ private val AUDIO_ERROR_CODES =
         PlaybackException.ERROR_CODE_AUDIO_TRACK_WRITE_FAILED,
         PlaybackException.ERROR_CODE_AUDIO_TRACK_OFFLOAD_INIT_FAILED,
         PlaybackException.ERROR_CODE_AUDIO_TRACK_OFFLOAD_WRITE_FAILED,
+    )
+
+/**
+ * 换 CDN 重试可能有帮助的错误码（网络 / HTTP / 拉流超时）。
+ *
+ * 只收「换一个源地址可能自愈」的错误：权限与明文流量限制属客户端配置问题，
+ * 解码与音频管线错误与源地址无关，都不在此列。
+ */
+private val NETWORK_ERROR_CODES =
+    setOf(
+        PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+        PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
+        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+        PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+        PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
+        PlaybackException.ERROR_CODE_TIMEOUT,
     )
 
 /** 视频解码能力相关错误码（可尝试换编码 / 降画质重试）。 */
@@ -80,6 +99,35 @@ internal fun isAudioRenderError(
 ): Boolean {
     if (errorCode != null && errorCode in AUDIO_ERROR_CODES) return true
     return throwable?.causeChain()?.any { it.isInAudioPackage() } == true
+}
+
+/**
+ * 是否为换 CDN 重试可能有帮助的错误。
+ *
+ * 调用方（如播放器 ViewModel 的自动选源）据此决定是否切换到下一个候选地址：
+ * 解码、音频管线、容器解析等错误换地址不会改善，重试只是白白拉长用户等待。
+ *
+ * 判定顺序：media3 网络类错误码优先；非 [PlaybackException] 或其错误码未归类时，
+ * 回溯原因链中的 [IOException]（media3 的 `HttpDataSourceException` 等均继承自它）。
+ */
+fun Throwable.isNetworkError(): Boolean =
+    isNetworkError(
+        errorCode = (this as? PlaybackException)?.errorCode,
+        throwable = this,
+    )
+
+/**
+ * 是否为换 CDN 重试可能有帮助的错误（参数化版本，便于单测）。
+ *
+ * @param errorCode media3 错误码；非 [PlaybackException] 时传 `null`
+ * @param throwable 待检查的异常，会连同原因链一起判定
+ */
+internal fun isNetworkError(
+    errorCode: Int?,
+    throwable: Throwable?,
+): Boolean {
+    if (errorCode != null && errorCode in NETWORK_ERROR_CODES) return true
+    return throwable?.causeChain()?.any { it is IOException } == true
 }
 
 /**
