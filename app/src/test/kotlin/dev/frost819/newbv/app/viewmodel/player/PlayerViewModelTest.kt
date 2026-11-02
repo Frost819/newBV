@@ -1909,12 +1909,13 @@ class PlayerViewModelTest {
                         uuid = "u1",
                         category = "sponsor",
                         actionType = SponsorActionType.SKIP,
-                        startMs = 10_000L,
-                        endMs = 20_000L,
+                        // 片段尾贴着片长（60s），触发尾部保护钳制：目标 = end - 1s = 59s
+                        startMs = 55_000L,
+                        endMs = 59_500L,
                     ),
                 )
             setVideoPlayer(mockPlayer)
-            every { mockPlayer.currentPosition } returns 11_000L
+            every { mockPlayer.currentPosition } returns 56_000L
             every { mockPlayer.duration } returns 60_000L
             every { mockPlayer.bufferedPercentage } returns 0
 
@@ -1925,7 +1926,6 @@ class PlayerViewModelTest {
             advanceTimeBy(300)
             runCurrent()
 
-            // 60s 时长下非片尾片段目标钳制为 end - 1s
             verify(exactly = 1) { mockPlayer.seekTo(59_000L) }
             assertThat(viewModel.uiState.value.shortcutTipText).isEqualTo("已跳过：赞助/恰饭")
             viewModel.viewModelScope.cancel()
@@ -1961,7 +1961,8 @@ class PlayerViewModelTest {
             advanceTimeBy(200) // 再次向前跨入 → 重新自动跳过
             runCurrent()
 
-            verify(exactly = 2) { mockPlayer.seekTo(59_000L) }
+            // 片段终点 20s 距片长 60s 较远，目标即终点本身（尾部保护只钳上限）
+            verify(exactly = 2) { mockPlayer.seekTo(20_000L) }
             viewModel.viewModelScope.cancel()
         }
 }
