@@ -14,6 +14,9 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PersonAdd
+import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,18 +39,23 @@ import androidx.navigation.toRoute
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.ListFooterTip
 import dev.frost819.newbv.app.ui.component.TvLazyVerticalGrid
+import dev.frost819.newbv.app.ui.component.UpActionButton
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.app.ui.component.rememberFocusSaver
 import dev.frost819.newbv.app.ui.component.videocard.SmallVideoCard
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
 import dev.frost819.newbv.app.ui.navigation.navigateFromVideoCard
+import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatHourMinSec
 import dev.frost819.newbv.app.util.toWanString
 import dev.frost819.newbv.app.viewmodel.common.CollectWatchLaterEffects
 import dev.frost819.newbv.app.viewmodel.common.WatchLaterViewModel
+import dev.frost819.newbv.app.viewmodel.user.UserSpaceUiEffect
+import dev.frost819.newbv.app.viewmodel.user.UserSpaceUiState
 import dev.frost819.newbv.app.viewmodel.user.UserSpaceViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -54,7 +63,7 @@ import kotlinx.coroutines.flow.filter
 /**
  * 用户空间页。
  *
- * 展示用户信息（头像、昵称）和投稿视频网格。
+ * 展示用户信息（头像、昵称、关注按钮）和投稿视频网格。
  * 用户名和头像由路由参数传入，不单独调用 API 获取（与原版 BV 行为一致）。
  */
 fun NavGraphBuilder.userSpaceScreen(navController: NavController) {
@@ -83,8 +92,17 @@ private fun UserSpaceScreen(
     val gridState = rememberLazyGridState()
     val focusSaver = rememberFocusSaver()
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
+    val context = LocalContext.current
 
     CollectWatchLaterEffects(watchLaterViewModel)
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is UserSpaceUiEffect.ShowToast -> ToastUtils.show(context, effect.message)
+            }
+        }
+    }
 
     LaunchedEffect(mid) {
         viewModel.init(mid, name, face)
@@ -113,7 +131,11 @@ private fun UserSpaceScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            UserSpaceHeader(state = state)
+            UserSpaceHeader(
+                state = state,
+                focusSaver = focusSaver,
+                onToggleFollow = { viewModel.toggleFollow() },
+            )
         }
 
         itemsIndexed(
@@ -167,7 +189,11 @@ private fun UserSpaceScreen(
 }
 
 @Composable
-private fun UserSpaceHeader(state: dev.frost819.newbv.app.viewmodel.user.UserSpaceUiState) {
+private fun UserSpaceHeader(
+    state: UserSpaceUiState,
+    focusSaver: FocusSaver,
+    onToggleFollow: () -> Unit,
+) {
     Row(
         modifier =
             Modifier
@@ -188,7 +214,8 @@ private fun UserSpaceHeader(state: dev.frost819.newbv.app.viewmodel.user.UserSpa
             Spacer(modifier = Modifier.width(16.dp))
         }
 
-        Column(modifier = Modifier.weight(1f)) {
+        // fill = false 让名称列只占内容宽度，关注按钮紧跟名称右侧，而不是被顶到屏幕最右
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
                 text = state.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -198,5 +225,15 @@ private fun UserSpaceHeader(state: dev.frost819.newbv.app.viewmodel.user.UserSpa
                 overflow = TextOverflow.Ellipsis,
             )
         }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        UpActionButton(
+            text = if (state.isFollowing) "已关注" else "关注",
+            icon = if (state.isFollowing) Icons.Rounded.PersonAdd else Icons.Outlined.PersonAdd,
+            highlighted = state.isFollowing,
+            onClick = onToggleFollow,
+            modifier = Modifier.focusSaverItem(focusSaver, "follow"),
+        )
     }
 }

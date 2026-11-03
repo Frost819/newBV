@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.user
 
+import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.biliapi.entity.user.SpaceVideo
 import dev.frost819.newbv.biliapi.entity.user.SpaceVideoData
@@ -47,6 +48,9 @@ class UserSpaceViewModelTest {
 
         mockkObject(Prefs)
         every { Prefs.apiType } returns DataApiType.Web
+
+        // 关注状态查询是 init 的独立请求，默认返回未关注，避免 strict mock 抛异常
+        coEvery { userRepository.checkIsFollowing(any()) } returns false
     }
 
     @AfterEach
@@ -320,5 +324,133 @@ class UserSpaceViewModelTest {
                     preferApiType = BiliApiType.App,
                 )
             }
+        }
+
+    // ------------------------------------------------------------------
+    // follow status
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `init loads following status`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.checkIsFollowing(1L) } returns true
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.isFollowing).isTrue()
+        }
+
+    @Test
+    fun `init keeps not following when status check fails`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.checkIsFollowing(any()) } throws IOException("network error")
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertThat(state.isFollowing).isFalse()
+            // 关注状态查询失败不应影响投稿列表加载
+            assertThat(state.videos).hasSize(2)
+            assertThat(state.error).isFalse()
+        }
+
+    @Test
+    fun `toggleFollow follows UP when not following`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.followUser(mid = 1L, preferApiType = BiliApiType.Web) } returns true
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+
+            coVerify { userRepository.followUser(mid = 1L, preferApiType = BiliApiType.Web) }
+            assertThat(viewModel.uiState.value.isFollowing).isTrue()
+            assertThat(viewModel.uiState.value.followLoading).isFalse()
+        }
+
+    @Test
+    fun `toggleFollow unfollows UP when already following`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.checkIsFollowing(1L) } returns true
+            coEvery { userRepository.unfollowUser(mid = 1L, preferApiType = BiliApiType.Web) } returns true
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.isFollowing).isTrue()
+
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+
+            coVerify { userRepository.unfollowUser(mid = 1L, preferApiType = BiliApiType.Web) }
+            assertThat(viewModel.uiState.value.isFollowing).isFalse()
+        }
+
+    @Test
+    fun `toggleFollow failure emits toast and keeps state`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.followUser(any(), any()) } throws IOException("network error")
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+
+            viewModel.uiEffect.test {
+                viewModel.toggleFollow()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(UserSpaceUiEffect.ShowToast::class.java)
+                assertThat((effect as UserSpaceUiEffect.ShowToast).message).contains("关注失败")
+            }
+
+            assertThat(viewModel.uiState.value.isFollowing).isFalse()
+            assertThat(viewModel.uiState.value.followLoading).isFalse()
+        }
+
+    @Test
+    fun `toggleFollow non-zero response emits toast`() =
+        runTest(testDispatcher) {
+            coEvery { userRepository.getSpaceVideos(any(), any(), any(), any()) } returns fakeVideoData()
+            coEvery { userRepository.followUser(any(), any()) } returns false
+
+            viewModel = createViewModel()
+            viewModel.init(1L, "测试UP")
+            advanceUntilIdle()
+
+            viewModel.uiEffect.test {
+                viewModel.toggleFollow()
+                advanceUntilIdle()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(UserSpaceUiEffect.ShowToast::class.java)
+                assertThat((effect as UserSpaceUiEffect.ShowToast).message).isEqualTo("关注失败")
+            }
+
+            assertThat(viewModel.uiState.value.isFollowing).isFalse()
+        }
+
+    @Test
+    fun `toggleFollow is no-op when mid is zero`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { userRepository.followUser(any(), any()) }
+            coVerify(exactly = 0) { userRepository.unfollowUser(any(), any()) }
         }
 }

@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.ui.state.live.LivePlayerState
 import dev.frost819.newbv.app.ui.state.live.LivePlayerUiState
 import dev.frost819.newbv.app.util.VideoCapabilityProvider
+import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.repositories.LivePlayInfo
 import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.biliapi.repositories.LiveQuality
@@ -307,6 +308,71 @@ class LivePlayerViewModelTest {
             assertThat(state.playerState)
                 .isEqualTo(LivePlayerState.Error("音频解码失败，请尝试切换线路"))
         }
+
+    // ── UP 主信息 ─────────────────────────────────────────────
+
+    @Test
+    fun `withRoomInfo merges anchor info into ui state`() {
+        val roomInfo =
+            RoomInfoData(
+                roomId = 1,
+                shortId = 0,
+                uid = 123L,
+                liveStatus = 1,
+                title = "直播间标题",
+                areaV2Name = "虚拟主播",
+                uname = "主播",
+                face = "https://example.com/face.jpg",
+            )
+
+        val merged = LivePlayerUiState().withRoomInfo(roomInfo)
+
+        assertThat(merged.title).isEqualTo("直播间标题")
+        assertThat(merged.areaName).isEqualTo("虚拟主播")
+        assertThat(merged.upMid).isEqualTo(123L)
+        assertThat(merged.upName).isEqualTo("主播")
+        assertThat(merged.upFace).isEqualTo("https://example.com/face.jpg")
+    }
+
+    @Test
+    fun `withRoomInfo keeps route title when room title is blank`() {
+        val roomInfo =
+            RoomInfoData(
+                roomId = 1,
+                shortId = 0,
+                uid = 123L,
+                liveStatus = 1,
+                title = "",
+            )
+
+        val merged = LivePlayerUiState(title = "路由标题").withRoomInfo(roomInfo)
+
+        assertThat(merged.title).isEqualTo("路由标题")
+    }
+
+    @Test
+    fun `withRoomInfo prefers anchor card info over blank room info`() {
+        // 线上 /room/v1/Room/get_info 不返回 uname/face，主播信息由用户卡片接口补全
+        val roomInfo =
+            RoomInfoData(
+                roomId = 1,
+                shortId = 0,
+                uid = 123L,
+                liveStatus = 1,
+                title = "标题",
+            )
+
+        val merged =
+            LivePlayerUiState().withRoomInfo(
+                roomInfo = roomInfo,
+                anchorName = "主播",
+                anchorFace = "https://example.com/face.jpg",
+            )
+
+        assertThat(merged.upMid).isEqualTo(123L)
+        assertThat(merged.upName).isEqualTo("主播")
+        assertThat(merged.upFace).isEqualTo("https://example.com/face.jpg")
+    }
 
     // ── Helpers ──────────────────────────────────────────────
 

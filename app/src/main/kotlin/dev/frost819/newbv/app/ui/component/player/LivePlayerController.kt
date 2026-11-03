@@ -65,6 +65,7 @@ import dev.frost819.newbv.data.datastore.Prefs
  * @param onBack 返回回调
  * @param onPlayPause 播放/暂停回调
  * @param onRefresh 刷新回调
+ * @param onGoToUpPage 跳转 UP 主主页回调
  * @param onToggleDanmaku 弹幕开关回调
  * @param onQualityChange 画质变化回调（回传 [LiveQuality.key]）
  * @param onLineChange 线路变化回调
@@ -92,6 +93,7 @@ fun LivePlayerController(
     onBack: () -> Unit,
     onPlayPause: () -> Unit,
     onRefresh: () -> Unit,
+    onGoToUpPage: () -> Unit,
     onToggleDanmaku: () -> Unit,
     onQualityChange: (Int) -> Unit,
     onLineChange: (Int) -> Unit,
@@ -306,6 +308,7 @@ fun LivePlayerController(
                 danmakuEnabled = danmakuEnabled,
                 onPlayPause = { onPlayPause() },
                 onRefresh = { onRefresh() },
+                onGoToUpPage = { onGoToUpPage() },
                 onDanmakuSwitchChange = { onToggleDanmaku() },
                 onShowSettings = { showMenuController = true },
             )

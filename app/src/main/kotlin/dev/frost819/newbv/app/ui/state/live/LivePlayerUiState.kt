@@ -51,6 +51,12 @@ data class LivePlayerUiState(
     val liveStatus: Int = 0,
     val areaName: String = "",
     val onlineCount: String = "0",
+    /** 主播 UID（用于跳转 UP 主主页）。 */
+    val upMid: Long = 0L,
+    /** 主播昵称。 */
+    val upName: String = "",
+    /** 主播头像 URL。 */
+    val upFace: String = "",
     val playerState: LivePlayerState = LivePlayerState.Idle,
     val isBuffering: Boolean = false,
     val availableQualities: List<LiveQuality> = emptyList(),

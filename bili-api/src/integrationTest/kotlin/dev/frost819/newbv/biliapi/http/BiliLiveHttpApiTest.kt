@@ -197,6 +197,24 @@ class BiliLiveHttpApiTest {
             Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
             val data = requireNotNull(response.data) { "data should not be null" }
             Assertions.assertEquals(ROOM_ID, data.roomId, "room_id should match")
+            Assertions.assertTrue(data.uid > 0, "room info should expose anchor uid")
+        }
+    }
+
+    @Test
+    fun `anchor info resolves through user card endpoint`() {
+        runBlocking {
+            // /room/v1/Room/get_info 只返回 uid，不含 uname/face，直播间 UP 信息需再查一次用户卡片
+            val roomInfo = BiliLiveHttpApi.getRoomInfo(ROOM_ID).getResponseData()
+            println("room info anchor: uid=${roomInfo.uid}, uname='${roomInfo.uname}', face='${roomInfo.face}'")
+
+            val cardResponse = BiliHttpApi.getUserCardInfo(uid = roomInfo.uid)
+            Assertions.assertEquals(0, cardResponse.code, "card API should return code=0, got: ${cardResponse.message}")
+            val card = cardResponse.getResponseData().card
+            println("user card: name='${card.name}', face='${card.face}'")
+
+            Assertions.assertTrue(card.name.isNotBlank(), "anchor name should not be blank")
+            Assertions.assertTrue(card.face.isNotBlank(), "anchor face should not be blank")
         }
     }
 }

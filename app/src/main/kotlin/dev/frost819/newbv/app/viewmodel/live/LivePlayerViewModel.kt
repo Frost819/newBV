@@ -18,6 +18,7 @@ import dev.frost819.newbv.app.util.toPlaybackLoadErrorMessage
 import dev.frost819.newbv.biliapi.http.entity.live.DanmakuEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
+import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.repositories.LivePlayInfo
 import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.biliapi.repositories.LiveQuality
@@ -204,15 +205,17 @@ class LivePlayerViewModel
                     _uiState.update { it.copy(realRoomId = realRoomId, liveStatus = roomInit.liveStatus) }
 
                     val roomInfo = liveRepository.getRoomInfo(realRoomId)
+                    // /room/v1/Room/get_info 不含 uname/face，需再查用户卡片补全主播名称与头像
+                    val anchorCard =
+                        runCatching { liveRepository.getAnchorCard(roomInfo.uid) }
+                            .onFailure { logger.warn(it) { "Failed to fetch anchor card: uid=${roomInfo.uid}" } }
+                            .getOrNull()
                     _uiState.update {
-                        val newState =
-                            it.copy(
-                                title = roomInfo.title.ifBlank { _uiState.value.title },
-                                cover = roomInfo.cover.ifBlank { roomInfo.keyframe },
-                                areaName = roomInfo.areaV2Name,
-                                onlineCount = formatOnlineCount(roomInfo.online),
-                            )
-                        newState
+                        it.withRoomInfo(
+                            roomInfo = roomInfo,
+                            anchorName = anchorCard?.name ?: "",
+                            anchorFace = anchorCard?.face ?: "",
+                        )
                     }
 
                     val requestedKey = _uiState.value.currentQuality.takeIf { it > 0 } ?: 0
@@ -549,3 +552,28 @@ class LivePlayerViewModel
             detachPlayer()
         }
     }
+
+/**
+ * 将直播间信息合并进 UI 状态。
+ *
+ * 标题/封面缺失时保留进入页面时路由带来的值；主播信息用于控制条上的 UP 主主页入口。
+ * `uname`/`face` 可能由外部接口（用户卡片）补全，为空时回退到 [roomInfo] 中的字段。
+ *
+ * @param roomInfo `GET /room/v1/Room/get_info` 返回的直播间信息
+ * @param anchorName 用户卡片接口补全的主播昵称
+ * @param anchorFace 用户卡片接口补全的主播头像
+ */
+internal fun LivePlayerUiState.withRoomInfo(
+    roomInfo: RoomInfoData,
+    anchorName: String = "",
+    anchorFace: String = "",
+): LivePlayerUiState =
+    copy(
+        title = roomInfo.title.ifBlank { title },
+        cover = roomInfo.cover.ifBlank { roomInfo.keyframe },
+        areaName = roomInfo.areaV2Name,
+        onlineCount = formatOnlineCount(roomInfo.online),
+        upMid = roomInfo.uid,
+        upName = anchorName.ifBlank { roomInfo.uname },
+        upFace = anchorFace.ifBlank { roomInfo.face },
+    )

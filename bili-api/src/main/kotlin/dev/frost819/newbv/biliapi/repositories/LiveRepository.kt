@@ -1,5 +1,6 @@
 package dev.frost819.newbv.biliapi.repositories
 
+import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.live.AreaLiveListResult
 import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveResponse
@@ -11,6 +12,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.QnDesc
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInfoData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomInitData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
+import dev.frost819.newbv.biliapi.http.entity.user.UserCardData.UserCardInfo
 import dev.frost819.newbv.biliapi.util.BiliLogger
 
 /**
@@ -93,6 +95,16 @@ class LiveRepository {
      * 获取直播间完整信息。
      */
     suspend fun getRoomInfo(roomId: Int): RoomInfoData = BiliLiveHttpApi.getRoomInfo(roomId).getResponseData()
+
+    /**
+     * 获取主播用户卡片信息。
+     *
+     * `/room/v1/Room/get_info` 只返回主播 `uid`，不包含 `uname`/`face`，
+     * 因此通过用户卡片接口补全主播名称与头像。该接口匿名可访问。
+     *
+     * @param mid 主播 UID（[RoomInfoData.uid]）
+     */
+    suspend fun getAnchorCard(mid: Long): UserCardInfo = BiliHttpApi.getUserCardInfo(uid = mid).getResponseData().card
 
     /**
      * 获取直播流信息（多线路 + 可用画质）。

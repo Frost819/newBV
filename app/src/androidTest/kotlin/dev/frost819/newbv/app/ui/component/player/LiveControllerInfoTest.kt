@@ -40,6 +40,7 @@ class LiveControllerInfoTest {
                         danmakuEnabled = true,
                         onPlayPause = {},
                         onRefresh = {},
+                        onGoToUpPage = {},
                         onDanmakuSwitchChange = {},
                         onShowSettings = {},
                     )
