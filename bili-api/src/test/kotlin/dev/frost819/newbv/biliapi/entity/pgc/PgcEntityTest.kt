@@ -211,6 +211,29 @@ class PgcEntityTest {
         assertThat(feed.ranks).isEmpty()
     }
 
+    @Test
+    fun `PgcFeedData fromPgcFeedV3Data ignores feed item with empty sub items`() {
+        val httpFeed =
+            PgcFeedV3Data(
+                coursor = 3,
+                hasNext = true,
+                items =
+                    listOf(
+                        PgcFeedV3Data.FeedItem(rankId = 0, subItems = emptyList()),
+                        PgcFeedV3Data.FeedItem(
+                            rankId = 1,
+                            subItems = listOf(fakeV3SubItem(cardStyle = "v_card", title = "卡片1")),
+                        ),
+                    ),
+            )
+
+        val feed = PgcFeedData.fromPgcFeedData(httpFeed)
+
+        assertThat(feed.items).hasSize(1)
+        assertThat(feed.items[0].title).isEqualTo("卡片1")
+        assertThat(feed.ranks).isEmpty()
+    }
+
     // ------------------------------------------------------------------
     // PgcItem.fromIndexResultItem
     // ------------------------------------------------------------------

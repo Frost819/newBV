@@ -16,8 +16,8 @@ data class PgcFeedData(
             )
 
         fun fromPgcFeedData(data: dev.frost819.newbv.biliapi.http.entity.pgc.PgcFeedV3Data): PgcFeedData {
-            val itemsList = data.items.find { it.subItems.first().cardStyle == "v_card" }
-            val ranksList = data.items.find { it.subItems.first().cardStyle == "rank" }
+            val itemsList = data.items.find { it.subItems.firstOrNull()?.cardStyle == "v_card" }
+            val ranksList = data.items.find { it.subItems.firstOrNull()?.cardStyle == "rank" }
             return PgcFeedData(
                 hasNext = data.hasNext,
                 cursor = data.coursor,

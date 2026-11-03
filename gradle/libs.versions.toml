@@ -55,8 +55,6 @@ ashley = "1.7.4"
 # === Other libraries ===
 androidsvg = "1.4"
 brotli = "0.1.2"
-jsoup = "1.20.1"
-ktor-jsoup = "2.3.0"
 qrcode = "3.3.0"
 material = "1.12.0"
 
@@ -162,8 +160,6 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 gdx = { group = "com.badlogicgames.gdx", name = "gdx", version.ref = "gdx" }
 ashley = { group = "com.badlogicgames.ashley", name = "ashley", version.ref = "ashley" }
 androidsvg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "androidsvg" }
-jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
-ktor-jsoup = { group = "com.tfowl.ktor", name = "ktor-jsoup", version.ref = "ktor-jsoup" }
 qrcode = { group = "io.github.g0dkar", name = "qrcode-kotlin-android", version.ref = "qrcode" }
 brotli = { group = "org.brotli", name = "dec", version.ref = "brotli" }
 
