@@ -48,17 +48,18 @@ class PlayerLoadControlTest {
     }
 
     @Test
-    fun `policy widens max buffer as heap grows`() {
-        // Then: 堆越大允许的时间上限越长
-        assertThat(PlayerLoadControl.policyFor(HEAP_LIMIT_192_MB).maxBufferMs).isEqualTo(20_000)
-        assertThat(PlayerLoadControl.policyFor(256L * MIB).maxBufferMs).isEqualTo(30_000)
-        assertThat(PlayerLoadControl.policyFor(512L * MIB).maxBufferMs).isEqualTo(40_000)
+    fun `policy uses flat max buffer window across heap sizes`() {
+        // Then: 时间上限不再按堆分档——真正的内存闸门是字节预算，
+        // 时间上限只负责吸收 CDN 的间歇性停顿，因此统一放宽到 60 秒
+        assertThat(PlayerLoadControl.policyFor(HEAP_LIMIT_192_MB).maxBufferMs).isEqualTo(60_000)
+        assertThat(PlayerLoadControl.policyFor(256L * MIB).maxBufferMs).isEqualTo(60_000)
+        assertThat(PlayerLoadControl.policyFor(512L * MIB).maxBufferMs).isEqualTo(60_000)
     }
 
     @Test
     fun `policy clamps target buffer bytes between floor and cap`() {
-        // Then: 极小堆取 16MiB 下限，极大堆取 96MiB 上限
-        assertThat(PlayerLoadControl.policyFor(48L * MIB).targetBufferBytes).isEqualTo(16 * MIB)
+        // Then: 极小堆取 32MiB 下限（低于此值连 1080P 的 60 秒窗都放不下），极大堆取 96MiB 上限
+        assertThat(PlayerLoadControl.policyFor(48L * MIB).targetBufferBytes).isEqualTo(32 * MIB)
         assertThat(PlayerLoadControl.policyFor(4L * 1024 * MIB).targetBufferBytes).isEqualTo(96 * MIB)
     }
 
@@ -91,8 +92,8 @@ class PlayerLoadControlTest {
         // Given: 先进入加载状态（缓冲未达最小值）
         loadControl.shouldContinueLoading(parameters(bufferedDurationUs = 1_000_000))
 
-        // When: 缓冲超过 20 秒上限
-        val loadingWhenFull = loadControl.shouldContinueLoading(parameters(bufferedDurationUs = 25_000_000))
+        // When: 缓冲超过 60 秒上限
+        val loadingWhenFull = loadControl.shouldContinueLoading(parameters(bufferedDurationUs = 65_000_000))
 
         // Then
         assertThat(loadingWhenFull).isFalse()
