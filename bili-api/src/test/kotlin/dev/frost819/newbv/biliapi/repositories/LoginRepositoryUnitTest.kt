@@ -272,6 +272,18 @@ class LoginRepositoryUnitTest {
         }
 
     @Test
+    fun `checkAppQrLoginState maps 48007 to Error with server message`() =
+        runTest {
+            coEvery { BiliPassportHttpApi.loginWithAppQR(any(), any(), any()) } returns
+                BiliResponse(code = 48007, message = "当前账号暂不支持在本APP登录")
+
+            val result = repository.checkAppQrLoginState("test-auth-code")
+
+            assertThat(result.state).isEqualTo(QrLoginState.Error)
+            assertThat(result.message).isEqualTo("当前账号无法登录")
+        }
+
+    @Test
     fun `checkAppQrLoginState returns Unknown for unrecognized response code`() =
         runTest {
             coEvery { BiliPassportHttpApi.loginWithAppQR(any(), any(), any()) } returns

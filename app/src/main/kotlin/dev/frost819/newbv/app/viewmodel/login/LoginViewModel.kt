@@ -160,6 +160,16 @@ class LoginViewModel
                                     cancelPolling()
                                 }
 
+                                QrLoginState.Error -> {
+                                    _uiState.update {
+                                        it.copy(
+                                            state = QrLoginState.Error,
+                                            errorMessage = result.message.ifBlank { "登录失败，请稍后重试" },
+                                        )
+                                    }
+                                    cancelPolling()
+                                }
+
                                 else -> {
                                     logger.warn { "Unknown QR login state: ${result.state}" }
                                 }

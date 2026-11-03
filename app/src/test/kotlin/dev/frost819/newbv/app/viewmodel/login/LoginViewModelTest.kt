@@ -235,6 +235,26 @@ class LoginViewModelTest {
         }
 
     @Test
+    fun `account not supported shows server message and stops polling`() =
+        runTest(testDispatcher) {
+            coEvery { loginRepository.requestAppQrLogin() } returns fakeQrData
+            coEvery { loginRepository.checkAppQrLoginState(any()) } returns
+                QrLoginResult(
+                    state = QrLoginState.Error,
+                    message = "当前账号无法登录",
+                )
+
+            viewModel.requestAppQrCode()
+            advanceTimeBy(1500)
+
+            assertThat(viewModel.uiState.value.state).isEqualTo(QrLoginState.Error)
+            assertThat(viewModel.uiState.value.errorMessage).isEqualTo("当前账号无法登录")
+
+            advanceTimeBy(5000)
+            coVerify(exactly = 1) { loginRepository.checkAppQrLoginState(any()) }
+        }
+
+    @Test
     fun `polling transitions through WaitingForConfirm`() =
         runTest(testDispatcher) {
             coEvery { loginRepository.requestAppQrLogin() } returns fakeQrData

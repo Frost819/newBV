@@ -18,12 +18,14 @@ data class QrLoginData(
  *
  * @param state 登录结果状态
  * @param cookies 登录成功的 cookies
+ * @param message 服务端返回的提示信息（失败时用于展示）
  */
 data class QrLoginResult(
     val state: QrLoginState,
     val accessToken: String? = null,
     val refreshToken: String? = null,
     val cookies: WebCookies? = null,
+    val message: String = "",
 )
 
 enum class QrLoginState {

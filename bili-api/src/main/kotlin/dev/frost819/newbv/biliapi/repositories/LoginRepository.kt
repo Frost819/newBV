@@ -11,6 +11,12 @@ import io.ktor.util.date.toJvmDate
 import java.util.Date
 import java.util.UUID
 
+/** B 站服务端返回：当前账号不支持 TV 端登录。 */
+private const val ACCOUNT_NOT_SUPPORTED = 48007
+
+/** 48007 的用户提示：说明是账号限制。 */
+private const val ACCOUNT_NOT_SUPPORTED_MESSAGE = "当前账号无法登录"
+
 class LoginRepository {
     /**
      * 请求扫码登录的二维码，仅支持 Http 接口使用
@@ -69,6 +75,7 @@ class LoginRepository {
             accessToken = null,
             refreshToken = null,
             cookies = resultCookies,
+            message = responseData.message,
         )
     }
 
@@ -159,6 +166,7 @@ class LoginRepository {
                 86039 -> QrLoginState.WaitingForScan
                 86090 -> QrLoginState.WaitingForConfirm
                 86038 -> QrLoginState.Expired
+                ACCOUNT_NOT_SUPPORTED -> QrLoginState.Error
                 else -> QrLoginState.Unknown
             }
         return QrLoginResult(
@@ -166,6 +174,12 @@ class LoginRepository {
             accessToken = response.data?.accessToken,
             refreshToken = response.data?.refreshToken,
             cookies = resultCookies,
+            message =
+                if (response.code == ACCOUNT_NOT_SUPPORTED) {
+                    ACCOUNT_NOT_SUPPORTED_MESSAGE
+                } else {
+                    response.message
+                },
         )
     }
 
