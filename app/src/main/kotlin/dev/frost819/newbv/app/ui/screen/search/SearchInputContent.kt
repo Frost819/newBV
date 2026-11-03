@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -36,6 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -69,6 +75,7 @@ fun SearchInputContent(
     onSearch: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val useSystemIme = Prefs.searchUseSystemIme
 
     Row(
         modifier =
@@ -78,11 +85,12 @@ fun SearchInputContent(
                 .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // 列 1：搜索框 + 软键盘
+        // 列 1：搜索框 + 软键盘（或系统输入法）
         SearchInputColumn(
             focusRequester = focusRequester,
             searchButtonModifier = Modifier.focusSaverItem(focusSaver, "search_button"),
             keyword = uiState.keyword,
+            useSystemIme = useSystemIme,
             onKeywordChange = { viewModel.updateKeyword(it) },
             onSearch = { onSearch(uiState.keyword) },
         )
@@ -118,9 +126,12 @@ private fun SearchInputColumn(
     focusRequester: FocusRequester,
     searchButtonModifier: Modifier,
     keyword: String,
+    useSystemIme: Boolean,
     onKeywordChange: (String) -> Unit,
     onSearch: () -> Unit,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     androidx.compose.foundation.layout.Box(
         modifier =
             Modifier
@@ -134,11 +145,24 @@ private fun SearchInputColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             OutlinedTextField(
-                modifier = Modifier.width(258.dp),
+                modifier =
+                    Modifier
+                        .width(258.dp)
+                        // 系统输入法模式下，进入搜索页的焦点直接给输入框，从而拉起 IME
+                        .then(if (useSystemIme) Modifier.focusRequester(focusRequester) else Modifier)
+                        .onFocusChanged { state ->
+                            when (SearchImePolicy.onFocusChanged(useSystemIme, state.isFocused)) {
+                                SearchImeAction.Show -> keyboardController?.show()
+                                SearchImeAction.Hide -> keyboardController?.hide()
+                                SearchImeAction.None -> Unit
+                            }
+                        },
                 value = keyword,
                 onValueChange = onKeywordChange,
-                maxLines = 1,
+                singleLine = true,
                 shape = MaterialTheme.shapes.large,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
                 colors =
                     OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -149,18 +173,28 @@ private fun SearchInputColumn(
                     ),
                 placeholder = { Text("搜索") },
             )
-            SoftKeyboard(
-                firstButtonFocusRequester = focusRequester,
-                searchButtonModifier = searchButtonModifier,
-                onClick = { onKeywordChange(keyword + it) },
-                onClear = { onKeywordChange("") },
-                onDelete = {
-                    if (keyword.isNotEmpty()) {
-                        onKeywordChange(keyword.dropLast(1))
-                    }
-                },
-                onSearch = onSearch,
-            )
+            if (!useSystemIme) {
+                SoftKeyboard(
+                    firstButtonFocusRequester = focusRequester,
+                    searchButtonModifier = searchButtonModifier,
+                    onClick = { onKeywordChange(keyword + it) },
+                    onClear = { onKeywordChange("") },
+                    onDelete = {
+                        if (keyword.isNotEmpty()) {
+                            onKeywordChange(keyword.dropLast(1))
+                        }
+                    },
+                    onSearch = onSearch,
+                )
+            } else {
+                // 系统输入法模式：用可见按钮提供「搜索」入口（输入框回车也会触发搜索）
+                androidx.tv.material3.Button(
+                    modifier = searchButtonModifier,
+                    onClick = onSearch,
+                ) {
+                    Text("搜索")
+                }
+            }
         }
     }
 }

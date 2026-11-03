@@ -75,6 +75,9 @@ internal object PrefKeys {
     val firstHomeTopNavItem = intPreferencesKey("first_home_top_nav")
     val firstPersonalTopNavItem = intPreferencesKey("first_personal_top_nav")
     val showHotword = booleanPreferencesKey("shw")
+
+    /** 搜索页使用系统输入法（默认关闭，使用自绘软键盘）。 */
+    val searchUseSystemIme = booleanPreferencesKey("search_sys_ime")
     val themeMode = intPreferencesKey("theme_mode")
 
     // ===== 存储设置 =====

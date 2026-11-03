@@ -47,6 +47,7 @@ fun OtherSetting(
     var showPreferedApiDialog by remember { mutableStateOf(false) }
     var selectedApi by remember { mutableStateOf(Prefs.apiType) }
     var crashReportEnabled by remember { mutableStateOf(Prefs.crashReportEnabled) }
+    var searchUseSystemIme by remember { mutableStateOf(Prefs.searchUseSystemIme) }
 
     Column(
         modifier =
@@ -67,6 +68,24 @@ fun OtherSetting(
             title = "接口选择",
             supportText = "当前：${selectedApi.displayName}",
             onClick = { showPreferedApiDialog = true },
+        )
+
+        SettingListItem(
+            title = "搜索使用系统输入法",
+            supportText = "关闭时使用自绘软键盘；打开后搜索页唤起系统输入法（可用中文/语音/手机遥控输入）",
+            trailingContent = {
+                Switch(
+                    checked = searchUseSystemIme,
+                    onCheckedChange = {
+                        searchUseSystemIme = it
+                        Prefs.searchUseSystemIme = it
+                    },
+                )
+            },
+            onClick = {
+                searchUseSystemIme = !searchUseSystemIme
+                Prefs.searchUseSystemIme = searchUseSystemIme
+            },
         )
 
         SettingListItem(

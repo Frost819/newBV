@@ -386,6 +386,9 @@ object Prefs {
     /** 显示搜索热词。 */
     var showHotword by pref(PrefKeys.showHotword, true)
 
+    /** 搜索页是否使用系统输入法（true 时隐藏自绘软键盘，改为唤起系统 IME）。 */
+    var searchUseSystemIme by pref(PrefKeys.searchUseSystemIme, false)
+
     /** 主题模式（跟随系统/深色/浅色）。 */
     var themeMode by pref(
         PrefKeys.themeMode,
