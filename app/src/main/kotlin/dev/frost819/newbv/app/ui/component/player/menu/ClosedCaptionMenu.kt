@@ -8,6 +8,7 @@ import dev.frost819.newbv.app.ui.component.player.menu.component.StepLessMenuIte
 import dev.frost819.newbv.app.viewmodel.player.MenuFocusState
 import dev.frost819.newbv.app.viewmodel.player.VideoPlayerClosedCaptionMenuItem
 import dev.frost819.newbv.biliapi.entity.video.Subtitle
+import dev.frost819.newbv.biliapi.entity.video.SubtitleType
 
 /**
  * 字幕设置面板。
@@ -52,10 +53,7 @@ fun ClosedCaptionMenuList(
             VideoPlayerClosedCaptionMenuItem.Switch ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items =
-                        availableSubtitleTracks.map { subtitle ->
-                            if (subtitle.id == -1L) "关闭" else subtitle.langDoc
-                        },
+                    items = availableSubtitleTracks.map { it.toMenuLabel() },
                     selected = availableSubtitleTracks.indexOfFirst { it.id == currentSubtitleId },
                     onSelectedChanged = { onSubtitleChange(availableSubtitleTracks[it]) },
                     onFocusBackToParent = backToMenu,
@@ -95,4 +93,25 @@ fun ClosedCaptionMenuList(
                 )
         }
     }
+}
+
+/**
+ * 字幕轨道在设置菜单中的显示名称。
+ *
+ * B 站返回的 `langDoc` 对 AI 字幕会带「（自动生成）」「（自动翻译）」后缀，
+ * 与人工字幕的语言名混在一起时难以区分。这里去掉这类后缀，再按字幕类型
+ * 补上 `(AI)` 标记，与 BV 原版行为保持一致。
+ *
+ * @return 菜单显示文案；[Subtitle.id] 为 -1 的占位轨道显示「关闭」
+ */
+internal fun Subtitle.toMenuLabel(): String {
+    if (id == -1L) return "关闭"
+
+    val languageName =
+        langDoc
+            .replace("（自动生成）", "")
+            .replace("（自动翻译）", "")
+            .trim()
+
+    return if (type == SubtitleType.AI) "$languageName(AI)" else languageName
 }
