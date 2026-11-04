@@ -438,10 +438,22 @@ object LiveDataWebSocket {
                             ?.jsonPrimitive
                             ?.content
                 }
+                // 弹幕属性 info[0] = [?, mode, fontsize, color, timestamp, ...]：
+                // [1] mode 决定滚动/顶部/底部展示，[3] color 为身份弹幕（舰长等）自定义色；
+                // 部分消息变体缺省该数组，失败时回退滚动白色
+                var mode = 1
+                var color = 0xFFFFFF
+                runCatching {
+                    val attr = dataJson["info"]!!.jsonArray[0].jsonArray
+                    mode = attr[1].jsonPrimitive.int
+                    color = attr[3].jsonPrimitive.int
+                }
                 DanmakuEvent(
                     content = danmakuContent,
                     mid = senderMid,
                     username = senderUsername,
+                    mode = mode,
+                    color = color,
                     medalName = medalName,
                     medalLevel = medalLevel,
                 )

@@ -129,8 +129,14 @@ fun NavGraphBuilder.livePlayerScreen(navController: NavController) {
                 cover = route.cover,
             )
             danmakuViewModel.init()
+            // 直播也应用账号云端屏蔽规则：进入房间即拉取，发送路径逐条过滤
+            danmakuViewModel.prepareForLive()
             viewModel.initVideoPlayer(context)
-            viewModel.loadLive(route.roomId, danmakuViewModel.danmakuPlayer)
+            viewModel.loadLive(
+                roomId = route.roomId,
+                danmakuPlayer = danmakuViewModel.danmakuPlayer,
+                danmakuFilter = danmakuViewModel::shouldDropLiveDanmaku,
+            )
         }
 
         DisposableEffect(Unit) {

@@ -610,6 +610,12 @@ fun VideoPlayerController(
                 onDanmakuSpeedFactorChange = { onDanmakuSettingChange(DanmakuSettingAction.SetSpeedFactor(it)) },
                 onDanmakuAreaChange = { onDanmakuSettingChange(DanmakuSettingAction.SetArea(it)) },
                 onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
+                onDanmakuBlockColorfulChange = { onDanmakuSettingChange(DanmakuSettingAction.SetBlockColorful(it)) },
+                onDanmakuBlockRepeatChange = { onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeat(it)) },
+                onDanmakuBlockByUserFilterChange = {
+                    onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilter(it))
+                },
+                onDanmakuAiCloudLevelChange = { onDanmakuSettingChange(DanmakuSettingAction.SetAiCloudLevel(it)) },
                 onSubtitleChange = { subtitle -> onSubtitleChange(subtitle) },
                 onSubtitleSizeChange = { onSubtitleSettingChange(SubtitleSettingAction.SetFontSize(it)) },
                 onSubtitleBackgroundOpacityChange = { onSubtitleSettingChange(SubtitleSettingAction.SetOpacity(it)) },

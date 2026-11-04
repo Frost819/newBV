@@ -84,6 +84,10 @@ fun MenuController(
     onDanmakuSpeedFactorChange: (Float) -> Unit,
     onDanmakuAreaChange: (Float) -> Unit,
     onDanmakuMaskChange: (Boolean) -> Unit = {},
+    onDanmakuBlockColorfulChange: (Boolean) -> Unit = {},
+    onDanmakuBlockRepeatChange: (Boolean) -> Unit = {},
+    onDanmakuBlockByUserFilterChange: (Boolean) -> Unit = {},
+    onDanmakuAiCloudLevelChange: (Int) -> Unit = {},
     onSubtitleChange: (Subtitle) -> Unit,
     onSubtitleSizeChange: (Int) -> Unit,
     onSubtitleBackgroundOpacityChange: (Float) -> Unit,
@@ -123,6 +127,10 @@ fun MenuController(
                 onDanmakuSpeedFactorChange = onDanmakuSpeedFactorChange,
                 onDanmakuAreaChange = onDanmakuAreaChange,
                 onDanmakuMaskChange = onDanmakuMaskChange,
+                onDanmakuBlockColorfulChange = onDanmakuBlockColorfulChange,
+                onDanmakuBlockRepeatChange = onDanmakuBlockRepeatChange,
+                onDanmakuBlockByUserFilterChange = onDanmakuBlockByUserFilterChange,
+                onDanmakuAiCloudLevelChange = onDanmakuAiCloudLevelChange,
                 onSubtitleChange = onSubtitleChange,
                 onSubtitleSizeChange = onSubtitleSizeChange,
                 onSubtitleBackgroundOpacityChange = onSubtitleBackgroundOpacityChange,
@@ -150,6 +158,10 @@ private fun MenuControllerContent(
     onDanmakuSpeedFactorChange: (Float) -> Unit,
     onDanmakuAreaChange: (Float) -> Unit,
     onDanmakuMaskChange: (Boolean) -> Unit,
+    onDanmakuBlockColorfulChange: (Boolean) -> Unit,
+    onDanmakuBlockRepeatChange: (Boolean) -> Unit,
+    onDanmakuBlockByUserFilterChange: (Boolean) -> Unit,
+    onDanmakuAiCloudLevelChange: (Int) -> Unit,
     onSubtitleChange: (Subtitle) -> Unit,
     onSubtitleSizeChange: (Int) -> Unit,
     onSubtitleBackgroundOpacityChange: (Float) -> Unit,
@@ -186,6 +198,10 @@ private fun MenuControllerContent(
                     onDanmakuSpeedFactorChange = onDanmakuSpeedFactorChange,
                     onDanmakuAreaChange = onDanmakuAreaChange,
                     onDanmakuMaskChange = onDanmakuMaskChange,
+                    onDanmakuBlockColorfulChange = onDanmakuBlockColorfulChange,
+                    onDanmakuBlockRepeatChange = onDanmakuBlockRepeatChange,
+                    onDanmakuBlockByUserFilterChange = onDanmakuBlockByUserFilterChange,
+                    onDanmakuAiCloudLevelChange = onDanmakuAiCloudLevelChange,
                     onFocusStateChange = { focusState = it },
                     onSubtitleChange = onSubtitleChange,
                     onSubtitleSizeChange = onSubtitleSizeChange,
@@ -235,6 +251,10 @@ private fun MenuList(
     onDanmakuSpeedFactorChange: (Float) -> Unit,
     onDanmakuAreaChange: (Float) -> Unit,
     onDanmakuMaskChange: (Boolean) -> Unit,
+    onDanmakuBlockColorfulChange: (Boolean) -> Unit,
+    onDanmakuBlockRepeatChange: (Boolean) -> Unit,
+    onDanmakuBlockByUserFilterChange: (Boolean) -> Unit,
+    onDanmakuAiCloudLevelChange: (Int) -> Unit,
     onFocusStateChange: (MenuFocusState) -> Unit,
     onSubtitleChange: (Subtitle) -> Unit,
     onSubtitleSizeChange: (Int) -> Unit,
@@ -289,6 +309,20 @@ private fun MenuList(
                     onDanmakuMaskChange = onDanmakuMaskChange,
                 )
             }
+
+            VideoPlayerMenuNavItem.DanmakuFilter ->
+                DanmakuFilterMenuList(
+                    currentBlockColorful = uiState.danmakuState.blockColorful,
+                    currentBlockRepeat = uiState.danmakuState.blockRepeat,
+                    currentBlockByUserFilter = uiState.danmakuState.blockByUserFilter,
+                    currentAiCloudLevel = uiState.danmakuState.aiCloudLevel,
+                    userFilterRuleCount = uiState.danmakuState.userFilterRuleCount,
+                    onDanmakuBlockColorfulChange = onDanmakuBlockColorfulChange,
+                    onDanmakuBlockRepeatChange = onDanmakuBlockRepeatChange,
+                    onDanmakuBlockByUserFilterChange = onDanmakuBlockByUserFilterChange,
+                    onDanmakuAiCloudLevelChange = onDanmakuAiCloudLevelChange,
+                    onFocusStateChange = onFocusStateChange,
+                )
 
             VideoPlayerMenuNavItem.ClosedCaption -> {
                 val subtitleTracks =
