@@ -276,7 +276,6 @@ private fun LiveMenuList(
                         ),
                     currentBlockColorful = danmakuState.blockColorful,
                     currentBlockRepeat = danmakuState.blockRepeat,
-                    currentBlockSpecial = danmakuState.blockSpecial,
                     currentBlockByUserFilter = danmakuState.blockByUserFilter,
                     currentAiCloudLevel = danmakuState.aiCloudLevel,
                     userFilterRuleCount = danmakuState.userFilterRuleCount,
@@ -285,9 +284,6 @@ private fun LiveMenuList(
                     },
                     onDanmakuBlockRepeatChange = {
                         onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeat(it))
-                    },
-                    onDanmakuBlockSpecialChange = {
-                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockSpecial(it))
                     },
                     onDanmakuBlockByUserFilterChange = {
                         onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilter(it))

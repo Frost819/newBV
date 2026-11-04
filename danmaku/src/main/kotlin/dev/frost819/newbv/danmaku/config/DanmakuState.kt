@@ -16,7 +16,6 @@ import dev.frost819.newbv.danmaku.entity.DanmakuType
  * 以及弹幕屏蔽/过滤相关参数：
  * - [blockColorful] 是否屏蔽彩色弹幕（默认 false）
  * - [blockRepeat] 是否屏蔽重复弹幕（默认 false）
- * - [blockSpecial] 是否屏蔽高级弹幕（默认 false）
  * - [blockByUserFilter] 是否应用账号云端屏蔽规则（关键词/正则/用户，默认 true）
  * - [aiCloudLevel] AI 智能云屏蔽等级（0 关闭，1-10 等级递增，直接作为 weight 阈值；默认 0）
  * - [userFilterRuleCount] 已加载的账号云端屏蔽规则条数（仅用于菜单展示）
@@ -35,7 +34,6 @@ data class DanmakuState(
         ),
     val blockColorful: Boolean = false,
     val blockRepeat: Boolean = false,
-    val blockSpecial: Boolean = false,
     val blockByUserFilter: Boolean = true,
     /**
      * AI 云屏蔽等级，直接作为丢弃阈值使用（weight 低于该值的弹幕被过滤）。

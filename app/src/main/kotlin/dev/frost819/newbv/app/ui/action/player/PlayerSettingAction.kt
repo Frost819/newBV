@@ -44,11 +44,6 @@ sealed interface DanmakuSettingAction {
         val enabled: Boolean,
     ) : DanmakuSettingAction
 
-    /** 屏蔽高级弹幕（mode 7/8/9）。 */
-    data class SetBlockSpecial(
-        val enabled: Boolean,
-    ) : DanmakuSettingAction
-
     /** 启用账号云端屏蔽规则（关键词/正则/用户）。 */
     data class SetBlockByUserFilter(
         val enabled: Boolean,

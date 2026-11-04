@@ -330,9 +330,6 @@ object Prefs {
     /** 默认屏蔽重复弹幕开关。 */
     var defaultDanmakuBlockRepeat by pref(PrefKeys.defaultDanmakuBlockRepeat, false)
 
-    /** 默认屏蔽高级弹幕开关。 */
-    var defaultDanmakuBlockSpecial by pref(PrefKeys.defaultDanmakuBlockSpecial, false)
-
     /** 默认账号云端屏蔽规则开关。 */
     var defaultDanmakuBlockByUserFilter by pref(PrefKeys.defaultDanmakuBlockByUserFilter, true)
 

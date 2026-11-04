@@ -59,7 +59,6 @@ internal object PrefKeys {
     val defaultDanmakuMask = booleanPreferencesKey("prefer_enable_webmark")
     val defaultDanmakuBlockColorful = booleanPreferencesKey("dbc")
     val defaultDanmakuBlockRepeat = booleanPreferencesKey("dbr")
-    val defaultDanmakuBlockSpecial = booleanPreferencesKey("dbs")
     val defaultDanmakuBlockByUserFilter = booleanPreferencesKey("dbu")
     val defaultDanmakuAiCloudLevel = intPreferencesKey("dai")
     val danmakuBiliFilterSynced = booleanPreferencesKey("dbfs")

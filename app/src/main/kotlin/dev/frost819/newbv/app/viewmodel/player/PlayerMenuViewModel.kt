@@ -116,7 +116,6 @@ enum class VideoPlayerDanmakuFilterMenuItem(
 ) {
     BlockColorful("屏蔽彩色弹幕"),
     BlockRepeat("合并重复弹幕"),
-    BlockSpecial("屏蔽高级弹幕"),
     BlockByUserFilter("账号屏蔽规则"),
     AiCloudLevel("AI 云屏蔽等级"),
 }

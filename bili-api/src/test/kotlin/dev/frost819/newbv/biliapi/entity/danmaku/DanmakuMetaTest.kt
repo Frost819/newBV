@@ -37,7 +37,6 @@ class DanmakuMetaTest {
                         blockscroll = false
                         blockbottom = false
                         blockcolor = true
-                        blockspecial = true
                         aiSwitch = false
                         aiLevel = 2
                         aiLevelV2 = 1
@@ -60,7 +59,6 @@ class DanmakuMetaTest {
         assertThat(config.blockScroll).isFalse()
         assertThat(config.blockBottom).isFalse()
         assertThat(config.blockColor).isTrue()
-        assertThat(config.blockSpecial).isTrue()
         // recSwitch=1 优先于 playerConfig.aiSwitch
         assertThat(config.aiSwitch).isTrue()
         // recFlag 优先于 playerConfig.aiLevel
@@ -82,7 +80,6 @@ class DanmakuMetaTest {
         assertThat(config.aiLevel).isEqualTo(7)
         assertThat(config.aiSwitch).isFalse()
         assertThat(config.blockColor).isFalse()
-        assertThat(config.blockSpecial).isFalse()
     }
 
     @Test

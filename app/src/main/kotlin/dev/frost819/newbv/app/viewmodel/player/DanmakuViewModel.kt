@@ -107,7 +107,6 @@ class DanmakuViewModel
                     enabledTypes = Prefs.defaultDanmakuTypes.map { it.toDanmakuEntity() },
                     blockColorful = Prefs.defaultDanmakuBlockColorful,
                     blockRepeat = Prefs.defaultDanmakuBlockRepeat,
-                    blockSpecial = Prefs.defaultDanmakuBlockSpecial,
                     blockByUserFilter = Prefs.defaultDanmakuBlockByUserFilter,
                     aiCloudLevel = Prefs.defaultDanmakuAiCloudLevel,
                 ),
@@ -464,7 +463,6 @@ class DanmakuViewModel
                                 "aiDropped=${filterStats.aiDropped}, aiScored=${filterStats.aiScored}, " +
                                 "weightRange=${filterStats.minWeight}..${filterStats.maxWeight}, " +
                                 "aiLevel=${_danmakuState.value.aiCloudLevel}, " +
-                                "blockSpecial=${_danmakuState.value.blockSpecial}, " +
                                 "blockRepeat=${_danmakuState.value.blockRepeat}, " +
                                 "blockUserFilter=${_danmakuState.value.blockByUserFilter}"
                         }
@@ -579,7 +577,8 @@ class DanmakuViewModel
                     stats.minWeight = minOf(stats.minWeight, item.level)
                     stats.maxWeight = maxOf(stats.maxWeight, item.level)
                 }
-                if (state.blockSpecial && item.type in SPECIAL_DANMAKU_MODES) {
+                // 高级(7)/代码(8)/BAS(9) 弹幕引擎无渲染器，落到滚动等于把原始 JSON/JS/BAS 当文本滚屏，直接丢弃
+                if (item.type in SPECIAL_DANMAKU_MODES) {
                     stats.specialDropped++
                     continue
                 }
@@ -701,7 +700,6 @@ class DanmakuViewModel
                     is DanmakuSettingAction.SetEnabledTypes -> old.copy(enabledTypes = action.types)
                     is DanmakuSettingAction.SetBlockColorful -> old.copy(blockColorful = action.enabled)
                     is DanmakuSettingAction.SetBlockRepeat -> old.copy(blockRepeat = action.enabled)
-                    is DanmakuSettingAction.SetBlockSpecial -> old.copy(blockSpecial = action.enabled)
                     is DanmakuSettingAction.SetBlockByUserFilter ->
                         old.copy(blockByUserFilter = action.enabled)
 
@@ -721,15 +719,12 @@ class DanmakuViewModel
                 logger.info {
                     "Danmaku filter changed: $action, " +
                         "colorful=${new.blockColorful}, repeat=${new.blockRepeat}, " +
-                        "special=${new.blockSpecial}, aiCloudLevel=${new.aiCloudLevel}"
+                        "aiCloudLevel=${new.aiCloudLevel}"
                 }
                 // blockRepeat 只改 DuplicateMergedFilter.enable（热切换），无需重载分段
             } else {
                 if (new.blockByUserFilter != old.blockByUserFilter) {
                     reloadCurrentSegments("blockByUserFilter")
-                }
-                if (new.blockSpecial != old.blockSpecial) {
-                    reloadCurrentSegments("blockSpecial")
                 }
                 if (new.aiCloudLevel != old.aiCloudLevel) {
                     reloadCurrentSegments("aiCloudLevel")
@@ -773,7 +768,6 @@ class DanmakuViewModel
             }
             if (new.blockColorful != old.blockColorful) Prefs.defaultDanmakuBlockColorful = new.blockColorful
             if (new.blockRepeat != old.blockRepeat) Prefs.defaultDanmakuBlockRepeat = new.blockRepeat
-            if (new.blockSpecial != old.blockSpecial) Prefs.defaultDanmakuBlockSpecial = new.blockSpecial
             if (new.blockByUserFilter != old.blockByUserFilter) {
                 Prefs.defaultDanmakuBlockByUserFilter = new.blockByUserFilter
             }
@@ -832,7 +826,7 @@ class DanmakuViewModel
                 "Danmaku filter chain rebuilt: " +
                     "filters=${dataFilters.map { it.javaClass.simpleName }}, " +
                     "types=$types, blockColorful=${state.blockColorful}, " +
-                    "blockRepeat=${state.blockRepeat}, blockSpecial=${state.blockSpecial}, " +
+                    "blockRepeat=${state.blockRepeat}, " +
                     "aiCloudLevel=${state.aiCloudLevel}"
             }
         }
@@ -975,8 +969,6 @@ class DanmakuViewModel
                     // 仅当服务端明确屏蔽（false）时启用本地屏蔽；用户本地已开的屏蔽保留
                     blockColorful =
                         if (config.hasPlayerConfig && !config.blockColor) true else current.blockColorful,
-                    blockSpecial =
-                        if (config.hasPlayerConfig && !config.blockSpecial) true else current.blockSpecial,
                     aiCloudLevel =
                         if (config.aiSwitch && (config.aiLevel > 0 || config.aiLevelV2 > 0)) {
                             (config.aiLevel.takeIf { it > 0 } ?: config.aiLevelV2)
@@ -992,7 +984,6 @@ class DanmakuViewModel
             _danmakuState.update { mergedState }
             Prefs.defaultDanmakuTypes = mergedState.enabledTypes.map { it.toDataDanmakuType() }
             Prefs.defaultDanmakuBlockColorful = mergedState.blockColorful
-            Prefs.defaultDanmakuBlockSpecial = mergedState.blockSpecial
             Prefs.defaultDanmakuAiCloudLevel = mergedState.aiCloudLevel
             initDanmakuConfig()
             logger.info { "Applied Bili danmaku filter config: $config" }
@@ -1058,7 +1049,12 @@ class DanmakuViewModel
             /** 重试退避基数（毫秒），按指数递增：1s、2s。 */
             private const val RETRY_BACKOFF_BASE_MS = 1_000L
 
-            /** 高级(7)/代码(8)/BAS(9) 弹幕，引擎无对应渲染器。 */
+            /**
+             * 高级(7)/代码(8)/BAS(9) 弹幕，引擎无对应渲染器。
+             *
+             * 不做成用户开关：这些弹幕一旦按滚动文本渲染就是原始 JSON/JS/BAS 源码，
+             * 没有「保留」的合理场景，直接丢弃。
+             */
             private val SPECIAL_DANMAKU_MODES = setOf(7, 8, 9)
 
             /** 重复弹幕合并的时间窗（秒），窗口内相同文本的弹幕合并为一条。 */

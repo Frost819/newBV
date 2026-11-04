@@ -612,7 +612,6 @@ fun VideoPlayerController(
                 onDanmakuMaskChange = { onDanmakuSettingChange(DanmakuSettingAction.SetMaskEnabled(it)) },
                 onDanmakuBlockColorfulChange = { onDanmakuSettingChange(DanmakuSettingAction.SetBlockColorful(it)) },
                 onDanmakuBlockRepeatChange = { onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeat(it)) },
-                onDanmakuBlockSpecialChange = { onDanmakuSettingChange(DanmakuSettingAction.SetBlockSpecial(it)) },
                 onDanmakuBlockByUserFilterChange = {
                     onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilter(it))
                 },

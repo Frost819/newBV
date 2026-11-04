@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +70,6 @@ class DanmakuViewModelTest {
             )
         every { Prefs.defaultDanmakuBlockColorful } returns false
         every { Prefs.defaultDanmakuBlockRepeat } returns false
-        every { Prefs.defaultDanmakuBlockSpecial } returns false
         every { Prefs.defaultDanmakuBlockByUserFilter } returns true
         every { Prefs.defaultDanmakuAiCloudLevel } returns 0
         every { Prefs.danmakuBiliFilterSynced } returns false
@@ -82,7 +82,6 @@ class DanmakuViewModelTest {
         every { Prefs.defaultDanmakuTypes = any() } answers {}
         every { Prefs.defaultDanmakuBlockColorful = any() } answers {}
         every { Prefs.defaultDanmakuBlockRepeat = any() } answers {}
-        every { Prefs.defaultDanmakuBlockSpecial = any() } answers {}
         every { Prefs.defaultDanmakuBlockByUserFilter = any() } answers {}
         every { Prefs.defaultDanmakuAiCloudLevel = any() } answers {}
         every { Prefs.danmakuBiliFilterSynced = any() } answers {}
@@ -362,9 +361,10 @@ class DanmakuViewModelTest {
     private fun fakeDanmakuData(
         dmid: Long,
         timeSec: Float,
+        type: Int = 1,
     ) = DanmakuData(
         time = timeSec,
-        type = 1,
+        type = type,
         size = 25,
         color = 0xFFFFFF,
         timestamp = 0,
@@ -689,6 +689,33 @@ class DanmakuViewModelTest {
         assertThat(merged.all { it.mergedType == DanmakuItemData.MERGED_TYPE_NORMAL }).isTrue()
     }
 
+    // === 高级/代码/BAS 弹幕过滤 ===
+
+    @Test
+    fun `special danmaku modes are always dropped regardless of settings`() =
+        runTest(testDispatcher) {
+            // mode 7/8/9 引擎无渲染器，落到滚动就是原始 JSON/JS/BAS 源码，不应依赖任何开关
+            val player = mockk<DanmakuPlayer>(relaxed = true)
+            viewModel.danmakuPlayer = player
+            // 只声明 1 个分段，避免预取段再触发一次 updateData
+            coEvery { videoPlayRepository.getDanmakuMeta(any(), any()) } returns
+                DanmakuMeta(360_000, 1, false, 100)
+            coEvery { videoPlayRepository.getDanmakuSegment(any(), any(), any(), any()) } returns
+                listOf(
+                    fakeDanmakuData(dmid = 1, timeSec = 1f),
+                    fakeDanmakuData(dmid = 2, timeSec = 2f, type = 7),
+                    fakeDanmakuData(dmid = 3, timeSec = 3f, type = 8),
+                    fakeDanmakuData(dmid = 4, timeSec = 4f, type = 9),
+                )
+
+            viewModel.loadDanmaku(aid = 1, cid = 2)
+            advanceUntilIdle()
+
+            val slot = slot<List<DanmakuItemData>>()
+            verify { player.updateData(capture(slot)) }
+            assertThat(slot.captured.map { it.content }).containsExactly("dm-1")
+        }
+
     // === B 站过滤配置同步门控 ===
 
     @Test
@@ -793,7 +820,6 @@ class DanmakuViewModelTest {
                     blockScroll = true,
                     blockBottom = true,
                     blockColor = true,
-                    blockSpecial = true,
                     hasValidConfig = true,
                     hasPlayerConfig = true,
                 )
@@ -809,7 +835,6 @@ class DanmakuViewModelTest {
             val state = viewModel.danmakuState.value
             assertThat(state.enabledTypes).isNotEmpty()
             assertThat(state.blockColorful).isFalse()
-            assertThat(state.blockSpecial).isFalse()
         }
 
     @Test
