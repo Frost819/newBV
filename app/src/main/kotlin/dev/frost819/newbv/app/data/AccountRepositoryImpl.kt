@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.data
 
+import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
@@ -27,6 +28,7 @@ import javax.inject.Singleton
  *
  * @property userDao Room DAO。
  * @property authRepository bili-api 鉴权状态。
+ * @property danmakuFilterRepository 账号云端弹幕屏蔽规则缓存（账号变化时通知失效）。
  */
 @Singleton
 class AccountRepositoryImpl
@@ -35,6 +37,7 @@ class AccountRepositoryImpl
         private val userDao: UserDao,
         private val authRepository: AuthRepository,
         private val channelRepository: ChannelRepository,
+        private val danmakuFilterRepository: DanmakuFilterRepository,
     ) : AccountRepository {
         /** UI 状态：当前登录用户信息。 */
         private val _uiState = MutableStateFlow(AccountUiState())
@@ -146,6 +149,8 @@ class AccountRepositoryImpl
                 biliJct = authData.biliJct,
                 accessToken = authData.accessToken,
             )
+            // 换号后云端弹幕屏蔽规则必须按新账号重拉
+            danmakuFilterRepository.onAccountChanged(authData.uid)
             _uiState.update {
                 it.copy(
                     isLogin = true,
@@ -184,6 +189,7 @@ class AccountRepositoryImpl
                 biliJct = authData.biliJct,
                 accessToken = authData.accessToken,
             )
+            danmakuFilterRepository.onAccountChanged(authData.uid)
             _uiState.update {
                 it.copy(
                     isLogin = true,
@@ -255,6 +261,7 @@ class AccountRepositoryImpl
                 biliJct = null
                 accessToken = null
             }
+            danmakuFilterRepository.onAccountChanged(null)
             channelRepository.close()
             _uiState.value = AccountUiState()
         }

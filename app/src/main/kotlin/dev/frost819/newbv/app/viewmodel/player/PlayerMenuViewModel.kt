@@ -81,11 +81,11 @@ enum class VideoPlayerMenuNavItem(
     val displayName: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
 ) {
-    PlaySpeed("倍速", Icons.Outlined.Speed),
-    Picture("画质", Icons.Outlined.Image),
-    Danmaku("弹幕", Icons.Outlined.ClearAll),
-    DanmakuFilter("屏蔽", Icons.Outlined.Block),
-    ClosedCaption("字幕", Icons.Outlined.ClosedCaption),
+    PlaySpeed("倍速播放", Icons.Outlined.Speed),
+    Picture("画质设置", Icons.Outlined.Image),
+    Danmaku("弹幕设置", Icons.Outlined.ClearAll),
+    DanmakuFilter("弹幕屏蔽", Icons.Outlined.Block),
+    ClosedCaption("字幕设置", Icons.Outlined.ClosedCaption),
 }
 
 /** 画质设置子项。 */
@@ -117,7 +117,7 @@ enum class VideoPlayerDanmakuFilterMenuItem(
     BlockColorful("屏蔽彩色弹幕"),
     BlockRepeat("合并重复弹幕"),
     BlockByUserFilter("账号屏蔽规则"),
-    AiCloudLevel("AI 云屏蔽等级"),
+    AiCloudLevel("AI 云屏蔽"),
 }
 
 /** 字幕设置子项。 */

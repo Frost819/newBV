@@ -20,7 +20,6 @@ import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.biliapi.grpc.utils.handleGrpcException
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuData
-import dev.frost819.newbv.biliapi.http.entity.danmaku.DanmakuFilterRule
 import dev.frost819.newbv.biliapi.http.entity.danmaku.toDanmakuDataList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -339,9 +338,6 @@ class VideoPlayRepository(
                     reply.toDanmakuDataList()
                 }
         }
-
-    /** 获取用户云端弹幕屏蔽规则（关键词 / 正则 / 用户）；失败由调用方降级处理。 */
-    suspend fun getDanmakuFilterRules(): List<DanmakuFilterRule> = BiliHttpApi.getDanmakuFilterRules()
 
     suspend fun getDanmakuMask(
         aid: Long,

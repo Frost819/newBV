@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.kuaishou.akdanmaku.data.DanmakuItemData
 import com.kuaishou.akdanmaku.ui.DanmakuPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.ui.component.livecard.formatOnlineCount
 import dev.frost819.newbv.app.ui.state.live.LivePlayerState
 import dev.frost819.newbv.app.ui.state.live.LivePlayerUiState
@@ -61,6 +62,7 @@ class LivePlayerViewModel
         private val liveRepository: LiveRepository,
         private val exoPlayerFactory: ExoPlayerFactory,
         private val videoCapabilityProvider: VideoCapabilityProvider,
+        private val danmakuFilterRepository: DanmakuFilterRepository,
     ) : ViewModel() {
         private val logger = Loggers.get("LivePlayerViewModel")
 
@@ -68,9 +70,6 @@ class LivePlayerViewModel
             private set
 
         private var danmakuPlayer: DanmakuPlayer? = null
-
-        /** 直播弹幕单条过滤函数（账号云端屏蔽规则），由 [loadLive] 注入。 */
-        private var danmakuFilter: ((content: String, mid: Long) -> Boolean)? = null
 
         private val _uiState = MutableStateFlow(LivePlayerUiState())
         val uiState: StateFlow<LivePlayerUiState> = _uiState.asStateFlow()
@@ -172,15 +171,14 @@ class LivePlayerViewModel
          *
          * @param roomId 房间号
          * @param danmakuPlayer 弹幕播放器实例（由 DanmakuViewModel 提供）
-         * @param danmakuFilter 直播弹幕单条过滤函数，返回 true 表示丢弃
          */
         fun loadLive(
             roomId: Long,
             danmakuPlayer: DanmakuPlayer? = null,
-            danmakuFilter: ((content: String, mid: Long) -> Boolean)? = null,
         ) {
             this.danmakuPlayer = danmakuPlayer
-            this.danmakuFilter = danmakuFilter
+            // 账号云端屏蔽规则通常已在 App 启动时预热；这里兜底补拉，失败不阻塞直播
+            danmakuFilterRepository.prefetch()
             loadLiveInternal(roomId)
         }
 
@@ -337,8 +335,9 @@ class LivePlayerViewModel
          * 处理直播弹幕事件。
          *
          * WebSocket 回调运行在 IO 线程，需切换到主线程操作弹幕播放器。
+         * `internal` 供单元测试直接驱动事件（生产环境只由 WebSocket 调用）。
          */
-        private fun handleLiveEvent(event: LiveEvent) {
+        internal fun handleLiveEvent(event: LiveEvent) {
             viewModelScope.launch(Dispatchers.Main.immediate) {
                 when (event) {
                     is DanmakuEvent -> {
@@ -354,36 +353,56 @@ class LivePlayerViewModel
             }
         }
 
-        /** 将直播弹幕送入引擎，先套用账号云端屏蔽规则；mode 7+ 折叠为滚动。 */
+        /** 将直播弹幕送入引擎，先套用账号云端屏蔽规则；mode 4/5 显示为底部/顶部，其余滚动。 */
         private fun sendDanmaku(
             content: String,
             mid: Long,
             mode: Int = 1,
             textColor: Int = 0xFFFFFF,
         ) {
-            if (danmakuFilter?.invoke(content, mid) == true) return
-            val danmakuId = danmakuIdCounter++
+            if (danmakuFilterRepository.shouldDropLive(content = content, mid = mid)) return
             val data =
-                DanmakuItemData(
-                    danmakuId = danmakuId,
-                    position = danmakuPlayer?.getCurrentTimeMs() ?: 0,
+                buildLiveDanmakuData(
+                    danmakuId = danmakuIdCounter++,
                     content = content,
-                    mode =
-                        when (mode) {
-                            4 -> DanmakuItemData.DANMAKU_MODE_CENTER_BOTTOM
-                            5 -> DanmakuItemData.DANMAKU_MODE_CENTER_TOP
-                            else -> DanmakuItemData.DANMAKU_MODE_ROLLING
-                        },
-                    textSize = 25,
+                    mid = mid,
+                    mode = mode,
                     textColor = textColor,
-                    score = 0,
-                    danmakuStyle = 0,
-                    rank = 0,
-                    userId = mid,
-                    mergedType = DanmakuItemData.MERGED_TYPE_NORMAL,
+                    position = danmakuPlayer?.getCurrentTimeMs() ?: 0,
                 )
             danmakuPlayer?.send(data)
         }
+
+        /**
+         * 构造直播弹幕渲染数据（mode 4/5 → 底部/顶部，其余滚动）。
+         *
+         * 独立为纯函数便于单测验证 mode/color 透传，避免依赖弹幕引擎。
+         */
+        internal fun buildLiveDanmakuData(
+            danmakuId: Long,
+            content: String,
+            mid: Long,
+            mode: Int,
+            textColor: Int,
+            position: Long,
+        ): DanmakuItemData =
+            DanmakuItemData(
+                danmakuId = danmakuId,
+                position = position,
+                content = content,
+                mode =
+                    when (mode) {
+                        4 -> DanmakuItemData.DANMAKU_MODE_CENTER_BOTTOM
+                        5 -> DanmakuItemData.DANMAKU_MODE_CENTER_TOP
+                        else -> DanmakuItemData.DANMAKU_MODE_ROLLING
+                    },
+                textSize = 25,
+                textColor = textColor,
+                score = 0,
+                danmakuStyle = 0,
+                rank = 0,
+                userId = mid,
+            )
 
         /**
          * 播放/暂停切换。
@@ -533,7 +552,6 @@ class LivePlayerViewModel
             videoPlayer?.release()
             videoPlayer = null
             danmakuPlayer = null
-            danmakuFilter = null
         }
 
         override fun onCleared() {

@@ -147,17 +147,17 @@ fun DanmakuMenuList(
  *
  * @param visibleItems 可见的屏蔽项；直播侧无 weight/ai_flag、无 mode 7-9、不经合并，
  *   只传实际生效的项（屏蔽彩色弹幕、账号屏蔽规则）
- * @param userFilterRuleCount 已加载的账号云端屏蔽规则数，>0 时在项名称后展示
+ * @param userFilterRuleCount 已加载的账号云端屏蔽规则数，>0 时在「开启」后展示
  */
 @Composable
 fun DanmakuFilterMenuList(
-    currentBlockColorful: Boolean = false,
-    currentBlockRepeat: Boolean = false,
-    currentBlockByUserFilter: Boolean = true,
+    currentBlockColorfulEnabled: Boolean = false,
+    currentBlockRepeatEnabled: Boolean = false,
+    currentBlockByUserFilterEnabled: Boolean = true,
     currentAiCloudLevel: Int = 0,
-    onDanmakuBlockColorfulChange: (Boolean) -> Unit = {},
-    onDanmakuBlockRepeatChange: (Boolean) -> Unit = {},
-    onDanmakuBlockByUserFilterChange: (Boolean) -> Unit = {},
+    onDanmakuBlockColorfulEnabledChange: (Boolean) -> Unit = {},
+    onDanmakuBlockRepeatEnabledChange: (Boolean) -> Unit = {},
+    onDanmakuBlockByUserFilterEnabledChange: (Boolean) -> Unit = {},
     onDanmakuAiCloudLevelChange: (Int) -> Unit = {},
     visibleItems: List<VideoPlayerDanmakuFilterMenuItem> = VideoPlayerDanmakuFilterMenuItem.entries,
     userFilterRuleCount: Int = 0,
@@ -167,13 +167,7 @@ fun DanmakuFilterMenuList(
     PlayerThreeLevelMenu(
         modifier = modifier,
         categories = visibleItems,
-        categoryLabel = { item ->
-            if (item == VideoPlayerDanmakuFilterMenuItem.BlockByUserFilter && userFilterRuleCount > 0) {
-                "${item.displayName}（$userFilterRuleCount 条）"
-            } else {
-                item.displayName
-            }
-        },
+        categoryLabel = { it.displayName },
         onFocusStateChange = onFocusStateChange,
     ) { selectedItem, itemModifier, backToMenu ->
         when (selectedItem) {
@@ -181,8 +175,8 @@ fun DanmakuFilterMenuList(
                 RadioMenuList(
                     modifier = itemModifier,
                     items = listOf("关闭", "开启"),
-                    selected = if (currentBlockColorful) 1 else 0,
-                    onSelectedChanged = { onDanmakuBlockColorfulChange(it == 1) },
+                    selected = if (currentBlockColorfulEnabled) 1 else 0,
+                    onSelectedChanged = { onDanmakuBlockColorfulEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
                 )
 
@@ -190,17 +184,21 @@ fun DanmakuFilterMenuList(
                 RadioMenuList(
                     modifier = itemModifier,
                     items = listOf("关闭", "开启"),
-                    selected = if (currentBlockRepeat) 1 else 0,
-                    onSelectedChanged = { onDanmakuBlockRepeatChange(it == 1) },
+                    selected = if (currentBlockRepeatEnabled) 1 else 0,
+                    onSelectedChanged = { onDanmakuBlockRepeatEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
                 )
 
             VideoPlayerDanmakuFilterMenuItem.BlockByUserFilter ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = listOf("关闭", "开启"),
-                    selected = if (currentBlockByUserFilter) 1 else 0,
-                    onSelectedChanged = { onDanmakuBlockByUserFilterChange(it == 1) },
+                    items =
+                        listOf(
+                            "关闭",
+                            if (userFilterRuleCount > 0) "开启( $userFilterRuleCount 条)" else "开启",
+                        ),
+                    selected = if (currentBlockByUserFilterEnabled) 1 else 0,
+                    onSelectedChanged = { onDanmakuBlockByUserFilterEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
                 )
 

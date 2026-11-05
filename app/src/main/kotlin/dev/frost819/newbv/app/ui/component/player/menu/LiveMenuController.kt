@@ -50,16 +50,16 @@ enum class LivePlayerMenuNavItem(
     val displayName: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
 ) {
-    Picture("画质", Icons.Outlined.Image),
-    Line("线路", Icons.Outlined.Wifi),
-    Danmaku("弹幕", Icons.Outlined.ClearAll),
-    DanmakuFilter("屏蔽", Icons.Outlined.Block),
+    Picture("画质设置", Icons.Outlined.Image),
+    Line("线路选择", Icons.Outlined.Wifi),
+    Danmaku("弹幕设置", Icons.Outlined.ClearAll),
+    DanmakuFilter("弹幕屏蔽", Icons.Outlined.Block),
 }
 
 /**
  * 直播播放器设置菜单控制器。
  *
- * 从右侧滑入的半透明面板，包含 3 个 Tab（画质/线路/弹幕）。
+ * 从右侧滑入的半透明面板，包含 4 个 Tab（画质设置/线路选择/弹幕设置/弹幕屏蔽）。
  * 三态焦点模型与视频播放器一致：MenuNav ↔ Menu ↔ Items。
  * 画质、线路 Tab 简化为二级：MenuNav ↔ Items（跳过 Menu 层级）。
  *
@@ -274,19 +274,19 @@ private fun LiveMenuList(
                             VideoPlayerDanmakuFilterMenuItem.BlockColorful,
                             VideoPlayerDanmakuFilterMenuItem.BlockByUserFilter,
                         ),
-                    currentBlockColorful = danmakuState.blockColorful,
-                    currentBlockRepeat = danmakuState.blockRepeat,
-                    currentBlockByUserFilter = danmakuState.blockByUserFilter,
+                    currentBlockColorfulEnabled = danmakuState.blockColorfulEnabled,
+                    currentBlockRepeatEnabled = danmakuState.blockRepeatEnabled,
+                    currentBlockByUserFilterEnabled = danmakuState.blockByUserFilterEnabled,
                     currentAiCloudLevel = danmakuState.aiCloudLevel,
                     userFilterRuleCount = danmakuState.userFilterRuleCount,
-                    onDanmakuBlockColorfulChange = {
-                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockColorful(it))
+                    onDanmakuBlockColorfulEnabledChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockColorfulEnabled(it))
                     },
-                    onDanmakuBlockRepeatChange = {
-                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeat(it))
+                    onDanmakuBlockRepeatEnabledChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockRepeatEnabled(it))
                     },
-                    onDanmakuBlockByUserFilterChange = {
-                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilter(it))
+                    onDanmakuBlockByUserFilterEnabledChange = {
+                        onDanmakuSettingChange(DanmakuSettingAction.SetBlockByUserFilterEnabled(it))
                     },
                     onDanmakuAiCloudLevelChange = {
                         onDanmakuSettingChange(DanmakuSettingAction.SetAiCloudLevel(it))

@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.frost819.newbv.BuildConfig
 import dev.frost819.newbv.app.data.AccountRepositoryImpl
+import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
@@ -305,7 +306,8 @@ object NetworkModule {
         userDao: UserDao,
         authRepository: AuthRepository,
         channelRepository: ChannelRepository,
-    ): AccountRepository = AccountRepositoryImpl(userDao, authRepository, channelRepository)
+        danmakuFilterRepository: DanmakuFilterRepository,
+    ): AccountRepository = AccountRepositoryImpl(userDao, authRepository, channelRepository, danmakuFilterRepository)
 
     /**
      * 提供 [SearchRepository] 单例。

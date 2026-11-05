@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
 import dev.frost819.newbv.biliapi.http.entity.user.LevelInfo
@@ -94,8 +95,16 @@ class AccountRepositoryImplTest {
                 data = myInfoData,
             )
         coEvery { BiliHttpApi.getUserSelfInfo() } returns mockResponse
+        coEvery { BiliHttpApi.getDanmakuFilterRules() } returns emptyList()
 
-        repository = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
+        repository = newAccountRepository()
+    }
+
+    /** 构造被测仓库；弹幕规则缓存用空实现，避免引入网络依赖。 */
+    private fun newAccountRepository(): AccountRepositoryImpl {
+        val danmakuFilterRepository = DanmakuFilterRepository(authRepository = authRepository)
+        danmakuFilterRepository.scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        return AccountRepositoryImpl(userDao, authRepository, ChannelRepository(), danmakuFilterRepository)
     }
 
     @AfterEach
@@ -310,7 +319,7 @@ class AccountRepositoryImplTest {
         Prefs.biliJct = "test-jct"
         Prefs.accessToken = "test-token"
 
-        val newRepo = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
+        val newRepo = newAccountRepository()
 
         assertThat(authRepository.mid).isEqualTo(300L)
         assertThat(authRepository.sessionData).isEqualTo("test-sess")
@@ -324,7 +333,7 @@ class AccountRepositoryImplTest {
     fun `initFromPrefs does nothing when not logged in`() {
         Prefs.isLogin = false
 
-        val newRepo = AccountRepositoryImpl(userDao, authRepository, ChannelRepository())
+        val newRepo = newAccountRepository()
 
         assertThat(authRepository.mid).isNull()
         assertThat(newRepo.uiState.value.isLogin).isFalse()
