@@ -188,16 +188,18 @@ class VideoInfoRepository
         /**
          * 更新播放历史（仅历史字段，不影响交互状态）。
          *
+         * @param aid 视频 AV 号
          * @param progress 播放进度（秒），-1 表示已看完
          * @param lastPlayedCid 最近播放的 CID
          */
         fun updateHistory(
+            aid: Long,
             progress: Int,
             lastPlayedCid: Long,
         ) {
             _videoSharedState.update { old ->
-                old?.copy(lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
-                    ?: VideoSharedState(aid = 0, lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
+                old?.takeIf { it.aid == aid }?.copy(lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
+                    ?: VideoSharedState(aid = aid, lastPlayedCid = lastPlayedCid, lastPlayedTime = progress)
             }
         }
 

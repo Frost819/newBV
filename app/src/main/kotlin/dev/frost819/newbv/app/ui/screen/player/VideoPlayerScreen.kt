@@ -269,7 +269,6 @@ fun VideoPlayerScreen(
             // 弹幕引擎时钟由进度喂入按位置跳变自动对齐，无需在此单独通知弹幕
             playerViewModel.seekToTime(time)
         },
-        onBackToStart = { playerViewModel.backToStart() },
         onCancelSkipToNextEp = { playerViewModel.cancelPlayNext() },
         onPlayNewVideo = { item: VideoListItem ->
             logger.info { "[PLAYBACK] switch aid=${item.aid}, cid=${item.cid}" }

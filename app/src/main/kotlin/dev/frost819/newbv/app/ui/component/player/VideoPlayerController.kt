@@ -82,7 +82,6 @@ fun VideoPlayerController(
     onPause: () -> Unit,
     onExit: () -> Unit,
     onGoTime: (time: Long) -> Unit,
-    onBackToStart: () -> Unit,
     onCancelSkipToNextEp: () -> Unit,
     onPlayNewVideo: (VideoListItem) -> Unit,
     onPlayPrevious: () -> Unit,
@@ -106,6 +105,7 @@ fun VideoPlayerController(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val confirmKeyGestureHandler = remember { ConfirmKeyGestureHandler() }
 
     // 覆盖层可见性
     var showListController by remember { mutableStateOf(false) }
@@ -342,20 +342,23 @@ fun VideoPlayerController(
             }
         }
 
-        // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
+        if (event.key in confirmKeys && event.type == KeyEventType.KeyUp) {
+            val action = confirmKeyGestureHandler.onKeyUp()
+            if (action == null) return true
+            if (!showClickableControllers && action == ConfirmKeyAction.TogglePlayback) {
+                onPlay()
+                return true
+            }
+        }
+
+        // 覆盖层未显示时的按键。
         if (!showClickableControllers) {
             when (event.key) {
                 in confirmKeys -> {
                     if (event.type == KeyEventType.KeyDown) {
-                        if (event.nativeKeyEvent.isLongPress) {
-                            showMenuController = true
-                        }
-                        return true
-                    } else {
-                        if (uiState.showBackToStart) {
-                            onBackToStart()
-                        } else {
-                            onPlay()
+                        when (confirmKeyGestureHandler.onKeyDown(event.nativeKeyEvent.isLongPress)) {
+                            ConfirmKeyAction.OpenMenu -> showMenuController = true
+                            ConfirmKeyAction.TogglePlayback, null -> Unit
                         }
                         return true
                     }
