@@ -81,8 +81,9 @@ class ExoMediaPlayer(
 
     private val httpDataSourceFactory =
         OkHttpDataSource.Factory(httpClient).apply {
+            // 首包补 Range，规避 CDN 对「整段 GET」的反盗链响应（详见 MediaRequestHeaders）
+            setDefaultRequestProperties(MediaRequestHeaders.of(options.referer))
             options.userAgent?.let { setUserAgent(it) }
-            options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
         }
 
     private val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
