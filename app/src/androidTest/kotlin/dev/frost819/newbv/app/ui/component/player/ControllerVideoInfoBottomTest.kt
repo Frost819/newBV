@@ -3,8 +3,10 @@ package dev.frost819.newbv.app.ui.component.player
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.frost819.newbv.app.ui.state.player.SeekerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
@@ -24,7 +26,10 @@ class ControllerVideoInfoBottomTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(isPgc: Boolean) {
+    private fun setContent(
+        isPgc: Boolean,
+        qualityButtonLabel: String? = "1080P",
+    ) {
         composeRule.setContent {
             TvMaterialTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -37,6 +42,8 @@ class ControllerVideoInfoBottomTest {
                         isPgc = isPgc,
                         danmakuEnabled = true,
                         isLooping = false,
+                        qualityButtonLabel = qualityButtonLabel,
+                        onShowQualitySelect = {},
                         onDirectionLeft = {},
                         onDirectionRight = {},
                         onSeekGoTime = {},
@@ -82,5 +89,20 @@ class ControllerVideoInfoBottomTest {
         composeRule.onNodeWithContentDescription("播放/暂停").assertExists()
         composeRule.onNodeWithContentDescription("弹幕开关").assertExists()
         composeRule.onNodeWithContentDescription("打开设置").assertExists()
+    }
+
+    @Test
+    fun quality_button_shows_current_quality_label() {
+        setContent(isPgc = false, qualityButtonLabel = "1080P")
+
+        composeRule.onNodeWithContentDescription("清晰度").assertExists()
+        composeRule.onNodeWithText("1080P").assertIsDisplayed()
+    }
+
+    @Test
+    fun quality_button_hidden_when_label_null() {
+        setContent(isPgc = false, qualityButtonLabel = null)
+
+        composeRule.onNodeWithContentDescription("清晰度").assertDoesNotExist()
     }
 }

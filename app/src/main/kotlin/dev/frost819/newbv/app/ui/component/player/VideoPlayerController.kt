@@ -40,6 +40,7 @@ import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.MenuController
+import dev.frost819.newbv.app.ui.component.settings.displayName
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.ui.state.player.SeekerState
@@ -49,6 +50,7 @@ import dev.frost819.newbv.biliapi.entity.video.Subtitle
 import dev.frost819.newbv.core.theme.BVTheme
 import dev.frost819.newbv.core.theme.ThemeMode
 import dev.frost819.newbv.data.datastore.Prefs
+import dev.frost819.newbv.data.datastore.Resolution
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -68,6 +70,7 @@ import kotlinx.coroutines.launch
  * 6. ControllerVideoInfo — 信息栏 + 进度条 + 按钮
  * 7. VideoListController — 分集列表
  * 8. MenuController — 设置菜单
+ * 9. QualitySelectDialog — 清晰度快切弹窗（独立 Dialog 窗口）
  */
 @Composable
 @Suppress("LongParameterList", "CyclomaticComplexMethod")
@@ -112,6 +115,9 @@ fun VideoPlayerController(
     var showMenuController by remember { mutableStateOf(false) }
     var showInfoSeekController by remember { mutableStateOf(false) }
     var showRelatedVideosController by remember { mutableStateOf(false) }
+    // 清晰度快切弹窗：状态提升到控制器（而非信息栏），避免信息栏 5s 自动隐藏时
+    // AnimatedVisibility 移除内容导致弹窗被连带销毁
+    var showQualityDialog by remember { mutableStateOf(false) }
     val showClickableControllers by remember {
         derivedStateOf {
             showListController ||
@@ -563,6 +569,13 @@ fun VideoPlayerController(
                 isPgc = isPgc,
                 danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
                 isLooping = isLooping,
+                qualityButtonLabel =
+                    if (uiState.availableQuality.size > 1) {
+                        Resolution.fromCode(uiState.mediaProfileState.qualityId).displayName
+                    } else {
+                        null
+                    },
+                onShowQualitySelect = { showQualityDialog = true },
                 onDirectionLeft = ::onDirectionLeft,
                 onDirectionRight = ::onDirectionRight,
                 onSeekGoTime = ::onSeekGoTime,
@@ -625,6 +638,25 @@ fun VideoPlayerController(
                 onSubtitleBackgroundOpacityChange = { onSubtitleSettingChange(SubtitleSettingAction.SetOpacity(it)) },
                 onSubtitleBottomPadding = { onSubtitleSettingChange(SubtitleSettingAction.SetBottomPadding(it)) },
             )
+
+            // 清晰度快切弹窗（独立 Dialog 窗口，Back 键由 onDismiss 处理）
+            if (showQualityDialog) {
+                QualitySelectDialog(
+                    availableQualityIds = uiState.availableQuality.keys.toList(),
+                    currentQualityId = uiState.mediaProfileState.qualityId,
+                    onSelect = { qualityId ->
+                        showQualityDialog = false
+                        if (qualityId != uiState.mediaProfileState.qualityId) {
+                            onMediaProfileSettingChange(MediaProfileSettingAction.SetQuality(qualityId))
+                        }
+                        onInteraction()
+                    },
+                    onDismiss = {
+                        showQualityDialog = false
+                        onInteraction()
+                    },
+                )
+            }
         }
     }
 }
