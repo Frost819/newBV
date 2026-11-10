@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoListItem
+import dev.frost819.newbv.app.entity.player.inPlayOrder
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -48,11 +50,15 @@ class VideoListViewModel
 
         init {
             viewModelScope.launch {
-                videoInfoRepository.videoList
-                    .collect { list ->
-                        if (list.isEmpty()) return@collect
-                        _videoListState.update { it.copy(videoList = list) }
-                    }
+                // 顺序在这里定一次：列表与各条目内的分 P 都按当前播放顺序排列后放进 state，
+                // 分集面板渲染、上下集查找、自动连播都按索引取，天然一致。
+                // 与 playOrderReversedFlow 合并，切换正序/倒序时面板立即重排。
+                combine(videoInfoRepository.videoList, Prefs.playOrderReversedFlow) { list, reverse ->
+                    list.inPlayOrder(reverse)
+                }.collect { list ->
+                    if (list.isEmpty()) return@collect
+                    _videoListState.update { it.copy(videoList = list) }
+                }
             }
             viewModelScope.launch {
                 // 直接取详情内的 relatedVideos：详情（含相关视频）由 repository 整体原子更新，
@@ -69,6 +75,9 @@ class VideoListViewModel
         /**
          * 查找下一个播放目标。
          *
+         * 取 state 里已排好序的列表（见 init），因此倒序时
+         * 「下一集」自然就是列表里更靠前的那一集，无需再翻一次。
+         *
          * @param currentAid 当前视频 AV 号
          * @param currentCid 当前视频 CID
          * @return 下一个播放项，null 表示没有下一集
@@ -77,7 +86,7 @@ class VideoListViewModel
             currentAid: Long,
             currentCid: Long,
         ): VideoListItem? {
-            val list = videoInfoRepository.videoList.value
+            val list = _videoListState.value.videoList
             val index = list.indexOfFirst { it.aid == currentAid }
             if (index == -1) return null
 
@@ -95,8 +104,22 @@ class VideoListViewModel
                 }
             }
 
-            // 查找列表中的下一个视频
-            if (index + 1 < list.size) return list[index + 1]
+            // 跳到下一个视频时，若它有多个分 P，要从该方向上的第一个 P 开始。
+            // 列表已按播放顺序排好，倒序时 first() 就是原顺序里的最后一 P，
+            // 与 findPreviousVideo 取 lastOrNull() 正好对称。
+            if (index + 1 < list.size) {
+                val next = list[index + 1]
+                val nextFirstPage = next.ugcPages?.firstOrNull()
+                return if (nextFirstPage != null) {
+                    VideoListItem(
+                        aid = next.aid,
+                        cid = nextFirstPage.cid,
+                        title = nextFirstPage.title,
+                    )
+                } else {
+                    next
+                }
+            }
             return null
         }
 
@@ -111,7 +134,7 @@ class VideoListViewModel
             currentAid: Long,
             currentCid: Long,
         ): VideoListItem? {
-            val list = videoInfoRepository.videoList.value
+            val list = _videoListState.value.videoList
             val index = list.indexOfFirst { it.aid == currentAid }
             if (index == -1) return null
 

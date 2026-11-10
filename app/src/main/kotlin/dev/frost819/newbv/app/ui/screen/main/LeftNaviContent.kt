@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.OndemandVideo
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
@@ -43,6 +45,8 @@ import androidx.tv.material3.SurfaceDefaults
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
+import dev.frost819.newbv.app.ui.component.toggleThemeMode
 import dev.frost819.newbv.core.focus.isDpadRight
 import dev.frost819.newbv.core.focus.isKeyDown
 import dev.frost819.newbv.data.datastore.LeftNaviItem
@@ -81,6 +85,7 @@ fun LeftNaviContent(
     focusSaver: FocusSaver,
 ) {
     val focusManager = LocalFocusManager.current
+    val currentlyDark = rememberIsDarkTheme()
     NavigationRail(
         modifier =
             modifier
@@ -190,6 +195,26 @@ fun LeftNaviContent(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = null,
+                )
+            },
+        )
+
+        // 日间/夜间快捷切换：图标显示「将要切换到的目标」，
+        // 当前是深色就显示太阳（点一下变亮），当前是浅色就显示月亮。
+        var themeToggleFocused by remember { mutableStateOf(false) }
+        NavigationRailItem(
+            modifier =
+                Modifier
+                    .focusSaverItem(focusSaver, "theme_toggle")
+                    .onFocusChanged {
+                        themeToggleFocused = it.hasFocus
+                    },
+            onClick = { toggleThemeMode(currentlyDark) },
+            selected = themeToggleFocused,
+            icon = {
+                Icon(
+                    imageVector = if (currentlyDark) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                    contentDescription = if (currentlyDark) "切换到日间模式" else "切换到夜间模式",
                 )
             },
         )

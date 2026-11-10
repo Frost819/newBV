@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
+import dev.frost819.newbv.app.entity.player.inPlayOrder
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.component.settings.displayName
 import dev.frost819.newbv.app.ui.state.player.MediaProfileState
@@ -1529,7 +1530,8 @@ class PlayerViewModel
 
         private fun findNextPlayTarget(): NextPlayTarget? {
             val state = _uiState.value
-            val videoList = videoInfoRepository.videoList.value
+            // 按当前播放顺序取列表：倒序时索引 +1 就是更早的一集
+            val videoList = videoInfoRepository.videoList.value.inPlayOrder(Prefs.playOrderReversed)
             val index = videoList.indexOfFirst { it.aid == state.aid }
             if (index == -1) return null
 
@@ -1540,13 +1542,25 @@ class PlayerViewModel
                     return NextPlayTarget.UgcPage(current, current.ugcPages[innerIndex + 1])
                 }
             }
-            if (index + 1 < videoList.size) return NextPlayTarget.VideoItem(videoList[index + 1])
+            // 跨到下一个视频时，若它有多个分 P，要从该方向上的第一个 P 播起。
+            // 列表已按播放顺序排好，倒序时 first() 是原顺序的最后一 P，
+            // 与 findPreviousPlayTarget 取 lastOrNull() 对称。
+            if (index + 1 < videoList.size) {
+                val next = videoList[index + 1]
+                val nextFirstPage = next.ugcPages?.firstOrNull()
+                return if (nextFirstPage != null) {
+                    NextPlayTarget.UgcPage(next, nextFirstPage)
+                } else {
+                    NextPlayTarget.VideoItem(next)
+                }
+            }
             return null
         }
 
         private fun findPreviousPlayTarget(): NextPlayTarget? {
             val state = _uiState.value
-            val videoList = videoInfoRepository.videoList.value
+            // 同 findNextPlayTarget：统一按当前播放顺序取列表
+            val videoList = videoInfoRepository.videoList.value.inPlayOrder(Prefs.playOrderReversed)
             val index = videoList.indexOfFirst { it.aid == state.aid }
             if (index == -1) return null
 

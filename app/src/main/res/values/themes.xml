@@ -1,12 +1,18 @@
 <resources>
 
     <style name="Theme.NewBV.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <!-- 与 windowBackground 同源，避免浅色下闪屏到内容之间出现黑白跳变 -->
+        <item name="windowSplashScreenBackground">@color/window_background</item>
         <item name="postSplashScreenTheme">@style/Theme.NewBV</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
     </style>
 
     <style name="Theme.NewBV" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">@android:color/black</item>
+        <!--
+          启动窗口背景按系统 uiMode 取值（values-night 覆盖为黑色）。
+          原先写死 @android:color/black，浅色模式下冷启动会先闪一帧黑屏——
+          应用内主题由 Prefs.themeMode 决定，管不到系统绘制启动窗口的那一帧。
+        -->
+        <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

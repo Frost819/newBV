@@ -206,6 +206,7 @@ fun LogViewerScreen(
                             Modifier
                                 .size(240.dp)
                                 .clip(MaterialTheme.shapes.large)
+                                // 二维码必须在任何主题下都保持白底，否则扫码识别率会掉
                                 .background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {

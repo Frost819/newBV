@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,6 +36,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -113,6 +117,7 @@ fun ControllerVideoInfo(
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
+    themeIsDark: Boolean,
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
@@ -126,6 +131,7 @@ fun ControllerVideoInfo(
     onGoToUpPage: () -> Unit,
     onShowInteraction: () -> Unit,
     onShowComments: () -> Unit,
+    onToggleTheme: () -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -159,6 +165,7 @@ fun ControllerVideoInfo(
                 isPgc = isPgc,
                 danmakuEnabled = danmakuEnabled,
                 isLooping = isLooping,
+                themeIsDark = themeIsDark,
                 onDirectionLeft = onDirectionLeft,
                 onDirectionRight = onDirectionRight,
                 onSeekGoTime = onSeekGoTime,
@@ -172,6 +179,7 @@ fun ControllerVideoInfo(
                 onGoToUpPage = onGoToUpPage,
                 onShowInteraction = onShowInteraction,
                 onShowComments = onShowComments,
+                onToggleTheme = onToggleTheme,
             )
         }
     }
@@ -270,6 +278,7 @@ fun ControllerVideoInfoBottom(
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
+    themeIsDark: Boolean,
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
@@ -283,6 +292,7 @@ fun ControllerVideoInfoBottom(
     onGoToUpPage: () -> Unit,
     onShowInteraction: () -> Unit,
     onShowComments: () -> Unit,
+    onToggleTheme: () -> Unit,
 ) {
     val seekFocusRequester = remember { FocusRequester() }
     val buttonsFocusRequester = remember { FocusRequester() }
@@ -419,39 +429,71 @@ fun ControllerVideoInfoBottom(
         }
 
         // 操作按钮行
+        // 排序说明：这一行在 1080p 下会超出屏宽（11 个按钮 × 84dp 间距），
+        // 靠后的按钮在电视上根本移不过去。日夜切换属于高频操作，放在前部保证可达；
+        // 评论/交互这类偶发操作放到末尾。
         val icons =
             buildList {
-                add(ControllerIcon(R.drawable.play_pause_24px, "播放/暂停", onPlayPause))
+                add(ControllerIcon(iconRes = R.drawable.play_pause_24px, description = "播放/暂停", action = onPlayPause))
                 add(
                     ControllerIcon(
-                        if (danmakuEnabled) R.drawable.danmaku_on_24px else R.drawable.danmaku_off_24px,
-                        "弹幕开关",
-                        onDanmakuSwitchChange,
+                        // 图标表示「将要切换到的目标」：当前深色显示太阳，当前浅色显示月亮
+                        imageVector =
+                            if (themeIsDark) {
+                                Icons.Outlined.LightMode
+                            } else {
+                                Icons.Outlined.DarkMode
+                            },
+                        description = if (themeIsDark) "切换到日间模式" else "切换到夜间模式",
+                        action = onToggleTheme,
                     ),
                 )
-                add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
+                add(
+                    ControllerIcon(
+                        iconRes =
+                            if (danmakuEnabled) {
+                                R.drawable.danmaku_on_24px
+                            } else {
+                                R.drawable.danmaku_off_24px
+                            },
+                        description = "弹幕开关",
+                        action = onDanmakuSwitchChange,
+                    ),
+                )
+                add(ControllerIcon(iconRes = R.drawable.settings_24px, description = "打开设置", action = onShowSettings))
                 if (!isPgc) {
-                    add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
-                    add(ControllerIcon(R.drawable.contact_page_24px, "up主页", onGoToUpPage))
-                    add(ControllerIcon(R.drawable.related_videos_24px, "相关视频", onShowRelatedVideos))
+                    add(ControllerIcon(iconRes = R.drawable.info_24px, description = "视频信息", action = onGoToVideoInfo))
+                    add(ControllerIcon(iconRes = R.drawable.contact_page_24px, description = "up主页", action = onGoToUpPage))
+                    add(
+                        ControllerIcon(
+                            iconRes = R.drawable.related_videos_24px,
+                            description = "相关视频",
+                            action = onShowRelatedVideos,
+                        ),
+                    )
                 }
                 add(
                     ControllerIcon(
-                        if (isLooping) R.drawable.repeat_one_on_24px else R.drawable.repeat_one_24px,
-                        "循环播放",
-                        onToggleLoop,
+                        iconRes =
+                            if (isLooping) {
+                                R.drawable.repeat_one_on_24px
+                            } else {
+                                R.drawable.repeat_one_24px
+                            },
+                        description = "循环播放",
+                        action = onToggleLoop,
                     ),
                 )
                 add(
                     ControllerIcon(
-                        icon = R.drawable.interaction_24px,
+                        iconRes = R.drawable.interaction_24px,
                         description = "交互",
                         action = onShowInteraction,
                     ),
                 )
                 add(
                     ControllerIcon(
-                        icon = R.drawable.comment,
+                        iconRes = R.drawable.comment,
                         description = "评论",
                         action = onShowComments,
                     ),
@@ -483,11 +525,19 @@ fun ControllerVideoInfoBottom(
                         onClick = item.action,
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     ) {
-                        Icon(
-                            painter = painterResource(id = item.icon),
-                            contentDescription = item.description,
-                            modifier = Modifier.padding(5.dp),
-                        )
+                        if (item.imageVector != null) {
+                            Icon(
+                                imageVector = item.imageVector,
+                                contentDescription = item.description,
+                                modifier = Modifier.padding(5.dp),
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = item.iconRes!!),
+                                contentDescription = item.description,
+                                modifier = Modifier.padding(5.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -497,9 +547,18 @@ fun ControllerVideoInfoBottom(
 
 /**
  * 操作按钮数据三元组。
+ *
+ * 图标有两种来源：项目内置的 drawable（原有按钮）与 Compose 矢量图标
+ * （Material Icons，用于日夜切换这类不需要额外资源的按钮）。
+ *
+ * @param iconRes drawable 资源 ID，为 null 时改用 [imageVector]。
+ * @param imageVector 矢量图标，[iconRes] 为 null 时生效。
+ * @param description 无障碍描述，同时作为列表 key。
+ * @param action 点击回调。
  */
 private data class ControllerIcon(
-    val icon: Int,
+    val iconRes: Int? = null,
+    val imageVector: ImageVector? = null,
     val description: String,
     val action: () -> Unit,
 )
@@ -553,6 +612,7 @@ private fun ControllerVideoInfoPreview() {
             isPgc = false,
             danmakuEnabled = true,
             isLooping = false,
+            themeIsDark = true,
             onDirectionLeft = {},
             onDirectionRight = {},
             onSeekGoTime = {},
@@ -566,6 +626,7 @@ private fun ControllerVideoInfoPreview() {
             onGoToUpPage = {},
             onShowInteraction = {},
             onShowComments = {},
+            onToggleTheme = {},
         )
     }
 }

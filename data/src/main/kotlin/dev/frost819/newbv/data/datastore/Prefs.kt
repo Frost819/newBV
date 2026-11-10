@@ -51,6 +51,10 @@ class PrefDelegate<T, P>(
     /** 内存缓存流，初始值为默认值的持久化形式。 */
     internal val flow: MutableStateFlow<Any?> = MutableStateFlow(save(defaultValue))
 
+    /** 当前值（业务类型），直接反映内存缓存。 */
+    internal val currentValue: T
+        get() = (flow.value as? P)?.let(restore) ?: defaultValue
+
     /**
      * 读取当前值。
      *
@@ -366,6 +370,13 @@ object Prefs {
     /** 显示播放器调试信息。 */
     var showPlayerDebugInfo by pref(PrefKeys.showPlayerDebugInfo, false)
 
+    /**
+     * 合集/分集倒序播放（true 时最新一集排在最前，自动连播也按倒序推进）。
+     *
+     * 只影响播放顺序与分集列表的呈现，不改变接口返回的原始次序。
+     */
+    var playOrderReversed by pref(PrefKeys.playOrderReversed, false)
+
     // --- 应用界面（PRD 7.2） ---
 
     /** 界面缩放密度（默认 1f，app 层 init 时按屏幕宽度重新计算）。 */
@@ -416,23 +427,50 @@ object Prefs {
 
     // ===== Flow 属性（用于 Compose collectAsState 实时观察） =====
 
-    /** 主题模式 Flow（实时响应设置变更）。 */
-    val themeModeFlow: StateFlow<ThemeMode>
-        get() =
-            (delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>)
-                ?.flow
-                ?.map { ThemeMode.fromOrdinal(it as? Int ?: 0) }
-                ?.stateIn(scope, SharingStarted.Eagerly, ThemeMode.FollowSystem)
-                ?: MutableStateFlow(ThemeMode.FollowSystem)
+    /**
+     * 主题模式 Flow（实时响应设置变更）。
+     *
+     * 用 `by lazy` 缓存实例：Compose 在 `setContent` 里读取这个属性，
+     * 若每次访问都新建一个 `stateIn(scope, Eagerly)` 的 StateFlow，
+     * 会随每次重组泄漏一个永不取消的协程，且新实例的初始值
+     * （[ThemeMode.FollowSystem]）会让界面在切换后闪回系统档一帧。
+     *
+     * 首次访问发生在 [init] 之后，此时委托已注册，缓存的值即为磁盘上的真实值。
+     */
+    val themeModeFlow: StateFlow<ThemeMode> by lazy { createThemeModeFlow() }
 
-    /** Density Flow（实时响应设置变更）。 */
-    val densityFlow: StateFlow<Float>
-        get() =
-            (delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>)
-                ?.flow
-                ?.map { it as? Float ?: 2f }
-                ?.stateIn(scope, SharingStarted.Eagerly, 2f)
-                ?: MutableStateFlow(2f)
+    /** Density Flow（实时响应设置变更），缓存策略同 [themeModeFlow]。 */
+    val densityFlow: StateFlow<Float> by lazy { createDensityFlow() }
+
+    /** 播放顺序 Flow（true = 倒序），缓存策略同 [themeModeFlow]。 */
+    val playOrderReversedFlow: StateFlow<Boolean> by lazy { createPlayOrderReversedFlow() }
+
+    /** 构建 [themeModeFlow]，绑定到委托的内存缓存流。 */
+    private fun createThemeModeFlow(): StateFlow<ThemeMode> {
+        val delegate = delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>
+            ?: return MutableStateFlow(ThemeMode.FollowSystem)
+        return delegate.flow
+            .map { ThemeMode.fromOrdinal(it as? Int ?: ThemeMode.FollowSystem.ordinal) }
+            .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)
+    }
+
+    /** 构建 [densityFlow]，绑定到委托的内存缓存流。 */
+    private fun createDensityFlow(): StateFlow<Float> {
+        val delegate = delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>
+            ?: return MutableStateFlow(2f)
+        return delegate.flow
+            .map { it as? Float ?: 2f }
+            .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)
+    }
+
+    /** 构建 [playOrderReversedFlow]，绑定到委托的内存缓存流。 */
+    private fun createPlayOrderReversedFlow(): StateFlow<Boolean> {
+        val delegate = delegateMap[PrefKeys.playOrderReversed] as? PrefDelegate<Boolean, Boolean>
+            ?: return MutableStateFlow(false)
+        return delegate.flow
+            .map { it as? Boolean ?: false }
+            .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)
+    }
 
     // ===== 初始化 =====
 

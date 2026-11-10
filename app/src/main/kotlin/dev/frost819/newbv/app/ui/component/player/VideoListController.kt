@@ -50,13 +50,15 @@ import dev.frost819.newbv.core.theme.BVTheme
  * 分集列表覆盖层。
  *
  * 从左侧滑入的半透明面板，显示视频分集列表。
- * 支持嵌套 UGC 分页（有 ugcPages 的视频可展开/折叠子分集）。
+ * 顶部提供正序/倒序切换；支持嵌套 UGC 分页（有 ugcPages 的视频可展开/折叠子分集）。
  * 显示时自动滚动到当前播放项并请求焦点。
  *
  * @param modifier 修饰符
  * @param show 是否显示
  * @param currentCid 当前播放视频的 CID
- * @param videoList 视频列表
+ * @param videoList 视频列表（已按当前播放顺序排好）
+ * @param reversed 当前是否倒序播放
+ * @param onTogglePlayOrder 切换正序/倒序回调
  * @param onPlayNewVideo 点击播放新视频回调
  */
 @Composable
@@ -65,23 +67,28 @@ fun VideoListController(
     show: Boolean,
     currentCid: Long,
     videoList: List<VideoListItem>,
+    reversed: Boolean,
+    onTogglePlayOrder: () -> Unit,
     onPlayNewVideo: (VideoListItem) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val parentFocusRequester = remember { FocusRequester() }
     val childFocusRequester = remember { FocusRequester() }
 
+    /** 当前播放项在列表中的下标（含顶部顺序开关占用的第 0 项偏移）。 */
+    fun currentItemIndex(): Int =
+        videoList.indexOfFirst { video ->
+            video.cid == currentCid ||
+                video.ugcPages?.any { it.cid == currentCid } == true
+        }
+
     // 显示时自动滚动到当前集并请求焦点
     LaunchedEffect(show) {
         if (show) {
-            val currentIndex =
-                videoList.indexOfFirst { video ->
-                    video.cid == currentCid ||
-                        video.ugcPages?.any { it.cid == currentCid } == true
-                }
-
+            val currentIndex = currentItemIndex()
             if (currentIndex != -1) {
-                listState.animateScrollToItem(currentIndex)
+                // 顶部多了一行播放顺序开关，列表项下标要相应下移
+                listState.animateScrollToItem(currentIndex + 1)
 
                 val isChild =
                     videoList
@@ -95,6 +102,16 @@ fun VideoListController(
                     parentFocusRequester.requestFocus()
                 }
             }
+        }
+    }
+
+    // 切换正序/倒序后当前集在列表里的位置会变，跟着滚过去，
+    // 否则画面停在旧位置，看起来像列表莫名跳走。这里只滚动不抢焦点——
+    // 用户此刻的焦点在顶部的顺序开关上，抢走会让人没法连按切换。
+    LaunchedEffect(reversed) {
+        val currentIndex = currentItemIndex()
+        if (show && currentIndex != -1) {
+            listState.animateScrollToItem(currentIndex + 1)
         }
     }
 
@@ -122,6 +139,12 @@ fun VideoListController(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(vertical = 60.dp),
                 ) {
+                    item(key = "play_order") {
+                        PlayOrderRow(
+                            reversed = reversed,
+                            onClick = onTogglePlayOrder,
+                        )
+                    }
                     items(
                         items = videoList,
                         key = { it.cid },
@@ -136,6 +159,52 @@ fun VideoListController(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * 播放顺序切换行。
+ *
+ * 放在分集面板顶部：改顺序时用户正在选片，落点最直接。
+ * 文案给出「当前状态 + 点一下会变成什么」，避免只写一个正序/倒序让人猜。
+ */
+@Composable
+private fun PlayOrderRow(
+    reversed: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .touchClickable(onClick = onClick),
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+        colors = ClickableSurfaceDefaults.colors(containerColor = Color.White.copy(alpha = 0.12f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = if (reversed) "倒序播放" else "正序播放",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Icon(
+                imageVector =
+                    if (reversed) {
+                        Icons.Default.KeyboardArrowDown
+                    } else {
+                        Icons.Default.KeyboardArrowUp
+                    },
+                contentDescription = if (reversed) "切换为正序播放" else "切换为倒序播放",
+                tint = Color.White.copy(alpha = 0.7f),
+            )
         }
     }
 }
@@ -343,6 +412,8 @@ private fun VideoListControllerPreview() {
             show = true,
             currentCid = 201L,
             videoList = sampleList,
+            reversed = false,
+            onTogglePlayOrder = {},
             onPlayNewVideo = {},
         )
     }
