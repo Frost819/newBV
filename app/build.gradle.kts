@@ -69,6 +69,12 @@ android {
             if (signingPropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // 侧载到已有正式版的设备时，两者签名不同、同包名会被系统拒绝安装。
+            // 加 -PlanPackage 打出独立包名的 release（-PlanPackage 只影响 applicationId，
+            // 不新增 buildType，所有 library 模块的变体匹配保持原样）。
+            if (project.hasProperty("lanPackage")) {
+                applicationIdSuffix = ".opt"
+            }
         }
         debug {
             isMinifyEnabled = false

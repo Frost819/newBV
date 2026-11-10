@@ -143,14 +143,29 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `init loads recommend and popular`() =
+    fun `init only loads the default tab`() =
         runTest(testDispatcher) {
             viewModel = createViewModel()
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
+            // 冷启动只拉首屏那一个 Tab，其余 Tab 等首次切到时再请求。
+            // 测试里默认 Tab 是 Dynamics 且未登录，实现会回退到 Recommend。
             assertThat(state.recommendItems).isNotEmpty()
-            assertThat(state.popularItems).isNotEmpty()
+            assertThat(state.popularItems).isEmpty()
+            assertThat(state.dynamicItems).isEmpty()
+        }
+
+    @Test
+    fun `popular is loaded on demand`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.popularItems).isEmpty()
+
+            viewModel.loadPopular()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.popularItems).isNotEmpty()
         }
 
     @Test

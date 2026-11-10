@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.home
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +32,11 @@ private const val LOAD_TIMEOUT_MS = 10_000L
 
 /**
  * 首页 Tab 状态。
+ *
+ * 所有字段都是 val，列表每次变更都生成新实例（不会原地修改）。标 [Immutable]
+ * 让 Compose 把它当稳定类型，任意 Tab 的 loading/error 变化不必连累整页网格的跳过判断。
  */
+@Immutable
 data class HomeUiState(
     val recommendItems: List<UgcItem> = emptyList(),
     val recommendLoading: Boolean = false,
@@ -87,9 +92,18 @@ class HomeViewModel
 
         init {
             _uiState.update { it.copy(isLogin = Prefs.isLogin) }
-            loadRecommend()
-            loadPopular()
-            if (Prefs.isLogin) loadDynamic()
+            // 首屏只加载默认 Tab。原来三个 Tab 一起发请求（推荐还要串行补 3 页），
+            // 冷启动时和图片解码、Compose 首帧抢网络与 CPU，用户看到的就是「慢」。
+            // 其余 Tab 在 HomeContent 里首次切到时才加载。
+            val startTab = Prefs.firstHomeTopNavItem
+            when {
+                startTab == dev.frost819.newbv.data.datastore.HomeTopNavItem.Recommend -> loadRecommend()
+                startTab == dev.frost819.newbv.data.datastore.HomeTopNavItem.Popular -> loadPopular()
+                startTab == dev.frost819.newbv.data.datastore.HomeTopNavItem.Dynamics && Prefs.isLogin ->
+                    loadDynamic()
+                // 默认落在动态页但未登录时动态列表是空的，回退加载推荐，避免首屏一片空白。
+                else -> loadRecommend()
+            }
 
             viewModelScope.launch {
                 accountRepository.uiState

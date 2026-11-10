@@ -44,7 +44,7 @@ import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.currentInputMethod
+import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 
 /**
  * 小型视频卡片。
@@ -78,7 +78,10 @@ fun SmallVideoCard(
     var showActions by remember { mutableStateOf(false) }
     var releaseLongPress by remember { mutableStateOf(false) }
     val firstButtonRequester = remember { FocusRequester() }
-    val isTouchMode = currentInputMethod() == InputMethod.Touch
+    // 不用 collectAsState：每张卡片都订阅一个 StateFlow 会给网格增加几十个收集器，
+    // 也会让卡片成为动态订阅节点。这里直接读 tracker 的当前值，长按面板出现时
+    // showActions 变化本来就会重组，读到的一定是最新输入方式。
+    val isTouchMode = LocalInteractionTracker.current?.current == InputMethod.Touch
 
     val hasAnyAction =
         onAddWatchLater != null ||
@@ -311,6 +314,17 @@ private fun CardCover(
     time: String,
     progress: Float? = null,
 ) {
+    // B 站封面原图往往上千像素，而卡片只有几百像素宽。请求缩略图可以显著减少
+    // 焦点移动、新卡片进入视口时的下载与解码开销。
+    val imageModel =
+        remember(cover) {
+            if (cover.startsWith("http", ignoreCase = true) && !cover.contains('@')) {
+                "$cover@400h_640w_1c.webp"
+            } else {
+                cover
+            }
+        }
+
     Box(
         modifier =
             modifier
@@ -323,7 +337,7 @@ private fun CardCover(
                 Modifier
                     .fillMaxSize()
                     .clip(MaterialTheme.shapes.large),
-            model = cover,
+            model = imageModel,
             contentDescription = null,
             contentScale = ContentScale.Crop,
         )

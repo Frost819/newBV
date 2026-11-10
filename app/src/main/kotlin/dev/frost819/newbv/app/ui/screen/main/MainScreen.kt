@@ -1,12 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -127,70 +121,57 @@ fun MainScreen(
         drawerState = drawerState,
     ) {
         Box(modifier = Modifier) {
-            AnimatedContent(
-                targetState = selectedDrawerItem,
-                label = "main-animated-content",
-                transitionSpec = {
-                    val coefficient = 20
-                    if (targetState.ordinal < initialState.ordinal) {
-                        fadeIn() + slideInVertically { -it / coefficient } togetherWith
-                            fadeOut() + slideOutVertically { it / coefficient }
-                    } else {
-                        fadeIn() + slideInVertically { it / coefficient } togetherWith
-                            fadeOut() + slideOutVertically { -it / coefficient }
-                    }
-                },
-            ) { screen ->
-                when (screen) {
-                    LeftNaviItem.Home ->
-                        HomeContent(
-                            navFocusRequester = homeFocusRequester,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    LeftNaviItem.Search -> {
-                        val searchInputViewModel: dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel =
-                            androidx.hilt.navigation.compose
-                                .hiltViewModel()
-                        dev.frost819.newbv.app.ui.screen.search.SearchInputContent(
-                            viewModel = searchInputViewModel,
-                            focusRequester = homeFocusRequester,
-                            focusSaver = focusSaver,
-                            onSearch = { keyword ->
-                                searchInputViewModel.commitSearch(keyword) {
-                                    navController.navigate(
-                                        dev.frost819.newbv.app.ui.navigation
-                                            .SearchResultRoute(keyword = keyword),
-                                    )
-                                }
-                            },
-                        )
-                    }
-                    LeftNaviItem.Personal ->
-                        dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
-                            navFocusRequester = homeFocusRequester,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    LeftNaviItem.UGC ->
-                        dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
-                            navFocusRequester = homeFocusRequester,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    LeftNaviItem.PGC ->
-                        dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
-                            navFocusRequester = homeFocusRequester,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    LeftNaviItem.Live ->
-                        dev.frost819.newbv.app.ui.screen.live.LiveContent(
-                            navFocusRequester = homeFocusRequester,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
+            // 左栏上下切换直接换内容，去掉 fade/slide 转场。
+            // 转场期间两个页面会同时组合，配合焦点切换会明显掉帧。
+            when (selectedDrawerItem) {
+                LeftNaviItem.Home ->
+                    HomeContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                LeftNaviItem.Search -> {
+                    val searchInputViewModel: dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel =
+                        androidx.hilt.navigation.compose
+                            .hiltViewModel()
+                    dev.frost819.newbv.app.ui.screen.search.SearchInputContent(
+                        viewModel = searchInputViewModel,
+                        focusRequester = homeFocusRequester,
+                        focusSaver = focusSaver,
+                        onSearch = { keyword ->
+                            searchInputViewModel.commitSearch(keyword) {
+                                navController.navigate(
+                                    dev.frost819.newbv.app.ui.navigation
+                                        .SearchResultRoute(keyword = keyword),
+                                )
+                            }
+                        },
+                    )
                 }
+                LeftNaviItem.Personal ->
+                    dev.frost819.newbv.app.ui.screen.personal.PersonalContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                LeftNaviItem.UGC ->
+                    dev.frost819.newbv.app.ui.screen.ugc.UgcContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                LeftNaviItem.PGC ->
+                    dev.frost819.newbv.app.ui.screen.pgc.PgcContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                LeftNaviItem.Live ->
+                    dev.frost819.newbv.app.ui.screen.live.LiveContent(
+                        navFocusRequester = homeFocusRequester,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
             }
 
             if (showUserPanel) {

@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.component
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -64,10 +63,9 @@ fun TopNav(
     LaunchedEffect(selectedIndex) {
         selectedTabIndex = selectedIndex
     }
-    val verticalPadding by animateDpAsState(
-        targetValue = if (isLargePadding) 12.dp else 6.dp,
-        label = "top-nav-padding",
-    )
+    // 直接取值。原先用 animateDpAsState 让顶栏高度在焦点进出内容区时持续动画，
+    // 每帧都会让整个 Scaffold 重新测量。
+    val verticalPadding = if (isLargePadding) 12.dp else 6.dp
 
     Row(
         modifier =
