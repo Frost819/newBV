@@ -15,6 +15,7 @@ import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.data.datastore.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,15 @@ import dev.frost819.newbv.data.datastore.ApiType as DataApiType
 
 /** 网络请求超时时间（毫秒）。 */
 private const val LOAD_TIMEOUT_MS = 10_000L
+
+/**
+ * 首屏之后补齐其余 Tab 的延迟（毫秒）。
+ *
+ * 冷启动时首帧、图片解码已经占满带宽和 CPU，补 Tab 必须让开；
+ * 但完全等到用户切过去再请求，切 Tab 会先闪一下「加载中」，那一次网络往返
+ * 就是遥控器上感受到的「不跟手」。
+ */
+private const val PREFETCH_DELAY_MS = 2_000L
 
 /**
  * 首页 Tab 状态。
@@ -116,6 +126,15 @@ class HomeViewModel
                             onUserSwitched(uid)
                         }
                     }
+            }
+
+            // 首屏落定之后再补齐另外两个 Tab。用户左右切 Tab 时列表已经在了，
+            // 不会出现「先空一屏 → 加载中 → 再出图」这段等待。
+            // 已有数据的 Tab 直接跳过；正在加载的由各 load 方法内部的 loading 判断挡住。
+            viewModelScope.launch {
+                delay(PREFETCH_DELAY_MS)
+                if (_uiState.value.popularItems.isEmpty()) loadPopular()
+                if (_uiState.value.dynamicItems.isEmpty() && Prefs.isLogin) loadDynamic()
             }
         }
 
