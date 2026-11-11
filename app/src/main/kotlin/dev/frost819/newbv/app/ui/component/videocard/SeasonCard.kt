@@ -74,12 +74,12 @@ fun SeasonCard(
                         .clip(MaterialTheme.shapes.large),
                 contentAlignment = Alignment.BottomCenter,
             ) {
+                // 圆角裁剪由外层 Box 负责，图片不再重复 clip（少一层离屏图层）。
                 AsyncImage(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .clip(MaterialTheme.shapes.large),
+                            .aspectRatio(0.75f),
                     model = rememberCoverThumbnail(cover = data.cover, height = 640, width = 480),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,

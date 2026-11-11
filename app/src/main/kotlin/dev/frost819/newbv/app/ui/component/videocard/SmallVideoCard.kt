@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -93,6 +94,9 @@ fun SmallVideoCard(
         showActions = false
     }
 
+    // CardDefaults.shape 内部只是拼一个 CardShape，提成局部变量避免重复构造。
+    val cardShape = CardDefaults.shape(MaterialTheme.shapes.large)
+
     LaunchedEffect(showActions) {
         if (showActions && hasAnyAction) {
             firstButtonRequester.requestFocus()
@@ -117,12 +121,12 @@ fun SmallVideoCard(
                     ).onFocusChanged { focusState ->
                         if (!focusState.hasFocus) showActions = false
                     },
-            shape = CardDefaults.shape(MaterialTheme.shapes.large),
+            shape = cardShape,
             border =
                 CardDefaults.border(
                     focusedBorder =
                         Border(
-                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+                            border = BorderStroke(3.dp, MaterialTheme.colorScheme.border),
                             shape = MaterialTheme.shapes.large,
                         ),
                 ),
@@ -325,11 +329,10 @@ private fun CardCover(
                 .clip(MaterialTheme.shapes.large),
         contentAlignment = Alignment.BottomCenter,
     ) {
+        // 圆角裁剪只在外层 Box 上做一次。图片再套一次 clip 会多开一层离屏图层
+        // （saveLayer），弱 GPU 的盒子上每张卡片都要多一次合成，纯属浪费。
         AsyncImage(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clip(MaterialTheme.shapes.large),
+            modifier = Modifier.fillMaxSize(),
             model = imageModel,
             contentDescription = null,
             contentScale = ContentScale.Crop,

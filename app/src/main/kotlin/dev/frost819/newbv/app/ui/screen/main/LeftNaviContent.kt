@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.main
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -131,10 +130,7 @@ fun LeftNaviContent(
                             ),
                     ) {
                         AsyncImage(
-                            modifier =
-                                Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape),
+                            modifier = Modifier.size(40.dp),
                             model = avatar,
                             contentDescription = null,
                             contentScale = ContentScale.FillBounds,
@@ -155,15 +151,14 @@ fun LeftNaviContent(
         ) {
             LeftNaviItem.entries.forEach { item ->
                 var isFocused by remember { mutableStateOf(false) }
-                val indicatorColor by animateColorAsState(
-                    targetValue =
-                        if (item == selectedItem) {
-                            MaterialTheme.colorScheme.border
-                        } else {
-                            Color.Transparent
-                        },
-                    label = "selection-indicator",
-                )
+                // 选中胶囊直接跟手切换。原来用 animateColorAsState 做 200ms 渐变，
+                // 每次按方向键都要在动画期间逐帧重组整个导航项，遥控器上表现为迟钝。
+                val indicatorColor =
+                    if (item == selectedItem) {
+                        MaterialTheme.colorScheme.border
+                    } else {
+                        Color.Transparent
+                    }
                 NavigationRailItem(
                     modifier =
                         Modifier

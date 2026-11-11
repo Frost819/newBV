@@ -93,11 +93,9 @@ private fun LiveCardCover(
                 .fillMaxSize()
                 .clip(MaterialTheme.shapes.large),
     ) {
+        // 圆角裁剪由外层 Box 负责，图片不再重复 clip（少一层离屏图层）。
         AsyncImage(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clip(MaterialTheme.shapes.large),
+            modifier = Modifier.fillMaxSize(),
             model = rememberCoverThumbnail(cover = cover, height = 360, width = 640),
             contentDescription = null,
             contentScale = ContentScale.Crop,

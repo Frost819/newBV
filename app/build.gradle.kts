@@ -238,6 +238,20 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+/**
+ * Compose 编译器诊断报告（仅 `-PcomposeReports` 时生成）。
+ *
+ * 报告会列出每个 Composable 的可跳过性（skippable）与参数稳定性（stable/unstable），
+ * 以及每个函数的重启/跳过统计。默认关闭，避免污染 build 目录。
+ */
+composeCompiler {
+    val enableReports = providers.gradleProperty("composeReports").isPresent
+    if (enableReports) {
+        reportsDestination.set(layout.buildDirectory.dir("compose_reports"))
+        metricsDestination.set(layout.buildDirectory.dir("compose_metrics"))
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }

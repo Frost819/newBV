@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
@@ -34,6 +33,9 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.TabRowScope
 import androidx.tv.material3.Text
 import dev.frost819.newbv.core.focus.touchClickable
+
+/** Tab 胶囊形状。提为常量，避免每个 tab 每次重组都新建一个 RoundedCornerShape。 */
+private val TabShape = RoundedCornerShape(50)
 
 /**
  * 顶部导航 Tab 栏。
@@ -119,9 +121,11 @@ private fun TabRowScope.NavItemTab(
         modifier =
             modifier
                 .onFocusChanged { hasFocus = it.hasFocus }
-                .clip(RoundedCornerShape(50))
-                .background(containerColor)
-                .border(2.dp, borderColor, RoundedCornerShape(50))
+                // 胶囊底与描边都按形状绘制，不再套 clip——
+                // clip 会给每个 tab 开一层离屏图层，方向键每切一次都要重绘这一层，
+                // 而内容只有居中文字，本来就不会溢出形状。
+                .background(containerColor, TabShape)
+                .border(2.dp, borderColor, TabShape)
                 .touchClickable(onClick = onClick),
         selected = selected,
         onFocus = onFocus,
