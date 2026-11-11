@@ -217,7 +217,10 @@ class ExoMediaPlayer(
     }
 
     override fun reset() {
-        TODO("Not yet implemented")
+        // 原先是 TODO("Not yet implemented")，一旦有调用方走到这里就直接崩。
+        // 按 ExoPlayer 的语义清空媒体项并停在空闲态，实例本身保留以便复用。
+        mPlayer?.stop()
+        mPlayer?.clearMediaItems()
     }
 
     override val isPlaying: Boolean

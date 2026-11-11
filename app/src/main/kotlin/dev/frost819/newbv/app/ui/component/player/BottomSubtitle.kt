@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,19 +45,20 @@ import dev.frost819.newbv.core.theme.BVTheme
 fun BottomSubtitle(
     modifier: Modifier = Modifier,
     subtitleData: List<SubtitleItem>,
-    currentTime: Long,
+    currentTime: State<Long>,
     fontSize: TextUnit,
     opacity: Float,
     padding: Dp,
 ) {
-    var currentText by remember { mutableStateOf("") }
-
-    LaunchedEffect(subtitleData, currentTime) {
-        runCatching {
-            currentText = subtitleData.find { it.isShowing(currentTime) }?.content
+    // currentTime 以 State 传入，只有本组件随播放进度重组，父级控制器不再被 250ms 的刷新带动。
+    // 直接用 remember 求当前字幕，省掉原先每 250ms 取消并重启一个协程的开销。
+    val currentText =
+        remember(subtitleData, currentTime.value) {
+            runCatching {
+                subtitleData.firstOrNull { it.isShowing(currentTime.value) }?.content
+            }.getOrNull()
                 ?: if (BuildConfig.DEBUG) "【DEBUG】无内容" else ""
         }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (currentText.isNotEmpty()) {
@@ -108,7 +107,7 @@ private fun BottomSubtitlePreview() {
     BVTheme {
         BottomSubtitle(
             subtitleData = sampleSubtitle,
-            currentTime = 5000L,
+            currentTime = remember { mutableStateOf(5000L) },
             fontSize = 24.sp,
             opacity = 0.4f,
             padding = 12.dp,

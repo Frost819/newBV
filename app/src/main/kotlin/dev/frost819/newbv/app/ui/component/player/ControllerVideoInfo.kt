@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -108,7 +109,7 @@ fun ControllerVideoInfo(
     show: Boolean,
     isSeeking: Boolean,
     goTime: Long,
-    seekerState: SeekerState,
+    seekerState: State<SeekerState>,
     title: String,
     clock: Pair<Int, Int>,
     onlineWatching: String,
@@ -133,6 +134,10 @@ fun ControllerVideoInfo(
     onShowComments: () -> Unit,
     onToggleTheme: () -> Unit,
 ) {
+    // 只在真正用到进度状态的地方读 value：父级每 250ms 拿到新 seekerState 时
+    // 只重组这个子树，不会把整棵播放器控制器一起拖下水。
+    val seeker by seekerState
+
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
@@ -159,7 +164,7 @@ fun ControllerVideoInfo(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 isSeeking = isSeeking,
                 goTime = goTime,
-                seekerState = seekerState,
+                seekerState = seeker,
                 videoShot = videoShot,
                 videoShotCache = videoShotCache,
                 isPgc = isPgc,
@@ -599,11 +604,15 @@ private fun ControllerVideoInfoPreview() {
             isSeeking = false,
             goTime = 0L,
             seekerState =
-                SeekerState(
-                    totalDuration = 600_000L,
-                    currentTime = 120_000L,
-                    bufferedPercentage = 50,
-                ),
+                remember {
+                    mutableStateOf(
+                        SeekerState(
+                            totalDuration = 600_000L,
+                            currentTime = 120_000L,
+                            bufferedPercentage = 50,
+                        ),
+                    )
+                },
             title = "示例视频标题",
             clock = Pair(14, 30),
             onlineWatching = "9.4万+",

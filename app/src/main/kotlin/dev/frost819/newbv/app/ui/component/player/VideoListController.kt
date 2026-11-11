@@ -108,7 +108,7 @@ fun VideoListController(
     // 切换正序/倒序后当前集在列表里的位置会变，跟着滚过去，
     // 否则画面停在旧位置，看起来像列表莫名跳走。这里只滚动不抢焦点——
     // 用户此刻的焦点在顶部的顺序开关上，抢走会让人没法连按切换。
-    LaunchedEffect(reversed) {
+    LaunchedEffect(reversed, currentCid) {
         val currentIndex = currentItemIndex()
         if (show && currentIndex != -1) {
             listState.animateScrollToItem(currentIndex + 1)
@@ -277,7 +277,7 @@ private fun VideoListItemRow(
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                video.ugcPages?.forEach { page ->
+                video.ugcPages.forEach { page ->
                     val isPageSelected = page.cid == currentCid
                     val childModifier =
                         if (isPageSelected) {

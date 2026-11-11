@@ -1,11 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.personal
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -36,7 +30,7 @@ import androidx.compose.material3.Scaffold as Material3Scaffold
 /**
  * 个人页内容（TopNav + 4 个子 Tab）。
  *
- * 顶部 Tab 按首选项排序，Tab 切换使用 [AnimatedContent] 横向滑动。
+ * 顶部 Tab 按首选项排序，切换时直接替换内容，不做转场动画。
  * 菜单键刷新当前 Tab 数据。
  *
  * @param navFocusRequester 顶部 Tab 的焦点请求器（由 MainScreen 传入）。
@@ -97,48 +91,33 @@ fun PersonalContent(
                         false
                     },
         ) {
-            AnimatedContent(
-                targetState = selectedTab,
-                label = "personal-animated-content",
-                transitionSpec = {
-                    val coefficient = 10
-                    if (reorderedItems.indexOf(PersonalTabItem(targetState)) <
-                        reorderedItems.indexOf(PersonalTabItem(initialState))
-                    ) {
-                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
-                            fadeOut() + slideOutHorizontally { it / coefficient }
-                    } else {
-                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
-                            fadeOut() + slideOutHorizontally { -it / coefficient }
-                    }
-                },
-            ) { screen ->
-                when (screen) {
-                    PersonalTopNavItem.ToView ->
-                        ToViewScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    PersonalTopNavItem.History ->
-                        HistoryScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    PersonalTopNavItem.Favorite ->
-                        FavoriteScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    PersonalTopNavItem.FollowingSeason ->
-                        FollowingSeasonScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                }
+            // 与首页一致：切 Tab 不做 fade/slide 转场。
+            // 四个网格各有几十张卡片，转场期间新旧两份同时留在组合树里逐帧重绘，连按方向键会掉帧。
+            when (selectedTab) {
+                PersonalTopNavItem.ToView ->
+                    ToViewScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                PersonalTopNavItem.History ->
+                    HistoryScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                PersonalTopNavItem.Favorite ->
+                    FavoriteScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                PersonalTopNavItem.FollowingSeason ->
+                    FollowingSeasonScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
             }
         }
     }

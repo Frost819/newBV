@@ -45,7 +45,17 @@ fun HomeContent(
     focusSaver: FocusSaver,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val firstTab = remember { Prefs.firstHomeTopNavItem }
+    val firstTab =
+        remember {
+            val saved = Prefs.firstHomeTopNavItem
+            // 未登录时动态页只有一句「请先登录」，首屏落在推荐更合理。
+            // 只影响本次落点，不改偏好：登录后仍回到用户上次选的 Tab。
+            if (!Prefs.isLogin && saved == HomeTopNavItem.Dynamics) {
+                HomeTopNavItem.Recommend
+            } else {
+                saved
+            }
+        }
     var selectedTab by rememberSaveable { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()

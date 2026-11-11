@@ -93,7 +93,7 @@ fun DynamicsScreen(
     ) {
         itemsIndexed(
             items = state.dynamicItems,
-            key = { index, _ -> index },
+            key = { _, item -> item.aid },
         ) { index, item ->
             val cardData =
                 remember(item) {

@@ -112,8 +112,21 @@ android {
                     "**/*.proto",
                     "/META-INF/native-image/jansi/**",
                     "/org/fusesource/jansi/internal/native/**",
+                    // 版本标记、依赖清单、协程调试探针、Kotlin 运行时自带的源码/元数据，
+                    // 运行时都读不到，留着只是占安装包
+                    "META-INF/*.version",
+                    "META-INF/DEPENDENCIES",
+                    "DebugProbesKt.bin",
+                    "kotlin/**",
+                    "**/*.kotlin_metadata",
                 )
         }
+    }
+
+    // 侧载分发用不到 Play 的依赖签名信息，去掉可少一段 dex 元数据
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 

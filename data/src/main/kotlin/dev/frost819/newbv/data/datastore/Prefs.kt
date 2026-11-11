@@ -80,6 +80,8 @@ class PrefDelegate<T, P>(
         value: T,
     ) {
         val persistValue = save(value)
+        // 进度条、透明度这类滑动回调会连续给同一个值赋值，没必要每次都落盘。
+        if (flow.value == persistValue) return
         flow.value = persistValue
         val dataStore = Prefs.dataStore
         Prefs.launchPersist {
@@ -485,10 +487,10 @@ object Prefs {
      *
      * @param dataStore DataStore 实例（由 Hilt 注入）。
      */
+    @Synchronized
     fun init(dataStore: DataStore<Preferences>) {
         check(!initialized) { "Prefs 已经初始化，禁止重复调用 init()" }
         dataStoreRef = dataStore
-        initialized = true
 
         val initialPrefs = runBlocking { dataStore.data.first() }
         delegateMap.forEach { (key, delegate) ->
@@ -497,6 +499,9 @@ object Prefs {
             }
         }
         checkAndInitBuvid(initialPrefs)
+        // 所有委托回填完再置位：原先提前置位，这段窗口里其它线程会读到默认值
+        // （表现为主题闪一帧、isLogin 误判）
+        initialized = true
     }
 
     /** 检查 buvid / buvid3 是否缺失，缺失则自动生成并持久化。 */

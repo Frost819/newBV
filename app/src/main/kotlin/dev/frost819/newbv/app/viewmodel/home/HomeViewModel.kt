@@ -216,7 +216,7 @@ class HomeViewModel
                         popularNextPage = data.nextPage
                         _uiState.update {
                             it.copy(
-                                popularItems = it.popularItems + data.list,
+                                popularItems = (it.popularItems + data.list).distinctBy { item -> item.aid },
                                 popularHasMore = !data.noMore,
                             )
                         }
@@ -273,7 +273,7 @@ class HomeViewModel
                         dynamicUpdateBaseline = data.updateBaseline
                         _uiState.update {
                             it.copy(
-                                dynamicItems = it.dynamicItems + data.videos,
+                                dynamicItems = (it.dynamicItems + data.videos).distinctBy { item -> item.aid },
                                 dynamicHasMore = data.hasMore,
                             )
                         }

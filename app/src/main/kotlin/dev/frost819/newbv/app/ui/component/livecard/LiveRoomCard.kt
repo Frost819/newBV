@@ -29,6 +29,7 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.ui.component.videocard.rememberCoverThumbnail
 import dev.frost819.newbv.core.focus.touchClickable
 
 /**
@@ -97,7 +98,7 @@ private fun LiveCardCover(
                 Modifier
                     .fillMaxSize()
                     .clip(MaterialTheme.shapes.large),
-            model = cover,
+            model = rememberCoverThumbnail(cover = cover, height = 360, width = 640),
             contentDescription = null,
             contentScale = ContentScale.Crop,
         )

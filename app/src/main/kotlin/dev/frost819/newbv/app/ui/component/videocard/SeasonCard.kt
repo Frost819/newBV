@@ -80,7 +80,7 @@ fun SeasonCard(
                             .fillMaxWidth()
                             .aspectRatio(0.75f)
                             .clip(MaterialTheme.shapes.large),
-                    model = data.cover,
+                    model = rememberCoverThumbnail(cover = data.cover, height = 640, width = 480),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
                 )

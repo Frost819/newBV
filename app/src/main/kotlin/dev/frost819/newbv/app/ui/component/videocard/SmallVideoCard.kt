@@ -316,14 +316,7 @@ private fun CardCover(
 ) {
     // B 站封面原图往往上千像素，而卡片只有几百像素宽。请求缩略图可以显著减少
     // 焦点移动、新卡片进入视口时的下载与解码开销。
-    val imageModel =
-        remember(cover) {
-            if (cover.startsWith("http", ignoreCase = true) && !cover.contains('@')) {
-                "$cover@400h_640w_1c.webp"
-            } else {
-                cover
-            }
-        }
+    val imageModel = rememberCoverThumbnail(cover = cover, height = 400, width = 640)
 
     Box(
         modifier =
