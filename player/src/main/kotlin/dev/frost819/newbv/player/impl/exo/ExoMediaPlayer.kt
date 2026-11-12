@@ -26,6 +26,7 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.upstream.ParsingLoadable
 import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerOptions
+import dev.frost819.newbv.player.formatBitrateKbps
 import dev.frost819.newbv.player.formatMinSec
 import dev.frost819.newbv.player.isAudioRenderError
 import dev.frost819.newbv.player.isVideoDecodeError
@@ -284,7 +285,8 @@ class ExoMediaPlayer(
                 speed: ${speed}x
                 buffered: $bufferedPercentage%
                 resolution: ${mPlayer?.videoSize?.width} x ${mPlayer?.videoSize?.height}
-                audio: ${mPlayer?.audioFormat?.bitrate ?: 0} kbps
+                video: ${(mPlayer?.videoFormat?.bitrate ?: 0).formatBitrateKbps()}
+                audio: ${(mPlayer?.audioFormat?.bitrate ?: 0).formatBitrateKbps()}
                 video codec: ${mPlayer?.videoFormat?.sampleMimeType ?: "null"}
                 audio codec: ${mPlayer?.audioFormat?.sampleMimeType ?: "null"} ($audioRendererName)
                 """.trimIndent()
