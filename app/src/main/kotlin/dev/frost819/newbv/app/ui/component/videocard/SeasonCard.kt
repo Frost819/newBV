@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +48,13 @@ fun SeasonCard(
     onGoToDetailPage: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    // 形状与边框只随主题变化，列表滚动时不再每次重组都分配 Border/BorderStroke。
+    val largeShape = MaterialTheme.shapes.large
+    val borderColor = MaterialTheme.colorScheme.border
+    val focusedBorder =
+        remember(largeShape, borderColor) {
+            Border(border = BorderStroke(3.dp, borderColor), shape = largeShape)
+        }
     Surface(
         modifier = modifier.touchClickable(onClick = onClick),
         onClick = onClick,
@@ -56,15 +64,8 @@ fun SeasonCard(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 pressedContainerColor = MaterialTheme.colorScheme.surface,
             ),
-        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.large),
-        border =
-            ClickableSurfaceDefaults.border(
-                focusedBorder =
-                    Border(
-                        border = BorderStroke(width = 3.dp, color = MaterialTheme.colorScheme.border),
-                        shape = MaterialTheme.shapes.large,
-                    ),
-            ),
+        shape = ClickableSurfaceDefaults.shape(shape = largeShape),
+        border = ClickableSurfaceDefaults.border(focusedBorder = focusedBorder),
     ) {
         Column {
             Box(
@@ -92,13 +93,7 @@ fun SeasonCard(
                                 .height(48.dp)
                                 .fillMaxWidth()
                                 .background(
-                                    Brush.verticalGradient(
-                                        colors =
-                                            listOf(
-                                                Color.Transparent,
-                                                Color.Black.copy(alpha = 0.8f),
-                                            ),
-                                    ),
+BottomScrim,
                                 ),
                     )
                     Text(
@@ -138,3 +133,8 @@ fun SeasonCard(
         }
     }
 }
+/** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
+private val BottomScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+    )

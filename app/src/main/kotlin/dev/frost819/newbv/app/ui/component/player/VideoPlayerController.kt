@@ -310,10 +310,12 @@ fun VideoPlayerController(
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        val confirmKeys = listOf(Key.DirectionCenter, Key.Enter, Key.Spacebar)
-
-        // 非 confirm 键的 KeyUp 事件消费掉
-        if (event.type == KeyEventType.KeyUp && event.key !in confirmKeys) {
+        // 每次按键都新建 listOf 再判 in 会白白分配一个 ArrayList，直接比较即可。
+        if (event.type == KeyEventType.KeyUp &&
+            event.key != Key.DirectionCenter &&
+            event.key != Key.Enter &&
+            event.key != Key.Spacebar
+        ) {
             return true
         }
 
@@ -356,7 +358,7 @@ fun VideoPlayerController(
         // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         if (!showClickableControllers) {
             when (event.key) {
-                in confirmKeys -> {
+                Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
                     if (event.type == KeyEventType.KeyDown) {
                         if (event.nativeKeyEvent.isLongPress) {
                             showMenuController = true

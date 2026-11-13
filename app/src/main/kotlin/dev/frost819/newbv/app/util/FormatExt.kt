@@ -64,13 +64,18 @@ fun Int.formatHourMinSec(): String = (this * 1000L).formatHourMinSec()
 
 /**
  * 去除字符串中的 HTML 标签（如搜索结果标题中的 <em> 高亮标签）。
+ *
+ * 绝大多数标题不带标签，先扫一遍字符：没命中就原样返回，省掉 HtmlCompat
+ * 的解析和 Spanned 构造。列表滚动时每个 item 都要走这里，这一步省得很实在。
  */
-fun String.removeHtmlTags(): String =
-    HtmlCompat
+fun String.removeHtmlTags(): String {
+    if (indexOf('<') == -1) return this
+    return HtmlCompat
         .fromHtml(
             this,
             HtmlCompat.FROM_HTML_MODE_LEGACY,
         ).toString()
+}
 
 /**
  * 将评论发布时间戳格式化为相对时间文案。

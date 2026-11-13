@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +48,14 @@ fun LiveRoomCard(
     data: LiveRoomCardData,
     onClick: () -> Unit,
 ) {
+    // 形状与边框只随主题变化，列表滚动时不再每次重组都分配 Border/BorderStroke。
+    val largeShape = MaterialTheme.shapes.large
+    val borderColor = MaterialTheme.colorScheme.border
+    val cardShape = CardDefaults.shape(largeShape)
+    val focusedBorder =
+        remember(largeShape, borderColor) {
+            Border(border = androidx.compose.foundation.BorderStroke(3.dp, borderColor), shape = largeShape)
+        }
     Column(modifier = modifier.fillMaxWidth()) {
         Card(
             onClick = onClick,
@@ -55,15 +64,8 @@ fun LiveRoomCard(
                     .fillMaxWidth()
                     .aspectRatio(1.78f)
                     .touchClickable(onClick = onClick),
-            shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border =
-                CardDefaults.border(
-                    focusedBorder =
-                        Border(
-                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
-                            shape = MaterialTheme.shapes.large,
-                        ),
-                ),
+            shape = cardShape,
+            border = CardDefaults.border(focusedBorder = focusedBorder),
         ) {
             LiveCardCover(
                 cover = data.cover,
@@ -108,13 +110,7 @@ private fun LiveCardCover(
                     .height(48.dp)
                     .align(Alignment.BottomCenter)
                     .background(
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.6f),
-                                ),
-                        ),
+BottomScrim,
                     ),
         )
 
@@ -214,3 +210,8 @@ private fun LiveRoomCardPreview() {
         }
     }
 }
+/** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
+private val BottomScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+    )

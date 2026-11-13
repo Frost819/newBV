@@ -102,6 +102,12 @@ fun VideoPlayerScreen(
     val videoShotCache by remember(uiState.videoShot) { mutableStateOf(VideoShotImageCache()) }
 
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
+    // 相关视频列表只在切换视频时变化。之前它跟 uiState 一起放在 mergedUiState 的
+    // remember key 里，播放进度等高频状态一变就把几十个 RelatedVideo 重新 map 一遍。
+    val relatedVideoCards =
+        remember(videoListState.relatedVideos) {
+            videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) }
+        }
     val mergedUiState =
         remember(
             uiState,
@@ -112,7 +118,7 @@ fun VideoPlayerScreen(
             subtitleData,
             subtitleList,
             videoListState.videoList,
-            videoListState.relatedVideos,
+            relatedVideoCards,
         ) {
             uiState.copy(
                 danmakuState = danmakuState,
@@ -122,7 +128,7 @@ fun VideoPlayerScreen(
                 subtitleData = subtitleData,
                 subtitleList = subtitleList,
                 videoList = videoListState.videoList,
-                relatedVideos = videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) },
+                relatedVideos = relatedVideoCards,
             )
         }
 

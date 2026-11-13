@@ -213,13 +213,7 @@ fun ControllerVideoInfoTop(
                     ),
                 ).background(
                     brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Black.copy(alpha = 0f),
-                                ),
-                        ),
+TopScrim,
                 ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
@@ -641,3 +635,8 @@ private fun ControllerVideoInfoPreview() {
 }
 
 // endregion
+/** 控制器顶部信息条渐变：颜色固定，避免每次重组构造 Brush。 */
+private val TopScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Black.copy(alpha = 0f)),
+    )

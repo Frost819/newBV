@@ -94,8 +94,15 @@ fun SmallVideoCard(
         showActions = false
     }
 
-    // CardDefaults.shape 内部只是拼一个 CardShape，提成局部变量避免重复构造。
-    val cardShape = CardDefaults.shape(MaterialTheme.shapes.large)
+    // 形状、颜色、边框都是主题里的稳定值。网格里几十张卡片每次重组都新建
+    // CardShape / BorderStroke / Border 是纯分配，缓存到主题变化时才重建。
+    val largeShape = MaterialTheme.shapes.large
+    val borderColor = MaterialTheme.colorScheme.border
+    val cardShape = CardDefaults.shape(largeShape)
+    val focusedBorder =
+        remember(largeShape, borderColor) {
+            Border(border = BorderStroke(3.dp, borderColor), shape = largeShape)
+        }
 
     LaunchedEffect(showActions) {
         if (showActions && hasAnyAction) {
@@ -122,14 +129,7 @@ fun SmallVideoCard(
                         if (!focusState.hasFocus) showActions = false
                     },
             shape = cardShape,
-            border =
-                CardDefaults.border(
-                    focusedBorder =
-                        Border(
-                            border = BorderStroke(3.dp, MaterialTheme.colorScheme.border),
-                            shape = MaterialTheme.shapes.large,
-                        ),
-                ),
+            border = CardDefaults.border(focusedBorder = focusedBorder),
         ) {
             if (showActions) {
                 Row(
@@ -344,13 +344,7 @@ private fun CardCover(
                     .fillMaxWidth()
                     .height(48.dp)
                     .background(
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.5f),
-                                ),
-                        ),
+BottomScrim,
                     ),
         )
 
@@ -532,3 +526,8 @@ private fun CardInfoPreview() {
 }
 
 // endregion
+/** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
+private val BottomScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+    )

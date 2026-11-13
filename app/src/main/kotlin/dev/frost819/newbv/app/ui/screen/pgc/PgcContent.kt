@@ -91,10 +91,12 @@ fun PgcContent(
 
     Material3Scaffold(
         topBar = {
+            val pgcTabItems = remember { PgcTabItem.entries.toList() }
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
-                items = PgcTabItem.entries.toList(),
-                selectedIndex = PgcTabItem.entries.indexOf(selectedTab),
+                items = pgcTabItems,
+                // entries.toList() 就是 ordinal 顺序，直接取 ordinal 省掉一次线性查找。
+                selectedIndex = selectedTab.ordinal,
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = nav as PgcTabItem

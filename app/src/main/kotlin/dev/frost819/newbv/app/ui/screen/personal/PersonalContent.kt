@@ -60,12 +60,18 @@ fun PersonalContent(
             }
         }
 
+    // 只在选中项变化时算一次，避免每次重组都构造临时 PersonalTabItem 再线性查找。
+    val selectedIndex =
+        remember(selectedTab, reorderedItems) {
+            reorderedItems.indexOfFirst { it.item == selectedTab }
+        }
+
     Material3Scaffold(
         topBar = {
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = reorderedItems,
-                selectedIndex = reorderedItems.indexOf(PersonalTabItem(selectedTab)),
+                selectedIndex = selectedIndex,
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     selectedTab = (nav as PersonalTabItem).item

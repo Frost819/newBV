@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +24,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -60,11 +60,10 @@ fun TopNav(
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    var selectedTabIndex by remember { mutableIntStateOf(selectedIndex) }
-
-    LaunchedEffect(selectedIndex) {
-        selectedTabIndex = selectedIndex
-    }
+    // 外部选中项变化时重建 state，语义与原来的 LaunchedEffect 同步一致，
+    // 但省掉一次协程启动和它带来的一帧延迟。焦点在 tab 间移动时 selectedIndex 不变，
+    // 内部状态照常由 onFocus 更新。
+    var selectedTabIndex by remember(selectedIndex) { mutableIntStateOf(selectedIndex) }
     // 直接取值。原先用 animateDpAsState 让顶栏高度在焦点进出内容区时持续动画，
     // 每帧都会让整个 Scaffold 重新测量。
     val verticalPadding = if (isLargePadding) 12.dp else 6.dp
@@ -107,6 +106,9 @@ private fun NavItemTab(
     // 焦点写进 State 后只在 drawBehind 里读：焦点变化走「重绘」而不是「重组」。
     val focusState = remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
+    // 描边宽度只随屏幕密度变化，缓存 Stroke 避免焦点态每帧绘制都新建一个。
+    val borderWidthPx = with(LocalDensity.current) { 2.dp.toPx() }
+    val borderStroke = remember(borderWidthPx) { Stroke(width = borderWidthPx) }
 
     Box(
         modifier =
@@ -139,7 +141,7 @@ private fun NavItemTab(
                         drawRoundRect(
                             color = accentColor,
                             cornerRadius = radius,
-                            style = Stroke(width = 2.dp.toPx()),
+                            style = borderStroke,
                         )
                     }
                 }.height(32.dp)

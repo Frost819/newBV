@@ -119,6 +119,10 @@ android {
                     "DebugProbesKt.bin",
                     "kotlin/**",
                     "**/*.kotlin_metadata",
+                    // libgdx 的 GWT 模块描述与 Ragel 解析器源文件只在构建期用，
+                    // Android 运行时不读取；dex 中也没有任何对它们的字符串引用。
+                    "com/badlogic/gdx.gwt.xml",
+                    "com/badlogic/gdx/utils/*.rl",
                 )
         }
     }
