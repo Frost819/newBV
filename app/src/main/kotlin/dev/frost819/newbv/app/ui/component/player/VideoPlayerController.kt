@@ -33,8 +33,8 @@ import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutAction
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutCatalog
-import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutKeys
 import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutsStore
+import dev.frost819.newbv.app.entity.player.shortcut.findShortcut
 import dev.frost819.newbv.app.entity.player.shortcut.pgcUnsupportedShortcutActions
 import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
@@ -288,9 +288,11 @@ fun VideoPlayerController(
 
     fun handleCustomShortcut(event: KeyEvent): Boolean {
         if (showClickableControllers) return false
-        val keyCode = event.nativeKeyEvent.keyCode
-        if (!PlayerCustomShortcutKeys.isAllowedKeyCode(keyCode)) return false
-        val shortcut = PlayerCustomShortcutsStore.getByKey()[keyCode] ?: return false
+        val shortcut =
+            findShortcut(
+                keyCode = event.nativeKeyEvent.keyCode,
+                bindings = PlayerCustomShortcutsStore.getByKey(),
+            ) ?: return false
         if (event.type == KeyEventType.KeyUp) return true
         if (event.type != KeyEventType.KeyDown) return false
         if (event.nativeKeyEvent.repeatCount != 0) return true
