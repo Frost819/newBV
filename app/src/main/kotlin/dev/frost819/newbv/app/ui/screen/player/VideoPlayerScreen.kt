@@ -115,6 +115,25 @@ fun VideoPlayerScreen(
         resumeAfterComments = false
     }
 
+    // 打开互动面板：暂停播放与弹幕，并记录关闭后是否需要恢复
+    fun openInteraction() {
+        logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
+        resumeAfterInteraction = uiState.playerState == PlayerState.Playing
+        playerViewModel.pausePlayback()
+        danmakuViewModel.pause()
+        showInteractionDialog = true
+    }
+
+    // 关闭互动面板：返回键、面板按钮与自定义快捷键共用
+    fun dismissInteraction() {
+        showInteractionDialog = false
+        if (resumeAfterInteraction) {
+            playerViewModel.resumePlayback()
+            danmakuViewModel.play()
+        }
+        resumeAfterInteraction = false
+    }
+
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
     val mergedUiState =
         remember(
@@ -313,11 +332,8 @@ fun VideoPlayerScreen(
             navController.navigateToVideoDetailFromPlayer(uiState.aid)
         },
         onShowInteraction = {
-            logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
-            resumeAfterInteraction = uiState.playerState == PlayerState.Playing
-            playerViewModel.pausePlayback()
-            danmakuViewModel.pause()
-            showInteractionDialog = true
+            // 自定义键 / 控制栏按钮都是 toggle：已打开则关闭，未打开则打开
+            if (showInteractionDialog) dismissInteraction() else openInteraction()
         },
         onShowComments = {
             // 自定义键 / 控制栏按钮都是 toggle：已打开则关闭，未打开则打开
@@ -397,13 +413,14 @@ fun VideoPlayerScreen(
             onCoin = { playerViewModel.sendVideoCoin() },
             onFavorite = { playerViewModel.toggleVideoFavorite() },
             onOneClickTriple = { playerViewModel.oneClickTripleAction() },
-            onDismiss = {
-                showInteractionDialog = false
-                if (resumeAfterInteraction) {
-                    playerViewModel.resumePlayback()
-                    danmakuViewModel.play()
+            onDismiss = { dismissInteraction() },
+            onShortcutAction = { action ->
+                if (action == PlayerCustomShortcutAction.OpenInteraction) {
+                    dismissInteraction()
+                    true
+                } else {
+                    false
                 }
-                resumeAfterInteraction = false
             },
         )
     }
