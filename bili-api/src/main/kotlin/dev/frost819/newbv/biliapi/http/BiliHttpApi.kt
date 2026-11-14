@@ -157,17 +157,30 @@ object BiliHttpApi {
     private const val SOCKET_TIMEOUT_MS = 20_000L
 
     private var endPoint: String = "api.bilibili.com"
+
+    /**
+     * 预热协程与首个业务请求可能同时到达。原来两处都是无同步的 null 检查，
+     * 竞态下会各建一个 HttpClient（各自带 OkHttp 连接池与线程池），既浪费线程
+     * 也浪费首次连接。加锁后全进程只创建一次。
+     */
+    @Volatile
     private var clientInstance: HttpClient? = null
+    private val clientLock = Any()
+
     private val client: HttpClient
-        get() = clientInstance ?: createClient().also { clientInstance = it }
+        get() =
+            clientInstance ?: synchronized(clientLock) {
+                clientInstance ?: createClient().also { clientInstance = it }
+            }
 
     /**
      * 在后台协程预创建 Ktor HttpClient，与 UI 初始化并行执行。
      * 创建完成后赋值给 [clientInstance]，使首次网络请求时 [client] 直接可用，避免串行等待。
      */
     fun warmUpClient() {
-        if (clientInstance == null) {
-            CoroutineScope(Dispatchers.IO).launch {
+        if (clientInstance != null) return
+        CoroutineScope(Dispatchers.IO).launch {
+            synchronized(clientLock) {
                 if (clientInstance == null) {
                     clientInstance = createClient()
                 }
@@ -179,7 +192,8 @@ object BiliHttpApi {
         Json {
             coerceInputValues = true
             ignoreUnknownKeys = true
-            prettyPrint = true
+            // 请求体不需要人类可读的缩进，关掉可省去每个请求的多余空白与编码开销。
+            prettyPrint = false
         }
 
     var wbiImgKey: String? = null

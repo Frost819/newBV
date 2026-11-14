@@ -72,6 +72,7 @@ internal object PrefKeys {
     val showVideoInfo = booleanPreferencesKey("show_video_info")
     val showPersistentSeek = booleanPreferencesKey("show_persistent_seek")
     val showPlayerDebugInfo = booleanPreferencesKey("show_player_debug_info")
+    val playOrderReversed = booleanPreferencesKey("play_order_reversed")
 
     // ===== 应用界面 =====
     val density = floatPreferencesKey("density")

@@ -72,11 +72,17 @@ class FocusSaver(
      */
     @Composable
     fun RestoreFocus() {
-        LaunchedEffect(savedKey.value) {
+        // 只在 composition 建立/恢复时执行一次。
+        // 旧实现把 savedKey.value 作为 LaunchedEffect 的 key：运行时每按一次方向键，
+        // 焦点变化都会写 savedKey，导致调用 RestoreFocus 的整页重组，并在 50ms 后
+        // 再次 requestFocus 把焦点拉回去，这是遥控器「不跟手」最直接的原因。
+        // 现在 savedKey 只在 effect 内部读取，运行时写入不会触发任何重组。
+        LaunchedEffect(Unit) {
             val key = savedKey.value
             if (key.isNotEmpty()) {
+                // 等 LazyGrid/LazyColumn 的子项完成 focusRequester 注册
+                kotlinx.coroutines.delay(50)
                 requesters[key]?.let {
-                    kotlinx.coroutines.delay(50)
                     runCatching { it.requestFocus() }
                 }
             }

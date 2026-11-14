@@ -44,8 +44,13 @@ fun TvLazyVerticalGrid(
                     size: Float,
                     containerSize: Float,
                 ): Float {
-                    val targetPosition = containerSize * pivotFraction
-                    return offset - targetPosition
+                    // 旧实现无论焦点项是否已经可见，都返回「滚动到 30% 处」的距离，
+                    // 于是每按一次方向键都要跑一轮滚动动画，快速连按时动画互相叠加。
+                    // 只有在焦点项进入上下安全区之外时才滚动，同屏内移动保持零滚动。
+                    val safeTop = containerSize * 0.12f
+                    val safeBottom = containerSize * 0.88f
+                    if (offset >= safeTop && offset + size <= safeBottom) return 0f
+                    return offset - containerSize * pivotFraction
                 }
             }
         }

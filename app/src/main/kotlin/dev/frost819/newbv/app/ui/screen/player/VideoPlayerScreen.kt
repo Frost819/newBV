@@ -28,6 +28,8 @@ import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
 import dev.frost819.newbv.app.ui.component.player.VideoInteractionDialog
 import dev.frost819.newbv.app.ui.component.player.VideoPlayerController
 import dev.frost819.newbv.app.ui.component.rememberDoublePressExit
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
+import dev.frost819.newbv.app.ui.component.toggleThemeMode
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.app.ui.component.videocard.isPgc
 import dev.frost819.newbv.app.ui.navigation.UserSpaceRoute
@@ -43,12 +45,14 @@ import dev.frost819.newbv.app.viewmodel.player.SubtitleViewModel
 import dev.frost819.newbv.app.viewmodel.player.VideoListViewModel
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMaskFrame
 import dev.frost819.newbv.core.log.Loggers
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.danmaku.component.DanmakuPlayerCompose
 import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
 import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
 import dev.frost819.newbv.player.BvVideoPlayer
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlin.math.absoluteValue
@@ -78,6 +82,8 @@ fun VideoPlayerScreen(
     val uiState by playerViewModel.uiState.collectAsState()
     val seekerState = playerViewModel.seekerState.collectAsState()
     val danmakuState by danmakuViewModel.danmakuState.collectAsState()
+    // 应用级外观（播放器内层强制深色，这里读的是全局档位解析后的结果）
+    val currentlyDarkForPlayer = rememberIsDarkTheme()
     val danmakuMask by danmakuViewModel.danmakuMask.collectAsState()
     val videoListState by videoListViewModel.videoListState.collectAsState()
     val subtitleState by subtitleViewModel.subtitleState.collectAsState()
@@ -96,6 +102,12 @@ fun VideoPlayerScreen(
     val videoShotCache by remember(uiState.videoShot) { mutableStateOf(VideoShotImageCache()) }
 
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
+    // 相关视频列表只在切换视频时变化。之前它跟 uiState 一起放在 mergedUiState 的
+    // remember key 里，播放进度等高频状态一变就把几十个 RelatedVideo 重新 map 一遍。
+    val relatedVideoCards =
+        remember(videoListState.relatedVideos) {
+            videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) }
+        }
     val mergedUiState =
         remember(
             uiState,
@@ -106,7 +118,7 @@ fun VideoPlayerScreen(
             subtitleData,
             subtitleList,
             videoListState.videoList,
-            videoListState.relatedVideos,
+            relatedVideoCards,
         ) {
             uiState.copy(
                 danmakuState = danmakuState,
@@ -116,7 +128,7 @@ fun VideoPlayerScreen(
                 subtitleData = subtitleData,
                 subtitleList = subtitleList,
                 videoList = videoListState.videoList,
-                relatedVideos = videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) },
+                relatedVideos = relatedVideoCards,
             )
         }
 
@@ -163,6 +175,7 @@ fun VideoPlayerScreen(
     LaunchedEffect(Unit) {
         playerViewModel.seekerState
             .map { it.currentTime }
+            .distinctUntilChanged()
             .collect { danmakuViewModel.onVideoPositionChanged(it) }
     }
 
@@ -334,6 +347,19 @@ fun VideoPlayerScreen(
         },
         onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
         onShowShortcutTip = { text -> playerViewModel.showShortcutTip(text) },
+        onToggleTheme = {
+            // 播放器画面固定深色，切换后界面本身不会变，所以必须给一条文字反馈，
+            // 否则用户会以为按钮坏了。真正生效的是返回后的页面与设置项。
+            val turnToDark = !currentlyDarkForPlayer
+            toggleThemeMode(currentlyDark = currentlyDarkForPlayer)
+            playerViewModel.showShortcutTip(if (turnToDark) "已切换到夜间模式" else "已切换到日间模式")
+        },
+        onTogglePlayOrder = {
+            // 列表随即重排，给一条文字确认当前档位，免得用户以为点了没反应
+            val turnToReversed = !Prefs.playOrderReversed
+            Prefs.playOrderReversed = turnToReversed
+            playerViewModel.showShortcutTip(if (turnToReversed) "已切换为倒序播放" else "已切换为正序播放")
+        },
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

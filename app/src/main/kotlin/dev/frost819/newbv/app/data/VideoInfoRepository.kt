@@ -175,13 +175,20 @@ class VideoInfoRepository
          * @param preferApiType 接口类型
          */
         suspend fun updateUgcPages(preferApiType: ApiType) {
+            // 先把网络结果全部取回来，再做纯映射。
+            // 原先把 getUgcPages 放在 _videoList.update 的闭包里：update 是 CAS 自旋，
+            // 一旦并发冲突整个闭包会重跑，同一个视频就会被重复请求。
+            val pagesByAid =
+                _videoList.value
+                    .mapNotNull { item ->
+                        runCatching {
+                            item.aid to videoDetailRepository.getUgcPages(aid = item.aid, preferApiType = preferApiType)
+                        }.getOrNull()
+                            ?.takeIf { (_, pages) -> pages.size > 1 }
+                    }.toMap()
+            if (pagesByAid.isEmpty()) return
             _videoList.update { oldList ->
-                oldList.map { item ->
-                    runCatching {
-                        val pages = videoDetailRepository.getUgcPages(aid = item.aid, preferApiType = preferApiType)
-                        if (pages.size > 1) item.copy(ugcPages = pages) else item
-                    }.getOrElse { item }
-                }
+                oldList.map { item -> pagesByAid[item.aid]?.let { item.copy(ugcPages = it) } ?: item }
             }
         }
 

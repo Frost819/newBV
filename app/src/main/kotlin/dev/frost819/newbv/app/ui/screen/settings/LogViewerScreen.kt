@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -88,7 +90,8 @@ fun LogViewerScreen(
             } else {
                 selectedFile?.let { viewModel.getFileUrl(it) } ?: viewModel.getServerUrl()
             }
-        qrImage = generateQrCode(url)
+        // 二维码编码是 CPU 活，放在主线程会在焦点移动那一帧卡一下
+        qrImage = withContext(Dispatchers.Default) { generateQrCode(url) }
     }
 
     Scaffold(
@@ -206,6 +209,7 @@ fun LogViewerScreen(
                             Modifier
                                 .size(240.dp)
                                 .clip(MaterialTheme.shapes.large)
+                                // 二维码必须在任何主题下都保持白底，否则扫码识别率会掉
                                 .background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {

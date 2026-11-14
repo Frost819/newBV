@@ -5,6 +5,7 @@ import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.entity.user.MyInfoData
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
+import dev.frost819.newbv.core.log.Loggers
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.db.dao.UserDao
 import dev.frost819.newbv.data.db.entity.UserEntity
@@ -43,6 +44,8 @@ class AccountRepositoryImpl
         private val _uiState = MutableStateFlow(AccountUiState())
         val uiState: StateFlow<AccountUiState> = _uiState.asStateFlow()
 
+        private val logger = Loggers.get("AccountRepository")
+
         init {
             initFromPrefs()
         }
@@ -54,6 +57,8 @@ class AccountRepositoryImpl
          * 将 Prefs 中已有的凭证同步到 [AuthRepository] 和 [uiState]。
          */
         private fun initFromPrefs() {
+            // 无痕模式也要从偏好里恢复：否则重启后按钮显示「关」，播放器却按 Prefs 真值走
+            _uiState.update { it.copy(incognitoMode = Prefs.incognitoMode) }
             if (Prefs.isLogin) {
                 syncToAuthRepository(
                     uid = Prefs.uid,
@@ -222,6 +227,9 @@ class AccountRepositoryImpl
                         nextExp = response.levelExp.nextExp,
                     )
                 }
+            }.onFailure {
+                // 网络失败、登录态过期、解析失败原先都被静默吞掉，界面停在旧值且无从排查
+                logger.warn(it) { "refreshUserInfo failed" }
             }
         }
 

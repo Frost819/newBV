@@ -218,7 +218,9 @@ fun CommentsDialog(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.62f)),
+                    // 遮罩跟随主题：深色下用黑色压暗画面，浅色下用深灰，
+                    // 否则浅色主题里铺 62% 纯黑会糊成一块脏灰，与白色面板对比过强。
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.62f)),
         ) {
             Surface(
                 modifier =

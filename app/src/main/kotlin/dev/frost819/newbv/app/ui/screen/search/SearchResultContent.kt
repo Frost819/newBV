@@ -187,10 +187,12 @@ fun SearchResultContent(
                 )
             }
 
-            // 5 类 Tab 导航
+            // 5 类 Tab 导航。列表是静态的，缓存起来，避免每次重组给 TopNav 传一个新 List
+            // 实例，导致整行 Tab 失去跳过性。
+            val searchTypeNavItems = remember { SearchType.entries.map { SearchTypeNavItem(it) } }
             TopNav(
                 modifier = Modifier.focusRequester(tabRowFocusRequester),
-                items = SearchType.entries.map { SearchTypeNavItem(it) },
+                items = searchTypeNavItems,
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { item ->
                     viewModel.switchType((item as SearchTypeNavItem).type)
@@ -267,6 +269,8 @@ fun SearchResultContent(
                         is SearchResultItem.PgcItem -> {
                             val p = item.pgc
                             val focusKey = "pgc_${p.seasonId}"
+                            val ratingText =
+                                remember(p.star) { if (p.star > 0) String.format("%.1f", p.star) else null }
                             SeasonCard(
                                 modifier = Modifier.focusSaverItem(focusSaver, focusKey),
                                 data =
@@ -274,7 +278,7 @@ fun SearchResultContent(
                                         seasonId = p.seasonId,
                                         title = p.title.removeHtmlTags(),
                                         cover = p.cover,
-                                        rating = if (p.star > 0) String.format("%.1f", p.star) else null,
+                                        rating = ratingText,
                                     ),
                                 onClick = {
                                     navController.navigate(

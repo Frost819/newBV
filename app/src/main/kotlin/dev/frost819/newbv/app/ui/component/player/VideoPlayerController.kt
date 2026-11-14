@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -40,6 +41,7 @@ import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.MenuController
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.ui.state.player.SeekerState
@@ -102,10 +104,19 @@ fun VideoPlayerController(
     onRelatedVideoClicked: (dev.frost819.newbv.app.ui.component.videocard.VideoCardData) -> Unit,
     onToggleDanmaku: () -> Unit,
     onShowShortcutTip: (String) -> Unit,
+    onToggleTheme: () -> Unit,
+    onTogglePlayOrder: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // 播放器本体固定深色（视频场景），但日夜切换按钮操作的是应用全局外观，
+    // 因此这里读的是应用级主题状态，而不是播放器内层那个强制 Dark 的主题。
+    val appThemeIsDark = rememberIsDarkTheme()
+
+    // 播放顺序（正序/倒序），影响分集面板呈现与上下集推进方向
+    val playOrderReversed by Prefs.playOrderReversedFlow.collectAsState()
 
     // 覆盖层可见性
     var showListController by remember { mutableStateOf(false) }
@@ -299,10 +310,12 @@ fun VideoPlayerController(
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        val confirmKeys = listOf(Key.DirectionCenter, Key.Enter, Key.Spacebar)
-
-        // 非 confirm 键的 KeyUp 事件消费掉
-        if (event.type == KeyEventType.KeyUp && event.key !in confirmKeys) {
+        // 每次按键都新建 listOf 再判 in 会白白分配一个 ArrayList，直接比较即可。
+        if (event.type == KeyEventType.KeyUp &&
+            event.key != Key.DirectionCenter &&
+            event.key != Key.Enter &&
+            event.key != Key.Spacebar
+        ) {
             return true
         }
 
@@ -345,7 +358,7 @@ fun VideoPlayerController(
         // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         if (!showClickableControllers) {
             when (event.key) {
-                in confirmKeys -> {
+                Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
                     if (event.type == KeyEventType.KeyDown) {
                         if (event.nativeKeyEvent.isLongPress) {
                             showMenuController = true
@@ -478,23 +491,15 @@ fun VideoPlayerController(
                             .clip(MaterialTheme.shapes.medium)
                             .background(Color.Black.copy(alpha = 0.5f)),
                 ) {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = seekerState.value.debugInfo,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    PlayerDebugInfoText(seekerState)
                 }
             }
 
-            // 常显进度条
+            // 常显进度条：State 的读取放进子组件，父级不随 250ms 刷新重组
             if (showPersistentSeek && !showInfoSeekController) {
-                VideoProgressSeek(
+                PersistentSeekBar(
                     modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter),
-                    duration = seekerState.value.totalDuration,
-                    position = seekerState.value.currentTime,
-                    bufferedPercentage = seekerState.value.bufferedPercentage,
-                    isPersistentSeek = true,
+                    seekerState = seekerState,
                 )
             }
 
@@ -502,7 +507,7 @@ fun VideoPlayerController(
             if (uiState.subtitleId != -1L) {
                 BottomSubtitle(
                     subtitleData = uiState.subtitleData,
-                    currentTime = seekerState.value.currentTime,
+                    currentTime = remember(seekerState) { derivedStateOf { seekerState.value.currentTime } },
                     fontSize =
                         androidx.compose.ui.unit.TextUnit(
                             uiState.subtitleState.fontSize.toFloat(),
@@ -554,7 +559,7 @@ fun VideoPlayerController(
                 show = showInfoSeekController,
                 isSeeking = isSeeking,
                 goTime = goTime,
-                seekerState = seekerState.value,
+                seekerState = seekerState,
                 title = uiState.title,
                 clock = uiState.clock,
                 onlineWatching = uiState.onlineWatching,
@@ -563,6 +568,7 @@ fun VideoPlayerController(
                 isPgc = isPgc,
                 danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
                 isLooping = isLooping,
+                themeIsDark = appThemeIsDark,
                 onDirectionLeft = ::onDirectionLeft,
                 onDirectionRight = ::onDirectionRight,
                 onSeekGoTime = ::onSeekGoTime,
@@ -576,6 +582,7 @@ fun VideoPlayerController(
                 onGoToUpPage = onGoToUpPage,
                 onShowInteraction = onShowInteraction,
                 onShowComments = onShowComments,
+                onToggleTheme = onToggleTheme,
             )
 
             // 分集列表
@@ -584,6 +591,8 @@ fun VideoPlayerController(
                 show = showListController,
                 currentCid = uiState.cid,
                 videoList = uiState.videoList,
+                reversed = playOrderReversed,
+                onTogglePlayOrder = onTogglePlayOrder,
                 onPlayNewVideo = onPlayNewVideo,
             )
 
@@ -627,4 +636,31 @@ fun VideoPlayerController(
             )
         }
     }
+}
+
+/** 调试信息文本：单独成组件，seekerState 的读取只影响这一小块。 */
+@Composable
+private fun PlayerDebugInfoText(seekerState: State<SeekerState>) {
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = seekerState.value.debugInfo,
+        color = Color.White,
+        style = MaterialTheme.typography.bodySmall,
+    )
+}
+
+/** 常显进度条：同上，把 State 读取收进子组件，避免父级每 250ms 整体重组。 */
+@Composable
+private fun PersistentSeekBar(
+    modifier: Modifier = Modifier,
+    seekerState: State<SeekerState>,
+) {
+    val seeker = seekerState.value
+    VideoProgressSeek(
+        modifier = modifier,
+        duration = seeker.totalDuration,
+        position = seeker.currentTime,
+        bufferedPercentage = seeker.bufferedPercentage,
+        isPersistentSeek = true,
+    )
 }

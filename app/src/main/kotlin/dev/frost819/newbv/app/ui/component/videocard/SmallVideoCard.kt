@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,7 +45,7 @@ import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.currentInputMethod
+import dev.frost819.newbv.core.interaction.LocalInteractionTracker
 
 /**
  * 小型视频卡片。
@@ -78,7 +79,10 @@ fun SmallVideoCard(
     var showActions by remember { mutableStateOf(false) }
     var releaseLongPress by remember { mutableStateOf(false) }
     val firstButtonRequester = remember { FocusRequester() }
-    val isTouchMode = currentInputMethod() == InputMethod.Touch
+    // 不用 collectAsState：每张卡片都订阅一个 StateFlow 会给网格增加几十个收集器，
+    // 也会让卡片成为动态订阅节点。这里直接读 tracker 的当前值，长按面板出现时
+    // showActions 变化本来就会重组，读到的一定是最新输入方式。
+    val isTouchMode = LocalInteractionTracker.current?.current == InputMethod.Touch
 
     val hasAnyAction =
         onAddWatchLater != null ||
@@ -89,6 +93,16 @@ fun SmallVideoCard(
     BackHandler(enabled = showActions) {
         showActions = false
     }
+
+    // 形状、颜色、边框都是主题里的稳定值。网格里几十张卡片每次重组都新建
+    // CardShape / BorderStroke / Border 是纯分配，缓存到主题变化时才重建。
+    val largeShape = MaterialTheme.shapes.large
+    val borderColor = MaterialTheme.colorScheme.border
+    val cardShape = CardDefaults.shape(largeShape)
+    val focusedBorder =
+        remember(largeShape, borderColor) {
+            Border(border = BorderStroke(3.dp, borderColor), shape = largeShape)
+        }
 
     LaunchedEffect(showActions) {
         if (showActions && hasAnyAction) {
@@ -114,15 +128,8 @@ fun SmallVideoCard(
                     ).onFocusChanged { focusState ->
                         if (!focusState.hasFocus) showActions = false
                     },
-            shape = CardDefaults.shape(MaterialTheme.shapes.large),
-            border =
-                CardDefaults.border(
-                    focusedBorder =
-                        Border(
-                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
-                            shape = MaterialTheme.shapes.large,
-                        ),
-                ),
+            shape = cardShape,
+            border = CardDefaults.border(focusedBorder = focusedBorder),
         ) {
             if (showActions) {
                 Row(
@@ -311,6 +318,10 @@ private fun CardCover(
     time: String,
     progress: Float? = null,
 ) {
+    // B 站封面原图往往上千像素，而卡片只有几百像素宽。请求缩略图可以显著减少
+    // 焦点移动、新卡片进入视口时的下载与解码开销。
+    val imageModel = rememberCoverThumbnail(cover = cover, height = 400, width = 640)
+
     Box(
         modifier =
             modifier
@@ -318,12 +329,11 @@ private fun CardCover(
                 .clip(MaterialTheme.shapes.large),
         contentAlignment = Alignment.BottomCenter,
     ) {
+        // 圆角裁剪只在外层 Box 上做一次。图片再套一次 clip 会多开一层离屏图层
+        // （saveLayer），弱 GPU 的盒子上每张卡片都要多一次合成，纯属浪费。
         AsyncImage(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clip(MaterialTheme.shapes.large),
-            model = cover,
+            modifier = Modifier.fillMaxSize(),
+            model = imageModel,
             contentDescription = null,
             contentScale = ContentScale.Crop,
         )
@@ -334,13 +344,7 @@ private fun CardCover(
                     .fillMaxWidth()
                     .height(48.dp)
                     .background(
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.5f),
-                                ),
-                        ),
+BottomScrim,
                     ),
         )
 
@@ -522,3 +526,8 @@ private fun CardInfoPreview() {
 }
 
 // endregion
+/** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
+private val BottomScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+    )

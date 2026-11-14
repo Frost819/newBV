@@ -3,11 +3,12 @@ package dev.frost819.newbv.app.ui.component.player
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * 控制器自动隐藏倒计时的统一管理。
@@ -38,18 +39,28 @@ fun rememberControllerAutoHide(
     timeoutMs: Long = CONTROLLER_AUTO_HIDE_TIMEOUT_MS,
     onHide: () -> Unit,
 ): () -> Unit {
-    val interactionTick = remember { mutableIntStateOf(0) }
+    val interactions = remember { Channel<Unit>(Channel.CONFLATED) }
     // onHide 每次重组可能是新 lambda，用 rememberUpdatedState 保证 effect 内始终调用最新实现
     val currentOnHide by rememberUpdatedState(onHide)
 
-    // 以 visible + 交互次数为 key：可见时启动倒计时，交互时重启，隐藏时取消
-    LaunchedEffect(visible, interactionTick.intValue) {
+    // 只有 visible 变化才重建计时循环；交互只往 channel 投事件。
+    // 原先用 intState 计数，按键（KeyDown + KeyUp）会各改一次 State，
+    // 整个播放器控制器因此每按一次方向键重组两次，正好压在焦点移动那一帧上。
+    LaunchedEffect(visible) {
         if (!visible) return@LaunchedEffect
-        delay(timeoutMs)
-        currentOnHide()
+        // 可见即开始计时；Channel 是 CONFLATED，for 之前投的值不会丢
+        interactions.trySend(Unit)
+        var timer: Job? = null
+        for (ignored in interactions) {
+            timer?.cancel()
+            timer = launch {
+                delay(timeoutMs)
+                currentOnHide()
+            }
+        }
     }
 
-    return remember { { interactionTick.intValue++ } }
+    return remember(interactions) { { interactions.trySend(Unit).let {} } }
 }
 
 /** 控制器默认自动隐藏时长（毫秒）。 */

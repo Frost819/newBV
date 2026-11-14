@@ -1,6 +1,8 @@
 package dev.frost819.newbv.app
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import coil3.ImageLoader
@@ -102,36 +104,8 @@ class BVApplication : Application() {
         // 账号云端弹幕屏蔽规则：启动时后台预热，播放器/直播只读缓存（登录态由仓库自行判断）
         danmakuFilterRepository.prefetch()
 
-        if (accessToken.isNotBlank() && Prefs.buvid.isNotBlank()) {
-            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-                channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
-            }
-        }
-
-        if (!Prefs.buvid3FromSpi) {
-            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-                val spiResult = BiliHttpApi.fetchBuvid3FromSpi()
-                if (spiResult != null) {
-                    Prefs.buvid3 = spiResult.buvid3
-                    Prefs.deviceCookies = spiResult.deviceCookies
-                    Prefs.buvid3FromSpi = true
-                    authRepository.buvid3 = spiResult.buvid3
-                    authRepository.deviceCookies = spiResult.deviceCookies
-                    BiliHttpApi.buvid3 = spiResult.buvid3
-                    BiliHttpApi.deviceCookies = spiResult.deviceCookies
-                }
-            }
-        }
-
         @Suppress("UNUSED_EXPRESSION")
         crashHandler
-
-        // 已启用上传时，尝试上传上次崩溃未发送的日志；开关状态由 CrashUploader 实时读取
-        if (crashUploader.canUpload()) {
-            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-                crashUploader.uploadPendingCrashLogs()
-            }
-        }
 
         logger.info { "Application started" }
 
@@ -151,27 +125,78 @@ class BVApplication : Application() {
                 ).maxSizeBytes(diskCacheMaxBytes)
                 .build()
 
+        // 图片请求共用一套带 HTTP 磁盘缓存的 OkHttp，避免裸 client 每次都回源；
+        // TV 网格一次滚过几十张封面，回源会直接表现为「卡」。
+        val imageHttpClient =
+            OkHttpClient
+                .Builder()
+                .cache(
+                    okhttp3.Cache(
+                        File(cacheDir, CacheManager.IMAGE_HTTP_CACHE_DIR),
+                        CacheManager.IMAGE_HTTP_CACHE_BYTES,
+                    ),
+                ).build()
+
         coil3.SingletonImageLoader.setSafe {
             ImageLoader
                 .Builder(this)
-                .crossfade(true)
+                // TV 遥控器快速滚动时逐张淡入会拖慢观感，交给帧本身显示即可。
+                .crossfade(false)
+                .memoryCache {
+                    // 默认按可用内存的百分比取，电视盒子内存小，固定一个上限更稳。
+                    coil3.memory.MemoryCache
+                        .Builder()
+                        .maxSizeBytes(CacheManager.IMAGE_MEMORY_CACHE_BYTES)
+                        .build()
+                }
                 .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCache(imageDiskCache)
                 .components {
-                    add(OkHttpNetworkFetcherFactory(OkHttpClient()))
+                    add(OkHttpNetworkFetcherFactory(imageHttpClient))
                 }.build()
         }
 
-        // 启动时检查缓存阈值，超限自动 LRU 清理（检查时机 = App 启动 + 缓存写入后）
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            CacheManager(this@BVApplication).checkCache()
-        }
+        // 下面这些都不是首屏要用的：gRPC 频道、buvid3 注册、崩溃日志上传、
+        // 缓存目录全量遍历、播放器 OkHttp 预热。原来在 onCreate 里各起一个
+        // CoroutineScope 同时跑，和首页渲染抢 CPU、网络、磁盘 IO，冷启动直接变慢。
+        // 统一延后到首帧之后，并共用一个 scope。
+        val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (accessToken.isNotBlank() && Prefs.buvid.isNotBlank()) {
+                backgroundScope.launch {
+                    channelRepository.initDefaultChannel(accessToken, Prefs.buvid)
+                }
+            }
 
-        // 预热播放器 OkHttpClient（构建 SSLContext/KeyStore 较慢，放到 IO 线程）。
-        // 预热后单例已就绪，首次进播放器时不再阻塞主线程。
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            playerHttpClientProvider.get()
-        }
+            if (!Prefs.buvid3FromSpi) {
+                backgroundScope.launch {
+                    val spiResult = BiliHttpApi.fetchBuvid3FromSpi()
+                    if (spiResult != null) {
+                        Prefs.buvid3 = spiResult.buvid3
+                        Prefs.deviceCookies = spiResult.deviceCookies
+                        Prefs.buvid3FromSpi = true
+                        authRepository.buvid3 = spiResult.buvid3
+                        authRepository.deviceCookies = spiResult.deviceCookies
+                        BiliHttpApi.buvid3 = spiResult.buvid3
+                        BiliHttpApi.deviceCookies = spiResult.deviceCookies
+                    }
+                }
+            }
+
+            if (crashUploader.canUpload()) {
+                backgroundScope.launch { crashUploader.uploadPendingCrashLogs() }
+            }
+
+            backgroundScope.launch { CacheManager(this@BVApplication).checkCache() }
+
+            // 构建 SSLContext/KeyStore 较慢，放到 IO 线程预热；进播放器前通常已完成。
+            backgroundScope.launch { playerHttpClientProvider.get() }
+        }, BACKGROUND_TASKS_DELAY_MS)
+    }
+
+    private companion object {
+        /** 非首屏后台任务的延后时间，留出首屏渲染窗口。 */
+        const val BACKGROUND_TASKS_DELAY_MS = 2_000L
     }
 }
