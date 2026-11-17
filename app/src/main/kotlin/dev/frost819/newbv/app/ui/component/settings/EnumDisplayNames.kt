@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.component.settings
 
+import dev.frost819.newbv.biliapi.entity.IpFamilyPreference
 import dev.frost819.newbv.data.datastore.ActionAfterPlay
 import dev.frost819.newbv.data.datastore.ApiType
 import dev.frost819.newbv.data.datastore.Audio
@@ -76,6 +77,16 @@ val ApiType.displayName: String
         when (this) {
             ApiType.Web -> "Web"
             ApiType.App -> "App"
+        }
+
+/** 网络地址族偏好显示名称。 */
+val IpFamilyPreference.displayName: String
+    get() =
+        when (this) {
+            IpFamilyPreference.Auto -> "自动（系统顺序）"
+            IpFamilyPreference.PreferIpv4 -> "IPv4 优先"
+            IpFamilyPreference.PreferIpv6 -> "IPv6 优先"
+            IpFamilyPreference.Ipv4Only -> "仅 IPv4"
         }
 
 /** 主题模式显示名称。 */

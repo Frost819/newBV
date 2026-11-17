@@ -14,6 +14,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
 import dev.frost819.newbv.biliapi.http.entity.live.SimplePlayUrlData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
+import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
 import dev.frost819.newbv.biliapi.util.BiliLogger
@@ -42,6 +43,11 @@ object BiliLiveHttpApi {
     private fun createClient() {
         client =
             HttpClient(OkHttp) {
+                engine {
+                    config {
+                        dns(BiliDns)
+                    }
+                }
                 BiliUserAgent()
                 install(ContentNegotiation) {
                     json(

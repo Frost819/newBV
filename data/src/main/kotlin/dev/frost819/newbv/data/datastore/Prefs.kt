@@ -5,6 +5,7 @@ package dev.frost819.newbv.data.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import dev.frost819.newbv.biliapi.entity.IpFamilyPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -237,6 +238,18 @@ object Prefs {
         ApiType.Web,
         save = { it.ordinal },
         restore = { ApiType.fromOrdinal(it) },
+    )
+
+    /**
+     * 网络地址族偏好（默认跟随系统）。
+     *
+     * 规避「路由器分配了 IPv6 但出口异常」时解析到 IPv6 导致请求超时（issue #285）。
+     */
+    var ipFamilyPreference by pref(
+        PrefKeys.ipFamilyPreference,
+        IpFamilyPreference.Auto,
+        save = { it.ordinal },
+        restore = { IpFamilyPreference.fromOrdinal(it) },
     )
 
     /** 是否启用崩溃日志上传（默认关闭）。 */

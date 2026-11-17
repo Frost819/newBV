@@ -1,6 +1,7 @@
 package dev.frost819.newbv.player
 
 import android.content.Context
+import dev.frost819.newbv.biliapi.http.util.BiliDns
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
@@ -72,6 +73,7 @@ object OkHttpUtil {
 
         return OkHttpClient
             .Builder()
+            .dns(BiliDns)
             .sslSocketFactory(
                 sslContext.socketFactory,
                 trustManagerFactory.trustManagers[0] as X509TrustManager,

@@ -9,6 +9,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.InteractWordEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
+import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.brotliDecompress
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
 import dev.frost819.newbv.biliapi.util.BiliLogger
@@ -69,6 +70,7 @@ object LiveDataWebSocket {
     private val wsClient by lazy {
         OkHttpClient
             .Builder()
+            .dns(BiliDns)
             .pingInterval(30, TimeUnit.SECONDS)
             .build()
     }

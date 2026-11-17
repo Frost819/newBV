@@ -11,6 +11,7 @@ import dev.frost819.newbv.app.data.AccountRepositoryImpl
 import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
@@ -354,6 +355,7 @@ object NetworkModule {
         HttpClient(OkHttp) {
             engine {
                 config {
+                    dns(BiliDns)
                     connectTimeout(10, TimeUnit.SECONDS)
                     readTimeout(15, TimeUnit.SECONDS)
                     writeTimeout(15, TimeUnit.SECONDS)

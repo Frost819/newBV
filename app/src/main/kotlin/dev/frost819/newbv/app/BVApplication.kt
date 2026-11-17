@@ -13,6 +13,8 @@ import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.app.util.CacheManager
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.http.util.BiliDns
+import dev.frost819.newbv.biliapi.http.util.BiliNetworkConfig
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.core.log.CrashHandler
@@ -76,6 +78,9 @@ class BVApplication : Application() {
         super.onCreate()
 
         Prefs.init(dataStore)
+
+        // 网络地址族偏好在任何网络请求之前下发（DNS 每次解析时读取，修改后无需重启）
+        BiliNetworkConfig.addressFamily = Prefs.ipFamilyPreference
 
         val buvid3 = Prefs.buvid3
         val deviceCookies = Prefs.deviceCookies
@@ -159,7 +164,7 @@ class BVApplication : Application() {
                 .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCache(imageDiskCache)
                 .components {
-                    add(OkHttpNetworkFetcherFactory(OkHttpClient()))
+                    add(OkHttpNetworkFetcherFactory(OkHttpClient.Builder().dns(BiliDns).build()))
                 }.build()
         }
 

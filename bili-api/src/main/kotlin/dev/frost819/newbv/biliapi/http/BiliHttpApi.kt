@@ -75,6 +75,7 @@ import dev.frost819.newbv.biliapi.http.entity.video.VideoShot
 import dev.frost819.newbv.biliapi.http.entity.web.NavResponseData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.BiliAppConf
+import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
 import io.ktor.client.HttpClient
@@ -270,6 +271,11 @@ object BiliHttpApi {
 
     private fun createClient(): HttpClient =
         HttpClient(OkHttp) {
+            engine {
+                config {
+                    dns(BiliDns)
+                }
+            }
             BiliUserAgent()
             install(ContentNegotiation) { json(json) }
             install(ContentEncoding) {
