@@ -6,18 +6,17 @@ import org.junit.jupiter.api.Test
 /**
  * [UserEntity] data class 的单元测试。
  *
- * 验证构造默认值、equals/hashCode、copy、destructuring、可变字段修改及 lock 默认值。
+ * 验证构造默认值、equals/hashCode、copy、destructuring 与可变字段修改。
  */
 class UserEntityTest {
     @Test
-    fun `construct with required fields only uses defaults for id and lock`() {
+    fun `construct with required fields only uses default for id`() {
         val entity = UserEntity(uid = 123L, username = "user", avatar = "url", auth = "{}")
         assertThat(entity.id).isNull()
         assertThat(entity.uid).isEqualTo(123L)
         assertThat(entity.username).isEqualTo("user")
         assertThat(entity.avatar).isEqualTo("url")
         assertThat(entity.auth).isEqualTo("{}")
-        assertThat(entity.lock).isEmpty()
     }
 
     @Test
@@ -29,14 +28,12 @@ class UserEntityTest {
                 username = "test",
                 avatar = "http://example.com/a.png",
                 auth = """{"sessdata":"abc"}""",
-                lock = "1234",
             )
         assertThat(entity.id).isEqualTo(1)
         assertThat(entity.uid).isEqualTo(456L)
         assertThat(entity.username).isEqualTo("test")
         assertThat(entity.avatar).isEqualTo("http://example.com/a.png")
         assertThat(entity.auth).isEqualTo("""{"sessdata":"abc"}""")
-        assertThat(entity.lock).isEqualTo("1234")
     }
 
     @Test
@@ -61,16 +58,9 @@ class UserEntityTest {
     }
 
     @Test
-    fun `lock is mutable`() {
-        val entity = UserEntity(uid = 1L, username = "", avatar = "", auth = "")
-        entity.lock = "password"
-        assertThat(entity.lock).isEqualTo("password")
-    }
-
-    @Test
     fun `equals returns true for same values`() {
-        val a = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
-        val b = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
+        val a = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x")
+        val b = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x")
         assertThat(a).isEqualTo(b)
     }
 
@@ -89,13 +79,6 @@ class UserEntityTest {
     }
 
     @Test
-    fun `equals returns false for different lock`() {
-        val a = UserEntity(id = 1, uid = 100L, username = "u", avatar = "", auth = "", lock = "1")
-        val b = UserEntity(id = 1, uid = 100L, username = "u", avatar = "", auth = "", lock = "2")
-        assertThat(a).isNotEqualTo(b)
-    }
-
-    @Test
     fun `equals returns false for null`() {
         val entity = UserEntity(uid = 1L, username = "", avatar = "", auth = "")
         assertThat(entity).isNotEqualTo(null)
@@ -103,8 +86,8 @@ class UserEntityTest {
 
     @Test
     fun `hashCode is consistent for same values`() {
-        val a = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
-        val b = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
+        val a = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x")
+        val b = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x")
         assertThat(a.hashCode()).isEqualTo(b.hashCode())
     }
 
@@ -124,21 +107,13 @@ class UserEntityTest {
     }
 
     @Test
-    fun `copy with modified lock`() {
-        val original = UserEntity(uid = 1L, username = "", avatar = "", auth = "")
-        val copied = original.copy(lock = "9999")
-        assertThat(copied.lock).isEqualTo("9999")
-    }
-
-    @Test
     fun `component functions return correct values`() {
-        val entity = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x", lock = "l")
+        val entity = UserEntity(id = 1, uid = 100L, username = "u", avatar = "a", auth = "x")
         assertThat(entity.component1()).isEqualTo(1)
         assertThat(entity.component2()).isEqualTo(100L)
         assertThat(entity.component3()).isEqualTo("u")
         assertThat(entity.component4()).isEqualTo("a")
         assertThat(entity.component5()).isEqualTo("x")
-        assertThat(entity.component6()).isEqualTo("l")
     }
 
     @Test

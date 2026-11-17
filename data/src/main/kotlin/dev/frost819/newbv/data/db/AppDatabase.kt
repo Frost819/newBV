@@ -12,7 +12,8 @@ import dev.frost819.newbv.data.db.entity.UserEntity
  * 应用主数据库。
  *
  * 持久化搜索历史与多账户信息，由 Hilt 注入，禁止手动构建单例。
- * 数据库版本 4（相对原版 BV 的版本 3 新增了 newBV 的 schema 起始）。
+ * 数据库版本 5（相对原版 BV 的版本 3 新增了 newBV 的 schema 起始；
+ * 版本 5 移除了已废弃的 `user.lock` 列，迁移见 [MIGRATION_4_5]）。
  *
  * 实体列表：
  * - [SearchHistoryEntity]：搜索历史
@@ -22,7 +23,7 @@ import dev.frost819.newbv.data.db.entity.UserEntity
  */
 @Database(
     entities = [SearchHistoryEntity::class, UserEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

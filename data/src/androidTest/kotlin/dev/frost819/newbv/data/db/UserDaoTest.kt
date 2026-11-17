@@ -147,21 +147,10 @@ class UserDaoTest {
             val inserted = dao.getAll().first()
 
             inserted.auth = "newAuth"
-            inserted.lock = "1234"
             dao.update(inserted)
 
             val result = dao.findUserByUid(100L)
             assertThat(result!!.auth).isEqualTo("newAuth")
-            assertThat(result.lock).isEqualTo("1234")
-        }
-
-    @Test
-    fun default_lock_is_empty_string() =
-        runTest {
-            dao.insert(UserEntity(uid = 1L, username = "user", avatar = "url", auth = "auth"))
-
-            val result = dao.findUserByUid(1L)
-            assertThat(result!!.lock).isEmpty()
         }
 
     @Test

@@ -292,17 +292,6 @@ class AccountRepositoryImplTest {
         }
 
     @Test
-    fun `updateUserLock updates lock field in DB`() =
-        runTest {
-            val user = UserEntity(uid = 100L, username = "test", avatar = "", auth = "{}")
-            coEvery { userDao.findUserByUid(100L) } returns user
-
-            repository.updateUserLock(100L, "udlr")
-
-            coVerify { userDao.update(match { it.lock == "udlr" }) }
-        }
-
-    @Test
     fun `toggleIncognitoMode toggles Prefs`() {
         val initial = Prefs.incognitoMode
         repository.toggleIncognitoMode()
@@ -526,14 +515,4 @@ class AccountRepositoryImplTest {
         repository.toggleIncognitoMode()
         assertThat(repository.uiState.value.incognitoMode).isEqualTo(initial)
     }
-
-    @Test
-    fun `updateUserLock does nothing when user not found`() =
-        runTest {
-            coEvery { userDao.findUserByUid(999L) } returns null
-
-            repository.updateUserLock(999L, "udlr")
-
-            coVerify(exactly = 0) { userDao.update(any()) }
-        }
 }

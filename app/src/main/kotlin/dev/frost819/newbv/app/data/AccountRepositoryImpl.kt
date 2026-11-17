@@ -267,21 +267,6 @@ class AccountRepositoryImpl
         }
 
         /**
-         * 更新用户锁密码。
-         *
-         * @param uid 用户 UID。
-         * @param lock 锁密码字符串（空字符串表示取消锁）。
-         */
-        suspend fun updateUserLock(
-            uid: Long,
-            lock: String,
-        ) {
-            val user = userDao.findUserByUid(uid) ?: return
-            user.lock = lock
-            userDao.update(user)
-        }
-
-        /**
          * 切换无痕模式。
          */
         fun toggleIncognitoMode() {

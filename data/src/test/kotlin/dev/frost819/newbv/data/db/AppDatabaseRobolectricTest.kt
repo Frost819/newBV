@@ -167,7 +167,6 @@ class AppDatabaseRobolectricTest {
             assertThat(found!!.username).isEqualTo("testuser")
             assertThat(found.avatar).isEqualTo("http://example.com/a.png")
             assertThat(found.auth).isEqualTo("""{"sessdata":"abc"}""")
-            assertThat(found.lock).isEmpty()
             assertThat(found.id).isNotNull()
         }
 
@@ -201,14 +200,12 @@ class AppDatabaseRobolectricTest {
             inserted.username = "new"
             inserted.avatar = "new_url"
             inserted.auth = "new_auth"
-            inserted.lock = "1234"
             database.userDao().update(inserted)
 
             val updated = database.userDao().findUserByUid(100L)!!
             assertThat(updated.username).isEqualTo("new")
             assertThat(updated.avatar).isEqualTo("new_url")
             assertThat(updated.auth).isEqualTo("new_auth")
-            assertThat(updated.lock).isEqualTo("1234")
         }
 
     @Test
@@ -244,19 +241,6 @@ class AppDatabaseRobolectricTest {
             val found = database.searchHistoryDao().findHistory("datetest")!!
             assertThat(found.searchDate.time).isEqualTo(1700000000000L)
         }
-
-    @Test
-    fun userEntity_withLock_persistsCorrectly() =
-        runBlocking {
-            database.userDao().insert(
-                UserEntity(uid = 300L, username = "locked", avatar = "", auth = "", lock = "9999"),
-            )
-
-            val found = database.userDao().findUserByUid(300L)!!
-            assertThat(found.lock).isEqualTo("9999")
-        }
-
-    // ===== AppDatabase =====
 
     @Test
     fun databaseName_isCorrect() {

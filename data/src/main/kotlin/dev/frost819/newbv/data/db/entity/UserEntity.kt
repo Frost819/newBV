@@ -15,7 +15,6 @@ import androidx.room.PrimaryKey
  * @property username 用户名，登录后从接口获取并更新。
  * @property avatar 用户头像 URL，登录后从接口获取并更新。
  * @property auth 登录凭证 JSON（含 SESSDATA / bili_jct / access_token 等），由调用方序列化。
- * @property lock 用户锁密码（空字符串表示未启用），用于启动解锁校验。
  */
 @Entity(tableName = "user")
 data class UserEntity(
@@ -24,5 +23,4 @@ data class UserEntity(
     @ColumnInfo(name = "username") var username: String,
     @ColumnInfo(name = "avatar") var avatar: String,
     @ColumnInfo(name = "auth") var auth: String,
-    @ColumnInfo(name = "lock", defaultValue = "") var lock: String = "",
 )

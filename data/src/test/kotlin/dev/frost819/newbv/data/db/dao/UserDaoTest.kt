@@ -58,7 +58,7 @@ class UserDaoTest {
     fun `getAll returns all users with correct field values`() =
         runTest {
             dao.insert(
-                UserEntity(uid = 1L, username = "alice", avatar = "url1", auth = "auth1", lock = "l1"),
+                UserEntity(uid = 1L, username = "alice", avatar = "url1", auth = "auth1"),
                 UserEntity(uid = 2L, username = "bob", avatar = "url2", auth = "auth2"),
             )
 
@@ -69,11 +69,9 @@ class UserDaoTest {
             assertThat(alice.uid).isEqualTo(1L)
             assertThat(alice.avatar).isEqualTo("url1")
             assertThat(alice.auth).isEqualTo("auth1")
-            assertThat(alice.lock).isEqualTo("l1")
 
             val bob = result.find { it.username == "bob" }!!
             assertThat(bob.uid).isEqualTo(2L)
-            assertThat(bob.lock).isEmpty()
         }
 
     // ===== findUserByUid =====
@@ -179,14 +177,13 @@ class UserDaoTest {
     @Test
     fun `user with empty string fields persists correctly`() =
         runTest {
-            dao.insert(UserEntity(uid = 1L, username = "", avatar = "", auth = "", lock = ""))
+            dao.insert(UserEntity(uid = 1L, username = "", avatar = "", auth = ""))
 
             val found = dao.findUserByUid(1L)!!
 
             assertThat(found.username).isEmpty()
             assertThat(found.avatar).isEmpty()
             assertThat(found.auth).isEmpty()
-            assertThat(found.lock).isEmpty()
         }
 
     @Test
@@ -283,7 +280,6 @@ class UserDaoTest {
             inserted.username = "new"
             inserted.avatar = "new_url"
             inserted.auth = "new_auth"
-            inserted.lock = "4321"
             dao.update(inserted)
 
             val updated = dao.findUserByUid(500L)!!
@@ -291,7 +287,6 @@ class UserDaoTest {
             assertThat(updated.username).isEqualTo("new")
             assertThat(updated.avatar).isEqualTo("new_url")
             assertThat(updated.auth).isEqualTo("new_auth")
-            assertThat(updated.lock).isEqualTo("4321")
         }
 
     @Test
@@ -307,34 +302,6 @@ class UserDaoTest {
             dao.update(entity)
 
             assertThat(dao.getAll()).hasSize(2)
-        }
-
-    @Test
-    fun `update changing lock from empty to non-empty persists correctly`() =
-        runTest {
-            dao.insert(UserEntity(uid = 1L, username = "user", avatar = "", auth = ""))
-
-            val entity = dao.findUserByUid(1L)!!
-            assertThat(entity.lock).isEmpty()
-            entity.lock = "secret"
-            dao.update(entity)
-
-            val found = dao.findUserByUid(1L)!!
-            assertThat(found.lock).isEqualTo("secret")
-        }
-
-    @Test
-    fun `update changing lock from non-empty to empty persists correctly`() =
-        runTest {
-            dao.insert(UserEntity(uid = 1L, username = "user", avatar = "", auth = "", lock = "password"))
-
-            val entity = dao.findUserByUid(1L)!!
-            assertThat(entity.lock).isEqualTo("password")
-            entity.lock = ""
-            dao.update(entity)
-
-            val found = dao.findUserByUid(1L)!!
-            assertThat(found.lock).isEmpty()
         }
 
     // ===== combined workflow =====

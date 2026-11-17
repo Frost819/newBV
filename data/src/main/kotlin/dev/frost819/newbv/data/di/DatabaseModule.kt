@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.frost819.newbv.data.db.AppDatabase
+import dev.frost819.newbv.data.db.MIGRATION_4_5
 import dev.frost819.newbv.data.db.dao.SearchHistoryDao
 import dev.frost819.newbv.data.db.dao.UserDao
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +41,7 @@ object DatabaseModule {
     ): AppDatabase =
         Room
             .databaseBuilder(context, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
+            .addMigrations(MIGRATION_4_5)
             .build()
 
     /** 提供搜索历史 DAO。 */
