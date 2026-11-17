@@ -75,9 +75,9 @@ import dev.frost819.newbv.biliapi.http.entity.video.VideoShot
 import dev.frost819.newbv.biliapi.http.entity.web.NavResponseData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.BiliAppConf
-import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
+import dev.frost819.newbv.biliapi.http.util.useSharedBiliClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -150,9 +150,6 @@ internal fun extractPgcInitialStateJson(html: String): String {
 object BiliHttpApi {
     /** 单次 HTTP 请求的整体超时（毫秒），防止慢速滴流响应永久挂起。 */
     private const val REQUEST_TIMEOUT_MS = 20_000L
-
-    /** 建立连接超时（毫秒）。 */
-    private const val CONNECT_TIMEOUT_MS = 10_000L
 
     /** 单次 socket 读写超时（毫秒）。 */
     private const val SOCKET_TIMEOUT_MS = 20_000L
@@ -272,9 +269,7 @@ object BiliHttpApi {
     private fun createClient(): HttpClient =
         HttpClient(OkHttp) {
             engine {
-                config {
-                    dns(BiliDns)
-                }
+                useSharedBiliClient()
             }
             BiliUserAgent()
             install(ContentNegotiation) { json(json) }
@@ -283,11 +278,9 @@ object BiliHttpApi {
                 gzip(0.9F)
             }
             install(HttpRequestRetry) { retryOnException(maxRetries = 2) }
-            // OkHttp 引擎默认无整体超时，慢速滴流的响应可能永久挂起；
-            // 这里加整体请求超时，配合 OkHttp 的连接/读取超时兜底
+            // 整体请求超时由 Ktor 兜底；连接超时（5s）继承共享 OkHttpClient，不在此重复声明
             install(HttpTimeout) {
                 requestTimeoutMillis = REQUEST_TIMEOUT_MS
-                connectTimeoutMillis = CONNECT_TIMEOUT_MS
                 socketTimeoutMillis = SOCKET_TIMEOUT_MS
             }
             defaultRequest {

@@ -14,9 +14,9 @@ import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
 import dev.frost819.newbv.biliapi.http.entity.live.SimplePlayUrlData
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
-import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
+import dev.frost819.newbv.biliapi.http.util.useSharedBiliClient
 import dev.frost819.newbv.biliapi.util.BiliLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -44,9 +44,7 @@ object BiliLiveHttpApi {
         client =
             HttpClient(OkHttp) {
                 engine {
-                    config {
-                        dns(BiliDns)
-                    }
+                    useSharedBiliClient()
                 }
                 BiliUserAgent()
                 install(ContentNegotiation) {

@@ -13,8 +13,8 @@ import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.app.util.CacheManager
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
-import dev.frost819.newbv.biliapi.http.util.BiliDns
 import dev.frost819.newbv.biliapi.http.util.BiliNetworkConfig
+import dev.frost819.newbv.biliapi.http.util.BiliOkHttpClient
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.core.log.CrashHandler
@@ -164,7 +164,9 @@ class BVApplication : Application() {
                 .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCache(imageDiskCache)
                 .components {
-                    add(OkHttpNetworkFetcherFactory(OkHttpClient.Builder().dns(BiliDns).build()))
+                    add(
+                        OkHttpNetworkFetcherFactory(BiliOkHttpClient.instance),
+                    )
                 }.build()
         }
 
