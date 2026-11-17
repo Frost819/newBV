@@ -5,6 +5,7 @@ import okhttp3.Dns
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * 全局网络地址族偏好。
@@ -13,9 +14,34 @@ import java.net.InetAddress
  * OkHttpClient / gRPC Channel 即可生效。
  */
 object BiliNetworkConfig {
-    /** 当前地址族偏好，默认跟随系统。 */
+    private val addressFamilyListeners = CopyOnWriteArrayList<() -> Unit>()
+
+    /** 当前地址族偏好，默认跟随系统。修改时通知监听者（如让 gRPC 重连）。 */
     @Volatile
     var addressFamily: IpFamilyPreference = IpFamilyPreference.Auto
+        set(value) {
+            if (field == value) return
+            field = value
+            addressFamilyListeners.forEach { it() }
+        }
+
+    /**
+     * 注册地址族偏好变化监听。
+     *
+     * @param listener 偏好变化时回调（保证在设置变更的线程上同步执行）
+     */
+    fun addAddressFamilyListener(listener: () -> Unit) {
+        addressFamilyListeners.add(listener)
+    }
+
+    /**
+     * 移除地址族偏好变化监听。
+     *
+     * @param listener 之前注册的监听器
+     */
+    fun removeAddressFamilyListener(listener: () -> Unit) {
+        addressFamilyListeners.remove(listener)
+    }
 }
 
 /**
