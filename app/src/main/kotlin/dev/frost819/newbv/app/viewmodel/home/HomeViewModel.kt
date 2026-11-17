@@ -161,11 +161,10 @@ class HomeViewModel
                     if (!isFirstLoad || _uiState.value.recommendItems.size >= 24) break
                 }
 
-                // 首屏补齐失败时，只要已拿到部分数据就静默停止（避免"部分列表 + 报错"）；
-                // 加载更多失败则照常报错，让底部提示可重试
-                val hasItems = _uiState.value.recommendItems.isNotEmpty()
-                val showError = failed && (!hasItems || !isFirstLoad)
-                _uiState.update { it.copy(recommendLoading = false, recommendError = showError) }
+                // 首屏补齐过程中某一页失败时保留已加载内容，同时把错误交给底部提示重试。
+                // 不再静默停止：App 接口过滤卡片后列表可能偏短，用户会看到「加载不完整」
+                // 却没有任何可操作提示（issue #285）。
+                _uiState.update { it.copy(recommendLoading = false, recommendError = failed) }
             }
         }
 

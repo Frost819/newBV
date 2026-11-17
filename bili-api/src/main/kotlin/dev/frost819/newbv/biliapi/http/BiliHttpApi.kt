@@ -103,6 +103,8 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -180,9 +182,17 @@ object BiliHttpApi {
             prettyPrint = true
         }
 
+    @Volatile
     var wbiImgKey: String? = null
+
+    @Volatile
     var wbiSubKey: String? = null
+
+    @Volatile
     private var wbiLastRefreshDate = 0L
+
+    /** WBI key 更新的单飞锁：init 与首个请求并发时只发一次 nav 请求。 */
+    private val wbiUpdateMutex = Mutex()
 
     var buvid3: String = ""
 
@@ -2002,26 +2012,37 @@ object BiliHttpApi {
      * 更新 wbi keys
      */
     suspend fun updateWbi() {
-        val now = System.currentTimeMillis()
-        val needToUpdate =
-            wbiImgKey == null ||
-                wbiSubKey == null ||
-                (now - wbiLastRefreshDate > 2 * 60 * 60 * 1000L)
-
-        if (!needToUpdate) {
+        if (!isWbiUpdateNeeded()) {
             println("Skip update wbi keys")
             return
         }
 
-        runCatching {
-            val wbiData = getWebInterfaceNav().data!!.wbiImg
-            wbiImgKey = wbiData.getImgKey()
-            wbiSubKey = wbiData.getSubKey()
-            println("Update wbi keys: $wbiImgKey, $wbiSubKey")
-            wbiLastRefreshDate = now
-        }.onFailure {
-            println("Update wbi data failed: ${it.stackTraceToString()}")
+        // 单飞：init 的后台任务与首个 wbi 请求可能并发进入，等锁后二次检查，
+        // 避免冷启动时连续发两次 nav 请求（issue #285）
+        wbiUpdateMutex.withLock {
+            if (!isWbiUpdateNeeded()) {
+                println("Skip update wbi keys")
+                return
+            }
+
+            runCatching {
+                val wbiData = getWebInterfaceNav().data!!.wbiImg
+                wbiImgKey = wbiData.getImgKey()
+                wbiSubKey = wbiData.getSubKey()
+                println("Update wbi keys: $wbiImgKey, $wbiSubKey")
+                wbiLastRefreshDate = System.currentTimeMillis()
+            }.onFailure {
+                println("Update wbi data failed: ${it.stackTraceToString()}")
+            }
         }
+    }
+
+    /** WBI key 是否已过期或尚未获取。 */
+    private fun isWbiUpdateNeeded(): Boolean {
+        val now = System.currentTimeMillis()
+        return wbiImgKey == null ||
+            wbiSubKey == null ||
+            (now - wbiLastRefreshDate > 2 * 60 * 60 * 1000L)
     }
 
     /**

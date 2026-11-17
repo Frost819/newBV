@@ -508,7 +508,7 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `loadRecommend keeps partial data and no error when a later page fails`() =
+    fun `loadRecommend sets error but keeps partial data when a later page fails`() =
         runTest(testDispatcher) {
             coEvery { recommendRepo.getRecommendVideos(any(), any()) } returns
                 RecommendData(
@@ -520,9 +520,9 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            // 第 2 页失败：保留第 1 页数据，不整块报错
+            // 第 2 页失败：保留第 1 页数据，并在底部提示可重试（不再静默停止）
             assertThat(state.recommendItems).hasSize(1)
-            assertThat(state.recommendError).isFalse()
+            assertThat(state.recommendError).isTrue()
             assertThat(state.recommendLoading).isFalse()
         }
 
