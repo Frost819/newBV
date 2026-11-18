@@ -8,14 +8,10 @@ import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.ThemeMode
 
 /**
- * 主题相关的公共读写工具。
+ * 观察当前是否处于深色外观。
  *
  * 应用里有多处需要「当前是不是深色」这个信息：根主题装配、设置页、左侧导航栏快捷按钮。
- * 统一放在这里，避免各处各自拼 `ThemeMode.isDark(isSystemInDarkTheme())` 导致口径不一致。
- */
-
-/**
- * 观察当前是否处于深色外观。
+ * 统一走这里，避免各处各自拼 `ThemeMode.isDark(isSystemInDarkTheme())` 导致口径不一致。
  *
  * 「跟随系统」档要结合系统 uiMode 才能得出结果，因此不能直接读 [Prefs.themeMode]。
  *

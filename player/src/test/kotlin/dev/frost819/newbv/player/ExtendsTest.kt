@@ -22,4 +22,17 @@ class ExtendsTest {
         assertEquals("...", (-1L).formatMinSec())
         assertEquals("...", (-1000L).formatMinSec())
     }
+
+    @Test
+    fun `formatBitrateKbps converts bps to kbps`() {
+        assertEquals("192 kbps", 192_000.formatBitrateKbps())
+        assertEquals("1000 kbps", 1_000_000.formatBitrateKbps())
+        assertEquals("0 kbps", 999.formatBitrateKbps())
+    }
+
+    @Test
+    fun `formatBitrateKbps returns unknown for missing value`() {
+        assertEquals("未知", 0.formatBitrateKbps())
+        assertEquals("未知", (-1).formatBitrateKbps())
+    }
 }

@@ -23,6 +23,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import dev.frost819.newbv.app.entity.player.VideoListItem
+import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutAction
 import dev.frost819.newbv.app.ui.component.comment.CommentDialogMode
 import dev.frost819.newbv.app.ui.component.comment.CommentsDialog
 import dev.frost819.newbv.app.ui.component.player.VideoInteractionDialog
@@ -45,11 +46,11 @@ import dev.frost819.newbv.app.viewmodel.player.SubtitleViewModel
 import dev.frost819.newbv.app.viewmodel.player.VideoListViewModel
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMaskFrame
 import dev.frost819.newbv.core.log.Loggers
-import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.danmaku.component.DanmakuPlayerCompose
 import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
 import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.player.BvVideoPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -100,6 +101,44 @@ fun VideoPlayerScreen(
     var resumeAfterInteraction by remember { mutableStateOf(false) }
 
     val videoShotCache by remember(uiState.videoShot) { mutableStateOf(VideoShotImageCache()) }
+
+    // 打开评论面板：暂停播放与弹幕，并记录关闭后是否需要恢复
+    fun openComments() {
+        logger.info { "[CARD] openComments aid=${uiState.aid}" }
+        resumeAfterComments = uiState.playerState == PlayerState.Playing
+        playerViewModel.pausePlayback()
+        danmakuViewModel.pause()
+        showCommentsDialog = true
+    }
+
+    // 关闭评论面板：返回键、面板按钮与自定义快捷键共用，避免恢复逻辑两套
+    fun dismissComments() {
+        showCommentsDialog = false
+        if (resumeAfterComments) {
+            playerViewModel.resumePlayback()
+            danmakuViewModel.play()
+        }
+        resumeAfterComments = false
+    }
+
+    // 打开互动面板：暂停播放与弹幕，并记录关闭后是否需要恢复
+    fun openInteraction() {
+        logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
+        resumeAfterInteraction = uiState.playerState == PlayerState.Playing
+        playerViewModel.pausePlayback()
+        danmakuViewModel.pause()
+        showInteractionDialog = true
+    }
+
+    // 关闭互动面板：返回键、面板按钮与自定义快捷键共用
+    fun dismissInteraction() {
+        showInteractionDialog = false
+        if (resumeAfterInteraction) {
+            playerViewModel.resumePlayback()
+            danmakuViewModel.play()
+        }
+        resumeAfterInteraction = false
+    }
 
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
     // 相关视频列表只在切换视频时变化。之前它跟 uiState 一起放在 mergedUiState 的
@@ -306,18 +345,12 @@ fun VideoPlayerScreen(
             navController.navigateToVideoDetailFromPlayer(uiState.aid)
         },
         onShowInteraction = {
-            logger.info { "[CARD] openVideoInteraction aid=${uiState.aid}" }
-            resumeAfterInteraction = uiState.playerState == PlayerState.Playing
-            playerViewModel.pausePlayback()
-            danmakuViewModel.pause()
-            showInteractionDialog = true
+            // 自定义键 / 控制栏按钮都是 toggle：已打开则关闭，未打开则打开
+            if (showInteractionDialog) dismissInteraction() else openInteraction()
         },
         onShowComments = {
-            logger.info { "[CARD] openComments aid=${uiState.aid}" }
-            resumeAfterComments = uiState.playerState == PlayerState.Playing
-            playerViewModel.pausePlayback()
-            danmakuViewModel.pause()
-            showCommentsDialog = true
+            // 自定义键 / 控制栏按钮都是 toggle：已打开则关闭，未打开则打开
+            if (showCommentsDialog) dismissComments() else openComments()
         },
         onMediaProfileSettingChange = { action -> playerViewModel.updateMediaProfile(action) },
         onAspectRatioChange = { ratio -> playerViewModel.updateVideoAspectRatio(ratio) },
@@ -406,13 +439,14 @@ fun VideoPlayerScreen(
             onCoin = { playerViewModel.sendVideoCoin() },
             onFavorite = { playerViewModel.toggleVideoFavorite() },
             onOneClickTriple = { playerViewModel.oneClickTripleAction() },
-            onDismiss = {
-                showInteractionDialog = false
-                if (resumeAfterInteraction) {
-                    playerViewModel.resumePlayback()
-                    danmakuViewModel.play()
+            onDismiss = { dismissInteraction() },
+            onShortcutAction = { action ->
+                if (action == PlayerCustomShortcutAction.OpenInteraction) {
+                    dismissInteraction()
+                    true
+                } else {
+                    false
                 }
-                resumeAfterInteraction = false
             },
         )
     }
@@ -422,13 +456,14 @@ fun VideoPlayerScreen(
             aid = uiState.aid,
             mode = CommentDialogMode.Player,
             viewModel = commentViewModel,
-            onDismiss = {
-                showCommentsDialog = false
-                if (resumeAfterComments) {
-                    playerViewModel.resumePlayback()
-                    danmakuViewModel.play()
+            onDismiss = { dismissComments() },
+            onShortcutAction = { action ->
+                if (action == PlayerCustomShortcutAction.OpenComments) {
+                    dismissComments()
+                    true
+                } else {
+                    false
                 }
-                resumeAfterComments = false
             },
         )
     }

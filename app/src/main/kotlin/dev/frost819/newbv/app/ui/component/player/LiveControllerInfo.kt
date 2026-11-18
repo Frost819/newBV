@@ -147,7 +147,7 @@ private fun LiveControllerInfoTop(
                     ),
                 ).background(
                     brush =
-TopScrim,
+                    TopScrim,
                 ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
@@ -316,6 +316,7 @@ private fun Clock(
             },
     )
 }
+
 /** 控制器顶部信息条渐变：颜色固定，避免每次重组构造 Brush。 */
 private val TopScrim =
     Brush.verticalGradient(

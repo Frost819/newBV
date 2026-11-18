@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +48,7 @@ import dev.frost819.newbv.app.util.CodecType
 import dev.frost819.newbv.app.util.CodecUtil
 import dev.frost819.newbv.core.focus.touchClickable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 /**
@@ -65,16 +64,24 @@ fun MediaCodecScreen(
 ) {
     var currentCodecInfoData by remember { mutableStateOf<CodecInfoData?>(null) }
     var focusInNav by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
     val decoderList = remember { mutableStateListOf<CodecInfoData>() }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        scope.launch(Dispatchers.IO) {
-            val list = CodecUtil.parseCodecs().filter { it.type == CodecType.Decoder }
-            decoderList.clear()
-            decoderList.addAll(list)
-            currentCodecInfoData = list.firstOrNull()
-        }
+        // 解析涉及大量 MediaCodec native 调用，放到 IO 线程；结果回主线程再写入快照状态。
+        // CodecUtil 内部已按 codec 逐项容错，这里再兜一层，避免异常在 IO 线程导致进程崩溃。
+        val result =
+            withContext(Dispatchers.IO) {
+                runCatching { CodecUtil.parseCodecs().filter { it.type == CodecType.Decoder } }
+            }
+        result
+            .onSuccess { list ->
+                decoderList.clear()
+                decoderList.addAll(list)
+                currentCodecInfoData = list.firstOrNull()
+            }.onFailure { error ->
+                loadError = "读取编解码器信息失败：${error.message ?: "未知错误"}"
+            }
     }
 
     BackHandler(onBack = onBack)
@@ -108,6 +115,7 @@ fun MediaCodecScreen(
                         .fillMaxSize(),
                 onBackNav = { focusInNav = true },
                 currentCodecInfoData = currentCodecInfoData,
+                loadError = loadError,
             )
         }
     }
@@ -197,6 +205,7 @@ private fun MediaCodecDetails(
     modifier: Modifier = Modifier,
     onBackNav: () -> Unit,
     currentCodecInfoData: CodecInfoData?,
+    loadError: String?,
 ) {
     if (currentCodecInfoData != null) {
         LazyColumn(
@@ -303,7 +312,7 @@ private fun MediaCodecDetails(
         }
     } else {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Empty")
+            Text(loadError ?: "未读取到解码器")
         }
     }
 }

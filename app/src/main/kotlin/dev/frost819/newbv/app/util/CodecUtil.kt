@@ -3,8 +3,11 @@ package dev.frost819.newbv.app.util
 import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.os.Build
+import android.util.Log
 import android.util.Range
 import androidx.core.util.toRange
+
+private const val TAG = "CodecUtil"
 
 /**
  * 编解码器工具类。
@@ -12,12 +15,23 @@ import androidx.core.util.toRange
  * 解析设备上所有 [MediaCodecInfo]，分类为编码器/解码器、硬件/软件、音频/视频。
  */
 object CodecUtil {
-    /** 解析设备上所有编解码器信息。 */
+    /**
+     * 解析设备上所有编解码器信息。
+     *
+     * 部分厂商 ROM 存在「列在 [MediaCodecList] 中、但读取 capabilities 必抛异常」的坏
+     * codec，因此按 codec 逐项容错：坏项跳过并记录名称，不影响整页展示。
+     *
+     * @return 解析成功的编解码器列表；列表本身获取失败时返回空列表
+     */
     fun parseCodecs(): List<CodecInfoData> =
-        MediaCodecList(MediaCodecList.ALL_CODECS)
-            .codecInfos
-            .toList()
-            .map { CodecInfoData.fromCodecInfo(it) }
+        runCatching { MediaCodecList(MediaCodecList.ALL_CODECS).codecInfos.toList() }
+            .onFailure { Log.w(TAG, "Failed to list codecs", it) }
+            .getOrDefault(emptyList())
+            .mapNotNull { info ->
+                runCatching { CodecInfoData.fromCodecInfo(info) }
+                    .onFailure { Log.w(TAG, "Skip codec ${info.name}: ${it.message}", it) }
+                    .getOrNull()
+            }
 }
 
 /**
@@ -51,11 +65,19 @@ data class CodecInfoData(
     val achievableFrameRates: List<SupportedFrameRate>,
 ) {
     companion object {
-        fun fromCodecInfo(codecInfo: MediaCodecInfo): CodecInfoData {
-            val capabilities = codecInfo.getCapabilitiesForType(codecInfo.supportedTypes.first())
+        /**
+         * 从 [MediaCodecInfo] 解析详情。
+         *
+         * @return 解析结果；该 codec 取不到 capabilities 时返回 null，由调用方跳过
+         */
+        fun fromCodecInfo(codecInfo: MediaCodecInfo): CodecInfoData? {
+            val supportedType = codecInfo.supportedTypes.firstOrNull() ?: return null
+            val capabilities =
+                runCatching { codecInfo.getCapabilitiesForType(supportedType) }
+                    .getOrNull() ?: return null
             return CodecInfoData(
                 name = codecInfo.name,
-                mimeType = capabilities.mimeType,
+                mimeType = capabilities.mimeType?.takeIf { it.isNotBlank() } ?: supportedType,
                 type = CodecType.fromMediaCodecInfo(codecInfo),
                 mode = CodecMode.fromMediaCodecInfo(codecInfo),
                 media = CodecMedia.fromMediaCodecInfo(codecInfo),
@@ -65,7 +87,9 @@ data class CodecInfoData(
                     } else {
                         null
                     },
-                colorFormats = capabilities.colorFormats.toList(),
+                colorFormats =
+                    runCatching { capabilities.colorFormats?.toList().orEmpty() }
+                        .getOrDefault(emptyList()),
                 audioBitrateRange =
                     runCatching {
                         with(capabilities.audioCapabilities.bitrateRange) { lower..upper }

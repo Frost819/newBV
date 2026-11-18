@@ -37,6 +37,7 @@ internal object PrefKeys {
 
     // ===== 网络 & API =====
     val apiType = intPreferencesKey("api_type")
+    val ipFamilyPreference = intPreferencesKey("ip_family")
     val crashReportEnabled = booleanPreferencesKey("crash_report_enabled")
     val autoSelectCdn = booleanPreferencesKey("auto_select_cdn")
 

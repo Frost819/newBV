@@ -213,7 +213,7 @@ fun ControllerVideoInfoTop(
                     ),
                 ).background(
                     brush =
-TopScrim,
+                    TopScrim,
                 ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
@@ -433,9 +433,17 @@ fun ControllerVideoInfoBottom(
         // 评论/交互这类偶发操作放到末尾。
         val icons =
             buildList {
-                add(ControllerIcon(iconRes = R.drawable.play_pause_24px, description = "播放/暂停", action = onPlayPause))
                 add(
                     ControllerIcon(
+                        id = "play_pause",
+                        iconRes = R.drawable.play_pause_24px,
+                        description = "播放/暂停",
+                        action = onPlayPause,
+                    ),
+                )
+                add(
+                    ControllerIcon(
+                        id = "toggle_theme",
                         // 图标表示「将要切换到的目标」：当前深色显示太阳，当前浅色显示月亮
                         imageVector =
                             if (themeIsDark) {
@@ -449,6 +457,7 @@ fun ControllerVideoInfoBottom(
                 )
                 add(
                     ControllerIcon(
+                        id = "danmaku",
                         iconRes =
                             if (danmakuEnabled) {
                                 R.drawable.danmaku_on_24px
@@ -459,12 +468,34 @@ fun ControllerVideoInfoBottom(
                         action = onDanmakuSwitchChange,
                     ),
                 )
-                add(ControllerIcon(iconRes = R.drawable.settings_24px, description = "打开设置", action = onShowSettings))
+                add(
+                    ControllerIcon(
+                        id = "settings",
+                        iconRes = R.drawable.settings_24px,
+                        description = "打开设置",
+                        action = onShowSettings,
+                    ),
+                )
                 if (!isPgc) {
-                    add(ControllerIcon(iconRes = R.drawable.info_24px, description = "视频信息", action = onGoToVideoInfo))
-                    add(ControllerIcon(iconRes = R.drawable.contact_page_24px, description = "up主页", action = onGoToUpPage))
                     add(
                         ControllerIcon(
+                            id = "video_info",
+                            iconRes = R.drawable.info_24px,
+                            description = "视频信息",
+                            action = onGoToVideoInfo,
+                        ),
+                    )
+                    add(
+                        ControllerIcon(
+                            id = "up_page",
+                            iconRes = R.drawable.contact_page_24px,
+                            description = "up主页",
+                            action = onGoToUpPage,
+                        ),
+                    )
+                    add(
+                        ControllerIcon(
+                            id = "related_videos",
                             iconRes = R.drawable.related_videos_24px,
                             description = "相关视频",
                             action = onShowRelatedVideos,
@@ -473,6 +504,7 @@ fun ControllerVideoInfoBottom(
                 }
                 add(
                     ControllerIcon(
+                        id = "loop",
                         iconRes =
                             if (isLooping) {
                                 R.drawable.repeat_one_on_24px
@@ -485,6 +517,7 @@ fun ControllerVideoInfoBottom(
                 )
                 add(
                     ControllerIcon(
+                        id = "interaction",
                         iconRes = R.drawable.interaction_24px,
                         description = "交互",
                         action = onShowInteraction,
@@ -492,6 +525,7 @@ fun ControllerVideoInfoBottom(
                 )
                 add(
                     ControllerIcon(
+                        id = "comments",
                         iconRes = R.drawable.comment,
                         description = "评论",
                         action = onShowComments,
@@ -515,7 +549,7 @@ fun ControllerVideoInfoBottom(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
             icons.forEach { item ->
-                key(item.description) {
+                key(item.id) {
                     Surface(
                         modifier =
                             Modifier.touchClickable(
@@ -524,18 +558,20 @@ fun ControllerVideoInfoBottom(
                         onClick = item.action,
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     ) {
-                        if (item.imageVector != null) {
-                            Icon(
-                                imageVector = item.imageVector,
-                                contentDescription = item.description,
-                                modifier = Modifier.padding(5.dp),
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(id = item.iconRes!!),
-                                contentDescription = item.description,
-                                modifier = Modifier.padding(5.dp),
-                            )
+                        when {
+                            item.imageVector != null ->
+                                Icon(
+                                    imageVector = item.imageVector,
+                                    contentDescription = item.description,
+                                    modifier = Modifier.padding(5.dp),
+                                )
+
+                            item.iconRes != null ->
+                                Icon(
+                                    painter = painterResource(id = item.iconRes),
+                                    contentDescription = item.description,
+                                    modifier = Modifier.padding(5.dp),
+                                )
                         }
                     }
                 }
@@ -545,17 +581,21 @@ fun ControllerVideoInfoBottom(
 }
 
 /**
- * 操作按钮数据三元组。
+ * 操作按钮数据。
  *
  * 图标有两种来源：项目内置的 drawable（原有按钮）与 Compose 矢量图标
  * （Material Icons，用于日夜切换这类不需要额外资源的按钮）。
  *
+ * @param id 稳定标识，用作列表 key。不能拿 [description] 当 key：日夜切换按钮的描述
+ *           会随主题在「切换到日间模式 / 切换到夜间模式」之间变化，切换一次就会让
+ *           对应节点被回收重建，焦点随之丢失。
  * @param iconRes drawable 资源 ID，为 null 时改用 [imageVector]。
  * @param imageVector 矢量图标，[iconRes] 为 null 时生效。
- * @param description 无障碍描述，同时作为列表 key。
+ * @param description 无障碍描述。
  * @param action 点击回调。
  */
 private data class ControllerIcon(
+    val id: String,
     val iconRes: Int? = null,
     val imageVector: ImageVector? = null,
     val description: String,
@@ -635,6 +675,7 @@ private fun ControllerVideoInfoPreview() {
 }
 
 // endregion
+
 /** 控制器顶部信息条渐变：颜色固定，避免每次重组构造 Brush。 */
 private val TopScrim =
     Brush.verticalGradient(

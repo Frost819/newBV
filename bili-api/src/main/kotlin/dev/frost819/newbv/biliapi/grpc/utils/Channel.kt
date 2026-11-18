@@ -30,6 +30,8 @@ fun generateChannel(
     enableTransportSecurity: Boolean = true,
 ): ManagedChannel {
     val builder = ManagedChannelBuilder.forAddress(endPoint, port)
+    // 覆盖 gRPC 内置 dns resolver，改用 BiliDns 的地址族顺序（issue #285）
+    BiliNameResolverProvider.ensureRegistered()
     if (enableTransportSecurity) {
         builder.useTransportSecurity()
     } else {

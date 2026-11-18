@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -107,7 +106,7 @@ private fun LiveCardCover(
                     .height(48.dp)
                     .align(Alignment.BottomCenter)
                     .background(
-BottomScrim,
+                        BottomScrim,
                     ),
         )
 
@@ -207,6 +206,7 @@ private fun LiveRoomCardPreview() {
         }
     }
 }
+
 /** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
 private val BottomScrim =
     Brush.verticalGradient(

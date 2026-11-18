@@ -15,6 +15,8 @@ import dev.frost819.newbv.app.data.danmaku.DanmakuFilterRepository
 import dev.frost819.newbv.app.network.HttpServer
 import dev.frost819.newbv.app.util.CacheManager
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
+import dev.frost819.newbv.biliapi.http.util.BiliNetworkConfig
+import dev.frost819.newbv.biliapi.http.util.BiliOkHttpClient
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.ChannelRepository
 import dev.frost819.newbv.core.log.CrashHandler
@@ -79,6 +81,9 @@ class BVApplication : Application() {
 
         Prefs.init(dataStore)
 
+        // 网络地址族偏好在任何网络请求之前下发（DNS 每次解析时读取，修改后无需重启）
+        BiliNetworkConfig.addressFamily = Prefs.ipFamilyPreference
+
         val buvid3 = Prefs.buvid3
         val deviceCookies = Prefs.deviceCookies
         val sessData = Prefs.sessData
@@ -125,11 +130,13 @@ class BVApplication : Application() {
                 ).maxSizeBytes(diskCacheMaxBytes)
                 .build()
 
-        // 图片请求共用一套带 HTTP 磁盘缓存的 OkHttp，避免裸 client 每次都回源；
-        // TV 网格一次滚过几十张封面，回源会直接表现为「卡」。
+        // 图片请求在 BiliOkHttpClient 的基础上只多挂一层 HTTP 磁盘缓存。
+        // 用 newBuilder() 而不是新建 OkHttpClient：连接池、Dispatcher、自定义 DNS resolver
+        // 和 IP 族偏好都是主链路调好的，另起一套会多出几十个线程，也丢掉 DNS 解析结果，
+        // TV 网格一次滚过几十张封面时回源会直接表现为「卡」。
         val imageHttpClient =
-            OkHttpClient
-                .Builder()
+            BiliOkHttpClient.instance
+                .newBuilder()
                 .cache(
                     okhttp3.Cache(
                         File(cacheDir, CacheManager.IMAGE_HTTP_CACHE_DIR),
@@ -148,8 +155,7 @@ class BVApplication : Application() {
                         .Builder()
                         .maxSizeBytes(CacheManager.IMAGE_MEMORY_CACHE_BYTES)
                         .build()
-                }
-                .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
+                }.memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .diskCache(imageDiskCache)
                 .components {

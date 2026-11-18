@@ -15,12 +15,19 @@ import androidx.compose.runtime.remember
  * @param height 目标高度（B 站参数顺序是 `高度h_宽度w`）
  * @param width 目标宽度
  */
-fun coverThumbnailUrl(cover: String, height: Int, width: Int): String {
+fun coverThumbnailUrl(
+    cover: String,
+    height: Int,
+    width: Int,
+): String {
     if (!cover.startsWith("http", ignoreCase = true) || cover.contains('@')) return cover
     return "$cover@${height}h_${width}w_1c.webp"
 }
 
 /** [coverThumbnailUrl] 的 Compose 版本，按封面地址缓存结果。 */
 @Composable
-fun rememberCoverThumbnail(cover: String, height: Int, width: Int): String =
-    remember(cover, height, width) { coverThumbnailUrl(cover, height, width) }
+fun rememberCoverThumbnail(
+    cover: String,
+    height: Int,
+    width: Int,
+): String = remember(cover, height, width) { coverThumbnailUrl(cover, height, width) }

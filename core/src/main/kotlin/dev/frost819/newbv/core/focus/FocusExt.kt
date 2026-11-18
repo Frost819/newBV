@@ -102,8 +102,7 @@ fun Modifier.focusedScale(scale: Float = 0.9f): Modifier =
                         animationSpec = FOCUS_ANIM_SPEC,
                     )
                 }
-            }
-            .graphicsLayer {
+            }.graphicsLayer {
                 val value = animatedScale.value
                 scaleX = value
                 scaleY = value

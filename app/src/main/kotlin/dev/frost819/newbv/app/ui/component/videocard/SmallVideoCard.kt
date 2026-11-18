@@ -339,7 +339,7 @@ private fun CardCover(
                     .fillMaxWidth()
                     .height(48.dp)
                     .background(
-BottomScrim,
+                        BottomScrim,
                     ),
         )
 
@@ -521,6 +521,7 @@ private fun CardInfoPreview() {
 }
 
 // endregion
+
 /** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
 private val BottomScrim =
     Brush.verticalGradient(

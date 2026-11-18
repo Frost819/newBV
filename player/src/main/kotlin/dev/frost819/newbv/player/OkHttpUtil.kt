@@ -1,6 +1,7 @@
 package dev.frost819.newbv.player
 
 import android.content.Context
+import dev.frost819.newbv.biliapi.http.util.BiliOkHttpClient
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
@@ -17,9 +18,9 @@ import javax.net.ssl.X509TrustManager
  * - 追加自定义 CA 证书（如 GlobalSign ECC Root CA R5）
  * - 允许 bilivideo.com 和 bilivideo.cn 域名证书互通
  *
- * 注意：构建成本较高（读取系统 CA 库 + assets 证书 + 初始化 SSLContext），
- * 且 OkHttpClient 自带独立的 ConnectionPool。**必须由 `PlayerModule` 以单例持有，
- * 进程内只创建一份**，不要在播放器实例内按需创建。
+ * 注意：构建成本较高（读取系统 CA 库 + assets 证书 + 初始化 SSLContext），且派生实例
+ * 会通过 [BiliOkHttpClient.instance] 的 `newBuilder()` 复用同一个 ConnectionPool / Dispatcher。
+ * **必须由 `PlayerModule` 以单例持有，进程内只创建一份**，不要在播放器实例内按需创建。
  */
 object OkHttpUtil {
     /**
@@ -70,8 +71,8 @@ object OkHttpUtil {
                 init(null, trustManagerFactory.trustManagers, null)
             }
 
-        return OkHttpClient
-            .Builder()
+        return BiliOkHttpClient.instance
+            .newBuilder()
             .sslSocketFactory(
                 sslContext.socketFactory,
                 trustManagerFactory.trustManagers[0] as X509TrustManager,

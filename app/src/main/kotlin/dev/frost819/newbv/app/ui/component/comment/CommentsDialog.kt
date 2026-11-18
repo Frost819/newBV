@@ -65,7 +65,9 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.app.entity.player.shortcut.PlayerCustomShortcutAction
 import dev.frost819.newbv.app.ui.component.ListFooterTip
+import dev.frost819.newbv.app.ui.component.player.playerCustomShortcutKeyInterceptor
 import dev.frost819.newbv.app.util.ToastUtils
 import dev.frost819.newbv.app.util.formatCommentTime
 import dev.frost819.newbv.app.viewmodel.comment.CommentListState
@@ -179,6 +181,9 @@ private fun buildCommentRows(commentList: CommentListState): List<CommentRow> =
  * @param mode 弹窗展示模式
  * @param viewModel 评论状态 ViewModel
  * @param onDismiss 关闭回调
+ * @param onShortcutAction 弹窗内自定义快捷键动作回调，返回 true 表示已处理；
+ *   为 null 时（如详情页）不拦截任何按键。Dialog 是独立窗口，按键不会回到播放器根节点，
+ *   需要由弹窗自行识别才能实现「同一个键再次按下关闭」。
  */
 @Composable
 fun CommentsDialog(
@@ -186,6 +191,7 @@ fun CommentsDialog(
     mode: CommentDialogMode,
     viewModel: CommentViewModel,
     onDismiss: () -> Unit,
+    onShortcutAction: ((PlayerCustomShortcutAction) -> Boolean)? = null,
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -222,7 +228,14 @@ fun CommentsDialog(
                     .fillMaxSize()
                     // 遮罩跟随主题：深色下用黑色压暗画面，浅色下用深灰，
                     // 否则浅色主题里铺 62% 纯黑会糊成一块脏灰，与白色面板对比过强。
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.62f)),
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.62f))
+                    .then(
+                        if (onShortcutAction != null) {
+                            Modifier.playerCustomShortcutKeyInterceptor(onShortcutAction)
+                        } else {
+                            Modifier
+                        },
+                    ),
         ) {
             Surface(
                 modifier =
@@ -785,8 +798,7 @@ private fun CommentImageOverlay(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = onDismiss,
-                    )
-                    .onPreviewKeyEvent { event ->
+                    ).onPreviewKeyEvent { event ->
                         if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
                         when {
                             event.isDpadLeft() && currentIndex > 0 -> {

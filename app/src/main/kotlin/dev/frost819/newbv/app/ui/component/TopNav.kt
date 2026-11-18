@@ -33,7 +33,7 @@ import dev.frost819.newbv.core.interaction.InputMethod
 import dev.frost819.newbv.core.interaction.LocalInputMethod
 
 /** 胶囊圆角＝高度的一半，直接在绘制阶段按 px 算，不再为每个 tab 构造 RoundedCornerShape。 */
-private const val PillRadiusFactor = 0.5f
+private const val PILL_RADIUS_FACTOR = 0.5f
 
 /**
  * 顶部导航 Tab 栏。
@@ -141,7 +141,7 @@ private fun NavItemTab(
                     val focused = focusState.value && showFocusVisual
                     if (!selected && !focused) return@drawBehind
 
-                    val radius = CornerRadius(size.height * PillRadiusFactor)
+                    val radius = CornerRadius(size.height * PILL_RADIUS_FACTOR)
                     val fill =
                         if (selected) {
                             accentColor.copy(alpha = if (focused) 0.24f else 0.14f)

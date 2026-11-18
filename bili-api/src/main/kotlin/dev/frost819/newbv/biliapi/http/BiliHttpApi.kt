@@ -77,6 +77,7 @@ import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.BiliAppConf
 import dev.frost819.newbv.biliapi.http.util.encApiSign
 import dev.frost819.newbv.biliapi.http.util.injectCookies
+import dev.frost819.newbv.biliapi.http.util.useSharedBiliClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -102,6 +103,8 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -150,9 +153,6 @@ object BiliHttpApi {
     /** 单次 HTTP 请求的整体超时（毫秒），防止慢速滴流响应永久挂起。 */
     private const val REQUEST_TIMEOUT_MS = 20_000L
 
-    /** 建立连接超时（毫秒）。 */
-    private const val CONNECT_TIMEOUT_MS = 10_000L
-
     /** 单次 socket 读写超时（毫秒）。 */
     private const val SOCKET_TIMEOUT_MS = 20_000L
 
@@ -196,9 +196,17 @@ object BiliHttpApi {
             prettyPrint = false
         }
 
+    @Volatile
     var wbiImgKey: String? = null
+
+    @Volatile
     var wbiSubKey: String? = null
+
+    @Volatile
     private var wbiLastRefreshDate = 0L
+
+    /** WBI key 更新的单飞锁：init 与首个请求并发时只发一次 nav 请求。 */
+    private val wbiUpdateMutex = Mutex()
 
     var buvid3: String = ""
 
@@ -284,6 +292,9 @@ object BiliHttpApi {
 
     private fun createClient(): HttpClient =
         HttpClient(OkHttp) {
+            engine {
+                useSharedBiliClient()
+            }
             BiliUserAgent()
             install(ContentNegotiation) { json(json) }
             install(ContentEncoding) {
@@ -291,11 +302,9 @@ object BiliHttpApi {
                 gzip(0.9F)
             }
             install(HttpRequestRetry) { retryOnException(maxRetries = 2) }
-            // OkHttp 引擎默认无整体超时，慢速滴流的响应可能永久挂起；
-            // 这里加整体请求超时，配合 OkHttp 的连接/读取超时兜底
+            // 整体请求超时由 Ktor 兜底；连接超时（5s）继承共享 OkHttpClient，不在此重复声明
             install(HttpTimeout) {
                 requestTimeoutMillis = REQUEST_TIMEOUT_MS
-                connectTimeoutMillis = CONNECT_TIMEOUT_MS
                 socketTimeoutMillis = SOCKET_TIMEOUT_MS
             }
             defaultRequest {
@@ -2017,26 +2026,37 @@ object BiliHttpApi {
      * 更新 wbi keys
      */
     suspend fun updateWbi() {
-        val now = System.currentTimeMillis()
-        val needToUpdate =
-            wbiImgKey == null ||
-                wbiSubKey == null ||
-                (now - wbiLastRefreshDate > 2 * 60 * 60 * 1000L)
-
-        if (!needToUpdate) {
+        if (!isWbiUpdateNeeded()) {
             println("Skip update wbi keys")
             return
         }
 
-        runCatching {
-            val wbiData = getWebInterfaceNav().data!!.wbiImg
-            wbiImgKey = wbiData.getImgKey()
-            wbiSubKey = wbiData.getSubKey()
-            println("Update wbi keys: $wbiImgKey, $wbiSubKey")
-            wbiLastRefreshDate = now
-        }.onFailure {
-            println("Update wbi data failed: ${it.stackTraceToString()}")
+        // 单飞：init 的后台任务与首个 wbi 请求可能并发进入，等锁后二次检查，
+        // 避免冷启动时连续发两次 nav 请求（issue #285）
+        wbiUpdateMutex.withLock {
+            if (!isWbiUpdateNeeded()) {
+                println("Skip update wbi keys")
+                return
+            }
+
+            runCatching {
+                val wbiData = getWebInterfaceNav().data!!.wbiImg
+                wbiImgKey = wbiData.getImgKey()
+                wbiSubKey = wbiData.getSubKey()
+                println("Update wbi keys: $wbiImgKey, $wbiSubKey")
+                wbiLastRefreshDate = System.currentTimeMillis()
+            }.onFailure {
+                println("Update wbi data failed: ${it.stackTraceToString()}")
+            }
         }
+    }
+
+    /** WBI key 是否已过期或尚未获取。 */
+    private fun isWbiUpdateNeeded(): Boolean {
+        val now = System.currentTimeMillis()
+        return wbiImgKey == null ||
+            wbiSubKey == null ||
+            (now - wbiLastRefreshDate > 2 * 60 * 60 * 1000L)
     }
 
     /**

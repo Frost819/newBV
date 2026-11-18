@@ -135,7 +135,12 @@ fun LeftNaviContent(
                             ),
                     ) {
                         AsyncImage(
-                            modifier = Modifier.size(40.dp),
+                            // 图片本身也要裁圆：Surface 的 clip 只保证占位底色是圆的，
+                            // NavigationRailItem 的 icon 槽不裁内容，少这一层会露出方形封面。
+                            modifier =
+                                Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape),
                             model = avatar,
                             contentDescription = null,
                             contentScale = ContentScale.FillBounds,

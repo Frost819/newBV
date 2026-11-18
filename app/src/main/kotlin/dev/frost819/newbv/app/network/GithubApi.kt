@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.network
 
 import dev.frost819.newbv.app.network.entity.GithubRelease
+import dev.frost819.newbv.biliapi.http.util.useSharedBiliClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.BrowserUserAgent
@@ -42,6 +43,9 @@ object GithubApi {
 
     private val client: HttpClient =
         HttpClient(OkHttp) {
+            engine {
+                useSharedBiliClient()
+            }
             BrowserUserAgent()
             install(ContentNegotiation) {
                 json(json)

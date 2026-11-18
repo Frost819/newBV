@@ -57,7 +57,7 @@ fun Modifier.touchClickable(
         val focusRequester = remember { FocusRequester() }
         // 按下态只在绘制阶段读，手指按下/抬起都只是 invalidate 绘制。
         var pressed by remember { mutableStateOf(false) }
-        val pressColor = MaterialTheme.colorScheme.onSurface.copy(alpha = PressHighlightAlpha)
+        val pressColor = MaterialTheme.colorScheme.onSurface.copy(alpha = PRESS_HIGHLIGHT_ALPHA)
 
         this
             .focusRequester(focusRequester)
@@ -97,4 +97,4 @@ fun Modifier.touchClickable(
     }
 
 /** 按压高亮透明度：深浅主题都用 onSurface，浅色下是淡灰、深色下是淡白。 */
-private const val PressHighlightAlpha = 0.10f
+private const val PRESS_HIGHLIGHT_ALPHA = 0.10f

@@ -5,6 +5,7 @@ package dev.frost819.newbv.data.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import dev.frost819.newbv.biliapi.entity.IpFamilyPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -245,6 +246,18 @@ object Prefs {
         restore = { ApiType.fromOrdinal(it) },
     )
 
+    /**
+     * 网络地址族偏好（默认跟随系统）。
+     *
+     * 规避「路由器分配了 IPv6 但出口异常」时解析到 IPv6 导致请求超时（issue #285）。
+     */
+    var ipFamilyPreference by pref(
+        PrefKeys.ipFamilyPreference,
+        IpFamilyPreference.Auto,
+        save = { it.ordinal },
+        restore = { IpFamilyPreference.fromOrdinal(it) },
+    )
+
     /** 是否启用崩溃日志上传（默认关闭）。 */
     var crashReportEnabled by pref(PrefKeys.crashReportEnabled, false)
 
@@ -449,8 +462,9 @@ object Prefs {
 
     /** 构建 [themeModeFlow]，绑定到委托的内存缓存流。 */
     private fun createThemeModeFlow(): StateFlow<ThemeMode> {
-        val delegate = delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>
-            ?: return MutableStateFlow(ThemeMode.FollowSystem)
+        val delegate =
+            delegateMap[PrefKeys.themeMode] as? PrefDelegate<ThemeMode, Int>
+                ?: return MutableStateFlow(ThemeMode.FollowSystem)
         return delegate.flow
             .map { ThemeMode.fromOrdinal(it as? Int ?: ThemeMode.FollowSystem.ordinal) }
             .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)
@@ -458,8 +472,9 @@ object Prefs {
 
     /** 构建 [densityFlow]，绑定到委托的内存缓存流。 */
     private fun createDensityFlow(): StateFlow<Float> {
-        val delegate = delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>
-            ?: return MutableStateFlow(2f)
+        val delegate =
+            delegateMap[PrefKeys.density] as? PrefDelegate<Float, Float>
+                ?: return MutableStateFlow(2f)
         return delegate.flow
             .map { it as? Float ?: 2f }
             .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)
@@ -467,8 +482,9 @@ object Prefs {
 
     /** 构建 [playOrderReversedFlow]，绑定到委托的内存缓存流。 */
     private fun createPlayOrderReversedFlow(): StateFlow<Boolean> {
-        val delegate = delegateMap[PrefKeys.playOrderReversed] as? PrefDelegate<Boolean, Boolean>
-            ?: return MutableStateFlow(false)
+        val delegate =
+            delegateMap[PrefKeys.playOrderReversed] as? PrefDelegate<Boolean, Boolean>
+                ?: return MutableStateFlow(false)
         return delegate.flow
             .map { it as? Boolean ?: false }
             .stateIn(scope, SharingStarted.Eagerly, delegate.currentValue)

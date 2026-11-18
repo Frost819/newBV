@@ -53,10 +53,11 @@ fun rememberControllerAutoHide(
         var timer: Job? = null
         for (ignored in interactions) {
             timer?.cancel()
-            timer = launch {
-                delay(timeoutMs)
-                currentOnHide()
-            }
+            timer =
+                launch {
+                    delay(timeoutMs)
+                    currentOnHide()
+                }
         }
     }
 

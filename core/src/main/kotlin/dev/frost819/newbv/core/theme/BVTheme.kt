@@ -79,6 +79,7 @@ fun BVTheme(
                 surfaceVariant = BVColors.DarkSurfaceVariant,
                 onSurfaceVariant = BVColors.DarkOnSurfaceVariant,
                 border = BVColors.DarkBorder,
+                scrim = BVColors.DarkScrim,
             )
         } else {
             tvLight(
@@ -99,6 +100,7 @@ fun BVTheme(
                 surfaceVariant = BVColors.LightSurfaceVariant,
                 onSurfaceVariant = BVColors.LightOnSurfaceVariant,
                 border = BVColors.LightBorder,
+                scrim = BVColors.LightScrim,
             )
         }
 
@@ -119,6 +121,7 @@ fun BVTheme(
                 onSurface = BVColors.DarkOnSurface,
                 surfaceVariant = BVColors.DarkSurfaceVariant,
                 onSurfaceVariant = BVColors.DarkOnSurfaceVariant,
+                scrim = BVColors.DarkScrim,
             )
         } else {
             commonLight(
@@ -136,6 +139,7 @@ fun BVTheme(
                 onSurface = BVColors.LightOnSurface,
                 surfaceVariant = BVColors.LightSurfaceVariant,
                 onSurfaceVariant = BVColors.LightOnSurfaceVariant,
+                scrim = BVColors.LightScrim,
             )
         }
 

@@ -10,6 +10,7 @@ import dev.frost819.newbv.biliapi.http.entity.login.sms.SendSmsResponse
 import dev.frost819.newbv.biliapi.http.entity.login.sms.SmsLoginResponse
 import dev.frost819.newbv.biliapi.http.plugins.BiliUserAgent
 import dev.frost819.newbv.biliapi.http.util.encApiSign
+import dev.frost819.newbv.biliapi.http.util.useSharedBiliClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -38,6 +39,9 @@ object BiliPassportHttpApi {
     private fun createClient() {
         client =
             HttpClient(OkHttp) {
+                engine {
+                    useSharedBiliClient()
+                }
                 BiliUserAgent()
                 install(ContentNegotiation) {
                     json(

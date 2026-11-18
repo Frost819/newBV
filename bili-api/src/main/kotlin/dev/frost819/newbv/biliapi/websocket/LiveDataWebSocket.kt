@@ -9,6 +9,7 @@ import dev.frost819.newbv.biliapi.http.entity.live.InteractWordEvent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveEvent
 import dev.frost819.newbv.biliapi.http.entity.live.OnlineRankCountEvent
 import dev.frost819.newbv.biliapi.http.entity.live.WatchedChangeEvent
+import dev.frost819.newbv.biliapi.http.util.BiliOkHttpClient
 import dev.frost819.newbv.biliapi.http.util.brotliDecompress
 import dev.frost819.newbv.biliapi.http.util.zlibDecompress
 import dev.frost819.newbv.biliapi.util.BiliLogger
@@ -28,7 +29,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -67,8 +67,8 @@ object LiveDataWebSocket {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val wsClient by lazy {
-        OkHttpClient
-            .Builder()
+        BiliOkHttpClient.instance
+            .newBuilder()
             .pingInterval(30, TimeUnit.SECONDS)
             .build()
     }

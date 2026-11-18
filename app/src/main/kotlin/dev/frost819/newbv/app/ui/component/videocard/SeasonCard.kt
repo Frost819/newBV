@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -95,7 +94,7 @@ fun SeasonCard(
                                 .height(48.dp)
                                 .fillMaxWidth()
                                 .background(
-BottomScrim,
+                                    BottomScrim,
                                 ),
                     )
                     Text(
@@ -135,6 +134,7 @@ BottomScrim,
         }
     }
 }
+
 /** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
 private val BottomScrim =
     Brush.verticalGradient(
