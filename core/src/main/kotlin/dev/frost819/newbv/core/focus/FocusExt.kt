@@ -3,11 +3,11 @@ package dev.frost819.newbv.core.focus
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,11 +23,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceColors
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.LocalInteractionTracker
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -58,18 +59,17 @@ fun Modifier.focusedBorder(
     width: Dp = 3.dp,
 ): Modifier =
     composed {
-        val tracker = LocalInteractionTracker.current
+        // 组合阶段读一次输入方式（切换输入设备时重组本节点一次）；
+        // 方向键移动仍然只写 focused，走绘制阶段，不触发重组。
+        val inputMethod = LocalInputMethod.current
         val resolvedColor = color ?: MaterialTheme.colorScheme.border
         val focused = remember { mutableStateOf(false) }
-        // 拿到 State 对象即可，不在组合阶段读 .value
-        val inputMethodState = tracker?.inputMethod?.collectAsState()
 
         this
             .onFocusChanged { focused.value = it.hasFocus }
             .drawWithContent {
                 drawContent()
-                val visible =
-                    focused.value && inputMethodState?.value != InputMethod.Touch
+                val visible = focused.value && inputMethod == InputMethod.DPad
                 if (visible) {
                     val radius =
                         when (shape) {
@@ -137,6 +137,9 @@ fun FocusRequester.requestFocus(scope: CoroutineScope) {
  * 实现整体明暗反色。未聚焦时使用调用方传入的容器/内容色，
  * 以便表达「已选中 / 已激活」等常态。
  *
+ * 触屏模式下点击会顺带请求焦点，如果这里仍做反色，点一下卡片就会留下一块
+ * 反色高亮。因此 Touch 模式让聚焦色与常态色一致。
+ *
  * 注意：Surface 的内容色通过 [androidx.tv.material3.LocalContentColor] 下传，
  * 子组件（[androidx.tv.material3.Text] / [androidx.tv.material3.Icon]）**不要**再硬编码颜色，
  * 否则聚焦时不会随容器一起反色。
@@ -149,10 +152,38 @@ fun FocusRequester.requestFocus(scope: CoroutineScope) {
 fun focusInvertedColors(
     containerColor: Color,
     contentColor: Color,
-): ClickableSurfaceColors =
-    ClickableSurfaceDefaults.colors(
+): ClickableSurfaceColors {
+    val inputMethod = LocalInputMethod.current
+    val dpad = inputMethod == InputMethod.DPad
+    return ClickableSurfaceDefaults.colors(
         containerColor = containerColor,
         contentColor = contentColor,
-        focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-        focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+        focusedContainerColor =
+            if (dpad) MaterialTheme.colorScheme.inverseSurface else containerColor,
+        focusedContentColor =
+            if (dpad) MaterialTheme.colorScheme.inverseOnSurface else contentColor,
     )
+}
+
+/**
+ * 卡片的聚焦边框：遥控器模式显示，触屏模式退化成 0 宽度透明边框。
+ *
+ * TV Material3 的 `CardDefaults.border` / `ClickableSurfaceDefaults.border` 不受
+ * `focusedBorder()` 那个自绘边框控制，触屏点击请求焦点后会自己画一圈白边。
+ * 集中在这一处按输入方式处理，三个卡片组件不必各自订阅状态。
+ */
+@Composable
+fun focusBorderOrNone(
+    shape: Shape,
+    color: Color,
+    width: Dp = 3.dp,
+): Border {
+    val inputMethod = LocalInputMethod.current
+    return remember(shape, color, width, inputMethod) {
+        if (inputMethod == InputMethod.Touch) {
+            Border(border = BorderStroke(0.dp, Color.Transparent), shape = shape)
+        } else {
+            Border(border = BorderStroke(width, color), shape = shape)
+        }
+    }
+}

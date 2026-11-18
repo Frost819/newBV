@@ -178,7 +178,7 @@ private fun UgcGrid(
     ) {
         itemsIndexed(
             items = state.items,
-            key = { index, _ -> index },
+            key = { _, item -> item.aid },
         ) { index, item ->
             val cardData =
                 remember(item) {

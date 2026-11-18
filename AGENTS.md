@@ -1612,6 +1612,40 @@ BvVideoPlayer(
 )
 ```
 
+#### 11.11.5 触屏输入链路（2026-11-14 补齐）
+
+`touchClickable` 只是把点击补上了，输入方式识别、焦点视觉、滚动、按压反馈原来还是 TV 那套。
+
+1. **输入方式必须从 `dispatchTouchEvent` 记录**，不能用 `Activity.onTouchEvent`。
+   Compose 的 `pointerInput` / `clickable` 消费 DOWN 后窗口不再回调 `onTouchEvent`，
+   `InteractionTracker` 会一直停在 DPad。`dispatchKeyEvent` 也只对导航/媒体类物理按键
+   调 `onDpadKey()`，排除 `FLAG_SOFT_KEYBOARD` 和字符键，否则触屏打字时焦点框会反复出现。
+2. **整棵树只读 `LocalInputMethod` 这个普通值**，StateFlow 只在 `MainActivity.setContent`
+   订阅一次。之前每个 `focusedBorder` 各挂一个 `collectAsState()`，网格里几十张卡片就是
+   几十个收集器；而且输入方式变化时 draw 阶段读 State 不会主动重绘，边框会残留。
+3. **按压反馈**：`BVTheme` 在 Touch 模式恢复 material3 的 ripple，DPad 模式保持关闭；
+   `touchClickable` 自己在 draw 阶段叠一层 10% 高亮（TV 组件有背景，ripple 会被盖住），
+   按下只重绘不重组，并加 `pointerHoverIcon(PointerIcon.Hand)`。
+4. **焦点视觉按输入方式收敛**：`focusedBorder`、`focusInvertedColors`、
+   `focusBorderOrNone`（三个卡片共用）、`TopNav` 的焦点描边、
+   `LeftNaviContent` 的 selected 态在 Touch 模式都不显示；触屏点击仍会 `requestFocus()`，
+   因为 Tab / 菜单 / Chip 大量逻辑是「焦点即选中」，去掉会让触屏点不中入口。
+5. **列表**：`TvLazyVerticalGrid` 的 `BringIntoViewSpec` 在 Touch 模式改回系统默认
+   （只在 item 越界时滚到刚好可见），不再把点击项拽到屏幕 30% 处。
+6. **搜索**：`OutlinedTextField` 补 `ImeAction.Search`，Touch 模式隐藏 6×6 自绘键盘；
+   Manifest 加 `adjustResize`。
+7. **焦点即选中的组件，onClick 也要同步选中态**。典型是 `TopNav`：触屏没有「先聚焦再确认」
+   这一步，只调 `onClick` 会变成点一下只刷新、不切 Tab。
+
+新增 TV Material3 可点击组件时，除了 `onClick` + `touchClickable` 双写，还要检查：
+按压反馈、聚焦边框在 Touch 模式是否隐藏、选中态是否由 onClick 同步、长按是否有触屏路径、
+是否存在只有 `onPreviewKeyEvent` 才能触发的操作（这类操作要补一个可点按钮）。
+
+已补齐的漏网点：`SearchKeyword`（热搜/建议/历史触屏无响应）、`SeasonCard` 的
+`onGoToDetailPage`（参数只写在签名里，从未接上输入）、`LogViewerScreen` 日志文件选中、
+评论大图翻页与关闭、直播首页刷新。`MenuListItem` 的 spring 宽度补间也去掉了，
+和 `TopNav` / `LeftNaviContent` 保持同一套「按一下立刻到位」的做法。
+
 ### 11.12 直播播放器与弹幕 WebSocket
 
 #### 11.12.1 HLS 直播流 #EXT-X-START 导致 BEHIND_LIVE_WINDOW

@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,12 +21,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.core.focus.focusBorderOrNone
 import dev.frost819.newbv.core.focus.touchClickable
 
 /**
@@ -38,25 +37,28 @@ import dev.frost819.newbv.core.focus.touchClickable
  *
  * @param data 卡片数据。
  * @param onClick 点击回调。
- * @param onGoToDetailPage 跳转详情页回调（长按或菜单键）。
+ * @param onGoToDetailPage 长按进详情页回调（触屏长按；遥控器菜单键归页面级刷新）。
  * @param modifier Modifier。
  */
 @Composable
 fun SeasonCard(
     data: SeasonCardData,
     onClick: () -> Unit,
-    onGoToDetailPage: () -> Unit = {},
+    onGoToDetailPage: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    // 形状与边框只随主题变化，列表滚动时不再每次重组都分配 Border/BorderStroke。
+    // 形状与边框只随主题、输入方式变化；触屏点击不留聚焦边框。
     val largeShape = MaterialTheme.shapes.large
     val borderColor = MaterialTheme.colorScheme.border
-    val focusedBorder =
-        remember(largeShape, borderColor) {
-            Border(border = BorderStroke(3.dp, borderColor), shape = largeShape)
-        }
+    val focusedBorder = focusBorderOrNone(largeShape, borderColor)
     Surface(
-        modifier = modifier.touchClickable(onClick = onClick),
+        // 这个参数以前只写在签名里、从未接上任何输入路径，长按进详情等于没做。
+        // 触屏长按补上；传 null 时单击保持 detectTapGestures 的快路径。
+        modifier =
+            modifier.touchClickable(
+                onClick = onClick,
+                onLongClick = onGoToDetailPage,
+            ),
         onClick = onClick,
         colors =
             ClickableSurfaceDefaults.colors(

@@ -200,7 +200,7 @@ private fun PgcGrid(
 
         itemsIndexed(
             items = state.items,
-            key = { index, _ -> index },
+            key = { _, item -> item.seasonId },
         ) { index, item ->
             val cardData =
                 remember(item) {

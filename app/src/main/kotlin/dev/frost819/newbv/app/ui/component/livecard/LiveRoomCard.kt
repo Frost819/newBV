@@ -24,13 +24,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.videocard.rememberCoverThumbnail
+import dev.frost819.newbv.core.focus.focusBorderOrNone
 import dev.frost819.newbv.core.focus.touchClickable
 
 /**
@@ -48,14 +48,11 @@ fun LiveRoomCard(
     data: LiveRoomCardData,
     onClick: () -> Unit,
 ) {
-    // 形状与边框只随主题变化，列表滚动时不再每次重组都分配 Border/BorderStroke。
+    // 形状与边框只随主题、输入方式变化；触屏点击不留聚焦边框。
     val largeShape = MaterialTheme.shapes.large
     val borderColor = MaterialTheme.colorScheme.border
     val cardShape = CardDefaults.shape(largeShape)
-    val focusedBorder =
-        remember(largeShape, borderColor) {
-            Border(border = androidx.compose.foundation.BorderStroke(3.dp, borderColor), shape = largeShape)
-        }
+    val focusedBorder = focusBorderOrNone(largeShape, borderColor)
     Column(modifier = modifier.fillMaxWidth()) {
         Card(
             onClick = onClick,

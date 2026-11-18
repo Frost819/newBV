@@ -1,7 +1,6 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
@@ -43,9 +41,10 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
+import dev.frost819.newbv.core.focus.focusBorderOrNone
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.LocalInteractionTracker
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 
 /**
  * 小型视频卡片。
@@ -79,10 +78,9 @@ fun SmallVideoCard(
     var showActions by remember { mutableStateOf(false) }
     var releaseLongPress by remember { mutableStateOf(false) }
     val firstButtonRequester = remember { FocusRequester() }
-    // 不用 collectAsState：每张卡片都订阅一个 StateFlow 会给网格增加几十个收集器，
-    // 也会让卡片成为动态订阅节点。这里直接读 tracker 的当前值，长按面板出现时
-    // showActions 变化本来就会重组，读到的一定是最新输入方式。
-    val isTouchMode = LocalInteractionTracker.current?.current == InputMethod.Touch
+    // 读的是整棵树共享的输入方式值，不再给网格里每张卡片挂一个 Flow 收集器。
+    // 长按面板出现时 showActions 变化本来就会重组，长按守卫拿到的也是最新值。
+    val isTouchMode = LocalInputMethod.current == InputMethod.Touch
 
     val hasAnyAction =
         onAddWatchLater != null ||
@@ -94,15 +92,12 @@ fun SmallVideoCard(
         showActions = false
     }
 
-    // 形状、颜色、边框都是主题里的稳定值。网格里几十张卡片每次重组都新建
-    // CardShape / BorderStroke / Border 是纯分配，缓存到主题变化时才重建。
+    // 形状、颜色、边框都是主题里的稳定值，按主题和输入方式缓存。
+    // 触屏模式下退化成透明边框，点击请求焦点后不会留下一圈白边。
     val largeShape = MaterialTheme.shapes.large
     val borderColor = MaterialTheme.colorScheme.border
     val cardShape = CardDefaults.shape(largeShape)
-    val focusedBorder =
-        remember(largeShape, borderColor) {
-            Border(border = BorderStroke(3.dp, borderColor), shape = largeShape)
-        }
+    val focusedBorder = focusBorderOrNone(largeShape, borderColor)
 
     LaunchedEffect(showActions) {
         if (showActions && hasAnyAction) {
