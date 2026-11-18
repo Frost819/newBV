@@ -84,6 +84,8 @@ import kotlinx.coroutines.delay
  * @param isPgc 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
  * @param danmakuEnabled 弹幕是否开启
  * @param isLooping 是否循环播放
+ * @param qualityButtonLabel 清晰度按钮文字（当前画质名，如 "1080P"）；null 时不显示该按钮
+ * @param onShowQualitySelect 打开清晰度选择弹窗回调
  * @param onDirectionLeft seek 左移回调
  * @param onDirectionRight seek 右移回调
  * @param onSeekGoTime 确认 seek 回调
@@ -113,6 +115,8 @@ fun ControllerVideoInfo(
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
+    qualityButtonLabel: String?,
+    onShowQualitySelect: () -> Unit,
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
@@ -159,6 +163,8 @@ fun ControllerVideoInfo(
                 isPgc = isPgc,
                 danmakuEnabled = danmakuEnabled,
                 isLooping = isLooping,
+                qualityButtonLabel = qualityButtonLabel,
+                onShowQualitySelect = onShowQualitySelect,
                 onDirectionLeft = onDirectionLeft,
                 onDirectionRight = onDirectionRight,
                 onSeekGoTime = onSeekGoTime,
@@ -270,6 +276,8 @@ fun ControllerVideoInfoBottom(
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
+    qualityButtonLabel: String?,
+    onShowQualitySelect: () -> Unit,
     onDirectionLeft: () -> Unit,
     onDirectionRight: () -> Unit,
     onSeekGoTime: () -> Unit,
@@ -429,6 +437,10 @@ fun ControllerVideoInfoBottom(
                         onDanmakuSwitchChange,
                     ),
                 )
+                // 清晰度快切按钮：仅有多档画质时显示，文字为当前画质名
+                qualityButtonLabel?.let { label ->
+                    add(ControllerIcon(icon = 0, description = "清晰度", action = onShowQualitySelect, text = label))
+                }
                 add(ControllerIcon(R.drawable.settings_24px, "打开设置", onShowSettings))
                 if (!isPgc) {
                     add(ControllerIcon(R.drawable.info_24px, "视频信息", onGoToVideoInfo))
@@ -483,11 +495,21 @@ fun ControllerVideoInfoBottom(
                         onClick = item.action,
                         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
                     ) {
-                        Icon(
-                            painter = painterResource(id = item.icon),
-                            contentDescription = item.description,
-                            modifier = Modifier.padding(5.dp),
-                        )
+                        if (item.text != null) {
+                            // 文字按钮（清晰度）：显示当前档位名而非图标
+                            Text(
+                                text = item.text,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = item.icon),
+                                contentDescription = item.description,
+                                modifier = Modifier.padding(5.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -496,12 +518,15 @@ fun ControllerVideoInfoBottom(
 }
 
 /**
- * 操作按钮数据三元组。
+ * 操作按钮数据。
+ *
+ * [text] 非空时渲染文字按钮（如清晰度当前档位名），否则渲染 [icon] 图标按钮。
  */
 private data class ControllerIcon(
     val icon: Int,
     val description: String,
     val action: () -> Unit,
+    val text: String? = null,
 )
 
 /**
@@ -553,6 +578,8 @@ private fun ControllerVideoInfoPreview() {
             isPgc = false,
             danmakuEnabled = true,
             isLooping = false,
+            qualityButtonLabel = "1080P",
+            onShowQualitySelect = {},
             onDirectionLeft = {},
             onDirectionRight = {},
             onSeekGoTime = {},
