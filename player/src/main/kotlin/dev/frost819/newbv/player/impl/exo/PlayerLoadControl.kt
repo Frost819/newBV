@@ -24,7 +24,7 @@ internal object PlayerLoadControl {
     private const val MIB = 1024 * 1024
 
     /** 字节预算下限（16MiB）：极小堆设备也不能更低，否则连起播缓冲都不够。 */
-    private const val MIN_TARGET_BUFFER_BYTES = 16L * MIB
+    private const val MIN_TARGET_BUFFER_BYTES = 32L * MIB
 
     /** 字节预算上限（96MiB）：电视场景再大也没有收益，避免无谓占用。 */
     private const val MAX_TARGET_BUFFER_BYTES = 96L * MIB
@@ -32,9 +32,9 @@ internal object PlayerLoadControl {
     /** 堆上限（MB）→ 缓冲时间上限（毫秒），从大到小匹配，最后一档兜底。 */
     private val MAX_BUFFER_TIERS =
         listOf(
-            512 to 40_000,
-            256 to 30_000,
-            0 to 20_000,
+            512 to 60_000,
+            256 to 60_000,
+            0 to 60_000,
         )
 
     /**
