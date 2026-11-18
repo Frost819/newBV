@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.BrightnessHigh
-import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +27,8 @@ import androidx.tv.material3.Text
 /**
  * 手势提示覆盖层。
  *
- * 在手势执行期间显示反馈（亮度/音量百分比、倍速值、seek 状态）。
+ * 在手势执行期间/结束后短暂显示反馈（亮度百分比、音量百分比、长按倍速值）。
+ * Seek 的反馈由底部信息栏（时间 + 缩略图 + 进度条）承担，这里不重复显示。
  * 与 [PlayStateTips]/[SkipTips] 平级，放在 [VideoPlayerController] 覆盖层中。
  *
  * @param state 手势提示状态。
@@ -61,7 +61,6 @@ fun GestureTip(
                         GestureTipType.Brightness -> Icons.Rounded.BrightnessHigh
                         GestureTipType.Volume -> Icons.AutoMirrored.Rounded.VolumeUp
                         GestureTipType.Speed -> Icons.Rounded.Speed
-                        GestureTipType.Seek -> Icons.Rounded.FastForward
                         GestureTipType.None -> null
                     }
                 val displayText =
@@ -69,7 +68,6 @@ fun GestureTip(
                         GestureTipType.Brightness -> "${(state.value * 100).toInt()}%"
                         GestureTipType.Volume -> "${state.value.toInt()}%"
                         GestureTipType.Speed -> "${state.value}x"
-                        GestureTipType.Seek -> "快进/快退"
                         GestureTipType.None -> ""
                     }
                 if (iconVector != null) {

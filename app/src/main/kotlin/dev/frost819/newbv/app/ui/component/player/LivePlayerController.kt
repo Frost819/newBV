@@ -1,5 +1,8 @@
 package dev.frost819.newbv.app.ui.component.player
 
+import android.app.Activity
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -109,8 +112,10 @@ fun LivePlayerController(
         derivedStateOf { showInfoController || showMenuController }
     }
 
+    // 手势状态：亮度/音量都是 0~1 的比例，-1 表示尚未接管（首次以系统值为起点）
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
+    var currentVolume by remember { mutableFloatStateOf(-1f) }
 
     /** 隐藏信息栏控制器。 */
     fun hideController() {
@@ -209,7 +214,6 @@ fun LivePlayerController(
                     handleKeyEvent(event)
                 }.playerGestures(
                     totalDuration = { 0L },
-                    controllerVisible = { showInfoController },
                     callbacks =
                         PlayerGestureCallbacks(
                             onSingleTap = {
@@ -226,10 +230,10 @@ fun LivePlayerController(
                             onDoubleTap = { onPlayPause() },
                             onSeekDelta = { },
                             onSeekCommit = { },
-                            onBrightnessChange = { deltaY ->
-                                val activity = context as? android.app.Activity
+                            onBrightnessChange = { deltaFraction ->
+                                val activity = context as? Activity
                                 if (activity != null) {
-                                    currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
+                                    currentBrightness = adjustBrightness(activity, deltaFraction, currentBrightness)
                                     gestureTipState.value =
                                         GestureTipState(
                                             isActive = true,
@@ -238,17 +242,16 @@ fun LivePlayerController(
                                         )
                                 }
                             },
-                            onVolumeChange = { deltaY ->
+                            onVolumeChange = { deltaFraction ->
                                 val audioManager =
-                                    context.getSystemService(android.content.Context.AUDIO_SERVICE)
-                                        as? android.media.AudioManager
+                                    context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
                                 if (audioManager != null) {
-                                    val volumePercent = adjustVolume(audioManager, deltaY)
+                                    currentVolume = adjustVolume(audioManager, deltaFraction, currentVolume)
                                     gestureTipState.value =
                                         GestureTipState(
                                             isActive = true,
                                             type = GestureTipType.Volume,
-                                            value = volumePercent.toFloat(),
+                                            value = currentVolume * 100,
                                         )
                                 }
                             },

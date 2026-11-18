@@ -1,5 +1,8 @@
 package dev.frost819.newbv.app.ui.component.player
 
+import android.app.Activity
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -131,9 +134,14 @@ fun VideoPlayerController(
     // 常显进度条
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
 
-    // 手势状态
+    // 手势状态：亮度/音量都是 0~1 的比例，-1 表示尚未接管（首次以系统值为起点）
     val gestureTipState = rememberGestureTipState()
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
+    var currentVolume by remember { mutableFloatStateOf(-1f) }
+
+    // 长按倍速：记录按下前的倍速，抬手后恢复
+    var speedBeforeLongPress by remember { mutableFloatStateOf(1f) }
+    var isSpeedPressActive by remember { mutableStateOf(false) }
 
     fun calCoefficient(): Long =
         if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
@@ -404,7 +412,6 @@ fun VideoPlayerController(
                     handleKeyEvent(event)
                 }.playerGestures(
                     totalDuration = { seekerState.value.totalDuration },
-                    controllerVisible = { showInfoSeekController },
                     callbacks =
                         PlayerGestureCallbacks(
                             onSingleTap = {
@@ -424,13 +431,22 @@ fun VideoPlayerController(
                                 goTime = (goTime + deltaMs).coerceIn(0L, seekerState.value.totalDuration)
                                 isSeeking = true
                                 showInfoSeekController = true
+                                // 拖动过程中持续续期，避免慢速拖动时控制器被自动隐藏
+                                onInteraction()
                                 startSeekCountdown()
                             },
-                            onSeekCommit = { },
-                            onBrightnessChange = { deltaY ->
-                                val activity = context as? android.app.Activity
+                            onSeekCommit = {
+                                // 手指松开即提交，不必再等 1 秒防抖
+                                seekCountdown?.cancel()
+                                seekCountdown = null
+                                onGoTime(goTime)
+                                isSeeking = false
+                                onInteraction()
+                            },
+                            onBrightnessChange = { deltaFraction ->
+                                val activity = context as? Activity
                                 if (activity != null) {
-                                    currentBrightness = adjustBrightness(activity, deltaY, currentBrightness)
+                                    currentBrightness = adjustBrightness(activity, deltaFraction, currentBrightness)
                                     gestureTipState.value =
                                         GestureTipState(
                                             isActive = true,
@@ -439,21 +455,42 @@ fun VideoPlayerController(
                                         )
                                 }
                             },
-                            onVolumeChange = { deltaY ->
+                            onVolumeChange = { deltaFraction ->
                                 val audioManager =
-                                    context.getSystemService(android.content.Context.AUDIO_SERVICE)
-                                        as? android.media.AudioManager
+                                    context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
                                 if (audioManager != null) {
-                                    val volumePercent = adjustVolume(audioManager, deltaY)
+                                    currentVolume = adjustVolume(audioManager, deltaFraction, currentVolume)
                                     gestureTipState.value =
                                         GestureTipState(
                                             isActive = true,
                                             type = GestureTipType.Volume,
-                                            value = volumePercent.toFloat(),
+                                            value = currentVolume * 100,
                                         )
                                 }
                             },
                             onUserInteraction = onInteraction,
+                            onSpeedPressStart = {
+                                // 仅正常播放且无覆盖层时启用长按倍速，避免与菜单操作混淆
+                                if (!showClickableControllers && uiState.playerState == PlayerState.Playing) {
+                                    speedBeforeLongPress = uiState.playSpeed
+                                    isSpeedPressActive = true
+                                    onPlaySpeedChange(PLAYER_LONG_PRESS_SPEED)
+                                    gestureTipState.value =
+                                        GestureTipState(
+                                            isActive = true,
+                                            type = GestureTipType.Speed,
+                                            value = PLAYER_LONG_PRESS_SPEED,
+                                        )
+                                }
+                            },
+                            onSpeedPressEnd = {
+                                if (isSpeedPressActive) {
+                                    isSpeedPressActive = false
+                                    onPlaySpeedChange(speedBeforeLongPress)
+                                    // 倍速已还原，提示立刻收起（不沿用拖动提示的残留时间）
+                                    gestureTipState.value = GestureTipState()
+                                }
+                            },
                         ),
                     gestureTipState = gestureTipState,
                 ),
@@ -630,3 +667,8 @@ fun VideoPlayerController(
         }
     }
 }
+
+/**
+ * 长按倍速手势使用的倍速值。
+ */
+private const val PLAYER_LONG_PRESS_SPEED = 2f

@@ -1612,6 +1612,28 @@ BvVideoPlayer(
 )
 ```
 
+#### 11.11.5 播放器手势抢事件导致按钮"点不动"
+
+**问题**：播放器底部快捷按钮（TV Material3 `Surface` + `touchClickable`）点击无反应，反而把控制器收起；偶尔生效、偶尔不生效。
+
+**原因**：`playerGestures` 挂在播放器根节点上，它在 `awaitPointerEvent(Main)` 中对**每个**移动事件调用 `change.consume()`（即使位移还没超过拖拽阈值），并且继续跟踪已经被子组件消费的按下事件。子组件 `detectTapGestures` 的 `waitForUpOrCancellation` 只要发现 change 被消费就判定手势取消，按钮点击被吞掉，父节点的单击逻辑接手（切换控制器显隐）。真实手指点按时几乎一定有 1~2px 抖动，所以表现为"按钮点不动"。
+
+**解决方案**：
+
+1. `awaitFirstDown(requireUnconsumed = false)` 之后先 `onUserInteraction()`（保证按钮点击也能续期自动隐藏），再判断 `firstDown.isConsumed` → 直接 `return@awaitEachGesture`，把整个手势让给子组件
+2. 累计位移超过 `viewConfiguration.touchSlop` 之前**不消费**移动事件，超过后才判定方向并消费
+3. 拖拽阈值统一用 `viewConfiguration.touchSlop`，不要硬编码 10px（低于系统 slop，点按抖动就会被判成拖拽）
+
+**回归测试**：`PlayerGestureInteractionTest#tapWithJitter_onChildButton_stillClicks` 和 `#controllerButtonRow_isClickable`（直接组合 `ControllerVideoInfoBottom`，带 2px 抖动点击播放/暂停按钮）。撤掉上述修复后前者必然失败。
+
+#### 11.11.6 播放器手势的其他细节坑
+
+- **亮度/音量同构**：两者都按「竖直位移 / (容器高度 × `VERTICAL_DRAG_RANGE_RATIO`)」换算成满量程比例，再各自加到 float 状态上（亮度写窗口属性、音量按比例四舍五入成系统整数格）。不要用固定像素或逐帧取整（`deltaY / 80` 每帧恒为 0，音量滑不动）
+- **单击立即派发**：手写双击判定时若单击立即执行，双击暂停会先切一次控制器。单击应延迟 `viewConfiguration.doubleTapTimeoutMillis` 派发，双击时取消待派发的单击
+- **亮度调节**：`window.attributes.screenBrightness` 作用于整个窗口，退出播放器**不做**还原（与官方 App 行为一致，实测不需要）；首次调节从系统亮度起跳，不要固定 0.5
+- **长按倍速**：用协程 `delay(viewConfiguration.longPressTimeoutMillis)` 计时，抬手或开始拖动时结束；在 `finally` 里恢复倍速，避免播放器销毁时倍速残留
+- **`pointerInput(Unit)` 闭包陈旧**：手势 modifier 用 `Modifier.composed` + `rememberUpdatedState` 包裹回调。否则 `pointerInput(Unit)` 只在首次组合时捕获回调，后续重组（如倍速变化）读到的都是旧值
+
 ### 11.12 直播播放器与弹幕 WebSocket
 
 #### 11.12.1 HLS 直播流 #EXT-X-START 导致 BEHIND_LIVE_WINDOW
