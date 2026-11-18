@@ -93,7 +93,7 @@ fun HistoryScreen(
     ) {
         itemsIndexed(
             items = state.historyItems,
-            key = { index, _ -> index },
+            key = { _, item -> item.oid },
         ) { index, item ->
             val cardData =
                 remember(item) {

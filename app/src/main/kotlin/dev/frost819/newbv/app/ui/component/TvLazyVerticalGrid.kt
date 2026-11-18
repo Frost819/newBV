@@ -15,12 +15,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 
 /**
  * 封装了 TV 焦点定轴逻辑的 [LazyVerticalGrid]。
  *
  * TV 端 D-Pad 导航时，聚焦的 item 会自动滚动到屏幕上方 [pivotFraction] 比例处，
  * 避免焦点被顶部/底部遮挡。默认 0.3f（屏幕上方 30%），符合 TV 端习惯。
+ *
+ * 触屏模式不走定轴：手指点一下卡片会顺带请求焦点，若仍按 30% 定位，
+ * 列表会突然把这一项拽到屏幕上方，看起来像「点一下跳一下」。
+ * 触屏时改回系统默认行为，只在 item 真的越界时滚到刚好可见。
  *
  * @param pivotFraction 焦点 item 在屏幕上的停留位置比例 (0.0 - 1.0)。
  */
@@ -36,16 +42,29 @@ fun TvLazyVerticalGrid(
     pivotFraction: Float = 0.3f,
     content: LazyGridScope.() -> Unit,
 ) {
+    val inputMethod = LocalInputMethod.current
     val bringIntoViewSpec =
-        remember(pivotFraction) {
+        remember(pivotFraction, inputMethod) {
             object : BringIntoViewSpec {
                 override fun calculateScrollDistance(
                     offset: Float,
                     size: Float,
                     containerSize: Float,
                 ): Float {
-                    val targetPosition = containerSize * pivotFraction
-                    return offset - targetPosition
+                    if (inputMethod == InputMethod.Touch) {
+                        return when {
+                            offset < 0f -> offset
+                            offset + size > containerSize -> offset + size - containerSize
+                            else -> 0f
+                        }
+                    }
+                    // 旧实现无论焦点项是否已经可见，都返回「滚动到 30% 处」的距离，
+                    // 于是每按一次方向键都要跑一轮滚动动画，快速连按时动画互相叠加。
+                    // 只有在焦点项进入上下安全区之外时才滚动，同屏内移动保持零滚动。
+                    val safeTop = containerSize * 0.12f
+                    val safeBottom = containerSize * 0.88f
+                    if (offset >= safeTop && offset + size <= safeBottom) return 0f
+                    return offset - containerSize * pivotFraction
                 }
             }
         }

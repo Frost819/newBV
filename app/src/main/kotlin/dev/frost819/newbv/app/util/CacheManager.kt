@@ -122,8 +122,22 @@ class CacheManager(
         /** 清理目标比例：清理至阈值的 80%，避免刚清理又立即触发。 */
         internal const val CLEAN_TARGET_RATIO = 0.8
 
-        /** 自动清理关闭时 Coil 磁盘缓存的 maxSizeBytes（1TB，实际等同不限制）。 */
-        const val UNLIMITED_DISK_CACHE_BYTES: Long = 1L shl 40
+        /**
+         * 自动清理关闭时 Coil 磁盘缓存的 maxSizeBytes。
+         *
+         * 原来是 1TB（等同不限制），电视盒子闪存小，缓存无限增长会让 Coil 的
+         * LRU 索引和目录遍历越来越慢。给一个仍够用的上限，避免长期越用越卡。
+         */
+        const val UNLIMITED_DISK_CACHE_BYTES: Long = 512L * BYTES_PER_MB
+
+        /** 图片请求的 OkHttp HTTP 缓存目录（独立于 Coil 解码后的图片缓存）。 */
+        const val IMAGE_HTTP_CACHE_DIR = "image_http_cache"
+
+        /** 图片 HTTP 缓存上限：32MB，按 LRU 淘汰。 */
+        const val IMAGE_HTTP_CACHE_BYTES: Long = 32L * BYTES_PER_MB
+
+        /** Coil 内存缓存上限（字节）：默认按可用内存百分比取，盒子内存小，固定 32MB。 */
+        const val IMAGE_MEMORY_CACHE_BYTES: Long = 32L * BYTES_PER_MB
 
         /**
          * 递归统计目录内所有文件的总大小（字节）。

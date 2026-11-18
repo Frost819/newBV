@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -36,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -48,6 +51,8 @@ import dev.frost819.newbv.app.ui.component.search.SearchKeyword
 import dev.frost819.newbv.app.ui.component.search.SoftKeyboard
 import dev.frost819.newbv.app.viewmodel.search.SearchInputViewModel
 import dev.frost819.newbv.core.focus.touchClickable
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import dev.frost819.newbv.data.datastore.Prefs
 
 /**
@@ -121,10 +126,11 @@ private fun SearchInputColumn(
     onKeywordChange: (String) -> Unit,
     onSearch: () -> Unit,
 ) {
+    val inputMethod = LocalInputMethod.current
     androidx.compose.foundation.layout.Box(
         modifier =
             Modifier
-                .width(280.dp)
+                .width(if (inputMethod == InputMethod.Touch) 258.dp else 280.dp)
                 .fillMaxHeight()
                 .focusGroup(),
         contentAlignment = Alignment.TopCenter,
@@ -137,7 +143,10 @@ private fun SearchInputColumn(
                 modifier = Modifier.width(258.dp),
                 value = keyword,
                 onValueChange = onKeywordChange,
-                maxLines = 1,
+                singleLine = true,
+                // 触屏用系统 IME：回车直接搜索，不用再去找屏幕上的「搜索」按钮。
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
                 shape = MaterialTheme.shapes.large,
                 colors =
                     OutlinedTextFieldDefaults.colors(
@@ -149,18 +158,22 @@ private fun SearchInputColumn(
                     ),
                 placeholder = { Text("搜索") },
             )
-            SoftKeyboard(
-                firstButtonFocusRequester = focusRequester,
-                searchButtonModifier = searchButtonModifier,
-                onClick = { onKeywordChange(keyword + it) },
-                onClear = { onKeywordChange("") },
-                onDelete = {
-                    if (keyword.isNotEmpty()) {
-                        onKeywordChange(keyword.dropLast(1))
-                    }
-                },
-                onSearch = onSearch,
-            )
+            // 触屏设备上系统 IME 已经能输入中文，再摆一套 6×6 字母键盘只会挤占
+            // 横向空间、还会和 IME 抢焦点；遥控器没有 IME，仍需要自绘键盘。
+            if (inputMethod != InputMethod.Touch) {
+                SoftKeyboard(
+                    firstButtonFocusRequester = focusRequester,
+                    searchButtonModifier = searchButtonModifier,
+                    onClick = { onKeywordChange(keyword + it) },
+                    onClear = { onKeywordChange("") },
+                    onDelete = {
+                        if (keyword.isNotEmpty()) {
+                            onKeywordChange(keyword.dropLast(1))
+                        }
+                    },
+                    onSearch = onSearch,
+                )
+            }
         }
     }
 }
@@ -334,9 +347,9 @@ private fun SearchHistoryColumn(
         LazyColumn(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
-            itemsIndexed(histories) { index, history ->
+            itemsIndexed(histories, key = { _, history -> history.keyword }) { _, history ->
                 SearchKeyword(
-                    modifier = Modifier.focusSaverItem(focusSaver, "search_history_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "search_history_${history.keyword}"),
                     keyword = history.keyword,
                     onClick = {
                         if (deleteMode) {

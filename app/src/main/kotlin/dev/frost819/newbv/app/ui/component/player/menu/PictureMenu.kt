@@ -54,6 +54,19 @@ fun PictureMenuList(
         }
     val audioList = remember(availableAudio) { availableAudio.sortedBy { it.ordinal } }
 
+    // 菜单项文字只在源列表变化时重算。传新 List 实例会让 RadioMenuList 整列失去跳过性，
+    // 播放器里每次状态变化都重建这些字符串是白花的开销。
+    val qualityLabels =
+        remember(qualityIdList) { qualityIdList.map { Resolution.fromCode(it).displayName } }
+    val codecLabels =
+        remember(availableVideoCodec) { availableVideoCodec.map { it.displayName } }
+    val aspectRatioLabels = remember { VideoAspectRatio.entries.map { it.displayName } }
+    val audioLabels = remember(audioList) { audioList.map { it.displayName } }
+    val qualityIndex = remember(qualityIdList, currentResolution) { qualityIdList.indexOf(currentResolution) }
+    val codecIndex = remember(availableVideoCodec, currentVideoCodec) { availableVideoCodec.indexOf(currentVideoCodec) }
+    val aspectIndex = remember(currentVideoAspectRatio) { currentVideoAspectRatio.ordinal }
+    val audioIndex = remember(audioList, currentAudio) { audioList.indexOf(currentAudio) }
+
     PlayerThreeLevelMenu(
         modifier = modifier,
         categories = VideoPlayerPictureMenuItem.entries,
@@ -64,11 +77,8 @@ fun PictureMenuList(
             VideoPlayerPictureMenuItem.Resolution ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items =
-                        qualityIdList.map { resolutionCode ->
-                            Resolution.fromCode(resolutionCode).displayName
-                        },
-                    selected = qualityIdList.indexOf(currentResolution),
+                    items = qualityLabels,
+                    selected = qualityIndex,
                     onSelectedChanged = { onResolutionChange(qualityIdList[it]) },
                     onFocusBackToParent = backToMenu,
                 )
@@ -76,8 +86,8 @@ fun PictureMenuList(
             VideoPlayerPictureMenuItem.Codec ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = availableVideoCodec.map { it.displayName },
-                    selected = availableVideoCodec.indexOf(currentVideoCodec),
+                    items = codecLabels,
+                    selected = codecIndex,
                     onSelectedChanged = { onCodecChange(availableVideoCodec[it]) },
                     onFocusBackToParent = backToMenu,
                 )
@@ -85,8 +95,8 @@ fun PictureMenuList(
             VideoPlayerPictureMenuItem.AspectRatio ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = VideoAspectRatio.entries.map { it.displayName },
-                    selected = VideoAspectRatio.entries.indexOf(currentVideoAspectRatio),
+                    items = aspectRatioLabels,
+                    selected = aspectIndex,
                     onSelectedChanged = { onAspectRatioChange(VideoAspectRatio.entries[it]) },
                     onFocusBackToParent = backToMenu,
                 )
@@ -94,8 +104,8 @@ fun PictureMenuList(
             VideoPlayerPictureMenuItem.Audio ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = audioList.map { it.displayName },
-                    selected = audioList.indexOf(currentAudio),
+                    items = audioLabels,
+                    selected = audioIndex,
                     onSelectedChanged = { onAudioChange(audioList[it]) },
                     onFocusBackToParent = backToMenu,
                 )

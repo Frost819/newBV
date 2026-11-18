@@ -1,53 +1,57 @@
 package dev.frost819.newbv.core.focus
 
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceColors
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.LocalInteractionTracker
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** 焦点反馈动画统一走短 tween，避免 spring 长时间占用帧。 */
+private val FOCUS_ANIM_SPEC: AnimationSpec<Float> = tween(durationMillis = 110)
+
 /**
  * 获取焦点时显示边框。
  *
- * 仅在 [InputMethod.DPad] 模式下显示焦点边框，
- * 触屏模式下隐藏（触屏点击自带视觉反馈，无需额外焦点提示）。
+ * 仅在 [InputMethod.DPad] 模式下显示焦点边框，触屏模式下隐藏。
  *
- * 当 [LocalInteractionTracker] 未注入时，始终显示边框（兼容未接入 tracker 的场景）。
+ * 实现上把焦点状态和输入方式都推迟到 draw 阶段读取：Composable 本身不订阅，
+ * 方向键移动时不会触发任何重组。旧实现无条件创建 rememberInfiniteTransition，
+ * 即使 animate=false 也让每个节点每帧重组。
  *
  * @param shape 边框形状，默认 [ShapeDefaults.Large]。
- * @param animate 是否启用呼吸动画。
+ * @param animate 保留以兼容调用方；项目内无 animate=true，呼吸效果已移除。
  * @param color 边框颜色，默认使用当前主题的边框色。
  * @param width 边框宽度，默认 3dp。
  */
+@Suppress("UNUSED_PARAMETER")
 fun Modifier.focusedBorder(
     shape: Shape = ShapeDefaults.Large,
     animate: Boolean = false,
@@ -55,58 +59,54 @@ fun Modifier.focusedBorder(
     width: Dp = 3.dp,
 ): Modifier =
     composed {
-        val tracker = LocalInteractionTracker.current
+        // 组合阶段读一次输入方式（切换输入设备时重组本节点一次）；
+        // 方向键移动仍然只写 focused，走绘制阶段，不触发重组。
+        val inputMethod = LocalInputMethod.current
         val resolvedColor = color ?: MaterialTheme.colorScheme.border
-        var hasFocus by remember { mutableStateOf(false) }
+        val focused = remember { mutableStateOf(false) }
 
-        val showBorder =
-            if (tracker != null) {
-                val method by tracker.inputMethod.collectAsState()
-                hasFocus && method == InputMethod.DPad
-            } else {
-                hasFocus
+        this
+            .onFocusChanged { focused.value = it.hasFocus }
+            .drawWithContent {
+                drawContent()
+                val visible = focused.value && inputMethod == InputMethod.DPad
+                if (visible) {
+                    val radius =
+                        when (shape) {
+                            is RoundedCornerShape -> shape.topStart.toPx(size, this)
+                            else -> 12.dp.toPx()
+                        }
+                    drawRoundRect(
+                        color = resolvedColor,
+                        cornerRadius = CornerRadius(radius, radius),
+                        style = Stroke(width = width.toPx()),
+                    )
+                }
             }
-
-        val infiniteTransition = rememberInfiniteTransition(label = "focused-border-transition")
-        val animateColor by infiniteTransition.animateColor(
-            initialValue = resolvedColor.copy(alpha = 1f),
-            targetValue = resolvedColor.copy(alpha = 0.1f),
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Reverse,
-                ),
-            label = "focused-border-color",
-        )
-        val borderColor =
-            if (showBorder) {
-                if (animate) animateColor else resolvedColor
-            } else {
-                Color.Transparent
-            }
-
-        onFocusChanged { hasFocus = it.hasFocus }
-            .border(width = width, color = borderColor, shape = shape)
     }
 
 /**
  * 未获焦点时缩小，获焦点时恢复原大小。
- *
- * 触屏模式下保持显示缩放效果（D-Pad 用户看到放大，触屏用户看到缩小）。
- * 注意：与 [focusedBorder] 不同，[focusedScale] 不会根据输入方式隐藏。
- *
- * @param scale 未获焦点时的缩放比例，默认 0.9。
+ * scale 由 Animatable 在 graphicsLayer 阶段读取，每帧只重绘 layer，不重组。
  */
 fun Modifier.focusedScale(scale: Float = 0.9f): Modifier =
     composed {
-        var hasFocus by remember { mutableStateOf(false) }
-        val scaleValue by animateFloatAsState(
-            targetValue = if (hasFocus) 1f else scale,
-            label = "focused-scale",
-        )
+        val scope = rememberCoroutineScope()
+        val animatedScale = remember(scale) { Animatable(scale) }
 
-        onFocusChanged { hasFocus = it.hasFocus }
-            .scale(scaleValue)
+        this
+            .onFocusChanged { state ->
+                scope.launch {
+                    animatedScale.animateTo(
+                        targetValue = if (state.hasFocus) 1f else scale,
+                        animationSpec = FOCUS_ANIM_SPEC,
+                    )
+                }
+            }.graphicsLayer {
+                val value = animatedScale.value
+                scaleX = value
+                scaleY = value
+            }
     }
 
 /**
@@ -136,6 +136,9 @@ fun FocusRequester.requestFocus(scope: CoroutineScope) {
  * 实现整体明暗反色。未聚焦时使用调用方传入的容器/内容色，
  * 以便表达「已选中 / 已激活」等常态。
  *
+ * 触屏模式下点击会顺带请求焦点，如果这里仍做反色，点一下卡片就会留下一块
+ * 反色高亮。因此 Touch 模式让聚焦色与常态色一致。
+ *
  * 注意：Surface 的内容色通过 [androidx.tv.material3.LocalContentColor] 下传，
  * 子组件（[androidx.tv.material3.Text] / [androidx.tv.material3.Icon]）**不要**再硬编码颜色，
  * 否则聚焦时不会随容器一起反色。
@@ -148,10 +151,38 @@ fun FocusRequester.requestFocus(scope: CoroutineScope) {
 fun focusInvertedColors(
     containerColor: Color,
     contentColor: Color,
-): ClickableSurfaceColors =
-    ClickableSurfaceDefaults.colors(
+): ClickableSurfaceColors {
+    val inputMethod = LocalInputMethod.current
+    val dpad = inputMethod == InputMethod.DPad
+    return ClickableSurfaceDefaults.colors(
         containerColor = containerColor,
         contentColor = contentColor,
-        focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-        focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+        focusedContainerColor =
+            if (dpad) MaterialTheme.colorScheme.inverseSurface else containerColor,
+        focusedContentColor =
+            if (dpad) MaterialTheme.colorScheme.inverseOnSurface else contentColor,
     )
+}
+
+/**
+ * 卡片的聚焦边框：遥控器模式显示，触屏模式退化成 0 宽度透明边框。
+ *
+ * TV Material3 的 `CardDefaults.border` / `ClickableSurfaceDefaults.border` 不受
+ * `focusedBorder()` 那个自绘边框控制，触屏点击请求焦点后会自己画一圈白边。
+ * 集中在这一处按输入方式处理，三个卡片组件不必各自订阅状态。
+ */
+@Composable
+fun focusBorderOrNone(
+    shape: Shape,
+    color: Color,
+    width: Dp = 3.dp,
+): Border {
+    val inputMethod = LocalInputMethod.current
+    return remember(shape, color, width, inputMethod) {
+        if (inputMethod == InputMethod.Touch) {
+            Border(border = BorderStroke(0.dp, Color.Transparent), shape = shape)
+        } else {
+            Border(border = BorderStroke(width, color), shape = shape)
+        }
+    }
+}

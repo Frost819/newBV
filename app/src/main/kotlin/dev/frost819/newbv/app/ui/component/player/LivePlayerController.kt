@@ -131,9 +131,12 @@ fun LivePlayerController(
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        val confirmKeys = listOf(Key.DirectionCenter, Key.Enter, Key.Spacebar)
-
-        if (event.type == KeyEventType.KeyUp && event.key !in confirmKeys) {
+        // 与 VideoPlayerController 保持一致：直接比较，避免每次按键分配列表。
+        if (event.type == KeyEventType.KeyUp &&
+            event.key != Key.DirectionCenter &&
+            event.key != Key.Enter &&
+            event.key != Key.Spacebar
+        ) {
             return true
         }
 
@@ -176,7 +179,7 @@ fun LivePlayerController(
 
         if (!showClickableControllers) {
             when (event.key) {
-                in confirmKeys -> {
+                Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
                     if (event.type == KeyEventType.KeyDown) {
                         if (event.nativeKeyEvent.isLongPress) {
                             showMenuController = true

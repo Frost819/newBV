@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.main
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,6 +14,8 @@ import androidx.compose.material.icons.filled.OndemandVideo
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
@@ -43,8 +44,12 @@ import androidx.tv.material3.SurfaceDefaults
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
+import dev.frost819.newbv.app.ui.component.toggleThemeMode
 import dev.frost819.newbv.core.focus.isDpadRight
 import dev.frost819.newbv.core.focus.isKeyDown
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import dev.frost819.newbv.data.datastore.LeftNaviItem
 
 /**
@@ -81,6 +86,10 @@ fun LeftNaviContent(
     focusSaver: FocusSaver,
 ) {
     val focusManager = LocalFocusManager.current
+    val currentlyDark = rememberIsDarkTheme()
+    // 遥控器靠焦点看位置；触屏按「当前页面」高亮，点一下才同步，
+    // 也避免点击请求焦点后高亮停在旧的焦点项上。
+    val dpadMode = LocalInputMethod.current == InputMethod.DPad
     NavigationRail(
         modifier =
             modifier
@@ -112,7 +121,7 @@ fun LeftNaviContent(
                     onLogin()
                 }
             },
-            selected = userIsFocused,
+            selected = dpadMode && userIsFocused,
             icon = {
                 if (isLogin) {
                     Surface(
@@ -126,6 +135,8 @@ fun LeftNaviContent(
                             ),
                     ) {
                         AsyncImage(
+                            // 图片本身也要裁圆：Surface 的 clip 只保证占位底色是圆的，
+                            // NavigationRailItem 的 icon 槽不裁内容，少这一层会露出方形封面。
                             modifier =
                                 Modifier
                                     .size(40.dp)
@@ -150,22 +161,21 @@ fun LeftNaviContent(
         ) {
             LeftNaviItem.entries.forEach { item ->
                 var isFocused by remember { mutableStateOf(false) }
-                val indicatorColor by animateColorAsState(
-                    targetValue =
-                        if (item == selectedItem) {
-                            MaterialTheme.colorScheme.border
-                        } else {
-                            Color.Transparent
-                        },
-                    label = "selection-indicator",
-                )
+                // 选中胶囊直接跟手切换。原来用 animateColorAsState 做 200ms 渐变，
+                // 每次按方向键都要在动画期间逐帧重组整个导航项，遥控器上表现为迟钝。
+                val indicatorColor =
+                    if (item == selectedItem) {
+                        MaterialTheme.colorScheme.border
+                    } else {
+                        Color.Transparent
+                    }
                 NavigationRailItem(
                     modifier =
                         Modifier
                             .onFocusChanged { isFocused = it.hasFocus }
                             .selectionIndicator(indicatorColor),
                     onClick = { onLeftNaviItemChanged(item) },
-                    selected = isFocused,
+                    selected = if (dpadMode) isFocused else item == selectedItem,
                     icon = {
                         Icon(
                             imageVector = item.displayIcon,
@@ -185,11 +195,31 @@ fun LeftNaviContent(
                         settingsIsFocused = it.hasFocus
                     },
             onClick = onOpenSettings,
-            selected = settingsIsFocused,
+            selected = dpadMode && settingsIsFocused,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = null,
+                )
+            },
+        )
+
+        // 日间/夜间快捷切换：图标显示「将要切换到的目标」，
+        // 当前是深色就显示太阳（点一下变亮），当前是浅色就显示月亮。
+        var themeToggleFocused by remember { mutableStateOf(false) }
+        NavigationRailItem(
+            modifier =
+                Modifier
+                    .focusSaverItem(focusSaver, "theme_toggle")
+                    .onFocusChanged {
+                        themeToggleFocused = it.hasFocus
+                    },
+            onClick = { toggleThemeMode(currentlyDark) },
+            selected = dpadMode && themeToggleFocused,
+            icon = {
+                Icon(
+                    imageVector = if (currentlyDark) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                    contentDescription = if (currentlyDark) "切换到日间模式" else "切换到夜间模式",
                 )
             },
         )

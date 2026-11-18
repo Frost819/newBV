@@ -98,10 +98,12 @@ fun UgcContent(
 
     Material3Scaffold(
         topBar = {
+            val ugcTabItems = remember { UgcTabItem.entries.toList() }
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
-                items = UgcTabItem.entries.toList(),
-                selectedIndex = UgcTabItem.entries.indexOf(selectedTab),
+                items = ugcTabItems,
+                // entries.toList() 就是 ordinal 顺序，直接取 ordinal 省掉一次线性查找。
+                selectedIndex = selectedTab.ordinal,
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = nav as UgcTabItem
@@ -176,7 +178,7 @@ private fun UgcGrid(
     ) {
         itemsIndexed(
             items = state.items,
-            key = { index, _ -> index },
+            key = { _, item -> item.aid },
         ) { index, item ->
             val cardData =
                 remember(item) {

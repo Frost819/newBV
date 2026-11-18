@@ -44,6 +44,8 @@ import androidx.tv.material3.Text
 import dev.frost819.newbv.app.viewmodel.settings.LogViewerViewModel
 import dev.frost819.newbv.core.focus.touchClickable
 import io.github.g0dkar.qrcode.QRCode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -88,7 +90,8 @@ fun LogViewerScreen(
             } else {
                 selectedFile?.let { viewModel.getFileUrl(it) } ?: viewModel.getServerUrl()
             }
-        qrImage = generateQrCode(url)
+        // 二维码编码是 CPU 活，放在主线程会在焦点移动那一帧卡一下
+        qrImage = withContext(Dispatchers.Default) { generateQrCode(url) }
     }
 
     Scaffold(
@@ -143,16 +146,21 @@ fun LogViewerScreen(
                     }
 
                     items(items = uiState.logFiles, key = { it.name }) { file ->
+                        val selectFile = {
+                            isCreateFocused = false
+                            selectedFile = file
+                        }
                         ListItem(
                             modifier =
-                                Modifier.onFocusChanged {
-                                    if (it.hasFocus) {
-                                        isCreateFocused = false
-                                        selectedFile = file
-                                    }
-                                },
+                                Modifier
+                                    .onFocusChanged {
+                                        if (it.hasFocus) {
+                                            isCreateFocused = false
+                                            selectedFile = file
+                                        }
+                                    }.touchClickable(onClick = selectFile),
                             selected = false,
-                            onClick = {},
+                            onClick = selectFile,
                             headlineContent = {
                                 Text(text = file.name)
                             },
@@ -206,6 +214,7 @@ fun LogViewerScreen(
                             Modifier
                                 .size(240.dp)
                                 .clip(MaterialTheme.shapes.large)
+                                // 二维码必须在任何主题下都保持白底，否则扫码识别率会掉
                                 .background(Color.White),
                         contentAlignment = Alignment.Center,
                     ) {

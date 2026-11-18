@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
 import dev.frost819.newbv.app.ui.component.settings.OptionDialog
 import dev.frost819.newbv.app.ui.component.settings.SettingListItem
 import dev.frost819.newbv.app.ui.component.settings.SettingSwitchListItem
@@ -52,11 +53,13 @@ import kotlin.math.roundToInt
 /**
  * 界面设置页。
  *
- * 启动页/首页 Tab/个人页 Tab/显示视频详情/常显进度条/Density/主题模式。
+ * 日夜模式/启动页/首页 Tab/个人页 Tab/显示视频详情/常显进度条/Density/主题模式。
  */
 @Composable
 fun UISetting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    // 跟踪实际外观（含「跟随系统」解析后的结果），用于日夜开关的当前状态
+    val themeIsDark = rememberIsDarkTheme()
 
     var showDensityDialog by remember { mutableStateOf(false) }
     var dialogDensity by remember { mutableFloatStateOf(Prefs.density) }
@@ -90,6 +93,22 @@ fun UISetting(modifier: Modifier = Modifier) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item {
+                    SettingSwitchListItem(
+                        title = "夜间模式",
+                        supportText =
+                            if (themeIsDark) {
+                                "已开启，界面使用深色配色"
+                            } else {
+                                "已关闭，界面使用浅色配色"
+                            },
+                        checked = themeIsDark,
+                        onCheckedChange = { wantDark ->
+                            Prefs.themeMode = if (wantDark) ThemeMode.Dark else ThemeMode.Light
+                            selectedThemeMode = Prefs.themeMode
+                        },
+                    )
+                }
                 item {
                     SettingListItem(
                         title = "启动页",

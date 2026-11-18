@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
@@ -17,6 +18,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.tv.material3.SurfaceDefaults
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import androidx.compose.material3.MaterialTheme as CommonMaterialTheme
 import androidx.compose.material3.Surface as CommonSurface
 import androidx.compose.material3.darkColorScheme as commonDark
@@ -52,6 +55,11 @@ fun BVTheme(
     val fontScale = LocalDensity.current.fontScale
     val systemIsDark = isSystemInDarkTheme()
     val isDark = themeMode.isDark(systemIsDark)
+    // 触屏需要按压反馈；遥控器上 ripple 会拖出一层残影，且焦点边框已经够醒目。
+    // 这里只在 Touch 模式恢复 material3 的默认水波纹，DPad 模式保持关闭。
+    val inputMethod = LocalInputMethod.current
+    val rippleConfiguration =
+        if (inputMethod == InputMethod.Touch) RippleConfiguration() else null
 
     val tvColorScheme =
         if (isDark) {
@@ -71,6 +79,7 @@ fun BVTheme(
                 surfaceVariant = BVColors.DarkSurfaceVariant,
                 onSurfaceVariant = BVColors.DarkOnSurfaceVariant,
                 border = BVColors.DarkBorder,
+                scrim = BVColors.DarkScrim,
             )
         } else {
             tvLight(
@@ -91,6 +100,7 @@ fun BVTheme(
                 surfaceVariant = BVColors.LightSurfaceVariant,
                 onSurfaceVariant = BVColors.LightOnSurfaceVariant,
                 border = BVColors.LightBorder,
+                scrim = BVColors.LightScrim,
             )
         }
 
@@ -111,6 +121,7 @@ fun BVTheme(
                 onSurface = BVColors.DarkOnSurface,
                 surfaceVariant = BVColors.DarkSurfaceVariant,
                 onSurfaceVariant = BVColors.DarkOnSurfaceVariant,
+                scrim = BVColors.DarkScrim,
             )
         } else {
             commonLight(
@@ -128,6 +139,7 @@ fun BVTheme(
                 onSurface = BVColors.LightOnSurface,
                 surfaceVariant = BVColors.LightSurfaceVariant,
                 onSurfaceVariant = BVColors.LightOnSurfaceVariant,
+                scrim = BVColors.LightScrim,
             )
         }
 
@@ -140,7 +152,7 @@ fun BVTheme(
             typography = BVTypography.common,
         ) {
             CompositionLocalProvider(
-                LocalRippleConfiguration provides null,
+                LocalRippleConfiguration provides rippleConfiguration,
                 LocalDensity provides Density(density = density, fontScale = fontScale),
             ) {
                 CommonSurface(color = Color.Transparent) {

@@ -1,6 +1,5 @@
 package dev.frost819.newbv.app.ui.component.videocard
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,12 +20,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import dev.frost819.newbv.core.focus.focusBorderOrNone
 import dev.frost819.newbv.core.focus.touchClickable
 
 /**
@@ -37,18 +36,28 @@ import dev.frost819.newbv.core.focus.touchClickable
  *
  * @param data 卡片数据。
  * @param onClick 点击回调。
- * @param onGoToDetailPage 跳转详情页回调（长按或菜单键）。
+ * @param onGoToDetailPage 长按进详情页回调（触屏长按；遥控器菜单键归页面级刷新）。
  * @param modifier Modifier。
  */
 @Composable
 fun SeasonCard(
     data: SeasonCardData,
     onClick: () -> Unit,
-    onGoToDetailPage: () -> Unit = {},
+    onGoToDetailPage: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    // 形状与边框只随主题、输入方式变化；触屏点击不留聚焦边框。
+    val largeShape = MaterialTheme.shapes.large
+    val borderColor = MaterialTheme.colorScheme.border
+    val focusedBorder = focusBorderOrNone(largeShape, borderColor)
     Surface(
-        modifier = modifier.touchClickable(onClick = onClick),
+        // 这个参数以前只写在签名里、从未接上任何输入路径，长按进详情等于没做。
+        // 触屏长按补上；传 null 时单击保持 detectTapGestures 的快路径。
+        modifier =
+            modifier.touchClickable(
+                onClick = onClick,
+                onLongClick = onGoToDetailPage,
+            ),
         onClick = onClick,
         colors =
             ClickableSurfaceDefaults.colors(
@@ -56,15 +65,8 @@ fun SeasonCard(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 pressedContainerColor = MaterialTheme.colorScheme.surface,
             ),
-        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.large),
-        border =
-            ClickableSurfaceDefaults.border(
-                focusedBorder =
-                    Border(
-                        border = BorderStroke(width = 3.dp, color = MaterialTheme.colorScheme.border),
-                        shape = MaterialTheme.shapes.large,
-                    ),
-            ),
+        shape = ClickableSurfaceDefaults.shape(shape = largeShape),
+        border = ClickableSurfaceDefaults.border(focusedBorder = focusedBorder),
     ) {
         Column {
             Box(
@@ -74,13 +76,13 @@ fun SeasonCard(
                         .clip(MaterialTheme.shapes.large),
                 contentAlignment = Alignment.BottomCenter,
             ) {
+                // 圆角裁剪由外层 Box 负责，图片不再重复 clip（少一层离屏图层）。
                 AsyncImage(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .clip(MaterialTheme.shapes.large),
-                    model = data.cover,
+                            .aspectRatio(0.75f),
+                    model = rememberCoverThumbnail(cover = data.cover, height = 640, width = 480),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
                 )
@@ -92,13 +94,7 @@ fun SeasonCard(
                                 .height(48.dp)
                                 .fillMaxWidth()
                                 .background(
-                                    Brush.verticalGradient(
-                                        colors =
-                                            listOf(
-                                                Color.Transparent,
-                                                Color.Black.copy(alpha = 0.8f),
-                                            ),
-                                    ),
+                                    BottomScrim,
                                 ),
                     )
                     Text(
@@ -138,3 +134,9 @@ fun SeasonCard(
         }
     }
 }
+
+/** 卡片底部信息条的渐变遮罩：颜色固定，类加载时构造一次，避免每张卡片每次重组都新建 Brush 和 List。 */
+private val BottomScrim =
+    Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+    )

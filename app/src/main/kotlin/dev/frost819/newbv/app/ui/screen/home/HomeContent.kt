@@ -1,11 +1,5 @@
 package dev.frost819.newbv.app.ui.screen.home
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -51,7 +45,17 @@ fun HomeContent(
     focusSaver: FocusSaver,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val firstTab = remember { Prefs.firstHomeTopNavItem }
+    val firstTab =
+        remember {
+            val saved = Prefs.firstHomeTopNavItem
+            // 未登录时动态页只有一句「请先登录」，首屏落在推荐更合理。
+            // 只影响本次落点，不改偏好：登录后仍回到用户上次选的 Tab。
+            if (!Prefs.isLogin && saved == HomeTopNavItem.Dynamics) {
+                HomeTopNavItem.Recommend
+            } else {
+                saved
+            }
+        }
     var selectedTab by rememberSaveable { mutableStateOf(firstTab) }
     var focusOnContent by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
@@ -67,18 +71,30 @@ fun HomeContent(
             }
         }
 
+    // 只在选中项变化时算一次，避免每次重组都构造临时 HomeTabItem 再线性查找。
+    val selectedIndex =
+        remember(selectedTab, reorderedItems) {
+            reorderedItems.indexOfFirst { it.item == selectedTab }
+        }
+
     Material3Scaffold(
         topBar = {
             TopNav(
                 modifier = Modifier.focusRequester(navFocusRequester),
                 items = reorderedItems,
-                selectedIndex = reorderedItems.indexOf(HomeTabItem(selectedTab)),
+                selectedIndex = selectedIndex,
                 isLargePadding = !focusOnContent,
                 onSelectedChanged = { nav ->
                     val tab = (nav as HomeTabItem).item
                     selectedTab = tab
-                    if (tab == HomeTopNavItem.Dynamics && uiState.dynamicItems.isEmpty()) {
-                        viewModel.loadDynamic()
+                    // 首次切到某个 Tab 时再拉数据，冷启动不再三个 Tab 一起请求。
+                    when {
+                        tab == HomeTopNavItem.Recommend && uiState.recommendItems.isEmpty() ->
+                            viewModel.loadRecommend()
+                        tab == HomeTopNavItem.Popular && uiState.popularItems.isEmpty() ->
+                            viewModel.loadPopular()
+                        tab == HomeTopNavItem.Dynamics && uiState.dynamicItems.isEmpty() ->
+                            viewModel.loadDynamic()
                     }
                 },
                 onClick = { nav ->
@@ -102,42 +118,27 @@ fun HomeContent(
                         false
                     },
         ) {
-            AnimatedContent(
-                targetState = selectedTab,
-                label = "home-animated-content",
-                transitionSpec = {
-                    val coefficient = 10
-                    if (reorderedItems.indexOf(HomeTabItem(targetState)) <
-                        reorderedItems.indexOf(HomeTabItem(initialState))
-                    ) {
-                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
-                            fadeOut() + slideOutHorizontally { it / coefficient }
-                    } else {
-                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
-                            fadeOut() + slideOutHorizontally { -it / coefficient }
-                    }
-                },
-            ) { screen ->
-                when (screen) {
-                    HomeTopNavItem.Recommend ->
-                        RecommendScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    HomeTopNavItem.Popular ->
-                        PopularScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                    HomeTopNavItem.Dynamics ->
-                        DynamicsScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            focusSaver = focusSaver,
-                        )
-                }
+            // 切 Tab 不再做 fade/slide 转场：转场期间新旧两个网格（各几十张卡片）
+            // 会同时留在组合树里并逐帧重绘，左右切换时明显掉帧。
+            when (selectedTab) {
+                HomeTopNavItem.Recommend ->
+                    RecommendScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                HomeTopNavItem.Popular ->
+                    PopularScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
+                HomeTopNavItem.Dynamics ->
+                    DynamicsScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        focusSaver = focusSaver,
+                    )
             }
         }
     }

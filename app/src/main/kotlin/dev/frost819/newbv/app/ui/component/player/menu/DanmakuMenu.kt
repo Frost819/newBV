@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.component.player.menu
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.frost819.newbv.app.ui.component.player.menu.component.CheckBoxMenuList
 import dev.frost819.newbv.app.ui.component.player.menu.component.PlayerThreeLevelMenu
@@ -12,6 +13,10 @@ import dev.frost819.newbv.app.viewmodel.player.VideoPlayerDanmakuMenuItem
 import dev.frost819.newbv.danmaku.config.DanmakuState
 import dev.frost819.newbv.data.datastore.DanmakuType
 import java.text.NumberFormat
+
+/** 蒙版开关的固定选项，避免每次重组新建列表。 */
+private val MASK_OPTIONS = listOf("关闭", "开启")
+private val AI_LEVEL_OPTIONS = listOf("关闭", "弱", "中", "强", "极强")
 
 /**
  * 弹幕设置面板。
@@ -58,12 +63,22 @@ fun DanmakuMenuList(
         categoryLabel = { it.displayName },
         onFocusStateChange = onFocusStateChange,
     ) { selectedItem, itemModifier, backToMenu ->
+        val typeLabels = remember { DanmakuType.entries.map { it.displayName } }
+        val enabledOrdinals = remember(currentEnabledTypes) { currentEnabledTypes.map { it.ordinal } }
+        // DecimalFormat 构造要加载 Locale 符号表并编译 pattern，按方向键调数值时
+        // 每次重组都新建三个代价不小。缓存一个实例，结果按值缓存。
+        val percentFormat =
+            remember { NumberFormat.getPercentInstance().apply { maximumFractionDigits = 0 } }
+        val scaleText = remember(currentScale) { percentFormat.format(currentScale) }
+        val opacityText = remember(currentOpacity) { percentFormat.format(currentOpacity) }
+        val areaText = remember(currentArea) { percentFormat.format(currentArea) }
+        val speedText = remember(currentSpeedFactor) { "${String.format("%.1f", currentSpeedFactor)}x" }
         when (selectedItem) {
             VideoPlayerDanmakuMenuItem.Switch ->
                 CheckBoxMenuList(
                     modifier = itemModifier,
-                    items = DanmakuType.entries.map { it.displayName },
-                    selected = currentEnabledTypes.map { it.ordinal },
+                    items = typeLabels,
+                    selected = enabledOrdinals,
                     onSelectedChanged = { indices ->
                         handleDanmakuTypeChange(
                             currentTypes = currentEnabledTypes,
@@ -80,11 +95,7 @@ fun DanmakuMenuList(
                     value = currentScale,
                     step = 0.01f,
                     range = 0.5f..4f,
-                    text =
-                        NumberFormat
-                            .getPercentInstance()
-                            .apply { maximumFractionDigits = 0 }
-                            .format(currentScale),
+                    text = scaleText,
                     onValueChange = onDanmakuSizeChange,
                     onFocusBackToParent = backToMenu,
                 )
@@ -95,11 +106,7 @@ fun DanmakuMenuList(
                     value = currentOpacity,
                     step = 0.01f,
                     range = 0f..1f,
-                    text =
-                        NumberFormat
-                            .getPercentInstance()
-                            .apply { maximumFractionDigits = 0 }
-                            .format(currentOpacity),
+                    text = opacityText,
                     onValueChange = onDanmakuOpacityChange,
                     onFocusBackToParent = backToMenu,
                 )
@@ -110,7 +117,7 @@ fun DanmakuMenuList(
                     value = currentSpeedFactor,
                     step = 0.1f,
                     range = 0.2f..5f,
-                    text = "${String.format("%.1f", currentSpeedFactor)}x",
+                    text = speedText,
                     onValueChange = onDanmakuSpeedFactorChange,
                     onFocusBackToParent = backToMenu,
                 )
@@ -121,11 +128,7 @@ fun DanmakuMenuList(
                     value = currentArea,
                     step = 0.01f,
                     range = 0.1f..1f,
-                    text =
-                        NumberFormat
-                            .getPercentInstance()
-                            .apply { maximumFractionDigits = 0 }
-                            .format(currentArea),
+                    text = areaText,
                     onValueChange = onDanmakuAreaChange,
                     onFocusBackToParent = backToMenu,
                 )
@@ -133,7 +136,7 @@ fun DanmakuMenuList(
             VideoPlayerDanmakuMenuItem.Mask ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = listOf("关闭", "开启"),
+                    items = MASK_OPTIONS,
                     selected = if (currentMaskEnabled) 1 else 0,
                     onSelectedChanged = { onDanmakuMaskChange(it == 1) },
                     onFocusBackToParent = backToMenu,
@@ -170,11 +173,18 @@ fun DanmakuFilterMenuList(
         categoryLabel = { it.displayName },
         onFocusStateChange = onFocusStateChange,
     ) { selectedItem, itemModifier, backToMenu ->
+        val userFilterOptions =
+            remember(userFilterRuleCount) {
+                listOf(
+                    "关闭",
+                    if (userFilterRuleCount > 0) "开启( $userFilterRuleCount 条)" else "开启",
+                )
+            }
         when (selectedItem) {
             VideoPlayerDanmakuFilterMenuItem.BlockColorful ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = listOf("关闭", "开启"),
+                    items = MASK_OPTIONS,
                     selected = if (currentBlockColorfulEnabled) 1 else 0,
                     onSelectedChanged = { onDanmakuBlockColorfulEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
@@ -183,7 +193,7 @@ fun DanmakuFilterMenuList(
             VideoPlayerDanmakuFilterMenuItem.BlockRepeat ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = listOf("关闭", "开启"),
+                    items = MASK_OPTIONS,
                     selected = if (currentBlockRepeatEnabled) 1 else 0,
                     onSelectedChanged = { onDanmakuBlockRepeatEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
@@ -192,11 +202,7 @@ fun DanmakuFilterMenuList(
             VideoPlayerDanmakuFilterMenuItem.BlockByUserFilter ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items =
-                        listOf(
-                            "关闭",
-                            if (userFilterRuleCount > 0) "开启( $userFilterRuleCount 条)" else "开启",
-                        ),
+                    items = userFilterOptions,
                     selected = if (currentBlockByUserFilterEnabled) 1 else 0,
                     onSelectedChanged = { onDanmakuBlockByUserFilterEnabledChange(it == 1) },
                     onFocusBackToParent = backToMenu,
@@ -205,7 +211,7 @@ fun DanmakuFilterMenuList(
             VideoPlayerDanmakuFilterMenuItem.AiCloudLevel ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = listOf("关闭", "弱", "中", "强", "极强"),
+                    items = AI_LEVEL_OPTIONS,
                     selected = aiLevelToPresetIndex(currentAiCloudLevel),
                     onSelectedChanged = { onDanmakuAiCloudLevelChange(DanmakuState.AI_LEVEL_PRESETS[it]) },
                     onFocusBackToParent = backToMenu,

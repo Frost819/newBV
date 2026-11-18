@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.biliapi.entity.user.Author
+import dev.frost819.newbv.biliapi.entity.video.Dimension
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
 import dev.frost819.newbv.biliapi.entity.video.UserActions
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
@@ -268,11 +269,68 @@ class VideoListViewModelTest {
         }
 
     @Test
+    fun `findNextVideo starts at first page of next video when it has pages`() =
+        runTest(testDispatcher) {
+            // 列表已是播放顺序：从 A 跨到 B，B 有多个分 P，应落在第一个 P
+            videoInfoRepository.updateVideoList(
+                listOf(
+                    VideoListItem(aid = 1, cid = 11, title = "A"),
+                    VideoListItem(
+                        aid = 2,
+                        cid = 21,
+                        title = "B",
+                        ugcPages = listOf(page(201, "B-P1"), page(202, "B-P2")),
+                    ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val next = viewModel.findNextVideo(currentAid = 1, currentCid = 11)
+            assertThat(next).isNotNull()
+            assertThat(next!!.cid).isEqualTo(201L)
+            assertThat(next.title).isEqualTo("B-P1")
+        }
+
+    @Test
+    fun `findNextVideo starts at last original page when list is in reversed order`() =
+        runTest(testDispatcher) {
+            // 倒序后的 state：B 的分 P 已翻成 [P2, P1]，跨到 B 时应先播原顺序最后的 P2
+            videoInfoRepository.updateVideoList(
+                listOf(
+                    VideoListItem(aid = 1, cid = 11, title = "A"),
+                    VideoListItem(
+                        aid = 2,
+                        cid = 21,
+                        title = "B",
+                        ugcPages = listOf(page(202, "B-P2"), page(201, "B-P1")),
+                    ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val next = viewModel.findNextVideo(currentAid = 1, currentCid = 11)
+            assertThat(next).isNotNull()
+            assertThat(next!!.cid).isEqualTo(202L)
+            assertThat(next.title).isEqualTo("B-P2")
+        }
+
+    @Test
     fun `setCurrentAid sets current aid`() =
         runTest(testDispatcher) {
             viewModel.setCurrentAid(42L)
             assertThat(viewModel.videoListState.value.videoList).isEmpty()
         }
+
+    private fun page(
+        cid: Long,
+        title: String,
+    ) = VideoPage(
+        cid = cid,
+        index = cid.toInt(),
+        title = title,
+        duration = 600,
+        dimension = Dimension(1920, 1080),
+    )
 
     private fun fakeRelatedVideo(aid: Long): RelatedVideo =
         RelatedVideo(

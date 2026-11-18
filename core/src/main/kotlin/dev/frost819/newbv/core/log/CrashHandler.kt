@@ -55,10 +55,13 @@ class CrashHandler(
      * 仅应调用一次。
      */
     fun install() {
-        runCatching {
-            Runtime.getRuntime().exec("logcat -c")
-            logger.info { "Cleared logcat buffer" }
-        }
+        // logcat -c 会拉起一个进程，放在主线程会拖慢 Application 启动
+        Thread {
+            runCatching {
+                Runtime.getRuntime().exec("logcat -c")
+                logger.info { "Cleared logcat buffer" }
+            }
+        }.apply { isDaemon = true }.start()
 
         originalHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
@@ -173,6 +176,11 @@ class CrashHandler(
                 sb.appendLine(line)
             }
             reader.close()
+            // 只关流不回收进程，反复导出日志会积累残留进程和 fd
+            runCatching {
+                process.waitFor()
+                process.destroy()
+            }
             sb.toString()
         }.onFailure {
             logger.error(it) { "Failed to collect logcat" }

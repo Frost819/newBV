@@ -26,8 +26,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterAll
@@ -143,14 +145,44 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `init loads recommend and popular`() =
+    fun `init only loads the default tab`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            // 不推完整虚拟时间：补齐其余 Tab 的延迟还没到，观察首帧那一刻的状态。
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            val state = viewModel.uiState.value
+            // 冷启动只拉首屏那一个 Tab，其余 Tab 由 2 秒后的补齐协程负责。
+            // 测试里默认 Tab 是 Dynamics 且未登录，实现会回退到 Recommend。
+            assertThat(state.recommendItems).isNotEmpty()
+            assertThat(state.popularItems).isEmpty()
+            assertThat(state.dynamicItems).isEmpty()
+        }
+
+    @Test
+    fun `other tabs are prefetched after the delay`() =
         runTest(testDispatcher) {
             viewModel = createViewModel()
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            assertThat(state.recommendItems).isNotEmpty()
+            // 首屏落定后主动补齐热门；未登录时不动动态。
             assertThat(state.popularItems).isNotEmpty()
+            assertThat(state.dynamicItems).isEmpty()
+        }
+
+    @Test
+    fun `popular is loaded on demand`() =
+        runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceTimeBy(1_000)
+            runCurrent()
+            assertThat(viewModel.uiState.value.popularItems).isEmpty()
+
+            viewModel.loadPopular()
+            advanceUntilIdle()
+            assertThat(viewModel.uiState.value.popularItems).isNotEmpty()
         }
 
     @Test
