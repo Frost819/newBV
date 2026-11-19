@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.player
 
+import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
@@ -145,6 +146,18 @@ class PlayerViewModelTest {
         runCatching { viewModel.viewModelScope.cancel() }
         unmockkObject(Prefs)
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `initVideoPlayer passes disabled frame rate matching to the player`() {
+        val context = mockk<Context>()
+        every { context.applicationContext } returns context
+        every { Prefs.enableFrameRateMatching } returns false
+        every { exoPlayerFactory.create(context, any()) } returns mockk(relaxed = true)
+
+        viewModel.initVideoPlayer(context)
+
+        verify { exoPlayerFactory.create(context, match { !it.enableFrameRateMatching }) }
     }
 
     // ── Helpers ──────────────────────────────────────────────
