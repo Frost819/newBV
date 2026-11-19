@@ -6,22 +6,11 @@ import org.junit.jupiter.api.Test
 /**
  * [MediaRequestHeaders] 的单元测试。
  *
- * 核心约束：无论走哪个接口模式，媒体请求**必须**带 `Range`，否则 B 站海外 CDN
- * 会以 HTTP 567（HTML 反盗链页）拒绝整段 GET；Referer 则只在 Web 模式提供，
- * App 模式带上反而会 403。
+ * 默认头只负责 Referer：Web 模式需要，App 模式带上反而 403。
+ * `Range` 绝不能出现在默认头里——media3 在 seek 时用 `addHeader` 追加自己算的 Range，
+ * 默认头再常驻一个就会让请求带两个 Range，首包兜底交给 [MediaRangeInterceptor]。
  */
 class MediaRequestHeadersTest {
-    @Test
-    fun `always sends open range header`() {
-        // When: 两种接口模式（Web 带 Referer / App 不带）
-        val webHeaders = MediaRequestHeaders.of("https://www.bilibili.com")
-        val appHeaders = MediaRequestHeaders.of(null)
-
-        // Then: 都带开区间 Range
-        assertThat(webHeaders[MediaRequestHeaders.RANGE_HEADER]).isEqualTo("bytes=0-")
-        assertThat(appHeaders[MediaRequestHeaders.RANGE_HEADER]).isEqualTo("bytes=0-")
-    }
-
     @Test
     fun `sends referer only when provided`() {
         // When
@@ -36,9 +25,19 @@ class MediaRequestHeadersTest {
     }
 
     @Test
-    fun `range value starts from zero and keeps open end`() {
-        // Then: 开区间（结尾留空）才会拿到 206 分片流；闭区间会限制本次传输长度
-        assertThat(MediaRequestHeaders.OPEN_RANGE_VALUE).isEqualTo("bytes=0-")
-        assertThat(MediaRequestHeaders.OPEN_RANGE_VALUE.endsWith("-")).isTrue()
+    fun `default headers never pin range`() {
+        // Then: 默认头一旦带 Range，seek 请求会出现两个 Range 头（详见 MediaRangeInterceptor）
+        val webHeaders = MediaRequestHeaders.of("https://www.bilibili.com")
+        val appHeaders = MediaRequestHeaders.of(null)
+
+        assertThat(webHeaders).doesNotContainKey(MediaRangeInterceptor.RANGE_HEADER)
+        assertThat(appHeaders).doesNotContainKey(MediaRangeInterceptor.RANGE_HEADER)
+    }
+
+    @Test
+    fun `returns empty map when referer missing`() {
+        // Then: 不发送 Referer 时不为空表凭空构造键
+        assertThat(MediaRequestHeaders.of(null)).isEmpty()
+        assertThat(MediaRequestHeaders.of("")).isEmpty()
     }
 }

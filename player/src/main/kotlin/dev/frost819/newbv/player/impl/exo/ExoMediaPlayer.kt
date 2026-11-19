@@ -79,9 +79,22 @@ class ExoMediaPlayer(
     private var behindLiveWindowRecoverCount = 0
     private var behindLiveWindowLastRecoverAtMs = 0L
 
+    /**
+     * 派生自共享 client 的媒体请求 client。
+     *
+     * `newBuilder()` 只叠加拦截器，连接池与 Dispatcher 仍复用 [httpClient]，
+     * 不会为每个播放器实例新增一套线程池。
+     */
+    private val mediaHttpClient =
+        httpClient
+            .newBuilder()
+            .addInterceptor(MediaRangeInterceptor)
+            .build()
+
     private val httpDataSourceFactory =
-        OkHttpDataSource.Factory(httpClient).apply {
-            // 首包补 Range，规避 CDN 对「整段 GET」的反盗链响应（详见 MediaRequestHeaders）
+        OkHttpDataSource.Factory(mediaHttpClient).apply {
+            // Range 不能放进默认请求头：seek 时 media3 会用 addHeader 再追加一个，
+            // 首包兜底由 MediaRangeInterceptor 在「请求没有 Range」时补。
             setDefaultRequestProperties(MediaRequestHeaders.of(options.referer))
             options.userAgent?.let { setUserAgent(it) }
         }

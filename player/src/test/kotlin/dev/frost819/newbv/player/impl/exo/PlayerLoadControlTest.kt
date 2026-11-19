@@ -58,8 +58,8 @@ class PlayerLoadControlTest {
 
     @Test
     fun `policy clamps target buffer bytes between floor and cap`() {
-        // Then: 极小堆取 32MiB 下限（低于此值连 1080P 的 60 秒窗都放不下），极大堆取 96MiB 上限
-        assertThat(PlayerLoadControl.policyFor(48L * MIB).targetBufferBytes).isEqualTo(32 * MIB)
+        // Then: 极小堆取 16MiB 下限，极大堆取 96MiB 上限；中间按堆的 1/6
+        assertThat(PlayerLoadControl.policyFor(48L * MIB).targetBufferBytes).isEqualTo(16 * MIB)
         assertThat(PlayerLoadControl.policyFor(4L * 1024 * MIB).targetBufferBytes).isEqualTo(96 * MIB)
     }
 
