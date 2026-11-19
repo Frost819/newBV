@@ -34,6 +34,23 @@ object BVColors {
     /** 红色，用于错误/直播。 */
     val Red = Color(0xFFC87878)
 
+    /*
+     * 播放器进度条配色。
+     *
+     * 进度条直接压在视频画面上，且播放器固定深色主题，故用固定色而非半透明白：
+     * 半透明白会随画面亮度变化，亮画面上「未缓冲」的视觉亮度会反超「已播放」段。
+     * 三色相对亮度约 0.41 / 0.25 / 0.08，靠明度阶梯 + 色相双重区分。
+     */
+
+    /** 已播放段：在品牌紫同色相上提亮，保证黑底与亮画面上都清晰。 */
+    val PlayerSeekActive = Color(0xFFA9A4E8)
+
+    /** 已缓冲段：中性中灰，明显亮于未缓冲轨道。 */
+    val PlayerSeekBuffered = Color(0xFF8A8A8A)
+
+    /** 未缓冲轨道：中性暗灰，暗画面下仍有轮廓、亮画面下不会喧宾夺主。 */
+    val PlayerSeekInactive = Color(0xFF4F4F4F)
+
     /** 深色主题中性色。 */
     val DarkBackground = Color(0xFF171717)
     val DarkSurface = Color(0xFF222222)

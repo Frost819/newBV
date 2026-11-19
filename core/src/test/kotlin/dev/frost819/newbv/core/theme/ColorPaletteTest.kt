@@ -51,6 +51,20 @@ class ColorPaletteTest {
             .isAtLeast(MIN_TEXT_CONTRAST)
     }
 
+    @Test
+    fun `player seek bar colors step down in luminance for clear separation`() {
+        // 进度条三段压在视频画面上，只能靠明度阶梯 + 色相区分；
+        // 三段亮度过于接近时（如曾用半透明白 40% 叠加品牌色）远看无法分辨
+        val active = relativeLuminance(BVColors.PlayerSeekActive)
+        val buffered = relativeLuminance(BVColors.PlayerSeekBuffered)
+        val inactive = relativeLuminance(BVColors.PlayerSeekInactive)
+
+        assertThat(active).isGreaterThan(buffered)
+        assertThat(buffered).isGreaterThan(inactive)
+        assertThat(active / buffered).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
+        assertThat(buffered / inactive).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
+    }
+
     private fun contrastRatio(
         first: Color,
         second: Color,
@@ -75,5 +89,6 @@ class ColorPaletteTest {
 
     private companion object {
         private const val MIN_TEXT_CONTRAST = 4.5
+        private const val MIN_SEEK_LUMINANCE_RATIO = 1.5
     }
 }

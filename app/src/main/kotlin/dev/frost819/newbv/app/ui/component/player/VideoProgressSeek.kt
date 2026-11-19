@@ -1,26 +1,34 @@
 package dev.frost819.newbv.app.ui.component.player
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.MaterialTheme
+import dev.frost819.newbv.core.theme.BVColors
 import dev.frost819.newbv.core.theme.BVTheme
 
 /**
  * 视频进度条。
  *
  * 使用 Canvas 绘制三层进度线：背景轨道、缓冲进度、播放进度。
- * 三段轨道用「色相 + 明度」双重区分，避免混在一起：
- * 已播放用品牌色（primary），已缓冲用较亮的中性灰，未缓冲用很暗的中性灰。
- * 播放器固定运行在深色主题下，均能保证黑底上的可见性。
+ * 三段轨道用「明度阶梯 + 色相」双重区分，取值见 [BVColors.PlayerSeekActive] /
+ * [BVColors.PlayerSeekBuffered] / [BVColors.PlayerSeekInactive]：
+ * 已播放用提亮的品牌紫，已缓冲用中性中灰，未缓冲用中性暗灰（相对亮度约 0.41 / 0.25 / 0.08）。
+ *
+ * 这里刻意使用固定色而不是半透明白：进度条直接压在视频画面上，
+ * 半透明白的观感亮度随画面而变，亮画面上「未缓冲」会反超「已播放」段。
  * 支持两种显示模式：
  * - **常显模式**（[isPersistentSeek] = true）：2dp 细线，不显示缓冲进度，
  *   用于播放器底部始终可见的进度条。
@@ -42,9 +50,9 @@ fun VideoProgressSeek(
     isPersistentSeek: Boolean,
 ) {
     val trackWidthDp = if (isPersistentSeek) 2.dp else 8.dp
-    val activeTrackColor = MaterialTheme.colorScheme.primary
-    val bufferedTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-    val inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)
+    val activeTrackColor = BVColors.PlayerSeekActive
+    val bufferedTrackColor = BVColors.PlayerSeekBuffered
+    val inactiveTrackColor = BVColors.PlayerSeekInactive
 
     Canvas(
         modifier =
@@ -114,6 +122,31 @@ private fun VideoProgressSeekNormalPreview() {
             bufferedPercentage = 60,
             isPersistentSeek = false,
         )
+    }
+}
+
+/**
+ * 亮画面场景：验证进度条压在浅色视频画面上时三档仍可区分，
+ * 且不会出现「未缓冲轨道比已播放段更亮」的倒挂。
+ */
+@Preview(showBackground = true, backgroundColor = 0xFF808080)
+@Composable
+private fun VideoProgressSeekOnBrightFramePreview() {
+    BVTheme {
+        Box(
+            modifier =
+                Modifier
+                    .background(Color(0xFF808080))
+                    .padding(vertical = 24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            VideoProgressSeek(
+                duration = 100_000L,
+                position = 35_000L,
+                bufferedPercentage = 60,
+                isPersistentSeek = false,
+            )
+        }
     }
 }
 
