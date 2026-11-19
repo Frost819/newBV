@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.screen.settings.content
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -102,6 +103,18 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
             supportText = "当前：${playerCustomShortcuts.size} 个绑定",
             onClick = { showPlayerCustomShortcutsDialog = true },
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            var enableFrameRateMatching by remember { mutableStateOf(Prefs.enableFrameRateMatching) }
+            SettingSwitchListItem(
+                title = "自动帧率匹配",
+                supportText = "允许播放器按视频帧率调整屏幕刷新率。低帧率视频的弹幕卡顿时可尝试关闭，下次进入播放器时生效。",
+                checked = enableFrameRateMatching,
+                onCheckedChange = {
+                    enableFrameRateMatching = it
+                    Prefs.enableFrameRateMatching = it
+                },
+            )
+        }
         SettingSwitchListItem(
             title = "软解视频",
             supportText = "使用软件解码器（兼容性更好但性能较低）",

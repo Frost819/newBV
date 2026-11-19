@@ -449,6 +449,7 @@ class PlayerViewModel
                             if (apiType == DataApiType.App) ApiType.App else ApiType.Web,
                         ),
                     enableSoftwareVideoDecoder = Prefs.enableSoftwareVideoDecoder,
+                    enableFrameRateMatching = Prefs.enableFrameRateMatching,
                 )
 
             val newPlayer = exoPlayerFactory.create(context.applicationContext, options)

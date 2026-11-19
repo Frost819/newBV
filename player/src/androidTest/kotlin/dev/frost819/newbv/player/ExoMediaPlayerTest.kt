@@ -1,6 +1,7 @@
 package dev.frost819.newbv.player
 
 import android.content.Context
+import androidx.media3.common.C
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -70,6 +71,21 @@ class ExoMediaPlayerTest {
     fun initPlayer_createsExoPlayerInstance() {
         val mPlayer = runOnMain { player.mPlayer }
         assertThat(mPlayer).isNotNull()
+    }
+
+    @Test
+    fun defaultOptions_useSeamlessFrameRateMatching() {
+        val strategy = runOnMain { player.mPlayer?.videoChangeFrameRateStrategy }
+        assertThat(strategy).isEqualTo(C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_ONLY_IF_SEAMLESS)
+    }
+
+    @Test
+    fun disablingFrameRateMatching_turnsOffMedia3FrameRateRequests() {
+        runOnMainVoid {
+            player.release()
+            player = ExoMediaPlayer(context, VideoPlayerOptions(enableFrameRateMatching = false), httpClient)
+            assertThat(player.mPlayer?.videoChangeFrameRateStrategy).isEqualTo(C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF)
+        }
     }
 
     @Test

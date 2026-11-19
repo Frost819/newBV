@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.viewmodel.live
 
+import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.viewModelScope
 import com.google.common.truth.Truth.assertThat
@@ -15,6 +16,7 @@ import dev.frost819.newbv.biliapi.repositories.LivePlayInfo
 import dev.frost819.newbv.biliapi.repositories.LivePlayLine
 import dev.frost819.newbv.biliapi.repositories.LiveQuality
 import dev.frost819.newbv.biliapi.repositories.LiveRepository
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.player.AbstractVideoPlayer
 import dev.frost819.newbv.player.VideoPlayerListener
 import dev.frost819.newbv.player.impl.exo.ExoPlayerFactory
@@ -22,6 +24,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -74,6 +77,18 @@ class LivePlayerViewModelTest {
     fun tearDown() {
         runCatching { viewModel.viewModelScope.cancel() }
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `initVideoPlayer passes disabled frame rate matching to the live player`() {
+        val context = mockk<Context>()
+        mockkObject(Prefs) {
+            every { Prefs.enableFrameRateMatching } returns false
+
+            viewModel.initVideoPlayer(context)
+
+            verify { exoPlayerFactory.create(context, match { !it.enableFrameRateMatching }) }
+        }
     }
 
     @Test

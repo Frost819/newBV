@@ -283,6 +283,9 @@ object Prefs {
     /** 启用视频软解。 */
     var enableSoftwareVideoDecoder by pref(PrefKeys.enableSoftwareVideoDecoder, false)
 
+    /** 自动匹配片源帧率，默认使用 Media3 的无缝切换策略。 */
+    var enableFrameRateMatching by pref(PrefKeys.enableFrameRateMatching, true)
+
     /** 播放结束动作。 */
     var actionAfterPlay by pref(
         PrefKeys.actionAfterPlay,

@@ -8,7 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -76,6 +78,19 @@ class PrefsTest {
     fun `default apiType is Web`() {
         assertThat(Prefs.apiType).isEqualTo(ApiType.Web)
     }
+
+    @Test
+    fun `frame rate matching defaults to enabled and restores disabled preference`() =
+        runBlocking {
+            assertThat(Prefs.enableFrameRateMatching).isTrue()
+
+            Prefs.enableFrameRateMatching = false
+            withTimeout(5_000) { dataStore.data.first { it[PrefKeys.enableFrameRateMatching] == false } }
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
+
+            assertThat(Prefs.enableFrameRateMatching).isFalse()
+        }
 
     @Test
     fun `default quality is R1080P`() {
