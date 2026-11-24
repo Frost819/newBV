@@ -12,7 +12,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
  *
  * 策略只有两个变量：
  * - **字节预算**随设备堆上限缩放（堆的 1/6，夹在 16~96MiB），是真正的内存闸门；
- * - **时间上限**按堆规模分三档（20s / 30s / 40s），其余时间参数固定不变
+ * - **时间上限**统一 60 秒，只用来吸收 CDN 的间歇性停顿；其余时间参数固定不变
  *   （起播 1s、卡顿恢复 3s、常驻目标 5s）。
  *
  * 两者取先到者：[DefaultLoadControl.Builder.setPrioritizeTimeOverSizeThresholds] 置 `false`，
@@ -29,13 +29,8 @@ internal object PlayerLoadControl {
     /** 字节预算上限（96MiB）：电视场景再大也没有收益，避免无谓占用。 */
     private const val MAX_TARGET_BUFFER_BYTES = 96L * MIB
 
-    /** 堆上限（MB）→ 缓冲时间上限（毫秒），从大到小匹配，最后一档兜底。 */
-    private val MAX_BUFFER_TIERS =
-        listOf(
-            512 to 40_000,
-            256 to 30_000,
-            0 to 20_000,
-        )
+    /** 缓冲时间上限（毫秒）：只负责吸收 CDN 的间歇性停顿，不再按堆分档。 */
+    private const val MAX_BUFFER_MS = 60_000
 
     /**
      * 按堆上限推导缓冲参数。
@@ -44,12 +39,12 @@ internal object PlayerLoadControl {
      */
     fun policyFor(heapLimitBytes: Long): PlayerBufferPolicy =
         PlayerBufferPolicy(
-            // 字节预算：堆的 1/6，夹在上下限之间；余下 5/6 留给图片、弹幕、Compose 等
+            // 字节预算：堆的 1/6，夹在 16~96MiB；余下 5/6 留给图片、弹幕、Compose 等
             targetBufferBytes =
                 (heapLimitBytes / 6)
                     .coerceIn(MIN_TARGET_BUFFER_BYTES, MAX_TARGET_BUFFER_BYTES)
                     .toInt(),
-            maxBufferMs = MAX_BUFFER_TIERS.first { heapLimitBytes / MIB >= it.first }.second,
+            maxBufferMs = MAX_BUFFER_MS,
         )
 
     /**
@@ -77,7 +72,7 @@ internal object PlayerLoadControl {
 /**
  * 播放器缓冲参数。
  *
- * 只有 [targetBufferBytes] 与 [maxBufferMs] 随设备堆规模变化，其余时间参数与设备无关。
+ * 只有 [targetBufferBytes] 随设备堆规模变化，其余参数与设备无关。
  *
  * @property targetBufferBytes 分配器可占用的字节上限（视频 + 音频）。
  * @property maxBufferMs 缓冲上限时长（毫秒），达到后停止加载。
