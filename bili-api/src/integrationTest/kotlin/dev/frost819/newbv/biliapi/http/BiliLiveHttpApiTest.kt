@@ -2,6 +2,7 @@ package dev.frost819.newbv.biliapi.http
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -177,6 +178,49 @@ class BiliLiveHttpApiTest {
         runBlocking {
             val response = BiliLiveHttpApi.getFollowLive()
             Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+        }
+    }
+
+    @Test
+    fun `get follow live paginates without duplicates`() {
+        runBlocking {
+            val firstResponse = BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10)
+            Assertions.assertEquals(0, firstResponse.code, "API should return code=0, got: ${firstResponse.message}")
+            val firstData = requireNotNull(firstResponse.data) { "data should not be null" }
+            val firstRooms = firstData.rooms.ifEmpty { firstData.list }
+            Assertions.assertTrue(firstRooms.size <= 10, "第 1 页不应超过 10 条，实际 ${firstRooms.size}")
+
+            Assumptions.assumeTrue(
+                firstData.count > 10,
+                "关注中正在直播的主播不足 11 个（count=${firstData.count}），跳过翻页断言",
+            )
+
+            val secondResponse = BiliLiveHttpApi.getFollowLive(page = 2, pageSize = 10)
+            Assertions.assertEquals(0, secondResponse.code, "API should return code=0, got: ${secondResponse.message}")
+            val secondData = requireNotNull(secondResponse.data) { "data should not be null" }
+            val secondRooms = secondData.rooms.ifEmpty { secondData.list }
+            Assertions.assertTrue(secondRooms.isNotEmpty(), "还有第 2 页时不应返回空列表")
+
+            val overlap = firstRooms.map { it.roomId }.intersect(secondRooms.map { it.roomId }.toSet())
+            Assertions.assertTrue(overlap.isEmpty(), "第 1、2 页不应重复：$overlap")
+        }
+    }
+
+    @Test
+    fun `get follow live page past the end is empty`() {
+        runBlocking {
+            val firstResponse = BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10)
+            val firstData = requireNotNull(firstResponse.data) { "data should not be null" }
+            Assumptions.assumeTrue(firstData.count > 0, "关注中没有正在直播的主播，跳过")
+
+            val totalPages = (firstData.count + 9) / 10
+            val response = BiliLiveHttpApi.getFollowLive(page = totalPages + 1, pageSize = 10)
+            Assertions.assertEquals(0, response.code, "API should return code=0, got: ${response.message}")
+            val data = requireNotNull(response.data) { "data should not be null" }
+            Assertions.assertTrue(
+                data.rooms.ifEmpty { data.list }.isEmpty(),
+                "超出末页（第 $totalPages 页）应返回空列表",
+            )
         }
     }
 

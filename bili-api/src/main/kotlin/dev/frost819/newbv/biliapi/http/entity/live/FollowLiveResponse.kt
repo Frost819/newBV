@@ -4,11 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * 用户关注的主播正在直播的列表响应。
+ * 用户关注的主播正在直播的列表响应（单页）。
  *
  * 端点: `GET /xlive/web-ucenter/v1/xfetter/GetWebList`
  * 鉴权: SESSDATA Cookie
- * 参数: hit_ab=false（获取真实在线人数和封面）
+ * 参数: `hit_ab=false`（获取真实在线人数和封面），配合 `page` / `page_size` 翻页取全量
  */
 @Serializable
 data class FollowLiveResponse(
@@ -17,6 +17,19 @@ data class FollowLiveResponse(
     val count: Int = 0,
     @SerialName("not_living_num")
     val notLivingNum: Int = 0,
+)
+
+/**
+ * 关注直播分页结果。
+ *
+ * @property rooms 当前页正在直播的房间
+ * @property hasMore 是否还有下一页
+ * @property total 正在直播的关注人数（服务端 `count`，0 表示服务端未返回）
+ */
+data class FollowLiveResult(
+    val rooms: List<FollowLiveRoom>,
+    val hasMore: Boolean,
+    val total: Int = 0,
 )
 
 /**

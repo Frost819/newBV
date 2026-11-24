@@ -3,7 +3,7 @@ package dev.frost819.newbv.biliapi.repositories
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
 import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.live.AreaLiveListResult
-import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveResponse
+import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveResult
 import dev.frost819.newbv.biliapi.http.entity.live.LiveAreaParent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveListResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRecommendResponse
@@ -14,6 +14,9 @@ import dev.frost819.newbv.biliapi.http.entity.live.RoomInitData
 import dev.frost819.newbv.biliapi.http.entity.live.RoomPlayInfoV2Data
 import dev.frost819.newbv.biliapi.http.entity.user.UserCardData.UserCardInfo
 import dev.frost819.newbv.biliapi.util.BiliLogger
+
+/** 关注直播每页条数。服务端在 `hit_ab=false` 下默认（且实际）按 10 条分页。 */
+private const val FOLLOW_LIVE_PAGE_SIZE = 10
 
 /**
  * 直播数据仓库。
@@ -49,11 +52,29 @@ class LiveRepository {
     suspend fun getLiveRecommend(): LiveRecommendResponse = BiliLiveHttpApi.getLiveRecommend().getResponseData()
 
     /**
-     * 获取用户关注的主播正在直播的房间列表。
+     * 获取用户关注的主播正在直播的房间列表（分页）。
      *
-     * 返回当前正在直播的关注房间，含在线人数、分区、封面等信息。
+     * GetWebList 在 `hit_ab=false`（能拿到真实在线人数与封面）下默认每页只返回 10 条，
+     * 由调用方按需翻页；单次请求只能拿到前 10 个关注直播，页大小因此固定为服务端默认值，
+     * 否则「请求 20 条、服务端只给 10 条」会让 `hasMore` 判断失真。
+     *
+     * @param page 页码，从 1 开始
      */
-    suspend fun getFollowLive(): FollowLiveResponse = BiliLiveHttpApi.getFollowLive().getResponseData()
+    suspend fun getFollowLive(page: Int = 1): FollowLiveResult {
+        val data =
+            BiliLiveHttpApi
+                .getFollowLive(page = page, pageSize = FOLLOW_LIVE_PAGE_SIZE)
+                .getResponseData()
+        val rooms = data.rooms.ifEmpty { data.list }
+        val hasMore =
+            when {
+                rooms.isEmpty() -> false
+                // count 为正在直播的关注人数（hit_ab=false 时有效）
+                data.count > 0 -> page * FOLLOW_LIVE_PAGE_SIZE < data.count
+                else -> rooms.size >= FOLLOW_LIVE_PAGE_SIZE
+            }
+        return FollowLiveResult(rooms = rooms, hasMore = hasMore, total = data.count)
+    }
 
     /**
      * 获取两级分区列表。

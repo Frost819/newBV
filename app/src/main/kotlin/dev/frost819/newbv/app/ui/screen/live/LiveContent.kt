@@ -123,6 +123,7 @@ fun LiveContent(
             FollowHeader(
                 focusRequester = navFocusRequester,
                 focusSaver = focusSaver,
+                followTotal = state.followTotal,
                 onMoreClick = { navController.navigate(LiveFollowRoute) },
             )
         }
@@ -241,6 +242,7 @@ fun LiveContent(
 private fun FollowHeader(
     focusRequester: FocusRequester,
     focusSaver: FocusSaver,
+    followTotal: Int,
     onMoreClick: () -> Unit,
 ) {
     Row(
@@ -252,6 +254,14 @@ private fun FollowHeader(
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        if (followTotal > 0) {
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "$followTotal 人正在直播",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Spacer(Modifier.width(12.dp))
         Surface(
             modifier =

@@ -129,16 +129,28 @@ object BiliLiveHttpApi {
             }.body()
 
     /**
-     * 获取用户关注的主播正在直播的房间列表。
+     * 获取用户关注的主播正在直播的房间列表（单页）。
      *
      * 端点: `GET /xlive/web-ucenter/v1/xfetter/GetWebList`
      * 鉴权: SESSDATA Cookie
-     * 参数 hit_ab=false 以获取真实在线人数和封面 URL
+     *
+     * `hit_ab=false` 时返回真实在线人数与封面 URL，但服务端默认每页只给 10 条，
+     * 必须配合 [page] / [pageSize] 翻页才能拿到全部正在直播的关注房间；
+     * `hit_ab=true` 虽然一次给全，但 `online` / `cover_from_user` 等字段会被置空，
+     * 卡片会丢失封面与在线人数，因此不使用。
+     *
+     * @param page 页码，从 1 开始
+     * @param pageSize 每页数量
      */
-    suspend fun getFollowLive(): BiliResponse<FollowLiveResponse> =
+    suspend fun getFollowLive(
+        page: Int = 1,
+        pageSize: Int = 10,
+    ): BiliResponse<FollowLiveResponse> =
         client
             .get("/xlive/web-ucenter/v1/xfetter/GetWebList") {
                 parameter("hit_ab", false)
+                parameter("page", page)
+                parameter("page_size", pageSize)
             }.body()
 
     /**

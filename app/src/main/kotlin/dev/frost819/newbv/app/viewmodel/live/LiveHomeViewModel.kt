@@ -58,13 +58,14 @@ class LiveHomeViewModel
             viewModelScope.launch {
                 runCatching {
                     withTimeout(LOAD_TIMEOUT_MS) {
-                        val response = liveRepository.getFollowLive()
-                        response.rooms.filter { it.liveStatus == 1 }.map { it.toCardData() }
+                        val result = liveRepository.getFollowLive()
+                        result.rooms.filter { it.liveStatus == 1 }.map { it.toCardData() } to result.total
                     }
-                }.onSuccess { items ->
+                }.onSuccess { (items, total) ->
                     _uiState.update {
                         it.copy(
                             followItems = items,
+                            followTotal = total,
                             followLoading = false,
                             followError = false,
                         )
@@ -252,6 +253,8 @@ data class LiveHomeUiState(
     val followItems: List<LiveRoomCardData> = emptyList(),
     val followLoading: Boolean = false,
     val followError: Boolean = false,
+    /** 正在直播的关注人数（服务端返回，0 表示未知）。 */
+    val followTotal: Int = 0,
     val areaList: List<LiveAreaParent> = emptyList(),
     val areaLoading: Boolean = false,
     val areaError: Boolean = false,

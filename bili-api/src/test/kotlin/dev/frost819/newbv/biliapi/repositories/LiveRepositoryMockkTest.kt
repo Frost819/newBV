@@ -5,6 +5,7 @@ import dev.frost819.newbv.biliapi.http.BiliLiveHttpApi
 import dev.frost819.newbv.biliapi.http.entity.BiliResponse
 import dev.frost819.newbv.biliapi.http.entity.live.CodecSpec
 import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveResponse
+import dev.frost819.newbv.biliapi.http.entity.live.FollowLiveRoom
 import dev.frost819.newbv.biliapi.http.entity.live.LiveAreaParent
 import dev.frost819.newbv.biliapi.http.entity.live.LiveListResponse
 import dev.frost819.newbv.biliapi.http.entity.live.LiveRecommendResponse
@@ -74,14 +75,67 @@ class LiveRepositoryUnitTest {
         }
 
     @Test
-    fun `getFollowLive returns response data`() =
+    fun `getFollowLive returns first page with hasMore when more live rooms remain`() =
         runBlocking {
-            val fakeData = FollowLiveResponse()
-            coEvery { BiliLiveHttpApi.getFollowLive() } returns fakeResponse(fakeData)
+            val firstPage = List(10) { fakeFollowLiveRoom(roomId = it + 1L) }
+            coEvery { BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10) } returns
+                fakeResponse(FollowLiveResponse(rooms = firstPage, count = 13))
 
             val result = repository.getFollowLive()
 
-            assertThat(result).isEqualTo(fakeData)
+            // issue #337：关注了 13 个正在直播的主播，第 1 页只给 10 个但必须告知还有下一页
+            assertThat(result.rooms).hasSize(10)
+            assertThat(result.hasMore).isTrue()
+        }
+
+    @Test
+    fun `getFollowLive reports no more on last page`() =
+        runBlocking {
+            val lastPage = List(3) { fakeFollowLiveRoom(roomId = it + 11L) }
+            coEvery { BiliLiveHttpApi.getFollowLive(page = 2, pageSize = 10) } returns
+                fakeResponse(FollowLiveResponse(rooms = lastPage, count = 13))
+
+            val result = repository.getFollowLive(page = 2)
+
+            assertThat(result.rooms).hasSize(3)
+            assertThat(result.hasMore).isFalse()
+        }
+
+    @Test
+    fun `getFollowLive treats empty page as end`() =
+        runBlocking {
+            coEvery { BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10) } returns
+                fakeResponse(FollowLiveResponse(rooms = emptyList()))
+
+            val result = repository.getFollowLive()
+
+            assertThat(result.rooms).isEmpty()
+            assertThat(result.hasMore).isFalse()
+        }
+
+    @Test
+    fun `getFollowLive falls back to list field when rooms is empty`() =
+        runBlocking {
+            val listField = List(2) { fakeFollowLiveRoom(roomId = it + 1L) }
+            coEvery { BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10) } returns
+                fakeResponse(FollowLiveResponse(rooms = emptyList(), list = listField, count = 2))
+
+            val result = repository.getFollowLive()
+
+            assertThat(result.rooms).hasSize(2)
+            assertThat(result.hasMore).isFalse()
+        }
+
+    @Test
+    fun `getFollowLive falls back to room count when server omits count`() =
+        runBlocking {
+            val fullPage = List(10) { fakeFollowLiveRoom(roomId = it + 1L) }
+            coEvery { BiliLiveHttpApi.getFollowLive(page = 1, pageSize = 10) } returns
+                fakeResponse(FollowLiveResponse(rooms = fullPage, count = 0))
+
+            val result = repository.getFollowLive()
+
+            assertThat(result.hasMore).isTrue()
         }
 
     @Test
@@ -604,6 +658,17 @@ class LiveRepositoryUnitTest {
             message = "0",
             ttl = 1,
             data = data,
+        )
+
+    private fun fakeFollowLiveRoom(roomId: Long) =
+        FollowLiveRoom(
+            roomId = roomId,
+            uid = 1,
+            title = "room $roomId",
+            uname = "测试主播",
+            liveStatus = 1,
+            coverFromUser = "https://i0.hdslb.com/bfs/live/cover_$roomId.jpg",
+            online = 100,
         )
 
     private fun fakeLiveRoomItem(roomId: Int) =
