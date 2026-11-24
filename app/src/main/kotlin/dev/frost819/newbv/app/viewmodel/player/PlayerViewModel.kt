@@ -1293,14 +1293,16 @@ class PlayerViewModel
             val audioCandidates = officialCdnCandidates(audioUrls)
 
             // 开启自动选源时对候选测速排序（结果按 host 缓存），否则沿用原有顺序
+            // 测速用的是封口 Range，测不出「拒绝开区间 Range」的节点，所以排序放在测速之后
             videoCdnCandidates =
-                if (Prefs.autoSelectCdn) cdnSelector.rank(videoCandidates) else videoCandidates
+                (if (Prefs.autoSelectCdn) cdnSelector.rank(videoCandidates) else videoCandidates)
+                    .openRangeRejectingHostsLast()
             audioCdnCandidates =
                 if (Prefs.autoSelectCdn && audioCandidates.isNotEmpty()) {
                     cdnSelector.rank(audioCandidates)
                 } else {
                     audioCandidates
-                }
+                }.openRangeRejectingHostsLast()
             cdnFallbackIndex = 0
 
             val videoUrl = videoCdnCandidates.firstOrNull() ?: return null
