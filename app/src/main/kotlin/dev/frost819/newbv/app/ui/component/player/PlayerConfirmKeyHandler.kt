@@ -23,7 +23,10 @@ internal class PlayerConfirmKeyHandler(
      * @param keyCode 确认键的 Android 键码
      * @param isRepeat 是否为重复按下事件
      */
-    fun onKeyDown(keyCode: Int, isRepeat: Boolean) {
+    fun onKeyDown(
+        keyCode: Int,
+        isRepeat: Boolean,
+    ) {
         if (isRepeat || pressedKeyCode == keyCode) return
         cancel()
         pressedKeyCode = keyCode
@@ -43,7 +46,10 @@ internal class PlayerConfirmKeyHandler(
      * @param isCanceled 是否是系统取消按键序列产生的抬起事件
      * @return 是否消费了本次松手事件
      */
-    fun onKeyUp(keyCode: Int, isCanceled: Boolean): Boolean {
+    fun onKeyUp(
+        keyCode: Int,
+        isCanceled: Boolean,
+    ): Boolean {
         if (pressedKeyCode != keyCode) return false
         val isShortPress = !longPressTriggered && !isCanceled
         cancel()
