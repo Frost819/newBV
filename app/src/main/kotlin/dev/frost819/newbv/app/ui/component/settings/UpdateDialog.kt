@@ -165,16 +165,20 @@ fun UpdateDialog(
                 val tempFile = File(tempDir, tempFilename)
                 tempFile.createNewFile()
                 runCatching {
-                    GithubApi.downloadUpdate(latestRelease!!, tempFile) { downloaded, total ->
-                        bytesSentTotal = downloaded
-                        contentLength = total
-                        targetProgress =
-                            if (total > 0) {
-                                downloaded.toFloat() / total
-                            } else {
-                                0f
-                            }
-                    }
+                    GithubApi.downloadUpdate(
+                        release = latestRelease!!,
+                        file = tempFile,
+                        onProgress = { downloaded, total ->
+                            bytesSentTotal = downloaded
+                            contentLength = total
+                            targetProgress =
+                                if (total > 0) {
+                                    downloaded.toFloat() / total
+                                } else {
+                                    0f
+                                }
+                        },
+                    )
                     // 缓存写入后检查阈值，保留刚下载的 APK 待安装
                     CacheManager(context).checkCache(preserve = tempFile)
                     if (show) installUpdate(tempFile)
