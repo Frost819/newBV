@@ -26,6 +26,7 @@ import dev.frost819.newbv.app.ui.component.settings.displayName
 import dev.frost819.newbv.app.ui.screen.settings.SettingsMenuNavItem
 import dev.frost819.newbv.data.datastore.ActionAfterPlay
 import dev.frost819.newbv.data.datastore.Audio
+import dev.frost819.newbv.data.datastore.LongPressPlaySpeed
 import dev.frost819.newbv.data.datastore.PlaySpeed
 import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.data.datastore.Resolution
@@ -44,6 +45,7 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
     var showAudioCodecDialog by remember { mutableStateOf(false) }
     var showVideoCodecDialog by remember { mutableStateOf(false) }
     var showPlaySpeedDialog by remember { mutableStateOf(false) }
+    var showLongPressPlaySpeedDialog by remember { mutableStateOf(false) }
     var showActionAfterPlayDialog by remember { mutableStateOf(false) }
     var showPlayerCustomShortcutsDialog by remember { mutableStateOf(false) }
 
@@ -51,6 +53,7 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
     var selectedVideoCodec by remember { mutableStateOf(Prefs.defaultVideoCodec) }
     var selectedAudioCodec by remember { mutableStateOf(Prefs.defaultAudio) }
     var selectedPlaySpeed by remember { mutableStateOf(Prefs.defaultPlaySpeed) }
+    var selectedLongPressPlaySpeed by remember { mutableStateOf(Prefs.longPressPlaySpeed) }
     var selectedActionAfterPlay by remember { mutableStateOf(Prefs.actionAfterPlay) }
     var playerCustomShortcuts by remember { mutableStateOf(PlayerCustomShortcutsStore.get()) }
 
@@ -91,6 +94,11 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
             title = "默认播放速度",
             supportText = "当前：${selectedPlaySpeed.displayName}",
             onClick = { showPlaySpeedDialog = true },
+        )
+        SettingListItem(
+            title = "长按播放倍速",
+            supportText = "当前：${selectedLongPressPlaySpeed.displayName}",
+            onClick = { showLongPressPlaySpeedDialog = true },
         )
         SettingListItem(
             title = "播放结束动作",
@@ -178,6 +186,19 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
             onSelect = {
                 Prefs.defaultPlaySpeed = it
                 selectedPlaySpeed = it
+            },
+            getDisplayName = { it.displayName },
+        )
+    }
+
+    if (showLongPressPlaySpeedDialog) {
+        OptionDialog(
+            options = LongPressPlaySpeed.entries.toTypedArray(),
+            selectedOption = selectedLongPressPlaySpeed,
+            onDismiss = { showLongPressPlaySpeedDialog = false },
+            onSelect = {
+                Prefs.longPressPlaySpeed = it
+                selectedLongPressPlaySpeed = it
             },
             getDisplayName = { it.displayName },
         )

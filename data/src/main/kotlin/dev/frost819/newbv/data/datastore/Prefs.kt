@@ -370,6 +370,14 @@ object Prefs {
         restore = { PlaySpeed.fromCode(it) },
     )
 
+    /** 播放中长按时临时使用的倍速，默认为 3 倍。 */
+    var longPressPlaySpeed by pref(
+        PrefKeys.longPressPlaySpeed,
+        LongPressPlaySpeed.Default,
+        save = { it.speed },
+        restore = { LongPressPlaySpeed.fromSpeed(it) },
+    )
+
     /** 显示视频详情页（关闭后点击直接播放）。 */
     var showVideoInfo by pref(PrefKeys.showVideoInfo, true)
 

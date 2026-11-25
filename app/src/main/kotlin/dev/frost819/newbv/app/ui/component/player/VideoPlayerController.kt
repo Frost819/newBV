@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -18,6 +20,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +34,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
@@ -59,7 +64,7 @@ import kotlinx.coroutines.launch
 /**
  * 播放器根控制器。
  *
- * 管理所有覆盖层的可见性和焦点路由，处理 D-pad 按键事件、seek 加速、
+ * 管理所有覆盖层的可见性和焦点路由，处理 D-pad 按键事件、长按倍速、seek 加速、
  * 自定义快捷键、以及视频列表/菜单/相关信息控制器之间的协调。
  *
  * 布局层次（从底到顶）：
@@ -139,9 +144,61 @@ fun VideoPlayerController(
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
     var currentVolume by remember { mutableFloatStateOf(-1f) }
 
-    // 长按倍速：记录按下前的倍速，抬手后恢复
-    var speedBeforeLongPress by remember { mutableFloatStateOf(1f) }
-    var isSpeedPressActive by remember { mutableStateOf(false) }
+    // 触屏和遥控器共用倍速，只有发起长按的输入可以结束本次加速。
+    var speedPress by remember { mutableStateOf<SpeedPress?>(null) }
+
+    fun startSpeedPress(source: SpeedPressSource) {
+        if (speedPress != null || showClickableControllers || uiState.playerState != PlayerState.Playing) return
+        val speed = Prefs.longPressPlaySpeed.speed
+        speedPress = SpeedPress(source, previousSpeed = uiState.playSpeed, speed = speed)
+        onPlaySpeedChange(speed)
+        gestureTipState.value = GestureTipState()
+    }
+
+    fun endSpeedPress(source: SpeedPressSource) {
+        val press = speedPress?.takeIf { it.source == source } ?: return
+        speedPress = null
+        onPlaySpeedChange(press.previousSpeed)
+    }
+
+    val onConfirmShortPress by rememberUpdatedState {
+        if (uiState.showBackToStart) onBackToStart() else onPlay()
+    }
+    val onConfirmLongPress by rememberUpdatedState<() -> Unit> {
+        if (!showClickableControllers) {
+            if (uiState.playerState == PlayerState.Playing) {
+                startSpeedPress(SpeedPressSource.ConfirmKey)
+            } else {
+                showMenuController = true
+            }
+        }
+    }
+    val onConfirmLongPressEnd by rememberUpdatedState { endSpeedPress(SpeedPressSource.ConfirmKey) }
+    val longPressTimeoutMs = LocalViewConfiguration.current.longPressTimeoutMillis
+    val confirmKeyHandler =
+        remember(scope, longPressTimeoutMs) {
+            PlayerConfirmKeyHandler(
+                scope = scope,
+                longPressTimeoutMs = longPressTimeoutMs,
+                onShortPress = { onConfirmShortPress() },
+                onLongPress = { onConfirmLongPress() },
+                onLongPressEnd = { onConfirmLongPressEnd() },
+            )
+        }
+    val isWindowFocused = LocalWindowInfo.current.isWindowFocused
+    LaunchedEffect(confirmKeyHandler, showClickableControllers, isWindowFocused, uiState.playerState) {
+        // 面板、弹窗或后台可能接走 KeyUp。播放中断也应结束正在进行的加速。
+        if (
+            showClickableControllers ||
+            !isWindowFocused ||
+            (speedPress?.source == SpeedPressSource.ConfirmKey && uiState.playerState != PlayerState.Playing)
+        ) {
+            confirmKeyHandler.cancel()
+        }
+    }
+    DisposableEffect(confirmKeyHandler, uiState.aid, uiState.cid) {
+        onDispose { confirmKeyHandler.cancel() }
+    }
 
     fun calCoefficient(): Long =
         if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
@@ -243,7 +300,10 @@ fun VideoPlayerController(
         onShowShortcutTip(tip)
     }
 
-    fun executeCustomShortcut(action: PlayerCustomShortcutAction) {
+    fun executeCustomShortcut(
+        action: PlayerCustomShortcutAction,
+        playSpeed: Float,
+    ) {
         // PGC 默认走详情页且无 UP/相关视频，对应的路由类快捷键直接禁用并提示
         if (isPgc && action in pgcUnsupportedShortcutActions) {
             showShortcutTip(action, "番剧不支持")
@@ -278,7 +338,7 @@ fun VideoPlayerController(
             }
 
             is PlayerCustomShortcutAction.TogglePlaybackSpeed -> {
-                val targetSpeed = if (uiState.playSpeed == action.speed) 1f else action.speed
+                val targetSpeed = if (playSpeed == action.speed) 1f else action.speed
                 status = "${targetSpeed}x"
                 onPlaySpeedChange(targetSpeed)
             }
@@ -304,20 +364,29 @@ fun VideoPlayerController(
         if (event.type == KeyEventType.KeyUp) return true
         if (event.type != KeyEventType.KeyDown) return false
         if (event.nativeKeyEvent.repeatCount != 0) return true
-        executeCustomShortcut(shortcut.action)
+        // 倍速恢复后 UiState 还未重组，快捷键应使用长按前的速度。
+        val playSpeed =
+            speedPress?.takeIf { it.source == SpeedPressSource.ConfirmKey }?.previousSpeed ?: uiState.playSpeed
+        confirmKeyHandler.cancel()
+        executeCustomShortcut(shortcut.action, playSpeed)
         return true
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        val confirmKeys = listOf(Key.DirectionCenter, Key.Enter, Key.Spacebar)
+        val isConfirmKey = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.Spacebar
+        val nativeEvent = event.nativeKeyEvent
 
-        // 非 confirm 键的 KeyUp 事件消费掉
-        if (event.type == KeyEventType.KeyUp && event.key !in confirmKeys) {
-            return true
+        if (event.type == KeyEventType.KeyUp) {
+            if (!isConfirmKey) return true
+            if (confirmKeyHandler.onKeyUp(nativeEvent.keyCode, nativeEvent.isCanceled || showClickableControllers)) {
+                return true
+            }
         }
 
-        // 自定义快捷键
         if (handleCustomShortcut(event)) return true
+        if (!isConfirmKey && event.type == KeyEventType.KeyDown) {
+            confirmKeyHandler.cancel()
+        }
 
         // 始终生效的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         when (event.key) {
@@ -352,23 +421,14 @@ fun VideoPlayerController(
             }
         }
 
-        // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
+        // 覆盖层未打开时，播放器接管确认键和方向键。
         if (!showClickableControllers) {
             when (event.key) {
-                in confirmKeys -> {
+                Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
                     if (event.type == KeyEventType.KeyDown) {
-                        if (event.nativeKeyEvent.isLongPress) {
-                            showMenuController = true
-                        }
-                        return true
-                    } else {
-                        if (uiState.showBackToStart) {
-                            onBackToStart()
-                        } else {
-                            onPlay()
-                        }
-                        return true
+                        confirmKeyHandler.onKeyDown(nativeEvent.keyCode, isRepeat = nativeEvent.repeatCount > 0)
                     }
+                    return true
                 }
 
                 Key.DirectionUp -> {
@@ -469,28 +529,8 @@ fun VideoPlayerController(
                                 }
                             },
                             onUserInteraction = onInteraction,
-                            onSpeedPressStart = {
-                                // 仅正常播放且无覆盖层时启用长按倍速，避免与菜单操作混淆
-                                if (!showClickableControllers && uiState.playerState == PlayerState.Playing) {
-                                    speedBeforeLongPress = uiState.playSpeed
-                                    isSpeedPressActive = true
-                                    onPlaySpeedChange(PLAYER_LONG_PRESS_SPEED)
-                                    gestureTipState.value =
-                                        GestureTipState(
-                                            isActive = true,
-                                            type = GestureTipType.Speed,
-                                            value = PLAYER_LONG_PRESS_SPEED,
-                                        )
-                                }
-                            },
-                            onSpeedPressEnd = {
-                                if (isSpeedPressActive) {
-                                    isSpeedPressActive = false
-                                    onPlaySpeedChange(speedBeforeLongPress)
-                                    // 倍速已还原，提示立刻收起（不沿用拖动提示的残留时间）
-                                    gestureTipState.value = GestureTipState()
-                                }
-                            },
+                            onSpeedPressStart = { startSpeedPress(SpeedPressSource.Touch) },
+                            onSpeedPressEnd = { endSpeedPress(SpeedPressSource.Touch) },
                         ),
                     gestureTipState = gestureTipState,
                 ),
@@ -571,7 +611,14 @@ fun VideoPlayerController(
 
             // 手势提示（亮度/音量/倍速反馈）
             GestureTip(
-                state = gestureTipState.value,
+                state =
+                    speedPress?.let { press ->
+                        GestureTipState(
+                            isActive = true,
+                            type = GestureTipType.Speed,
+                            value = press.speed,
+                        )
+                    } ?: gestureTipState.value,
                 modifier = Modifier.align(Alignment.Center),
             )
 
@@ -668,7 +715,13 @@ fun VideoPlayerController(
     }
 }
 
-/**
- * 长按倍速手势使用的倍速值。
- */
-private const val PLAYER_LONG_PRESS_SPEED = 2f
+private enum class SpeedPressSource {
+    ConfirmKey,
+    Touch,
+}
+
+private data class SpeedPress(
+    val source: SpeedPressSource,
+    val previousSpeed: Float,
+    val speed: Float,
+)

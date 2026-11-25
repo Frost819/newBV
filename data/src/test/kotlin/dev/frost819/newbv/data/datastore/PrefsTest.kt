@@ -3,12 +3,15 @@ package dev.frost819.newbv.data.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -101,6 +104,46 @@ class PrefsTest {
     fun `default playSpeed is X1`() {
         assertThat(Prefs.defaultPlaySpeed).isEqualTo(PlaySpeed.X1)
     }
+
+    @Test
+    fun `long press playback speed defaults to 3x`() {
+        assertThat(Prefs.longPressPlaySpeed.speed).isEqualTo(3f)
+    }
+
+    @Test
+    fun `long press playback speed survives reinit independently of normal speed`() =
+        runBlocking {
+            // Given
+            Prefs.longPressPlaySpeed = LongPressPlaySpeed.X2_5
+            Prefs.defaultPlaySpeed = PlaySpeed.X1_5
+            withTimeout(5_000L) {
+                dataStore.data.first {
+                    it[PrefKeys.longPressPlaySpeed] == 2.5f && it[PrefKeys.defaultPlaySpeed] == PlaySpeed.X1_5.code
+                }
+            }
+
+            // When
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
+
+            // Then
+            assertThat(Prefs.longPressPlaySpeed).isEqualTo(LongPressPlaySpeed.X2_5)
+            assertThat(Prefs.defaultPlaySpeed).isEqualTo(PlaySpeed.X1_5)
+        }
+
+    @Test
+    fun `unknown saved long press playback speed falls back to 3x`() =
+        runBlocking {
+            // Given
+            dataStore.edit { it[PrefKeys.longPressPlaySpeed] = 2.75f }
+
+            // When
+            Prefs.resetForTesting()
+            Prefs.init(dataStore)
+
+            // Then
+            assertThat(Prefs.longPressPlaySpeed).isEqualTo(LongPressPlaySpeed.X3)
+        }
 
     @Test
     fun `default danmakuScale is 1_75`() {

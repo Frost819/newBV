@@ -197,6 +197,36 @@ enum class PlaySpeed(
     }
 }
 
+/**
+ * 按住遥控器确认键或播放画面时使用的临时倍速。
+ *
+ * @property speed 保存到偏好设置的倍速值。
+ */
+enum class LongPressPlaySpeed(
+    val speed: Float,
+) {
+    X1_5(1.5f),
+    X2(2f),
+    X2_5(2.5f),
+    X3(3f),
+    X3_5(3.5f),
+    X4(4f),
+    ;
+
+    companion object {
+        /** 尚未选择长按倍速时使用的默认值。 */
+        val Default = X3
+
+        /**
+         * 恢复已保存的长按倍速。
+         *
+         * @param speed 保存的倍速值。
+         * @return 匹配的选项，未知值回退到 [Default]。
+         */
+        fun fromSpeed(speed: Float): LongPressPlaySpeed = entries.find { it.speed == speed } ?: Default
+    }
+}
+
 // ===== 应用界面 =====
 
 /**

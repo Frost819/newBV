@@ -5,6 +5,7 @@ import dev.frost819.newbv.data.datastore.ActionAfterPlay
 import dev.frost819.newbv.data.datastore.ApiType
 import dev.frost819.newbv.data.datastore.Audio
 import dev.frost819.newbv.data.datastore.HomeTopNavItem
+import dev.frost819.newbv.data.datastore.LongPressPlaySpeed
 import dev.frost819.newbv.data.datastore.PersonalTopNavItem
 import dev.frost819.newbv.data.datastore.PlaySpeed
 import dev.frost819.newbv.data.datastore.Resolution
@@ -60,6 +61,10 @@ val PlaySpeed.displayName: String
             PlaySpeed.X1_5 -> "1.5x"
             PlaySpeed.X2 -> "2x"
         }
+
+/** 长按播放倍速的显示名称。 */
+val LongPressPlaySpeed.displayName: String
+    get() = speed.toString().removeSuffix(".0") + "x"
 
 /** 播放结束动作显示名称。 */
 val ActionAfterPlay.displayName: String
