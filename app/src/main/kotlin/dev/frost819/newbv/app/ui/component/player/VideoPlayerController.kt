@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -105,10 +106,14 @@ fun VideoPlayerController(
     onRelatedVideoClicked: (dev.frost819.newbv.app.ui.component.videocard.VideoCardData) -> Unit,
     onToggleDanmaku: () -> Unit,
     onShowShortcutTip: (String) -> Unit,
+    onTogglePlayOrder: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // 播放顺序（正序/倒序），影响分集面板呈现与上下集推进方向
+    val playOrderReversed by Prefs.playOrderReversedFlow.collectAsState()
 
     // 覆盖层可见性
     var showListController by remember { mutableStateOf(false) }
@@ -623,6 +628,8 @@ fun VideoPlayerController(
                 show = showListController,
                 currentCid = uiState.cid,
                 videoList = uiState.videoList,
+                reversed = playOrderReversed,
+                onTogglePlayOrder = onTogglePlayOrder,
                 onPlayNewVideo = onPlayNewVideo,
             )
 
