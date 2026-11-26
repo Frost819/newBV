@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# 与发版 workflow 不同，这里不加 `if: github.repository == ...` 限制：
+# CI 只读、不依赖任何 secret，贡献者在自己 fork 里同步 main 后也能跑同一套检查。
+# fork PR 的 GITHUB_TOKEN 本来就是只读的，不会拿到多余权限。
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint & Unit Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # buildSrc 的 AppConfiguration 用 git describe / rev-list 推导版本号，
+          # 浅克隆拿不到 tag 会回退成 0.0.0
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 同时设置 ANDROID_HOME / ANDROID_SDK_ROOT，因此不需要 local.properties 里的 sdk.dir
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Robolectric 会按需下载 android-all-instrumented（每个 SDK 约 100MB），缓存下来
+      - name: Cache Robolectric runtime jars
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ runner.os }}-${{ hashFiles('**/robolectric.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: robolectric-${{ runner.os }}-
+
+      - name: Static analysis (ktlint + detekt)
+        run: ./gradlew ktlintCheck detekt
+
+      - name: Unit tests
+        run: ./gradlew test
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+            **/build/reports/ktlint/**
+            **/build/reports/detekt/**
+          retention-days: 7
