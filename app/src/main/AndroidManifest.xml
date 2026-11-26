@@ -29,6 +29,7 @@
             android:configChanges="keyboard|keyboardHidden"
             android:exported="true"
             android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.NewBV.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

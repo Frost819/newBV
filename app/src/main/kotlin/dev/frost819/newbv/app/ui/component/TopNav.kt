@@ -35,6 +35,8 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.TabRowScope
 import androidx.tv.material3.Text
 import dev.frost819.newbv.core.focus.touchClickable
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 
 /**
  * 顶部导航 Tab 栏。
@@ -92,7 +94,17 @@ fun TopNav(
                         selectedTabIndex = index
                         onSelectedChanged(tab)
                     },
-                    onClick = { onClick(tab) },
+                    onClick = {
+                        // 遥控器上「聚焦即选中」，按确认键时这个 tab 已经是选中态，走刷新；
+                        // 触屏没有聚焦这一步，点未选中的 tab 必须自己完成切换，
+                        // 否则点一下只会刷新当前 Tab，看起来像点了没反应。
+                        if (index == selectedTabIndex) {
+                            onClick(tab)
+                        } else {
+                            selectedTabIndex = index
+                            onSelectedChanged(tab)
+                        }
+                    },
                 )
             }
         }
@@ -109,6 +121,8 @@ private fun TabRowScope.NavItemTab(
 ) {
     // 统一使用品牌青绿作为 TopNav 强调色，避免各页面颜色不一致
     val accentColor = MaterialTheme.colorScheme.secondary
+    // 触屏点击会顺带拿到焦点，但不需要跟着画一圈焦点描边。
+    val showFocusVisual = LocalInputMethod.current == InputMethod.DPad
     var hasFocus by remember { mutableStateOf(false) }
     val containerColor =
         if (selected) {
@@ -116,7 +130,7 @@ private fun TabRowScope.NavItemTab(
         } else {
             Color.Transparent
         }
-    val borderColor = if (hasFocus) accentColor else Color.Transparent
+    val borderColor = if (hasFocus && showFocusVisual) accentColor else Color.Transparent
     Tab(
         modifier =
             modifier

@@ -33,7 +33,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
@@ -42,6 +41,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import dev.frost819.newbv.R
+import dev.frost819.newbv.core.focus.focusBorderOrNone
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.interaction.InputMethod
 import dev.frost819.newbv.core.interaction.currentInputMethod
@@ -117,10 +117,11 @@ fun SmallVideoCard(
             shape = CardDefaults.shape(MaterialTheme.shapes.large),
             border =
                 CardDefaults.border(
+                    // 触屏点击会顺带请求焦点，此时不该再画 3dp 边框
                     focusedBorder =
-                        Border(
-                            border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+                        focusBorderOrNone(
                             shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.border,
                         ),
                 ),
         ) {

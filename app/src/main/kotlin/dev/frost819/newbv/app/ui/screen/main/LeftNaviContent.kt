@@ -45,6 +45,8 @@ import dev.frost819.newbv.app.ui.component.FocusSaver
 import dev.frost819.newbv.app.ui.component.focusSaverItem
 import dev.frost819.newbv.core.focus.isDpadRight
 import dev.frost819.newbv.core.focus.isKeyDown
+import dev.frost819.newbv.core.interaction.InputMethod
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import dev.frost819.newbv.data.datastore.LeftNaviItem
 
 /**
@@ -81,6 +83,9 @@ fun LeftNaviContent(
     focusSaver: FocusSaver,
 ) {
     val focusManager = LocalFocusManager.current
+    // 遥控器靠焦点看位置；触屏按「当前页面」高亮，点一下才同步，
+    // 也避免点击请求焦点后高亮停在旧的焦点项上。
+    val dpadMode = LocalInputMethod.current == InputMethod.DPad
     NavigationRail(
         modifier =
             modifier
@@ -112,7 +117,7 @@ fun LeftNaviContent(
                     onLogin()
                 }
             },
-            selected = userIsFocused,
+            selected = dpadMode && userIsFocused,
             icon = {
                 if (isLogin) {
                     Surface(
@@ -165,7 +170,7 @@ fun LeftNaviContent(
                             .onFocusChanged { isFocused = it.hasFocus }
                             .selectionIndicator(indicatorColor),
                     onClick = { onLeftNaviItemChanged(item) },
-                    selected = isFocused,
+                    selected = if (dpadMode) isFocused else item == selectedItem,
                     icon = {
                         Icon(
                             imageVector = item.displayIcon,
@@ -185,7 +190,7 @@ fun LeftNaviContent(
                         settingsIsFocused = it.hasFocus
                     },
             onClick = onOpenSettings,
-            selected = settingsIsFocused,
+            selected = dpadMode && settingsIsFocused,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Settings,
