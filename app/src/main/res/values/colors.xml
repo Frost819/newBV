@@ -2,4 +2,6 @@
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
     <color name="ic_banner_background">#FFFFFF</color>
+    <!-- 启动窗口底色（浅色），与 BVColors.LightBackground 一致 -->
+    <color name="window_background">#F5F7FB</color>
 </resources>

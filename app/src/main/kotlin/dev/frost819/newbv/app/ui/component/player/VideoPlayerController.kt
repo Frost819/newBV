@@ -43,6 +43,7 @@ import dev.frost819.newbv.app.ui.action.player.DanmakuSettingAction
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
 import dev.frost819.newbv.app.ui.action.player.SubtitleSettingAction
 import dev.frost819.newbv.app.ui.component.player.menu.MenuController
+import dev.frost819.newbv.app.ui.component.rememberIsDarkTheme
 import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.ui.state.player.SeekerState
@@ -105,10 +106,15 @@ fun VideoPlayerController(
     onRelatedVideoClicked: (dev.frost819.newbv.app.ui.component.videocard.VideoCardData) -> Unit,
     onToggleDanmaku: () -> Unit,
     onShowShortcutTip: (String) -> Unit,
+    onToggleTheme: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // 播放器本体固定深色（视频场景），但日夜切换按钮操作的是应用全局外观，
+    // 因此这里读的是应用级主题状态，而不是播放器内层那个强制 Dark 的主题。
+    val appThemeIsDark = rememberIsDarkTheme()
 
     // 覆盖层可见性
     var showListController by remember { mutableStateOf(false) }
@@ -602,6 +608,7 @@ fun VideoPlayerController(
                 isPgc = isPgc,
                 danmakuEnabled = uiState.danmakuState.enabledTypes.isNotEmpty(),
                 isLooping = isLooping,
+                themeIsDark = appThemeIsDark,
                 onDirectionLeft = ::onDirectionLeft,
                 onDirectionRight = ::onDirectionRight,
                 onSeekGoTime = ::onSeekGoTime,
@@ -615,6 +622,7 @@ fun VideoPlayerController(
                 onGoToUpPage = onGoToUpPage,
                 onShowInteraction = onShowInteraction,
                 onShowComments = onShowComments,
+                onToggleTheme = onToggleTheme,
             )
 
             // 分集列表

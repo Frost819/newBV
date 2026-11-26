@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 启动窗口底色（夜间），与 BVColors.DarkBackground 一致 -->
+    <color name="window_background">#171717</color>
+</resources>
