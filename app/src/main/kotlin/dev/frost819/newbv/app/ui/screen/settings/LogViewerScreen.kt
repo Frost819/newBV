@@ -143,16 +143,18 @@ fun LogViewerScreen(
                     }
 
                     items(items = uiState.logFiles, key = { it.name }) { file ->
+                        val selectFile = {
+                            isCreateFocused = false
+                            selectedFile = file
+                        }
                         ListItem(
                             modifier =
-                                Modifier.onFocusChanged {
-                                    if (it.hasFocus) {
-                                        isCreateFocused = false
-                                        selectedFile = file
-                                    }
-                                },
+                                Modifier
+                                    .onFocusChanged {
+                                        if (it.hasFocus) selectFile()
+                                    }.touchClickable(onClick = selectFile),
                             selected = false,
-                            onClick = {},
+                            onClick = selectFile,
                             headlineContent = {
                                 Text(text = file.name)
                             },

@@ -3,7 +3,9 @@ package dev.frost819.newbv.app.ui.component.comment
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -786,7 +788,13 @@ private fun CommentImageOverlay(
                 Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.5f))
-                    .focusRequester(focusRequester)
+                    // 点图片外的空白关闭。左右翻页按钮是子节点，会先消费触摸事件，
+                    // 点它们不会顺带关掉浮层。
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss,
+                    ).focusRequester(focusRequester)
                     .focusable()
                     .onPreviewKeyEvent { event ->
                         if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
@@ -811,6 +819,26 @@ private fun CommentImageOverlay(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
+            if (currentIndex > 0) {
+                ImageOverlayButton(
+                    modifier = Modifier.align(Alignment.CenterStart).padding(16.dp),
+                    label = "‹",
+                    onClick = { onIndexChange(currentIndex - 1) },
+                )
+            }
+            if (currentIndex < pictures.lastIndex) {
+                ImageOverlayButton(
+                    modifier = Modifier.align(Alignment.CenterEnd).padding(16.dp),
+                    label = "›",
+                    onClick = { onIndexChange(currentIndex + 1) },
+                )
+            }
+            // 触屏没有返回键，给个能点的关闭入口；遥控器也能用确认键关。
+            ImageOverlayButton(
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                label = "×",
+                onClick = onDismiss,
+            )
             if (pictures.size > 1) {
                 Text(
                     text = "${currentIndex + 1} / ${pictures.size}",
@@ -824,6 +852,31 @@ private fun CommentImageOverlay(
                 )
             }
         }
+    }
+}
+
+/** 大图浮层上的翻页/关闭按钮，触屏点击走 touchClickable，遥控器确认键走 Surface.onClick。 */
+@Composable
+private fun ImageOverlayButton(
+    modifier: Modifier,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier.touchClickable(onClick = onClick),
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(8.dp)),
+        colors =
+            ClickableSurfaceDefaults.colors(
+                containerColor = Color.Black.copy(alpha = 0.45f),
+                contentColor = Color.White,
+            ),
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.titleLarge,
+        )
     }
 }
 

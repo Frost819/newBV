@@ -7,11 +7,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,11 +25,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceColors
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import dev.frost819.newbv.core.interaction.InputMethod
-import dev.frost819.newbv.core.interaction.LocalInteractionTracker
+import dev.frost819.newbv.core.interaction.LocalInputMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -41,7 +42,6 @@ import kotlinx.coroutines.launch
  * 仅在 [InputMethod.DPad] 模式下显示焦点边框，
  * 触屏模式下隐藏（触屏点击自带视觉反馈，无需额外焦点提示）。
  *
- * 当 [LocalInteractionTracker] 未注入时，始终显示边框（兼容未接入 tracker 的场景）。
  *
  * @param shape 边框形状，默认 [ShapeDefaults.Large]。
  * @param animate 是否启用呼吸动画。
@@ -55,17 +55,13 @@ fun Modifier.focusedBorder(
     width: Dp = 3.dp,
 ): Modifier =
     composed {
-        val tracker = LocalInteractionTracker.current
+        // 组合阶段读一次输入方式（切换输入设备时重组本节点一次）；
+        // 方向键移动仍然只写 hasFocus，不触发重组。
+        val inputMethod = LocalInputMethod.current
         val resolvedColor = color ?: MaterialTheme.colorScheme.border
         var hasFocus by remember { mutableStateOf(false) }
 
-        val showBorder =
-            if (tracker != null) {
-                val method by tracker.inputMethod.collectAsState()
-                hasFocus && method == InputMethod.DPad
-            } else {
-                hasFocus
-            }
+        val showBorder = hasFocus && inputMethod == InputMethod.DPad
 
         val infiniteTransition = rememberInfiniteTransition(label = "focused-border-transition")
         val animateColor by infiniteTransition.animateColor(
@@ -155,3 +151,25 @@ fun focusInvertedColors(
         focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
         focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
     )
+
+/**
+ * 卡片容器用的边框：触屏模式下退化成 0dp 透明边框。
+ *
+ * 触屏点击会顺带请求焦点，若仍画 3dp 边框，点完一张卡片会留下白边。
+ * 返回的 [Border] 按主题与输入方式缓存，网格滚动时不再每次重组都新建。
+ */
+@Composable
+fun focusBorderOrNone(
+    shape: Shape,
+    color: Color,
+    width: Dp = 3.dp,
+): Border {
+    val inputMethod = LocalInputMethod.current
+    return remember(shape, color, width, inputMethod) {
+        if (inputMethod == InputMethod.Touch) {
+            Border(border = BorderStroke(0.dp, Color.Transparent), shape = shape)
+        } else {
+            Border(border = BorderStroke(width, color), shape = shape)
+        }
+    }
+}

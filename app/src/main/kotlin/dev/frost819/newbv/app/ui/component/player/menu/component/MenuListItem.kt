@@ -1,9 +1,6 @@
 package dev.frost819.newbv.app.ui.component.player.menu.component
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -58,15 +54,9 @@ fun MenuListItem(
     onFocus: () -> Unit = {},
     onClick: () -> Unit,
 ) {
-    val itemWidth by animateDpAsState(
-        targetValue = if (expanded) 200.dp else 66.dp,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        label = "MenuListItem width [$text]",
-    )
+    // 展开/折叠直接定宽。原来用 spring(StiffnessLow) 做宽度补间，一次焦点切换
+    // 要跑几百毫秒、期间每帧重组整个菜单项，遥控器上就是「按了要等一下」。
+    val itemWidth = if (expanded) 200.dp else 66.dp
 
     Surface(
         modifier =

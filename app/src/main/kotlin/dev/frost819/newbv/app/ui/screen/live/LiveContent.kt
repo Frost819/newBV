@@ -21,10 +21,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,15 +101,23 @@ fun LiveContent(
             }
     }
 
+    // 菜单键与页面上的刷新按钮共用同一个入口，避免两处逻辑以后走偏。
+    val refreshAll: () -> Unit =
+        remember(viewModel) {
+            {
+                viewModel.loadFollowLive()
+                viewModel.loadAreaList()
+                viewModel.loadRecommend()
+            }
+        }
+
     TvLazyVerticalGrid(
         modifier =
             Modifier
                 .fillMaxSize()
                 .onPreviewKeyEvent { event ->
                     if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
-                        viewModel.loadFollowLive()
-                        viewModel.loadAreaList()
-                        viewModel.loadRecommend()
+                        refreshAll()
                         return@onPreviewKeyEvent true
                     }
                     false
@@ -125,6 +135,7 @@ fun LiveContent(
                 focusSaver = focusSaver,
                 followTotal = state.followTotal,
                 onMoreClick = { navController.navigate(LiveFollowRoute) },
+                onRefresh = refreshAll,
             )
         }
 
@@ -244,6 +255,7 @@ private fun FollowHeader(
     focusSaver: FocusSaver,
     followTotal: Int,
     onMoreClick: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -292,6 +304,24 @@ private fun FollowHeader(
                     modifier = Modifier.height(12.dp),
                 )
             }
+        }
+        Spacer(Modifier.width(8.dp))
+        // 菜单键刷新在触屏设备上按不出来，页面上补一个能点的入口。
+        Surface(
+            modifier = Modifier.touchClickable(onClick = onRefresh),
+            onClick = onRefresh,
+            shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),
+            colors =
+                ClickableSurfaceDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "刷新直播",
+                modifier = Modifier.padding(8.dp).size(20.dp),
+            )
         }
     }
 }
