@@ -1198,6 +1198,207 @@ class PlayerViewModelTest {
             assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
         }
 
+    // ── 播放中卡顿换线 (#339) ─────────────────────────────────
+
+    private val stallVideoLine1 = "https://cdn1.example/v.m4s"
+    private val stallVideoLine2 = "https://cdn2.example/v.m4s"
+    private val stallAudioLine = "https://cdn1.example/a.m4s"
+
+    /** 开启自动选源、准备候选线路，播放器停在 42 秒。 */
+    private fun setUpStallScenario(videoCandidates: List<String> = listOf(stallVideoLine1, stallVideoLine2)) {
+        setVideoPlayer(mockPlayer)
+        every { Prefs.autoSelectCdn } returns true
+        every { Prefs.showPlayerDebugInfo } returns false
+        every { mockPlayer.currentPosition } returns 42_000L
+        setCdnCandidates(video = videoCandidates, audio = listOf(stallAudioLine))
+    }
+
+    @Test
+    fun `long stall while playing switches to next CDN at current position`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            // When: 已起播后卡顿，尚未到超时
+            listener.onBuffering()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS - 1)
+            runCurrent()
+
+            // Then: 继续等待
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+
+            // When: 超时仍未恢复
+            advanceTimeBy(1)
+            runCurrent()
+
+            // Then: 从当前进度、同一音轨换到下一条线路，不进入错误态
+            verify { mockPlayer.playUrl(stallVideoLine2, stallAudioLine) }
+            verify { mockPlayer.seekTo(42_000L) }
+            assertThat(viewModel.uiState.value.playerState).isNotInstanceOf(PlayerState.Error::class.java)
+            assertThat(viewModel.uiState.value.isBuffering).isTrue()
+        }
+
+    @Test
+    fun `stall that recovers before timeout keeps current CDN`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            listener.onBuffering()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS / 2)
+            listener.onReady()
+            listener.onPlay()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS * 2)
+            runCurrent()
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+            // onReady 启动了进度轮询，结束前取消，避免 runTest 收尾时无限推进虚拟时间（§11.5.4）
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `startup buffering does not switch CDN`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+
+            // 未起播（playerState 仍为 Ready）的缓冲属于起播阶段，由测速排序负责
+            getVideoPlayerListener().onBuffering()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS * 3)
+            runCurrent()
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+        }
+
+    @Test
+    fun `repeated short stalls switch CDN without waiting for timeout`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+
+            // Given: 两次很快恢复的卡顿
+            listener.onPlay()
+            listener.onBuffering()
+            runCurrent()
+            listener.onReady()
+            listener.onPlay()
+            listener.onBuffering()
+            runCurrent()
+            listener.onReady()
+            listener.onPlay()
+
+            // When: 第三次卡顿
+            listener.onBuffering()
+            runCurrent()
+
+            // Then: 立即换线
+            verify(exactly = 1) { mockPlayer.playUrl(stallVideoLine2, stallAudioLine) }
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `buffering caused by seeking is not counted as repeated stalls`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+            // ExoPlayer 在 seek 调用内同步回调缓冲
+            every { mockPlayer.seekTo(any()) } answers { listener.onBuffering() }
+
+            repeat(REPEATED_STALL_THRESHOLD) { i ->
+                listener.onPlay()
+                viewModel.seekToTime(60_000L * (i + 1))
+                runCurrent()
+                listener.onReady()
+            }
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `stall CDN switch toasts slow line`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            viewModel.uiEffect.test {
+                listener.onBuffering()
+                advanceTimeBy(STALL_SWITCH_TIMEOUT_MS)
+                runCurrent()
+
+                val effect = awaitItem()
+                assertThat(effect).isInstanceOf(PlayerUiEffect.ShowToast::class.java)
+                assertThat((effect as PlayerUiEffect.ShowToast).message).contains("缓冲过慢")
+            }
+        }
+
+    @Test
+    fun `stall does not switch CDN when autoSelectCdn disabled`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            every { Prefs.autoSelectCdn } returns false
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            listener.onBuffering()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS * 2)
+            runCurrent()
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+        }
+
+    @Test
+    fun `stall without remaining candidate keeps buffering instead of failing`() =
+        runTest(testDispatcher) {
+            setUpStallScenario(videoCandidates = listOf(stallVideoLine1))
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            listener.onBuffering()
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS * 2)
+            runCurrent()
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+            assertThat(viewModel.uiState.value.playerState).isNotInstanceOf(PlayerState.Error::class.java)
+            assertThat(viewModel.uiState.value.isBuffering).isTrue()
+        }
+
+    @Test
+    fun `stall switching stops after max switches per playback`() =
+        runTest(testDispatcher) {
+            val lines = (1..MAX_STALL_SWITCHES + 2).map { "https://cdn$it.example/v.m4s" }
+            setUpStallScenario(videoCandidates = lines)
+            val listener = getVideoPlayerListener()
+
+            repeat(MAX_STALL_SWITCHES + 1) {
+                listener.onPlay()
+                listener.onBuffering()
+                advanceTimeBy(STALL_SWITCH_TIMEOUT_MS)
+                runCurrent()
+            }
+
+            (1..MAX_STALL_SWITCHES).forEach { i -> verify { mockPlayer.playUrl(lines[i], stallAudioLine) } }
+            verify(exactly = 0) { mockPlayer.playUrl(lines[MAX_STALL_SWITCHES + 1], any()) }
+        }
+
+    @Test
+    fun `error during stall cancels pending stall switch`() =
+        runTest(testDispatcher) {
+            setUpStallScenario()
+            val listener = getVideoPlayerListener()
+            listener.onPlay()
+
+            listener.onBuffering()
+            listener.onError(RuntimeException("boom"))
+            advanceTimeBy(STALL_SWITCH_TIMEOUT_MS * 2)
+            runCurrent()
+
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+            assertThat(viewModel.uiState.value.playerState).isInstanceOf(PlayerState.Error::class.java)
+        }
+
     private fun dashVideo(
         quality: Int,
         codecId: Int,

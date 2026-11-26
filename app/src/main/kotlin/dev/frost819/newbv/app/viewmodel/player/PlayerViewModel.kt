@@ -79,6 +79,14 @@ private const val PLAYER_ACTION_TIMEOUT_MS = 10_000L
 /** 同时观看人数刷新间隔（cid 就绪后周期轮询）。 */
 private const val ONLINE_WATCH_REFRESH_MS = 60_000L
 
+/** 播放器报网络错误后换线的提示。 */
+private const val CDN_ERROR_FALLBACK_TOAST = "当前播放线路异常，已切换到备用线路"
+
+/** 播放中卡顿换线的提示。 */
+private const val CDN_STALL_FALLBACK_TOAST = "当前线路缓冲过慢，已切换到备用线路"
+
+private const val NANOS_PER_MILLI = 1_000_000L
+
 /**
  * 音频解码失败时的回退顺序。
  *
@@ -159,6 +167,12 @@ class PlayerViewModel
         /** 运行时 CDN 回退已尝试到的候选下标。 */
         private var cdnFallbackIndex = 0
 
+        /** 点播播放中卡顿的换线判定（仅开启自动选源时生效）。 */
+        private val stallMonitor = PlaybackStallMonitor()
+
+        /** 待执行的卡顿换线：缓冲恢复（[VideoPlayerListener.onReady]）、出错、结束、重播时取消。 */
+        private var stallSwitchJob: Job? = null
+
         private val detachedWorkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         private val _uiState = MutableStateFlow(PlayerUiState())
@@ -208,6 +222,7 @@ class PlayerViewModel
             object : VideoPlayerListener {
                 override fun onError(error: Exception) {
                     logger.info { "onError: $error" }
+                    cancelStallSwitch()
                     // 仅网络类错误换 CDN 有意义：解码 / 音频管线错误换源地址不会改善，
                     // 直接进入错误态（音频回退由 onAudioDecodeUnsupported 单独处理）
                     if (Prefs.autoSelectCdn && error.isNetworkError() && tryNextCdnFallback()) return
@@ -233,6 +248,8 @@ class PlayerViewModel
 
                 override fun onReady() {
                     logger.info { "onReady" }
+                    // 缓冲已恢复，撤销待执行的卡顿换线
+                    cancelStallSwitch()
                     _uiState.update { it.copy(playerState = PlayerState.Ready) }
                     updatePlaySpeed(forceUpdate = true)
                     startSeekerUpdater()
@@ -257,11 +274,16 @@ class PlayerViewModel
 
                 override fun onBuffering() {
                     logger.info { "onBuffering" }
+                    // ExoPlayer 先回调缓冲、再回调 isPlaying=false（→ onPause），
+                    // 所以此刻仍是 Playing 即说明是起播后的卡顿；起播 / 换线重播时为 Ready
+                    val wasPlaying = _uiState.value.playerState == PlayerState.Playing
                     _uiState.update { it.copy(isBuffering = true) }
+                    scheduleStallSwitch(wasPlaying)
                 }
 
                 override fun onEnd() {
                     logger.info { "onEnd" }
+                    cancelStallSwitch()
                     stopSeekerUpdater()
                     stopDebugInfoUpdater()
                     _uiState.update { it.copy(playerState = PlayerState.Ended) }
@@ -463,6 +485,7 @@ class PlayerViewModel
         /** 释放播放器资源，同步进度到 B 站。 */
         fun detachPlayer() {
             syncProgress(scope = detachedWorkScope, isDetaching = true)
+            cancelStallSwitch()
             videoPlayer?.release()
             videoPlayer = null
             stopSeekerUpdater()
@@ -620,6 +643,7 @@ class PlayerViewModel
 
         /** 跳转到指定位置（毫秒）。 */
         fun seekToTime(time: Long) {
+            markSeek()
             videoPlayer?.seekTo(time)
             _seekerState.update { it.copy(currentTime = time) }
         }
@@ -628,6 +652,7 @@ class PlayerViewModel
         fun backToStart() {
             backToStartCountdownJob?.cancel()
             _uiState.update { it.copy(showBackToStart = false) }
+            markSeek()
             videoPlayer?.seekTo(0)
         }
 
@@ -728,6 +753,7 @@ class PlayerViewModel
          * 通过 [videoSwitchEvent] 通知 UI 层协调弹幕/字幕重载。
          */
         fun playNewVideo(newVideo: VideoListItem) {
+            cancelStallSwitch()
             videoPlayer?.pause()
 
             val state = _uiState.value
@@ -935,6 +961,8 @@ class PlayerViewModel
             position: Long,
         ) {
             val player = videoPlayer ?: return
+            // 换了地址或换了档，旧线路上的卡顿计时已无意义
+            cancelStallSwitch()
             _uiState.update { it.copy(playerState = PlayerState.Ready, isBuffering = true) }
             player.pause()
             player.playUrl(urls.videoUrl, urls.audioUrl)
@@ -1314,6 +1342,7 @@ class PlayerViewModel
                     audioCandidates
                 }
             cdnFallbackIndex = 0
+            stallMonitor.reset()
 
             val videoUrl = videoCdnCandidates.firstOrNull() ?: return null
             val audioUrl = audioCdnCandidates.firstOrNull()
@@ -1424,6 +1453,7 @@ class PlayerViewModel
         private fun seekToLastPlayed() {
             // 历史接口和 UiState 以秒保存进度，播放器 seek API 使用毫秒。
             val time = _uiState.value.lastPlayed.toLong() * 1000L
+            markSeek()
             videoPlayer?.seekTo(time)
             _uiState.update { it.copy(showBackToStart = true) }
             backToStartCountdownJob?.cancel()
@@ -1521,10 +1551,12 @@ class PlayerViewModel
         /**
          * 尝试切换到下一个候选 CDN 地址重播。
          *
-         * 仅在开启自动选源且仍有未尝试的候选时生效。保留当前播放位置，
-         * 切换成功返回 `true`，无候选可用返回 `false`（由调用方上报错误）。
+         * 仅在开启自动选源且仍有未尝试的候选时生效。保留当前播放位置与画质，
+         * 切换成功返回 `true`，无候选可用返回 `false`（由调用方决定上报错误或忽略）。
+         *
+         * @param toast 换线成功后给用户的提示
          */
-        private fun tryNextCdnFallback(): Boolean {
+        private fun tryNextCdnFallback(toast: String = CDN_ERROR_FALLBACK_TOAST): Boolean {
             val player = videoPlayer ?: return false
             val nextIndex = cdnFallbackIndex + 1
             val videoUrl = videoCdnCandidates.getOrNull(nextIndex) ?: return false
@@ -1533,11 +1565,52 @@ class PlayerViewModel
             val position = player.currentPosition
             logger.info { "CDN fallback #$nextIndex -> $videoUrl" }
             viewModelScope.launch {
-                _uiEffect.emit(PlayerUiEffect.ShowToast("当前播放线路异常，已切换到备用线路"))
+                _uiEffect.emit(PlayerUiEffect.ShowToast(toast))
             }
             replayMedia(MediaUrls(videoUrl = videoUrl, audioUrl = audioUrl), position)
             return true
         }
+
+        /**
+         * 播放器进入缓冲时，按 [stallMonitor] 的判定安排卡顿换线。
+         *
+         * 线路吞吐不足时播放器只会反复缓冲、不报错，[VideoPlayerListener.onError] 的回退走不到；
+         * 这里在「已起播后长时间 / 反复缓冲」时复用同一套候选，从当前进度以同一画质换到下一条线路。
+         * 换线放到下一轮主线程消息执行，避免在播放器回调内重入；期间缓冲恢复则由 [cancelStallSwitch] 撤销。
+         *
+         * @param wasPlaying 进入缓冲前是否处于播放中
+         */
+        private fun scheduleStallSwitch(wasPlaying: Boolean) {
+            if (!Prefs.autoSelectCdn) return
+            val decision = stallMonitor.onBufferingStarted(monotonicNowMs(), wasPlaying)
+            if (decision == PlaybackStallMonitor.Decision.Ignore) return
+
+            stallSwitchJob?.cancel()
+            stallSwitchJob =
+                viewModelScope.launch(Dispatchers.Main) {
+                    if (decision is PlaybackStallMonitor.Decision.SwitchIfStillStalled) {
+                        delay(decision.timeoutMs)
+                    }
+                    stallSwitchJob = null
+                    logger.info { "Playback stalled ($decision), trying next CDN" }
+                    // 候选已用尽时保持现状继续缓冲：卡顿不是错误，不应打断播放
+                    if (tryNextCdnFallback(CDN_STALL_FALLBACK_TOAST)) stallMonitor.onSwitched()
+                }
+        }
+
+        /** 撤销待执行的卡顿换线。 */
+        private fun cancelStallSwitch() {
+            stallSwitchJob?.cancel()
+            stallSwitchJob = null
+        }
+
+        /** 记录一次拖动进度；须在调用播放器 seek 之前调用（seek 内会同步回调缓冲）。 */
+        private fun markSeek() {
+            stallMonitor.onSeek(monotonicNowMs())
+        }
+
+        /** 单调时钟（毫秒），不受系统改时影响。 */
+        private fun monotonicNowMs(): Long = System.nanoTime() / NANOS_PER_MILLI
 
         private fun findNextPlayTarget(): NextPlayTarget? {
             val state = _uiState.value
