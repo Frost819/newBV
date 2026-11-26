@@ -379,6 +379,13 @@ object Prefs {
     /** 显示播放器调试信息。 */
     var showPlayerDebugInfo by pref(PrefKeys.showPlayerDebugInfo, false)
 
+    /**
+     * 合集/分集倒序播放（true 时最新一集排在最前，自动连播也按倒序推进）。
+     *
+     * 只影响播放顺序与分集列表的呈现，不改变接口返回的原始次序。
+     */
+    var playOrderReversed by pref(PrefKeys.playOrderReversed, false)
+
     // --- 应用界面（PRD 7.2） ---
 
     /** 界面缩放密度（默认 1f，app 层 init 时按屏幕宽度重新计算）。 */
@@ -446,6 +453,21 @@ object Prefs {
                 ?.map { it as? Float ?: 2f }
                 ?.stateIn(scope, SharingStarted.Eagerly, 2f)
                 ?: MutableStateFlow(2f)
+
+    /**
+     * 播放顺序 Flow（true = 倒序）。
+     *
+     * 与 [themeModeFlow] 同样用 `by lazy` 缓存：Compose 在 `setContent` 里读它，
+     * 每次访问新建一个 `stateIn(scope, Eagerly)` 会随重组泄漏协程，
+     * 且新实例会先把界面闪回正序一帧。初始值直接取落盘值。
+     */
+    val playOrderReversedFlow: StateFlow<Boolean> by lazy {
+        (delegateMap[PrefKeys.playOrderReversed] as? PrefDelegate<Boolean, Boolean>)
+            ?.flow
+            ?.map { it as? Boolean ?: false }
+            ?.stateIn(scope, SharingStarted.Eagerly, playOrderReversed)
+            ?: MutableStateFlow(false)
+    }
 
     // ===== 初始化 =====
 

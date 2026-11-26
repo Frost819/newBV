@@ -57,6 +57,7 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
     var enableSoftwareVideoDecoder by remember { mutableStateOf(Prefs.enableSoftwareVideoDecoder) }
     var showPlayerDebugInfo by remember { mutableStateOf(Prefs.showPlayerDebugInfo) }
     var autoSelectCdn by remember { mutableStateOf(Prefs.autoSelectCdn) }
+    var playOrderReversed by remember { mutableStateOf(Prefs.playOrderReversed) }
 
     Column(
         modifier =
@@ -96,6 +97,15 @@ fun AudioVideoSetting(modifier: Modifier = Modifier) {
             title = "播放结束动作",
             supportText = "当前：${selectedActionAfterPlay.displayName}",
             onClick = { showActionAfterPlayDialog = true },
+        )
+        SettingSwitchListItem(
+            title = "倒序播放合集",
+            supportText = if (playOrderReversed) "最新一集在前，自动连播向更早的集数推进" else "第 1 集在前，自动连播向更新的集数推进",
+            checked = playOrderReversed,
+            onCheckedChange = {
+                playOrderReversed = it
+                Prefs.playOrderReversed = it
+            },
         )
         SettingListItem(
             title = "自定义播放快捷键",

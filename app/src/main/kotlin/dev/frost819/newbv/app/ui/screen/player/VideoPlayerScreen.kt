@@ -48,6 +48,7 @@ import dev.frost819.newbv.danmaku.component.DanmakuPlayerCompose
 import dev.frost819.newbv.danmaku.util.DanmakuMaskFinder
 import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
+import dev.frost819.newbv.data.datastore.Prefs
 import dev.frost819.newbv.player.BvVideoPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
@@ -367,6 +368,12 @@ fun VideoPlayerScreen(
         },
         onToggleDanmaku = { danmakuViewModel.toggleDanmaku() },
         onShowShortcutTip = { text -> playerViewModel.showShortcutTip(text) },
+        onTogglePlayOrder = {
+            // 列表随即重排，给一条文字确认当前档位，免得用户以为点了没反应
+            val turnToReversed = !Prefs.playOrderReversed
+            Prefs.playOrderReversed = turnToReversed
+            playerViewModel.showShortcutTip(if (turnToReversed) "已切换为倒序播放" else "已切换为正序播放")
+        },
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
