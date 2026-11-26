@@ -60,6 +60,12 @@ object BVColors {
     val DarkOnSurfaceVariant = Color(0xFFB8B8B8)
     val DarkBorder = PrimaryLight
 
+    /** 遮罩：深色主题下压暗画面用纯黑。 */
+    val DarkScrim = Color(0xFF000000)
+
+    /** 遮罩：浅色主题下用带蓝调的深色，纯黑铺在亮底上会糊成一块脏灰。 */
+    val LightScrim = Color(0xFF172033)
+
     /** 浅色主题中性色。 */
     val LightBackground = Color(0xFFF5F7FB)
     val LightSurface = Color(0xFFFFFFFF)
