@@ -57,12 +57,15 @@ class ColorPaletteTest {
         // 三段亮度过于接近时（如曾用半透明白 40% 叠加品牌色）远看无法分辨
         val active = relativeLuminance(BVColors.PlayerSeekActive)
         val buffered = relativeLuminance(BVColors.PlayerSeekBuffered)
+        val chapter = relativeLuminance(BVColors.PlayerSeekChapter)
         val inactive = relativeLuminance(BVColors.PlayerSeekInactive)
 
         assertThat(active).isGreaterThan(buffered)
-        assertThat(buffered).isGreaterThan(inactive)
+        assertThat(buffered).isGreaterThan(chapter)
+        assertThat(chapter).isGreaterThan(inactive)
         assertThat(active / buffered).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
-        assertThat(buffered / inactive).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
+        assertThat(buffered / chapter).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
+        assertThat(chapter / inactive).isAtLeast(MIN_SEEK_LUMINANCE_RATIO)
     }
 
     private fun contrastRatio(

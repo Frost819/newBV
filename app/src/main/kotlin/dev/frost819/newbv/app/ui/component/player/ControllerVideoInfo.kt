@@ -60,6 +60,7 @@ import dev.frost819.newbv.R
 import dev.frost819.newbv.app.ui.state.player.SeekerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.app.util.formatHourMinSec
+import dev.frost819.newbv.biliapi.entity.video.VideoChapterSegment
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.core.focus.touchClickable
 import dev.frost819.newbv.core.theme.BVTheme
@@ -81,6 +82,7 @@ import kotlinx.coroutines.delay
  * @param onlineWatching 同时观看人数文案（空串时不显示）
  * @param videoShot 缩略图数据（为 null 时不显示预览）
  * @param videoShotCache 缩略图缓存
+ * @param chapterSegments 归一化后的章节分段（空列表时进度条为普通单线渲染）
  * @param isPgc 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
  * @param danmakuEnabled 弹幕是否开启
  * @param isLooping 是否循环播放
@@ -110,6 +112,7 @@ fun ControllerVideoInfo(
     onlineWatching: String,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
+    chapterSegments: List<VideoChapterSegment>,
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
@@ -156,6 +159,7 @@ fun ControllerVideoInfo(
                 seekerState = seekerState,
                 videoShot = videoShot,
                 videoShotCache = videoShotCache,
+                chapterSegments = chapterSegments,
                 isPgc = isPgc,
                 danmakuEnabled = danmakuEnabled,
                 isLooping = isLooping,
@@ -257,7 +261,9 @@ fun ControllerVideoInfoTop(
 }
 
 /**
- * 控制器底部信息（缩略图预览 + 时间 + 进度条 + 操作按钮）。
+ * 控制器底部信息（缩略图预览 + 章节标签 + 时间 + 进度条 + 操作按钮）。
+ *
+ * 支持传入 [chapterSegments] 在焦点轮廓外上方渲染章节标签并在进度条上绘制分段缺口。
  */
 @Composable
 fun ControllerVideoInfoBottom(
@@ -267,6 +273,7 @@ fun ControllerVideoInfoBottom(
     seekerState: SeekerState,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
+    chapterSegments: List<VideoChapterSegment>,
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
@@ -324,6 +331,15 @@ fun ControllerVideoInfoBottom(
                 text = "$timeText / ${seekerState.totalDuration.formatHourMinSec()}",
                 color = MaterialTheme.colorScheme.onSurface,
                 style = TextStyle(shadow = Shadow(color = Color.Black, blurRadius = 1f)),
+            )
+        }
+
+        // 章节名标签行（置于焦点轮廓线外上方，与下方进度条同宽对齐）
+        if (seekerState.totalDuration > 0L && chapterSegments.isNotEmpty()) {
+            VideoChapterLabels(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                chapterSegments = chapterSegments,
+                duration = seekerState.totalDuration,
             )
         }
 
@@ -415,6 +431,7 @@ fun ControllerVideoInfoBottom(
                 position = if (isSeeking) goTime else seekerState.currentTime,
                 bufferedPercentage = seekerState.bufferedPercentage,
                 isPersistentSeek = false,
+                chapterSegments = chapterSegments,
             )
         }
 
@@ -550,6 +567,7 @@ private fun ControllerVideoInfoPreview() {
             onlineWatching = "9.4万+",
             videoShot = null,
             videoShotCache = VideoShotImageCache(),
+            chapterSegments = emptyList(),
             isPgc = false,
             danmakuEnabled = true,
             isLooping = false,
