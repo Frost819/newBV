@@ -16,6 +16,7 @@ import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMeta
 import dev.frost819.newbv.biliapi.entity.danmaku.toDanmakuMeta
 import dev.frost819.newbv.biliapi.entity.video.HeartbeatVideoType
 import dev.frost819.newbv.biliapi.entity.video.Subtitle
+import dev.frost819.newbv.biliapi.entity.video.VideoChapter
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.biliapi.grpc.utils.handleGrpcException
 import dev.frost819.newbv.biliapi.http.BiliHttpApi
@@ -403,4 +404,30 @@ class VideoPlayRepository(
         val videoShot = VideoShot.fromVideoShot(videoShortResponse.getResponseData())
         return videoShot
     }
+
+    /**
+     * 获取视频章节（view_points）列表。
+     *
+     * 固定走 Web 通道（/x/player/wbi/v2，WBI 签名由拦截器自动注入）：
+     * App gRPC 通道无对应数据，与接口类型偏好无关。
+     *
+     * @param aid 视频 AV 号
+     * @param cid 视频 CID
+     * @return 按 [VideoChapter.fromMs] 升序的原始章节；接口未返回章节数据时为空列表。
+     * 未做时长裁剪与重叠处理（归一化需播放器时长，由 UI 层调 [VideoChapters.normalize]）
+     * @throws Exception 网络失败或响应解析失败时抛出，由调用方决定兜底策略
+     */
+    suspend fun getViewPoints(
+        aid: Long,
+        cid: Long,
+    ): List<VideoChapter> =
+        BiliHttpApi
+            .getVideoMoreInfo(
+                avid = aid,
+                cid = cid,
+            ).getResponseData()
+            .viewPoints
+            .orEmpty()
+            .map(VideoChapter::fromViewPoint)
+            .sortedBy { it.fromMs }
 }

@@ -136,6 +136,23 @@ class VideoPlayRepositoryTest {
             assertPlayData(result, 836207)
         }
 
+    @Test
+    fun `get view points with http`() {
+        runBlocking {
+            // 章节数据仅 Web 通道提供；测试视频可能没有章节，断言解析不抛异常且字段自洽
+            val result =
+                videoPlayRepository.getViewPoints(
+                    aid = 993403941,
+                    cid = 1051761130,
+                )
+            println("viewPoints: ${result.size} 个章节")
+            result.forEach { chapter -> println("  [${chapter.fromMs}ms-${chapter.toMs}ms] ${chapter.content}") }
+            result.forEach { chapter ->
+                assertThat(chapter.toMs).isAtLeast(chapter.fromMs)
+            }
+        }
+    }
+
     @OptIn(ExperimentalEncodingApi::class)
     @Test
     fun `parse error status`() {

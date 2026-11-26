@@ -394,6 +394,25 @@ internal class BiliHttpApiTest {
     }
 
     @Test
+    fun `get video more info parses view points structurally`() {
+        runBlocking {
+            val response =
+                BiliHttpApi.getVideoMoreInfo(
+                    avid = 170001,
+                    cid = 279786,
+                )
+            assertThat(response.code).isEqualTo(0)
+            val viewPoints = response.getResponseData().viewPoints.orEmpty()
+            println("viewPoints: ${viewPoints.size} 个章节")
+            viewPoints.forEach { println("  [${it.from}s-${it.to}s] ${it.content}") }
+            // 测试视频可能没有章节：解析不抛异常 + 字段自洽即可
+            viewPoints.forEach { point ->
+                assertThat(point.to).isAtLeast(point.from)
+            }
+        }
+    }
+
+    @Test
     fun `send video like`() {
         assertDoesNotThrow {
             runBlocking {
