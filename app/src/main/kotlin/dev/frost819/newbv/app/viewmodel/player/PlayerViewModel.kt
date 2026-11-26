@@ -486,6 +486,18 @@ class PlayerViewModel
             if (videoPlayer?.isPlaying == true) videoPlayer?.pause()
         }
 
+        /**
+         * 播放页离开（被详情页/UP 主页覆盖，或退到后台）时调用。
+         *
+         * 除暂停播放外，还必须取消待执行的自动连播：倒计时任务挂在 [viewModelScope] 上，
+         * 不会随播放页销毁而结束，到点后会调用 [playNewVideo] 无条件启动播放器，
+         * 表现为「详情页/UP 主页无画面却有声」（issue #346）。
+         */
+        fun onPlayerPageInactive() {
+            cancelPlayNext()
+            pausePlayback()
+        }
+
         /** 恢复视频播放。 */
         fun resumePlayback() {
             if (videoPlayer?.isPlaying != true) videoPlayer?.start()

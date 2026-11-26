@@ -257,15 +257,16 @@ fun VideoPlayerScreen(
         }
     }
 
-    // 生命周期管理：离开或切到后台时暂停；回到页面/前台不自动续播，保持暂停由用户手动开始
+    // 生命周期管理：切到后台（HOME 等）时暂停并取消待执行的自动连播，
+    // 避免倒计时在后台到点后启动播放器导致「无画面有声」；回到前台不自动续播，由用户手动开始
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_PAUSE -> {
-                        if (playerViewModel.uiState.value.playerState == PlayerState.Playing) {
-                            playerViewModel.togglePlayPause()
-                        }
+                        // 无论当前是否在播放都取消待执行的自动连播：
+                        // 播放已结束（倒计时进行中）时同样需要在后台放弃连播
+                        playerViewModel.onPlayerPageInactive()
                     }
                     else -> {}
                 }

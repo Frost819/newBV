@@ -14,6 +14,7 @@ import dev.frost819.newbv.app.ui.state.player.PlayerState
 import dev.frost819.newbv.app.ui.state.player.PlayerUiEffect
 import dev.frost819.newbv.app.ui.state.player.PlayerUiState
 import dev.frost819.newbv.app.util.PlaybackCandidate
+import dev.frost819.newbv.app.util.PlayerConstants
 import dev.frost819.newbv.app.util.VideoCapabilityProvider
 import dev.frost819.newbv.biliapi.entity.DashAudio
 import dev.frost819.newbv.biliapi.entity.DashVideo
@@ -882,6 +883,64 @@ class PlayerViewModelTest {
             viewModel.cancelPlayNext()
 
             assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
+        }
+
+    // ── onPlayerPageInactive (#346) ───────────────────────────
+
+    /** 构造一条相关视频（用于触发「播放首个相关视频」连播）。 */
+    private fun relatedVideo(
+        aid: Long,
+        cid: Long,
+    ) = RelatedVideo(
+        aid = aid,
+        cid = cid,
+        cover = "",
+        title = "Related Video",
+        duration = 0,
+        author = null,
+        jumpToSeason = false,
+        epid = null,
+        view = 0,
+        danmaku = 0,
+    )
+
+    @Test
+    fun `onPlayerPageInactive cancels pending related video auto play`() =
+        runTest(testDispatcher) {
+            // Given: 播放已结束，「播放首个相关视频」倒计时进行中
+            every { Prefs.actionAfterPlay } returns ActionAfterPlay.PlayRelated
+            every { videoInfoRepository.relatedVideos } returns
+                MutableStateFlow(listOf(relatedVideo(aid = 999L, cid = 888L)))
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            setVideoPlayer(mockPlayer)
+            viewModel.checkAndPlayNext()
+            runCurrent()
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isTrue()
+
+            // When: 用户点开视频详情/UP 主页，播放页离开
+            viewModel.onPlayerPageInactive()
+
+            // Then: 倒计时被取消，过点后也不会切换视频（否则详情页会只有声音）
+            assertThat(viewModel.uiState.value.showSkipToNextEp).isFalse()
+            advanceTimeBy(PlayerConstants.COUNTDOWN_DURATION_MS + 1_000L)
+            runCurrent()
+
+            assertThat(viewModel.uiState.value.aid).isNotEqualTo(999L)
+            verify(exactly = 0) { mockPlayer.playUrl(any(), any()) }
+        }
+
+    @Test
+    fun `onPlayerPageInactive pauses playing player`() =
+        runTest(testDispatcher) {
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.isPlaying } returns true
+
+            viewModel.onPlayerPageInactive()
+
+            verify { mockPlayer.pause() }
         }
 
     // ── updateMediaProfile tests ──────────────────────────────

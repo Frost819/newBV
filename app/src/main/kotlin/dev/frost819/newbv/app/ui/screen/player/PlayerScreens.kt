@@ -84,10 +84,11 @@ fun NavGraphBuilder.videoPlayerScreen(navController: NavController) {
             playerViewModel.loadVideoWithResources()
         }
 
-        // 离开页面（如打开详情/UP 主空间）时暂停；播放器与弹幕保留在 ViewModel 中，返回后保持暂停
+        // 离开页面（如打开详情/UP 主空间）时暂停并取消待执行的自动连播；
+        // 播放器与弹幕保留在 ViewModel 中，返回后保持暂停（issue #346）
         DisposableEffect(Unit) {
             onDispose {
-                playerViewModel.pausePlayback()
+                playerViewModel.onPlayerPageInactive()
                 danmakuViewModel.pause()
             }
         }
