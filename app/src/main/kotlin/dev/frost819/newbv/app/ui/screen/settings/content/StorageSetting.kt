@@ -109,7 +109,10 @@ fun StorageSetting(modifier: Modifier = Modifier) {
                         supportText =
                             "当前：" +
                                 if (cacheThreshold == CacheManager.THRESHOLD_UNLIMITED) {
-                                    "无限制"
+                                    // 「无限制」只表示不按阈值自动清理，图片磁盘缓存本身仍有上限，
+                                    // 这里把上限写出来，避免用户以为缓存会无限增长。
+                                    "无限制（图片缓存上限 " +
+                                        "${CacheManager.UNLIMITED_DISK_CACHE_BYTES / CacheManager.BYTES_PER_MB} MB）"
                                 } else {
                                     "$cacheThreshold MB"
                                 },

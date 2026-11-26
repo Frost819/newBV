@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,11 @@ fun RecommendScreen(
     focusSaver: FocusSaver,
 ) {
     val state by viewModel.uiState.collectAsState()
+    // 推荐接口偶尔重复下发同一个 aid。列表要用 aid 作稳定 key，就必须先去重，
+    // 否则 LazyGrid 会直接抛重复 key 异常。放在 UI 层，分页/刷新的语义不动。
+    val displayItems =
+        remember(state.recommendItems) { state.recommendItems.distinctBy { it.aid } }
+    val itemCount by rememberUpdatedState(displayItems.size)
     val gridState = rememberLazyGridState()
     val watchLaterViewModel: WatchLaterViewModel = hiltViewModel()
 
@@ -58,7 +64,9 @@ fun RecommendScreen(
                 ?.index
         }.distinctUntilChanged()
             .filter { index ->
-                index != null && index >= state.recommendItems.size - 20
+                // 用 rememberUpdatedState 读最新条数，避免 LaunchedEffect 只捕获
+                // 首次组合时的旧值，导致分页后阈值不更新、反复触发加载。
+                index != null && index >= itemCount - 20
             }.collect {
                 viewModel.loadRecommend()
             }
@@ -73,8 +81,10 @@ fun RecommendScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         itemsIndexed(
-            items = state.recommendItems,
-            key = { index, _ -> index },
+            items = displayItems,
+            // 用业务 id 而非下标：分页追加 / 下拉刷新时已有卡片能保持身份，
+            // 不会整屏重新组合、也不会让焦点和图片请求全部重来。
+            key = { _, item -> item.aid },
         ) { index, item ->
             val cardData =
                 remember(item) {
@@ -113,7 +123,7 @@ fun RecommendScreen(
                 isLoading = state.recommendLoading,
                 isError = state.recommendError,
                 hasMore = state.recommendHasMore,
-                itemsIsEmpty = state.recommendItems.isEmpty(),
+                itemsIsEmpty = displayItems.isEmpty(),
             )
         }
     }

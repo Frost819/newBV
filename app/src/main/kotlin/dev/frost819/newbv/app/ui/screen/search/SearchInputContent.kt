@@ -334,9 +334,9 @@ private fun SearchHistoryColumn(
         LazyColumn(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
-            itemsIndexed(histories) { index, history ->
+            itemsIndexed(histories, key = { _, history -> history.keyword }) { _, history ->
                 SearchKeyword(
-                    modifier = Modifier.focusSaverItem(focusSaver, "search_history_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "search_history_${history.keyword}"),
                     keyword = history.keyword,
                     onClick = {
                         if (deleteMode) {

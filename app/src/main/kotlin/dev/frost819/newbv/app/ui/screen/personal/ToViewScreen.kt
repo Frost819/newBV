@@ -93,7 +93,7 @@ fun ToViewScreen(
             item(span = { GridItemSpan(maxLineSpan) }, key = "unwatched_header") {
                 SectionHeader(title = "未看完 (${unwatched.size})")
             }
-            itemsIndexed(items = unwatched) { index, item ->
+            itemsIndexed(items = unwatched, key = { _, item -> item.oid }) { _, item ->
                 val cardData =
                     remember(item) {
                         val durationMs = item.duration * 1000L
@@ -125,7 +125,7 @@ fun ToViewScreen(
                         )
                     }
                 SmallVideoCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, "toview_unwatched_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "toview_unwatched_${item.oid}"),
                     data = cardData,
                     onClick = {
                         navController.navigateFromVideoCard(cardData)
@@ -148,7 +148,7 @@ fun ToViewScreen(
             item(span = { GridItemSpan(maxLineSpan) }, key = "watched_header") {
                 SectionHeader(title = "已看完 (${watched.size})")
             }
-            itemsIndexed(items = watched) { index, item ->
+            itemsIndexed(items = watched, key = { _, item -> item.oid }) { _, item ->
                 val cardData =
                     remember(item) {
                         val durationMs = item.duration * 1000L
@@ -168,7 +168,7 @@ fun ToViewScreen(
                         )
                     }
                 SmallVideoCard(
-                    modifier = Modifier.focusSaverItem(focusSaver, "toview_watched_$index"),
+                    modifier = Modifier.focusSaverItem(focusSaver, "toview_watched_${item.oid}"),
                     data = cardData,
                     onClick = {
                         navController.navigateFromVideoCard(cardData)

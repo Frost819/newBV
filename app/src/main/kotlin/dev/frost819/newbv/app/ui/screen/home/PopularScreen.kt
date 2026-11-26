@@ -73,7 +73,7 @@ fun PopularScreen(
     ) {
         itemsIndexed(
             items = state.popularItems,
-            key = { index, _ -> index },
+            key = { _, item -> item.aid },
         ) { index, item ->
             val cardData =
                 remember(item) {

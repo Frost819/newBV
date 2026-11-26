@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -104,7 +105,7 @@ fun ControllerVideoInfo(
     show: Boolean,
     isSeeking: Boolean,
     goTime: Long,
-    seekerState: SeekerState,
+    seekerState: State<SeekerState>,
     title: String,
     clock: Pair<Int, Int>,
     onlineWatching: String,
@@ -127,6 +128,10 @@ fun ControllerVideoInfo(
     onShowInteraction: () -> Unit,
     onShowComments: () -> Unit,
 ) {
+    // 只在真正用到进度状态的地方读 value：父级每 250ms 拿到新 seekerState 时
+    // 只重组这个子树，不会把整棵播放器控制器一起拖下水。
+    val seeker by seekerState
+
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
@@ -153,7 +158,7 @@ fun ControllerVideoInfo(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 isSeeking = isSeeking,
                 goTime = goTime,
-                seekerState = seekerState,
+                seekerState = seeker,
                 videoShot = videoShot,
                 videoShotCache = videoShotCache,
                 isPgc = isPgc,
@@ -199,14 +204,7 @@ fun ControllerVideoInfoTop(
                         topEnd = CornerSize(0.dp),
                     ),
                 ).background(
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Black.copy(alpha = 0f),
-                                ),
-                        ),
+                    brush = TOP_SCRIM,
                 ).padding(horizontal = 32.dp, vertical = 16.dp),
     ) {
         Row(
@@ -540,11 +538,15 @@ private fun ControllerVideoInfoPreview() {
             isSeeking = false,
             goTime = 0L,
             seekerState =
-                SeekerState(
-                    totalDuration = 600_000L,
-                    currentTime = 120_000L,
-                    bufferedPercentage = 50,
-                ),
+                remember {
+                    mutableStateOf(
+                        SeekerState(
+                            totalDuration = 600_000L,
+                            currentTime = 120_000L,
+                            bufferedPercentage = 50,
+                        ),
+                    )
+                },
             title = "示例视频标题",
             clock = Pair(14, 30),
             onlineWatching = "9.4万+",
@@ -571,3 +573,9 @@ private fun ControllerVideoInfoPreview() {
 }
 
 // endregion
+
+/** 控制器顶部信息条渐变：颜色固定，避免每次重组构造 Brush。 */
+private val TOP_SCRIM =
+    Brush.verticalGradient(
+        colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Black.copy(alpha = 0f)),
+    )

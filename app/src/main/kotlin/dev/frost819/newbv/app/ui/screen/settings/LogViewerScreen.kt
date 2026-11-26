@@ -44,6 +44,8 @@ import androidx.tv.material3.Text
 import dev.frost819.newbv.app.viewmodel.settings.LogViewerViewModel
 import dev.frost819.newbv.core.focus.touchClickable
 import io.github.g0dkar.qrcode.QRCode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -88,7 +90,8 @@ fun LogViewerScreen(
             } else {
                 selectedFile?.let { viewModel.getFileUrl(it) } ?: viewModel.getServerUrl()
             }
-        qrImage = generateQrCode(url)
+        // 二维码编码是 CPU 活，放在主线程会在焦点移动那一帧卡一下
+        qrImage = withContext(Dispatchers.Default) { generateQrCode(url) }
     }
 
     Scaffold(

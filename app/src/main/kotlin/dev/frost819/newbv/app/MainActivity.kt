@@ -80,7 +80,11 @@ class MainActivity : ComponentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             interactionTracker.onDpadKey()
-            logger.info { "[INPUT] keyDown keyCode=${KeyEvent.keyCodeToString(event.keyCode)}" }
+            // 遥控器长按会连发按键，每条日志都要做字符串拼接 + Log.println。
+            // 只在 debug 构建保留，release 由 R8 常量折叠整块移除。
+            if (dev.frost819.newbv.BuildConfig.DEBUG) {
+                logger.info { "[INPUT] keyDown keyCode=${KeyEvent.keyCodeToString(event.keyCode)}" }
+            }
         }
         return super.dispatchKeyEvent(event)
     }
