@@ -21,6 +21,7 @@ import dev.frost819.newbv.biliapi.entity.DashVideo
 import dev.frost819.newbv.biliapi.entity.PlayData
 import dev.frost819.newbv.biliapi.entity.user.Author
 import dev.frost819.newbv.biliapi.entity.video.RelatedVideo
+import dev.frost819.newbv.biliapi.entity.video.VideoChapter
 import dev.frost819.newbv.biliapi.entity.video.VideoDetail
 import dev.frost819.newbv.biliapi.repositories.AuthRepository
 import dev.frost819.newbv.biliapi.repositories.CoinRepository
@@ -49,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -382,6 +384,86 @@ class PlayerViewModelTest {
             val state = viewModel.uiState.value
             assertThat(state.authorMid).isEqualTo(555L)
             assertThat(state.authorName).isEqualTo("卡片UP")
+        }
+
+    // ── chapters (view_points) tests ─────────────────────────
+
+    @Test
+    fun `playNewVideo clears stale chapters`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getPlayData(any(), any(), any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                error("unreachable")
+            }
+            updateUiState { it.copy(chapters = listOf(VideoChapter(0L, 60_000L, "旧章节"))) }
+
+            viewModel.playNewVideo(VideoListItem(aid = 10, cid = 20, title = "New Video"))
+
+            assertThat(viewModel.uiState.value.chapters).isEmpty()
+        }
+
+    @Test
+    fun `updateViewPoints writes chapters on success`() =
+        runTest(testDispatcher) {
+            val chapters =
+                listOf(
+                    VideoChapter(0L, 60_000L, "开场"),
+                    VideoChapter(60_000L, 120_000L, "正片"),
+                )
+            coEvery { videoPlayRepository.getViewPoints(any(), any()) } returns chapters
+            updateUiState { it.copy(aid = 1, cid = 2) }
+
+            viewModel.updateViewPoints()
+
+            assertThat(viewModel.uiState.value.chapters).containsExactlyElementsIn(chapters)
+        }
+
+    @Test
+    fun `updateViewPoints drops stale response after video switch`() =
+        runTest(testDispatcher) {
+            val chapters = listOf(VideoChapter(0L, 60_000L, "旧视频章节"))
+            coEvery { videoPlayRepository.getViewPoints(any(), any()) } coAnswers {
+                delay(1_000)
+                chapters
+            }
+            updateUiState { it.copy(aid = 1, cid = 2) }
+            launch { viewModel.updateViewPoints() }
+
+            // 响应返回前切到新视频，旧响应不得写入
+            advanceTimeBy(500)
+            updateUiState { it.copy(aid = 3, cid = 4) }
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            assertThat(viewModel.uiState.value.chapters).isEmpty()
+        }
+
+    @Test
+    fun `updateViewPoints keeps chapters empty on failure`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getViewPoints(any(), any()) } throws RuntimeException("network error")
+            updateUiState { it.copy(aid = 1, cid = 2) }
+
+            viewModel.updateViewPoints()
+
+            assertThat(viewModel.uiState.value.chapters).isEmpty()
+        }
+
+    @Test
+    fun `updateViewPoints rethrows CancellationException`() =
+        runTest(testDispatcher) {
+            coEvery { videoPlayRepository.getViewPoints(any(), any()) } throws
+                kotlinx.coroutines.CancellationException("cancelled")
+            updateUiState { it.copy(aid = 1, cid = 2) }
+
+            var caughtCancellation = false
+            try {
+                viewModel.updateViewPoints()
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                caughtCancellation = true
+            }
+
+            assertThat(caughtCancellation).isTrue()
         }
 
     @Test
