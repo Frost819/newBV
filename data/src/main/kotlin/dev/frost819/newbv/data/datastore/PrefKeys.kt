@@ -45,6 +45,10 @@ internal object PrefKeys {
     val defaultQuality = intPreferencesKey("dq")
     val defaultVideoCodec = intPreferencesKey("dvc")
     val enableSoftwareVideoDecoder = booleanPreferencesKey("enable_software_video_decoder")
+
+    /** 播放器是否按片源帧率向系统请求匹配刷新率。 */
+    val enableFrameRateMatching = booleanPreferencesKey("enable_frame_rate_matching")
+
     val actionAfterPlay = intPreferencesKey("action_after_play")
     val playerCustomShortcuts = stringPreferencesKey("player_custom_shortcuts")
 

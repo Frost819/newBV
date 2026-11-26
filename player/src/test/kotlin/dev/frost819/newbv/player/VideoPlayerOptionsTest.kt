@@ -10,12 +10,13 @@ import org.junit.jupiter.api.Test
  */
 class VideoPlayerOptionsTest {
     @Test
-    fun `default values are null or false`() {
+    fun `default options enable frame rate matching`() {
         val options = VideoPlayerOptions()
 
         assertThat(options.userAgent).isNull()
         assertThat(options.referer).isNull()
         assertThat(options.enableSoftwareVideoDecoder).isFalse()
+        assertThat(options.enableFrameRateMatching).isTrue()
     }
 
     @Test
@@ -25,11 +26,13 @@ class VideoPlayerOptionsTest {
                 userAgent = "Mozilla/5.0",
                 referer = "https://www.bilibili.com",
                 enableSoftwareVideoDecoder = true,
+                enableFrameRateMatching = false,
             )
 
         assertThat(options.userAgent).isEqualTo("Mozilla/5.0")
         assertThat(options.referer).isEqualTo("https://www.bilibili.com")
         assertThat(options.enableSoftwareVideoDecoder).isTrue()
+        assertThat(options.enableFrameRateMatching).isFalse()
     }
 
     @Test
