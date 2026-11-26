@@ -69,6 +69,12 @@ android {
             if (signingPropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // 侧载到已有正式版的设备时，两者签名不同、同包名会被系统拒绝安装。
+            // 加 -PlanPackage 打出独立包名的 release（-PlanPackage 只影响 applicationId，
+            // 不新增 buildType，所有 library 模块的变体匹配保持原样）。
+            if (project.hasProperty("lanPackage")) {
+                applicationIdSuffix = ".opt"
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -106,8 +112,25 @@ android {
                     "**/*.proto",
                     "/META-INF/native-image/jansi/**",
                     "/org/fusesource/jansi/internal/native/**",
+                    // 版本标记、依赖清单、协程调试探针、Kotlin 运行时自带的源码/元数据，
+                    // 运行时都读不到，留着只是占安装包
+                    "META-INF/*.version",
+                    "META-INF/DEPENDENCIES",
+                    "DebugProbesKt.bin",
+                    "kotlin/**",
+                    "**/*.kotlin_metadata",
+                    // libgdx 的 GWT 模块描述与 Ragel 解析器源文件只在构建期用，
+                    // Android 运行时不读取；dex 中也没有任何对它们的字符串引用。
+                    "com/badlogic/gdx.gwt.xml",
+                    "com/badlogic/gdx/utils/*.rl",
                 )
         }
+    }
+
+    // 侧载分发用不到 Play 的依赖签名信息，去掉可少一段 dex 元数据
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 
@@ -217,6 +240,20 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+/**
+ * Compose 编译器诊断报告（仅 `-PcomposeReports` 时生成）。
+ *
+ * 报告会列出每个 Composable 的可跳过性（skippable）与参数稳定性（stable/unstable），
+ * 以及每个函数的重启/跳过统计。默认关闭，避免污染 build 目录。
+ */
+composeCompiler {
+    val enableReports = providers.gradleProperty("composeReports").isPresent
+    if (enableReports) {
+        reportsDestination.set(layout.buildDirectory.dir("compose_reports"))
+        metricsDestination.set(layout.buildDirectory.dir("compose_metrics"))
+    }
 }
 
 tasks.withType<Test> {

@@ -54,8 +54,14 @@ object PlayerConstants {
     /** 播放器 detach 时心跳上报超时（毫秒）。 */
     const val HEARTBEAT_DETACH_TIMEOUT_MS = 3_000L
 
-    /** 进度条更新间隔（毫秒）。 */
-    const val SEEKER_UPDATE_INTERVAL_MS = 100L
+    /**
+     * 进度条更新间隔（毫秒）。
+     *
+     * 播放页把 seeker 作为 [androidx.compose.runtime.State] 往控制层传，但控制层在组合期
+     * 会读 `.value` 画进度条，因此这个间隔同时就是整个控制层的重组频率。TV 上进度条
+     * 秒级跳变已足够看清，100ms 只会带来 10Hz 的无谓重组与 lambda 重建。
+     */
+    const val SEEKER_UPDATE_INTERVAL_MS = 250L
 
     /** 时钟更新间隔（毫秒）。 */
     const val CLOCK_UPDATE_INTERVAL_MS = 1_000L

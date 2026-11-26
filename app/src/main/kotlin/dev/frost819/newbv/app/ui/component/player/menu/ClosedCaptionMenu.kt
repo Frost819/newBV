@@ -1,6 +1,7 @@
 package dev.frost819.newbv.app.ui.component.player.menu
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.frost819.newbv.app.ui.component.player.menu.component.PlayerThreeLevelMenu
 import dev.frost819.newbv.app.ui.component.player.menu.component.RadioMenuList
@@ -49,12 +50,18 @@ fun ClosedCaptionMenuList(
         categoryLabel = { it.displayName },
         onFocusStateChange = onFocusStateChange,
     ) { selectedItem, itemModifier, backToMenu ->
+        val subtitleLabels =
+            remember(availableSubtitleTracks) { availableSubtitleTracks.map { it.toMenuLabel() } }
+        val selectedSubtitleIndex =
+            remember(availableSubtitleTracks, currentSubtitleId) {
+                availableSubtitleTracks.indexOfFirst { it.id == currentSubtitleId }
+            }
         when (selectedItem) {
             VideoPlayerClosedCaptionMenuItem.Switch ->
                 RadioMenuList(
                     modifier = itemModifier,
-                    items = availableSubtitleTracks.map { it.toMenuLabel() },
-                    selected = availableSubtitleTracks.indexOfFirst { it.id == currentSubtitleId },
+                    items = subtitleLabels,
+                    selected = selectedSubtitleIndex,
                     onSelectedChanged = { onSubtitleChange(availableSubtitleTracks[it]) },
                     onFocusBackToParent = backToMenu,
                 )

@@ -113,21 +113,23 @@ private fun Carousel(
     modifier: Modifier = Modifier,
     autoScrollInterval: Long = CarouselDefaults.TimeToDisplayItemMillis,
     contentTransformStartToEnd: ContentTransform =
-        fadeIn(tween(1000))
-            .togetherWith(fadeOut(tween(1000))),
+        fadeIn(tween(220))
+            .togetherWith(fadeOut(tween(220))),
     contentTransformEndToStart: ContentTransform =
-        fadeIn(tween(1000))
-            .togetherWith(fadeOut(tween(1000))),
+        fadeIn(tween(220))
+            .togetherWith(fadeOut(tween(220))),
     content: @Composable AnimatedContentScope.(index: Int) -> Unit,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
     var isMovingBackward by remember { mutableStateOf(false) }
     var currentIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    LaunchedEffect(currentIndex, itemCount) {
+    // 只在未聚焦且有多张图时维持自动轮播协程。旧实现把 currentIndex 放进 key，
+    // 每次切图都重启协程重新计时；聚焦时也会按间隔反复唤醒。
+    LaunchedEffect(hasFocus, itemCount) {
+        if (hasFocus || itemCount == 0) return@LaunchedEffect
         while (true) {
             delay(autoScrollInterval)
-            if (itemCount == 0 || hasFocus) continue
             isMovingBackward = false
             currentIndex = (currentIndex + 1) % itemCount
         }

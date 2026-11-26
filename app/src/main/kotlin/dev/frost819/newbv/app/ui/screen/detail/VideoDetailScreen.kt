@@ -766,7 +766,7 @@ private fun VideoInfoHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(detail.tags) { tag ->
+                    items(detail.tags, key = { it.id }) { tag ->
                         val tagKey = "tag_${tag.id}"
                         SuggestionChip(
                             onClick = { onClickTag(tag) },
@@ -965,7 +965,7 @@ private fun VideoPartRow(
                 androidx.compose.foundation.layout
                     .PaddingValues(horizontal = 50.dp),
         ) {
-            items(pages) { page ->
+            items(pages, key = { it.cid }) { page ->
                 val played = if (page.cid == lastPlayedCid) lastPlayedTime else 0
                 EpisodeListButton(
                     title = page.title,
@@ -1059,7 +1059,7 @@ private fun VideoUgcSeasonRow(
                 androidx.compose.foundation.layout
                     .PaddingValues(horizontal = 50.dp),
         ) {
-            items(episodes) { episode ->
+            items(episodes, key = { it.cid }) { episode ->
                 val played = if (episode.cid == lastPlayedCid) lastPlayedTime else 0
                 EpisodeListButton(
                     title = episode.title,
@@ -1109,7 +1109,7 @@ private fun RelatedVideoRow(
                 androidx.compose.foundation.layout
                     .PaddingValues(horizontal = 50.dp),
         ) {
-            items(videos) { video ->
+            items(videos, key = { it.aid }) { video ->
                 val cardData = VideoCardData.fromRelatedVideo(video)
                 SmallVideoCard(
                     modifier =

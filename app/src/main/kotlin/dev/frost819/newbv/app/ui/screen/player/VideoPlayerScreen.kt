@@ -50,6 +50,7 @@ import dev.frost819.newbv.danmaku.util.calculateMaskDelay
 import dev.frost819.newbv.danmaku.util.danmakuMask
 import dev.frost819.newbv.player.BvVideoPlayer
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlin.math.absoluteValue
@@ -135,6 +136,12 @@ fun VideoPlayerScreen(
     }
 
     // 合并 UI 状态（包含 videoList 和 relatedVideos）
+    // 相关视频列表只在切换视频时变化。之前它跟 uiState 一起放在 mergedUiState 的
+    // remember key 里，播放进度等高频状态一变就把几十个 RelatedVideo 重新 map 一遍。
+    val relatedVideoCards =
+        remember(videoListState.relatedVideos) {
+            videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) }
+        }
     val mergedUiState =
         remember(
             uiState,
@@ -145,7 +152,7 @@ fun VideoPlayerScreen(
             subtitleData,
             subtitleList,
             videoListState.videoList,
-            videoListState.relatedVideos,
+            relatedVideoCards,
         ) {
             uiState.copy(
                 danmakuState = danmakuState,
@@ -155,7 +162,7 @@ fun VideoPlayerScreen(
                 subtitleData = subtitleData,
                 subtitleList = subtitleList,
                 videoList = videoListState.videoList,
-                relatedVideos = videoListState.relatedVideos.map { VideoCardData.fromRelatedVideo(it) },
+                relatedVideos = relatedVideoCards,
             )
         }
 
@@ -202,6 +209,7 @@ fun VideoPlayerScreen(
     LaunchedEffect(Unit) {
         playerViewModel.seekerState
             .map { it.currentTime }
+            .distinctUntilChanged()
             .collect { danmakuViewModel.onVideoPositionChanged(it) }
     }
 

@@ -309,10 +309,12 @@ fun VideoPlayerController(
     }
 
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        val confirmKeys = listOf(Key.DirectionCenter, Key.Enter, Key.Spacebar)
-
-        // 非 confirm 键的 KeyUp 事件消费掉
-        if (event.type == KeyEventType.KeyUp && event.key !in confirmKeys) {
+        // 每次按键都新建 listOf 再判 in 会白白分配一个 ArrayList，直接比较即可。
+        if (event.type == KeyEventType.KeyUp &&
+            event.key != Key.DirectionCenter &&
+            event.key != Key.Enter &&
+            event.key != Key.Spacebar
+        ) {
             return true
         }
 
@@ -355,7 +357,7 @@ fun VideoPlayerController(
         // 覆盖层未打开时的按键（KeyUp 已被顶层过滤，此处均为 KeyDown）
         if (!showClickableControllers) {
             when (event.key) {
-                in confirmKeys -> {
+                Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
                     if (event.type == KeyEventType.KeyDown) {
                         if (event.nativeKeyEvent.isLongPress) {
                             showMenuController = true
@@ -517,23 +519,15 @@ fun VideoPlayerController(
                             .clip(MaterialTheme.shapes.medium)
                             .background(Color.Black.copy(alpha = 0.5f)),
                 ) {
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = seekerState.value.debugInfo,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    PlayerDebugInfoText(seekerState)
                 }
             }
 
-            // 常显进度条
+            // 常显进度条：State 的读取放进子组件，父级不随 250ms 刷新重组
             if (showPersistentSeek && !showInfoSeekController) {
-                VideoProgressSeek(
+                PersistentSeekBar(
                     modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter),
-                    duration = seekerState.value.totalDuration,
-                    position = seekerState.value.currentTime,
-                    bufferedPercentage = seekerState.value.bufferedPercentage,
-                    isPersistentSeek = true,
+                    seekerState = seekerState,
                 )
             }
 
@@ -541,7 +535,7 @@ fun VideoPlayerController(
             if (uiState.subtitleId != -1L) {
                 BottomSubtitle(
                     subtitleData = uiState.subtitleData,
-                    currentTime = seekerState.value.currentTime,
+                    currentTime = remember(seekerState) { derivedStateOf { seekerState.value.currentTime } },
                     fontSize =
                         androidx.compose.ui.unit.TextUnit(
                             uiState.subtitleState.fontSize.toFloat(),
@@ -593,7 +587,7 @@ fun VideoPlayerController(
                 show = showInfoSeekController,
                 isSeeking = isSeeking,
                 goTime = goTime,
-                seekerState = seekerState.value,
+                seekerState = seekerState,
                 title = uiState.title,
                 clock = uiState.clock,
                 onlineWatching = uiState.onlineWatching,
@@ -672,3 +666,30 @@ fun VideoPlayerController(
  * 长按倍速手势使用的倍速值。
  */
 private const val PLAYER_LONG_PRESS_SPEED = 2f
+
+/** 调试信息文本：单独成组件，seekerState 的读取只影响这一小块。 */
+@Composable
+private fun PlayerDebugInfoText(seekerState: State<SeekerState>) {
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = seekerState.value.debugInfo,
+        color = Color.White,
+        style = MaterialTheme.typography.bodySmall,
+    )
+}
+
+/** 常显进度条：同上，把 State 读取收进子组件，避免父级每 250ms 整体重组。 */
+@Composable
+private fun PersistentSeekBar(
+    modifier: Modifier = Modifier,
+    seekerState: State<SeekerState>,
+) {
+    val seeker = seekerState.value
+    VideoProgressSeek(
+        modifier = modifier,
+        duration = seeker.totalDuration,
+        position = seeker.currentTime,
+        bufferedPercentage = seeker.bufferedPercentage,
+        isPersistentSeek = true,
+    )
+}
