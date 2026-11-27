@@ -52,7 +52,7 @@ fun SettingSwitchListItem(
                     switchChecked = !switchChecked
                     onCheckedChange(switchChecked)
                 }),
-        leadingContent = leadingContent,
+        leadingContent = leadingContent?.let { content -> { content() } },
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         trailingContent = {
