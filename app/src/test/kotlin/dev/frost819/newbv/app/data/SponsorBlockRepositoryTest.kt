@@ -7,10 +7,8 @@ import dev.frost819.newbv.app.network.entity.SponsorHashVideo
 import dev.frost819.newbv.app.network.entity.SponsorSegmentDto
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
@@ -18,11 +16,12 @@ import java.io.IOException
 /**
  * [SponsorBlockRepository] 的单元测试。
  *
- * Mock [SponsorBlockApi]，验证：bvid 筛选、CID 过滤、归一化去重、
+ * Mock [SponsorBlockApi]，验证：bvid 筛选、CID 过滤、归一化去重、负票过滤、
  * 空分类拦截请求、内存缓存 TTL、网络失败不写缓存。
  */
 class SponsorBlockRepositoryTest {
-    private val repository = SponsorBlockRepository()
+    private lateinit var sponsorBlockApi: SponsorBlockApi
+    private lateinit var repository: SponsorBlockRepository
 
     private fun dto(
         uuid: String,
@@ -45,12 +44,8 @@ class SponsorBlockRepositoryTest {
 
     @BeforeEach
     fun setUp() {
-        mockkObject(SponsorBlockApi)
-    }
-
-    @AfterEach
-    fun tearDown() {
-        unmockkObject(SponsorBlockApi)
+        sponsorBlockApi = mockk()
+        repository = SponsorBlockRepository(sponsorBlockApi)
     }
 
     @Test
@@ -59,7 +54,7 @@ class SponsorBlockRepositoryTest {
             val result = repository.getSkipSegments("BV1xx", 100L, emptyList())
 
             assertThat(result).isEmpty()
-            coVerify(exactly = 0) { SponsorBlockApi.getSkipSegments(any(), any()) }
+            coVerify(exactly = 0) { sponsorBlockApi.getSkipSegments(any(), any()) }
         }
 
     @Test
@@ -80,7 +75,7 @@ class SponsorBlockRepositoryTest {
                             ),
                     ),
                 )
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
 
@@ -101,7 +96,7 @@ class SponsorBlockRepositoryTest {
                             ),
                     ),
                 )
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 0L, listOf("sponsor"))
 
@@ -126,7 +121,7 @@ class SponsorBlockRepositoryTest {
                             ),
                     ),
                 )
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns videos
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns videos
 
             val result = repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
 
@@ -137,43 +132,43 @@ class SponsorBlockRepositoryTest {
     @Test
     fun `caches result within ttl and skips second request`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns
                 listOf(SponsorHashVideo(videoID = "BV1xx", segments = listOf(dto("a", 1.0, 2.0))))
 
             repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
             repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
 
-            coVerify(exactly = 1) { SponsorBlockApi.getSkipSegments(any(), any()) }
+            coVerify(exactly = 1) { sponsorBlockApi.getSkipSegments(any(), any()) }
         }
 
     @Test
     fun `cache key distinguishes category selections`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns emptyList()
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns emptyList()
 
             repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
             repository.getSkipSegments("BV1xx", 100L, listOf("sponsor", "intro"))
 
-            coVerify(exactly = 2) { SponsorBlockApi.getSkipSegments(any(), any()) }
+            coVerify(exactly = 2) { sponsorBlockApi.getSkipSegments(any(), any()) }
         }
 
     @Test
     fun `does not cache on network failure and retries next call`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } throws IOException("offline")
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } throws IOException("offline")
 
             runCatching { repository.getSkipSegments("BV1xx", 100L, listOf("sponsor")) }
             val second =
                 runCatching { repository.getSkipSegments("BV1xx", 100L, listOf("sponsor")) }
 
-            coVerify(exactly = 2) { SponsorBlockApi.getSkipSegments(any(), any()) }
+            coVerify(exactly = 2) { sponsorBlockApi.getSkipSegments(any(), any()) }
             assertThat(second.exceptionOrNull()).isInstanceOf(IOException::class.java)
         }
 
     @Test
     fun `maps dto to domain with ms action type and locked flag`() =
         runTest {
-            coEvery { SponsorBlockApi.getSkipSegments(any(), any()) } returns
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns
                 listOf(
                     SponsorHashVideo(
                         videoID = "BV1xx",
@@ -188,5 +183,29 @@ class SponsorBlockRepositoryTest {
             assertThat(result[0].endMs).isEqualTo(2_500L)
             assertThat(result[0].actionType).isEqualTo(SponsorActionType.MUTE)
             assertThat(result[0].locked).isTrue()
+        }
+
+    @Test
+    fun `drops unlocked segments with votes at or below minus two`() =
+        runTest {
+            val videos =
+                listOf(
+                    SponsorHashVideo(
+                        videoID = "BV1xx",
+                        segments =
+                            listOf(
+                                dto("mild-downvote", 1.0, 2.0, votes = -1, locked = 0),
+                                dto("rejected", 3.0, 4.0, votes = -2, locked = 0),
+                                dto("locked-downvote", 5.0, 6.0, votes = -5, locked = 1),
+                            ),
+                    ),
+                )
+            coEvery { sponsorBlockApi.getSkipSegments(any(), any()) } returns videos
+
+            val result = repository.getSkipSegments("BV1xx", 100L, listOf("sponsor"))
+
+            assertThat(result.map { it.uuid })
+                .containsExactly("mild-downvote", "locked-downvote")
+                .inOrder()
         }
 }

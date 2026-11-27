@@ -20,7 +20,9 @@ import javax.inject.Singleton
 @Singleton
 class SponsorBlockRepository
     @Inject
-    constructor() {
+    constructor(
+        private val sponsorBlockApi: SponsorBlockApi,
+    ) {
         private data class CacheEntry(
             val segments: List<SponsorSegment>,
             val timestamp: Long,
@@ -58,7 +60,7 @@ class SponsorBlockRepository
                 if (cached != null) {
                     cached.segments
                 } else {
-                    val videos = SponsorBlockApi.getSkipSegments(bvid, categories)
+                    val videos = sponsorBlockApi.getSkipSegments(bvid, categories)
                     val raw = videos.firstOrNull { it.videoID == bvid }?.segments.orEmpty()
                     normalize(raw).also { normalized ->
                         cache[cacheKey] = CacheEntry(normalized, System.currentTimeMillis())
@@ -69,7 +71,7 @@ class SponsorBlockRepository
 
         /**
          * 归一化原始片段：
-         * 1. 丢弃未知 actionType 与终点不大于起点的片段；
+         * 1. 丢弃未知 actionType、未锁定且严重负票（votes <= -2）与终点不大于起点的片段；
          * 2. 按 UUID 去重（UUID 空时用 `category:start:end` 兜底键），代表按
          *    锁定 > 票数 > 起点更早 > 片段更短 选取；
          * 3. 按起点升序。
@@ -78,6 +80,7 @@ class SponsorBlockRepository
             raw
                 .mapNotNull { dto ->
                     val actionType = SponsorActionType.fromValue(dto.actionType) ?: return@mapNotNull null
+                    if (dto.locked == 0 && dto.votes <= MIN_REJECTED_VOTES) return@mapNotNull null
                     if (dto.endMs <= dto.startMs) return@mapNotNull null
                     SponsorSegment(
                         uuid = dto.uuid,
@@ -118,5 +121,8 @@ class SponsorBlockRepository
         private companion object {
             /** 缓存有效期：社区片段变化频率低，30 分钟内复用。 */
             const val CACHE_TTL_MS = 30 * 60 * 1000L
+
+            /** 未锁定的社区负票阈值：小于等于该值的片段视为误标并丢弃。 */
+            const val MIN_REJECTED_VOTES = -2
         }
     }
