@@ -379,6 +379,18 @@ object Prefs {
     /** 显示播放器调试信息。 */
     var showPlayerDebugInfo by pref(PrefKeys.showPlayerDebugInfo, false)
 
+    // --- 播放器 - 空降助手 ---
+
+    /** 空降助手总开关（SponsorBlock 片段自动跳过/静音）。 */
+    var sponsorBlockEnabled by pref(PrefKeys.sponsorBlockEnabled, true)
+
+    /**
+     * 空降助手启用的分类（逗号连接的分类 API 名）。
+     *
+     * 空串语义为「全部关闭」；解析/序列化用 app 层 [dev.frost819.newbv.app.entity.player.SponsorCategories]。
+     */
+    var sponsorCategories by pref(PrefKeys.sponsorCategories, "sponsor")
+
     // --- 应用界面（PRD 7.2） ---
 
     /** 界面缩放密度（默认 1f，app 层 init 时按屏幕宽度重新计算）。 */

@@ -4,8 +4,11 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import dev.frost819.newbv.app.data.SponsorBlockRepository
 import dev.frost819.newbv.app.data.VideoInfoRepository
 import dev.frost819.newbv.app.data.VideoSharedState
+import dev.frost819.newbv.app.entity.player.SponsorActionType
+import dev.frost819.newbv.app.entity.player.SponsorSegment
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.action.player.MediaProfileSettingAction
@@ -45,10 +48,12 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -89,6 +94,7 @@ class PlayerViewModelTest {
     private lateinit var favoriteRepository: FavoriteRepository
     private lateinit var oneClickTripleActionRepository: OneClickTripleActionRepository
     private lateinit var cdnSelector: CdnSelector
+    private lateinit var sponsorBlockRepository: SponsorBlockRepository
     private lateinit var viewModel: PlayerViewModel
     private lateinit var mockPlayer: AbstractVideoPlayer
 
@@ -107,6 +113,8 @@ class PlayerViewModelTest {
         favoriteRepository = mockk(relaxed = true)
         oneClickTripleActionRepository = mockk(relaxed = true)
         cdnSelector = mockk(relaxed = true)
+        sponsorBlockRepository = mockk(relaxed = true)
+        coEvery { sponsorBlockRepository.getSkipSegments(any(), any(), any()) } returns emptyList()
 
         mockkObject(Prefs)
         every { Prefs.apiType } returns DataApiType.Web
@@ -118,6 +126,10 @@ class PlayerViewModelTest {
         every { Prefs.defaultPlaySpeed } returns PlaySpeed.X1
         every { Prefs.enableSoftwareVideoDecoder } returns false
         every { Prefs.autoSelectCdn } returns false
+        // 空降助手默认关闭，避免既有用例触发外部请求；专项用例单独开启
+        every { Prefs.sponsorBlockEnabled } returns false
+        every { Prefs.sponsorCategories } returns ""
+        every { Prefs.showPlayerDebugInfo } returns false
 
         mockPlayer = mockk(relaxed = true)
 
@@ -138,6 +150,7 @@ class PlayerViewModelTest {
                 favoriteRepository = favoriteRepository,
                 oneClickTripleActionRepository = oneClickTripleActionRepository,
                 cdnSelector = cdnSelector,
+                sponsorBlockRepository = sponsorBlockRepository,
             )
     }
 
@@ -1795,6 +1808,162 @@ class PlayerViewModelTest {
             val state = viewModel.uiState.value
             assertThat(state.cid).isEqualTo(111L)
             assertThat(state.lastPlayed).isEqualTo(0)
+            viewModel.viewModelScope.cancel()
+        }
+
+    // ── 空降助手（SponsorBlock）测试 ─────────────────────────
+
+    @Test
+    fun `updateSkipSegments clears state without request when disabled`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns false
+            updateUiState { it.copy(aid = 1L, cid = 100L) }
+
+            viewModel.updateSkipSegments()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.skipSegments).isEmpty()
+            coVerify(exactly = 0) { sponsorBlockRepository.getSkipSegments(any(), any(), any()) }
+        }
+
+    @Test
+    fun `updateSkipSegments skips request when no category enabled`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns true
+            every { Prefs.sponsorCategories } returns ""
+            updateUiState { it.copy(aid = 1L, cid = 100L) }
+
+            viewModel.updateSkipSegments()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.skipSegments).isEmpty()
+            coVerify(exactly = 0) { sponsorBlockRepository.getSkipSegments(any(), any(), any()) }
+        }
+
+    @Test
+    fun `updateSkipSegments loads and publishes segments for current video`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns true
+            every { Prefs.sponsorCategories } returns "sponsor"
+            val segments =
+                listOf(
+                    SponsorSegment(
+                        uuid = "u1",
+                        category = "sponsor",
+                        actionType = SponsorActionType.SKIP,
+                        startMs = 10_000L,
+                        endMs = 20_000L,
+                    ),
+                )
+            coEvery { sponsorBlockRepository.getSkipSegments(any(), any(), any()) } returns segments
+            updateUiState { it.copy(aid = 1L, cid = 100L) }
+
+            viewModel.updateSkipSegments()
+            advanceUntilIdle()
+
+            // bvid 为详情缺失时的本地换算兜底，此处只验证查询与发布链路
+            coVerify(exactly = 1) {
+                sponsorBlockRepository.getSkipSegments(any(), 100L, listOf("sponsor"))
+            }
+            assertThat(viewModel.uiState.value.skipSegments).isEqualTo(segments)
+        }
+
+    @Test
+    fun `updateSkipSegments drops stale response after cid changes`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns true
+            every { Prefs.sponsorCategories } returns "sponsor"
+            val deferred = CompletableDeferred<List<SponsorSegment>>()
+            coEvery { sponsorBlockRepository.getSkipSegments(any(), any(), any()) } coAnswers {
+                deferred.await()
+            }
+            updateUiState { it.copy(aid = 1L, cid = 100L) }
+            val job = launch { viewModel.updateSkipSegments() }
+            runCurrent()
+
+            updateUiState { it.copy(cid = 200L) } // 模拟快速切集
+            deferred.complete(
+                listOf(
+                    SponsorSegment(
+                        uuid = "stale",
+                        category = "sponsor",
+                        actionType = SponsorActionType.SKIP,
+                        startMs = 0L,
+                        endMs = 1_000L,
+                    ),
+                ),
+            )
+            job.join()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value.skipSegments).isEmpty()
+        }
+
+    @Test
+    fun `auto skip seeks to clamped target and shows tip`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns true
+            every { Prefs.sponsorCategories } returns "sponsor"
+            coEvery { sponsorBlockRepository.getSkipSegments(any(), any(), any()) } returns
+                listOf(
+                    SponsorSegment(
+                        uuid = "u1",
+                        category = "sponsor",
+                        actionType = SponsorActionType.SKIP,
+                        // 片段尾贴着片长（60s），触发尾部保护钳制：目标 = end - 1s = 59s
+                        startMs = 55_000L,
+                        endMs = 59_500L,
+                    ),
+                )
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returns 56_000L
+            every { mockPlayer.duration } returns 60_000L
+            every { mockPlayer.bufferedPercentage } returns 0
+
+            viewModel.updateSkipSegments()
+            advanceUntilIdle()
+            getVideoPlayerListener().onReady()
+            // 有界虚拟时间推进 seeker 循环（AGENTS 11.5.4：不用 advanceUntilIdle）
+            advanceTimeBy(300)
+            runCurrent()
+
+            verify(exactly = 1) { mockPlayer.seekTo(59_000L) }
+            assertThat(viewModel.uiState.value.shortcutTipText).isEqualTo("已跳过：赞助/恰饭")
+            viewModel.viewModelScope.cancel()
+        }
+
+    @Test
+    fun `onUserSeek re-arms segment for re-trigger after seek back`() =
+        runTest(testDispatcher) {
+            every { Prefs.sponsorBlockEnabled } returns true
+            every { Prefs.sponsorCategories } returns "sponsor"
+            coEvery { sponsorBlockRepository.getSkipSegments(any(), any(), any()) } returns
+                listOf(
+                    SponsorSegment(
+                        uuid = "u1",
+                        category = "sponsor",
+                        actionType = SponsorActionType.SKIP,
+                        startMs = 10_000L,
+                        endMs = 20_000L,
+                    ),
+                )
+            setVideoPlayer(mockPlayer)
+            every { mockPlayer.currentPosition } returnsMany listOf(11_000L, 5_000L, 11_000L)
+            every { mockPlayer.duration } returns 60_000L
+            every { mockPlayer.bufferedPercentage } returns 0
+
+            viewModel.updateSkipSegments()
+            advanceUntilIdle()
+            getVideoPlayerListener().onReady()
+            advanceTimeBy(200) // 第一次跨入 → 自动跳过（消费 u1）
+            runCurrent()
+
+            viewModel.onUserSeek(5_000L) // 用户拖回片段前
+            advanceTimeBy(200) // 再次向前跨入 → 重新自动跳过
+            runCurrent()
+
+            // 片段终点 20s 距片长 60s 较远，目标即终点本身（尾部保护只钳上限）
+            verify(exactly = 2) { mockPlayer.seekTo(20_000L) }
             viewModel.viewModelScope.cancel()
         }
 }

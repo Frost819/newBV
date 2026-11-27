@@ -307,7 +307,8 @@ fun VideoPlayerScreen(
         onGoTime = { time ->
             logger.info { "[PLAYBACK] seek aid=${uiState.aid}, cid=${uiState.cid}, positionMs=$time" }
             // 弹幕引擎时钟由进度喂入按位置跳变自动对齐，无需在此单独通知弹幕
-            playerViewModel.seekToTime(time)
+            // 用户 seek 走 onUserSeek：通知空降状态机重定位并恢复静音
+            playerViewModel.onUserSeek(time)
         },
         onBackToStart = { playerViewModel.backToStart() },
         onCancelSkipToNextEp = { playerViewModel.cancelPlayNext() },

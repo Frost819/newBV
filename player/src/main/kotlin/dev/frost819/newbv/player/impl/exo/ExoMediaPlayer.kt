@@ -263,6 +263,12 @@ class ExoMediaPlayer(
             mPlayer?.setPlaybackSpeed(value)
         }
 
+    override var volume: Float
+        get() = mPlayer?.volume ?: 1f
+        set(value) {
+            mPlayer?.volume = value
+        }
+
     override val tcpSpeed: Long
         get() = 0L
 

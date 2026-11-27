@@ -57,6 +57,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.frost819.newbv.R
+import dev.frost819.newbv.app.entity.player.SponsorSegment
 import dev.frost819.newbv.app.ui.state.player.SeekerState
 import dev.frost819.newbv.app.util.VideoShotImageCache
 import dev.frost819.newbv.app.util.formatHourMinSec
@@ -81,6 +82,7 @@ import kotlinx.coroutines.delay
  * @param onlineWatching 同时观看人数文案（空串时不显示）
  * @param videoShot 缩略图数据（为 null 时不显示预览）
  * @param videoShotCache 缩略图缓存
+ * @param skipSegments 空降片段列表（进度条按分类着色标记，空列表不绘制）
  * @param isPgc 是否来自番剧（为 true 时隐藏详情/UP/相关视频按钮）
  * @param danmakuEnabled 弹幕是否开启
  * @param isLooping 是否循环播放
@@ -110,6 +112,7 @@ fun ControllerVideoInfo(
     onlineWatching: String,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
+    skipSegments: List<SponsorSegment> = emptyList(),
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
@@ -156,6 +159,7 @@ fun ControllerVideoInfo(
                 seekerState = seekerState,
                 videoShot = videoShot,
                 videoShotCache = videoShotCache,
+                skipSegments = skipSegments,
                 isPgc = isPgc,
                 danmakuEnabled = danmakuEnabled,
                 isLooping = isLooping,
@@ -267,6 +271,7 @@ fun ControllerVideoInfoBottom(
     seekerState: SeekerState,
     videoShot: VideoShot?,
     videoShotCache: VideoShotImageCache,
+    skipSegments: List<SponsorSegment> = emptyList(),
     isPgc: Boolean,
     danmakuEnabled: Boolean,
     isLooping: Boolean,
@@ -415,6 +420,7 @@ fun ControllerVideoInfoBottom(
                 position = if (isSeeking) goTime else seekerState.currentTime,
                 bufferedPercentage = seekerState.bufferedPercentage,
                 isPersistentSeek = false,
+                skipSegments = skipSegments,
             )
         }
 
@@ -550,6 +556,7 @@ private fun ControllerVideoInfoPreview() {
             onlineWatching = "9.4万+",
             videoShot = null,
             videoShotCache = VideoShotImageCache(),
+            skipSegments = emptyList(),
             isPgc = false,
             danmakuEnabled = true,
             isLooping = false,

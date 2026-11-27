@@ -72,6 +72,14 @@ abstract class AbstractVideoPlayer {
     /** 播放速度（1.0 = 正常速度） */
     abstract var speed: Float
 
+    /**
+     * 播放器音量（0.0-1.0）。
+     *
+     * 仅作用于播放器流（Media3 player.volume），与系统媒体音量（手势调节）相互独立；
+     * 空降助手静音片段通过置 0 实现片段内静音。
+     */
+    abstract var volume: Float
+
     /** 当前缓冲的网速（字节/秒），部分实现可能返回 0 */
     abstract val tcpSpeed: Long
 

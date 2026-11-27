@@ -29,6 +29,7 @@ import dev.frost819.newbv.core.focus.touchClickable
  * @param supportText 副文本。
  * @param checked 当前开关状态。
  * @param onCheckedChange 开关变化回调。
+ * @param leadingContent 可选前置内容插槽（如分类颜色标识）。
  */
 @Composable
 fun SettingSwitchListItem(
@@ -37,6 +38,7 @@ fun SettingSwitchListItem(
     supportText: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    leadingContent: (@Composable () -> Unit)? = null,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
     var switchChecked by remember(checked) { mutableStateOf(checked) }
@@ -50,6 +52,7 @@ fun SettingSwitchListItem(
                     switchChecked = !switchChecked
                     onCheckedChange(switchChecked)
                 }),
+        leadingContent = leadingContent?.let { content -> { content() } },
         headlineContent = { Text(text = title) },
         supportingContent = { Text(text = supportText) },
         trailingContent = {

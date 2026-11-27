@@ -1,5 +1,6 @@
 package dev.frost819.newbv.app.ui.state.player
 
+import dev.frost819.newbv.app.entity.player.SponsorSegment
 import dev.frost819.newbv.app.entity.player.VideoAspectRatio
 import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
@@ -49,6 +50,7 @@ data class PlayerUiState(
     val availableQuality: Map<Int, String> = emptyMap(),
     val availableVideoCodec: List<VideoCodec> = emptyList(),
     val availableAudio: List<Audio> = emptyList(),
+    val skipSegments: List<SponsorSegment> = emptyList(),
     // 当前选中状态
     val mediaProfileState: MediaProfileState = MediaProfileState(),
     val playSpeed: Float = 1f,
