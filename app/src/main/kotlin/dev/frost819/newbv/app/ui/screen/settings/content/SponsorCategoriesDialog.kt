@@ -1,14 +1,19 @@
 package dev.frost819.newbv.app.ui.screen.settings.content
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,8 +24,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
@@ -63,7 +72,7 @@ fun SponsorCategoriesDialog(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = "勾选的片段类型会在播放中自动跳过或静音；全部关闭时不请求片段数据",
+                    text = "勾选的片段类型会在播放中自动跳过或静音；左侧圆点对应进度条标记颜色，全部关闭时不请求数据",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -80,6 +89,12 @@ fun SponsorCategoriesDialog(
                             title = option.displayName,
                             supportText = option.category,
                             checked = option.category in enabled,
+                            leadingContent = {
+                                CategoryColorIndicator(
+                                    color = Color(option.color),
+                                    categoryName = option.displayName,
+                                )
+                            },
                             onCheckedChange = { checked ->
                                 val next =
                                     if (checked) {
@@ -107,4 +122,28 @@ fun SponsorCategoriesDialog(
             }
         }
     }
+}
+
+/**
+ * 分类在进度条上对应的颜色标识圆点。
+ */
+@Composable
+private fun CategoryColorIndicator(
+    color: Color,
+    categoryName: String,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                    shape = CircleShape,
+                ).semantics {
+                    contentDescription = "$categoryName 进度条标记颜色"
+                },
+    )
 }
