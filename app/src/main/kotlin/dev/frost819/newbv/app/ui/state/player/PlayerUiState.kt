@@ -5,6 +5,7 @@ import dev.frost819.newbv.app.entity.player.VideoListItem
 import dev.frost819.newbv.app.ui.component.videocard.VideoCardData
 import dev.frost819.newbv.biliapi.entity.danmaku.DanmakuMask
 import dev.frost819.newbv.biliapi.entity.video.Subtitle
+import dev.frost819.newbv.biliapi.entity.video.VideoChapter
 import dev.frost819.newbv.biliapi.entity.video.VideoShot
 import dev.frost819.newbv.bilisubtitle.entity.SubtitleItem
 import dev.frost819.newbv.danmaku.config.DanmakuState
@@ -39,6 +40,7 @@ data class PlayerUiState(
     val playerState: PlayerState = PlayerState.Ready,
     val isBuffering: Boolean = false,
     val videoShot: VideoShot? = null,
+    val chapters: List<VideoChapter> = emptyList(),
     val clock: Pair<Int, Int> = Pair(0, 0),
     // 提示
     val showSkipToNextEp: Boolean = false,

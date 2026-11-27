@@ -990,7 +990,6 @@ class VideoDetailRepositoryUnitTest {
             dmMask = null,
             subtitle = null,
             playerIcon = null,
-            viewPoints = kotlinx.serialization.json.JsonArray(emptyList()),
             isUgcPayPreview = false,
             previewToast = "",
             pcdnLoader = null,

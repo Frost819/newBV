@@ -756,6 +756,7 @@ class PlayerViewModel
                     isBuffering = true,
                     playerState = PlayerState.Ready,
                     videoShot = null,
+                    chapters = emptyList(),
                     danmakuMask = null,
                     subtitleList = emptyList(),
                     subtitleData = emptyList(),
@@ -836,6 +837,7 @@ class PlayerViewModel
                     try {
                         resolveUrlsAndPlay(aid, cid, epid ?: 0)
                         launch { updateVideoShot() }
+                        launch { updateViewPoints() }
                         launch { updateVideoPages() }
                     } catch (e: CancellationException) {
                         throw e
@@ -1344,6 +1346,31 @@ class PlayerViewModel
                     )
                 _uiState.update { it.copy(videoShot = shot) }
             }.onFailure { logger.warn { "Load video shot failed: $it" } }
+        }
+
+        /**
+         * 拉取并写入章节数据（view_points）。
+         *
+         * 章节仅 Web 通道提供，加载失败或无章节数据时静默降级为空列表
+         * （进度条回退为普通单线渲染），不影响播放。
+         * internal 仅为单元测试可见性。
+         */
+        internal suspend fun updateViewPoints() {
+            val state = _uiState.value
+            runCatching {
+                withTimeout(PLAYER_ACTION_TIMEOUT_MS) {
+                    videoPlayRepository.getViewPoints(aid = state.aid, cid = state.cid)
+                }
+            }.onSuccess { chapters ->
+                // 快速切集时丢弃过期响应，避免旧视频章节残留到新视频
+                val current = _uiState.value
+                if (current.aid == state.aid && current.cid == state.cid) {
+                    _uiState.update { it.copy(chapters = chapters) }
+                }
+            }.onFailure { error ->
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                logger.warn { "Load view points failed: $error" }
+            }
         }
 
         private suspend fun updateVideoPages() {

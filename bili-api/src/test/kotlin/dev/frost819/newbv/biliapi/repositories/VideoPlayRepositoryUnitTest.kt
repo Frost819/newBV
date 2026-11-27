@@ -325,6 +325,56 @@ class VideoPlayRepositoryUnitTest {
         }
 
     // ------------------------------------------------------------------
+    // getViewPoints - Web
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `getViewPoints maps view points sorted by fromMs`() =
+        runTest {
+            val videoMoreInfo =
+                fakeVideoMoreInfoNoSubtitle().copy(
+                    viewPoints =
+                        listOf(
+                            VideoMoreInfo.ViewPoint(from = 60.0, to = 120.0, content = "正片"),
+                            VideoMoreInfo.ViewPoint(from = 0.0, to = 60.0, content = "开场"),
+                        ),
+                )
+            coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = videoMoreInfo)
+
+            val result = repository.getViewPoints(aid = AID, cid = CID)
+
+            assertThat(result).hasSize(2)
+            // 按 fromMs 升序返回
+            assertThat(result[0].fromMs).isEqualTo(0L)
+            assertThat(result[0].content).isEqualTo("开场")
+            assertThat(result[1].fromMs).isEqualTo(60_000L)
+            assertThat(result[1].toMs).isEqualTo(120_000L)
+        }
+
+    @Test
+    fun `getViewPoints returns empty list when viewPoints is null`() =
+        runTest {
+            coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } returns
+                BiliResponse(code = 0, message = "", data = fakeVideoMoreInfoNoSubtitle())
+
+            val result = repository.getViewPoints(aid = AID, cid = CID)
+
+            assertThat(result).isEmpty()
+        }
+
+    @Test
+    fun `getViewPoints propagates risk control error`() =
+        runTest {
+            coEvery { BiliHttpApi.getVideoMoreInfo(any(), any()) } throws
+                RiskControlException("触发风控")
+
+            assertThrows<RiskControlException> {
+                repository.getViewPoints(aid = AID, cid = CID)
+            }
+        }
+
+    // ------------------------------------------------------------------
     // getSubtitle - App (channel is null, stub is null)
     // ------------------------------------------------------------------
 
@@ -1109,7 +1159,6 @@ class VideoPlayRepositoryUnitTest {
             dmMask = null,
             subtitle = null,
             playerIcon = null,
-            viewPoints = kotlinx.serialization.json.JsonArray(emptyList()),
             isUgcPayPreview = false,
             previewToast = "",
             pcdnLoader = null,

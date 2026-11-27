@@ -35,7 +35,7 @@ import kotlinx.serialization.json.JsonArray
  * @param dmMask
  * @param subtitle
  * @param playerIcon
- * @param viewPoints
+ * @param viewPoints 章节信息（视频分段点，仅部分视频有）
  * @param isUgcPayPreview
  * @param previewToast
  * @param pcdnLoader
@@ -95,7 +95,7 @@ data class VideoMoreInfo(
     @SerialName("player_icon")
     val playerIcon: PlayerIcon? = null,
     @SerialName("view_points")
-    val viewPoints: JsonArray,
+    val viewPoints: List<ViewPoint>? = null,
     @SerialName("is_ugc_pay_preview")
     val isUgcPayPreview: Boolean,
     @SerialName("preview_toast")
@@ -204,6 +204,27 @@ data class VideoMoreInfo(
         val aiType: Int,
         @SerialName("ai_status")
         val aiStatus: Int,
+    )
+
+    /**
+     * 章节信息（view_points 单项）。
+     *
+     * 实测 `from`/`to` 为整数下发的秒值，用 Double 兼容潜在的小数秒。
+     * 字段均给默认值：个别条目缺字段不应让整个 [VideoMoreInfo] 解析失败
+     * （该响应同时承载字幕/蒙版/历史进度等数据）。
+     *
+     * @param from 章节起点，单位秒
+     * @param to 章节终点，单位秒
+     * @param content 章节标题
+     * @param imgUrl 章节配图 URL
+     */
+    @Serializable
+    data class ViewPoint(
+        val from: Double = 0.0,
+        val to: Double = 0.0,
+        val content: String = "",
+        @SerialName("imgUrl")
+        val imgUrl: String? = null,
     )
 
     /**
